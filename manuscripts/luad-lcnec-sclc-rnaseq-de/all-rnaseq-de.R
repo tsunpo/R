@@ -1,13 +1,14 @@
 # =============================================================================
 # Manuscript: Journey to the centre of the cancer cell
-# Chapter I:
-# Name:   all-rnaseq-de.R
+# Chapter II: Additive effect on RB1 mutant bypassing arrest in SCLC 
+# Name: manuscripts/luad-lcnec-sclc-rnaseq-de/all-rnaseq-de.R
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 31/10/17 (Reformation Day)
+# Last Modified: 00/11/17
 # =============================================================================
-#wd.source <- "/projects/cangen/tyang2/dev/R"              ## tyang2@cheops
-#wd.source <- "/ngs/cangen/tyang2/dev/R"                   ## tyang2@gauss
-wd.source <- "/Users/tpyang/Work/dev/R"                    ## tpyang@localhost
+#wd.source <- "/projects/cangen/tyang2/dev/R"   ## tyang2@cheops
+#wd.source <- "/ngs/cangen/tyang2/dev/R"        ## tyang2@gauss
+#wd.source <- "/re/home/tyang2/dev/R"           ## tyang2@gauss
+wd.source <- "/Users/tpyang/Work/dev/R"         ## tpyang@localhost
 
 handbooks <- c("Common.R", "DifferentialExpression.R")     ## Required handbooks/libraries for the manuscript
 invisible(sapply(handbooks, function(b) source(file.path(wd.source, "handbook-of", b))))
@@ -15,40 +16,45 @@ invisible(sapply(handbooks, function(b) source(file.path(wd.source, "handbook-of
 load(file.path(wd.source, "guide-to-the", "hg19.RData"))   ## The bioinformatician's guide to the human genome
 
 # -----------------------------------------------------------------------------
-# Transcript TPM estimates/aboundants from kallisto (v0.43.0)
+# Read in TSV files from kallisto (v0.43.1)
+# Based on https://rawgit.com/pachterlab/sleuth/master/inst/doc/intro.html
 # -----------------------------------------------------------------------------
-getTSVS <- function(wd, samples, BASE) {
-   wd.kallisto <- paste0(wd, "ngs/RNA/kallisto_hg19.ensembl_quant-b100--bias/")
-   wd.de <- paste0(wd, "analysis/expression/kallisto/", tolower(BASE), "-rnaseq-de-kallisto-ensembl/")
-   
-   return(sapply(samples, function(s) file.path(wd.kallisto, s)))
+getTSV <- function(wd, samples) {
+   return(paste0(wd, "kallisto_hg19.ensembl_quant-b100--bias--fusion/", samples))
 }
 
-wd <- paste0("/ngs/cangen/tyang2/LUAD/")
-samples.luad <- readTable(paste0(wd, "ngs/RNA/luad_rna_n48.list"), header=F, rownames=F, sep="\t")
-tsvs.luad <- getTSVS(wd, samples.luad, "LUAD")
-
-wd <- paste0("/ngs/cangen/tyang2/LCNEC/")
-samples.lcnec <- readTable(paste0(wd, "ngs/RNA/lcnec_rna_n69.list"), header=F, rownames=F, sep="\t")
-tsvs.lcnec <- getTSVS(wd, samples.lcnec, "LCNEC")
-
-wd <- paste0("/ngs/cangen/tyang2/SCLC/")
-samples.sclc <- readTable(paste0(wd, "ngs/RNA/sclc_rna_n81.list"), header=F, rownames=F, sep="\t")[,1]
-tsvs.sclc <- getTSVS(wd, samples.sclc, "SCLC")
-
-###
 ##
-library("sleuth")
-wd.all <- "/Users/tpyang/Work/uni-koeln/tyang2/ALL/"
-wd.all.de <- paste0(wd.all, "analysis/expression/kallisto/all-rnaseq-de/")
+#wd <- "/ngs/cangen/tyang2/"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2/"   ## tyang2@local
+
+wd.all <- paste0(wd, "ALL/")
+wd.all.de <- paste0(wd.all, "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/")
 setwd(wd.all)
 
-tsvs <- c(tsvs.luad, tsvs.lcnec, tsvs.sclc)
+wd.rna <- paste0(wd, "LUAD/ngs/RNA/")
+samples.luad <- readTable(paste0(wd.rna, "luad_rna_n48.list"), header=F, rownames=F, sep="\t")
+tsvs.luad    <- getTSV(wd.rna, samples.luad)
+
+wd.rna <- paste0(wd, "LCNEC/ngs/RNA/")
+samples.lcnec <- readTable(paste0(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=F, sep="\t")
+tsvs.lcnec    <- getTSV(wd.rna, samples.lcnec)
+
+wd.rna <- paste0(wd, "SCLC/ngs/RNA/")
+samples.sclc <- readTable(paste0(wd.rna, "sclc_rna_n81.list"), header=F, rownames=F, sep="\t")[,1]
+tsvs.sclc    <- getTSV(wd.rna, samples.sclc)
+
+# -----------------------------------------------------------------------------
+# Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
+# Based on https://pachterlab.github.io/sleuth_walkthroughs/boj/analysis.html
+# -----------------------------------------------------------------------------
+library("sleuth")   ## R version 3.2.2 (on gauss)
+
+tsvs    <- c(tsvs.luad, tsvs.lcnec, tsvs.sclc)
 samples <- c(samples.luad, samples.lcnec, samples.sclc)
 s2c <- data.frame(path=tsvs, sample=samples, stringsAsFactors=F)
-t2g <- tx2Ens(ensGene)
+t2g <- tx2Ens(ensGene.transcript)
 
-so <- sleuth_prep(s2c, ~1, target_mapping=t2g)
+so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T)
 # reading in kallisto results
 # dropping unused factor levels
 # .....................................................................
@@ -56,134 +62,50 @@ so <- sleuth_prep(s2c, ~1, target_mapping=t2g)
 # 88145 targets passed the filter
 # normalizing tpm
 # merging in metadata
-# normalizing bootstrap samples
+# aggregating by column: ens_gene
+# 20593 genes passed the filter
 # summarizing bootstraps
 
-tpm.norm.filt <- sleuth_to_matrix0(so, "obs_norm_filt", "tpm")$data
-tpm.norm.filt <- orderBySamples(tpm.norm.filt)
-save(tpm.norm.filt, file=paste0(wd.all.de, "data/all_kallisto_tpm.norm.filt.RData"))
+kallisto.table <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
+save(kallisto.table, file=paste0(wd.all.de, "data/all_sleuth_kallisto.table_0.43.1.RData"))
 
-#kallisto.table <- kallisto_table(so, use_filtered=T, normalized=T)
-#save(kallisto.table, file=paste0(wd.de, "data/sclc_kallisto_kallisto.table.RData"))
+tpm.gene.patch <- kallisto_table_to_matrix(kallisto.table)
+overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
+tpm.gene <- tpm.gene.patch[overlaps,]
 
-# -----------------------------------------------------------------------------
-# Gene-level TPM estimates/aboundants from kallisto
-# Last Modified: 30/06/17
-# -----------------------------------------------------------------------------
-transcripts <- intersect(rownames(t2g), rownames(tpm.norm.filt))
-tpm <- tpm.norm.filt[transcripts,]   ## Only keep transcripts in Ensembl BioMart annotation (see guide-to-the/hg19.R)
-
-tpm.gene <- getGeneTPM(t2g, tpm)
-codings <- intersect(rownames(subset(ensGene.gene, gene_biotype == "protein_coding")), rownames(tpm.gene))
-tpm.gene.pcg <- tpm.gene[codings,]
-# > nrow(tpm.norm.filt)
-# [1] 88145
-# > nrow(tpm)
-# [1] 83059
-# > nrow(tpm.gene)
-# [1] 18898
-# > nrow(tpm.gene.pcg)       ## Gene-level, protein-coding-gene TPMs (with 0 values)
-# [1] 16897
-# > nrow(tpm.gene.pcg.exp3)
-# [1] 15368
-# > nrow(tpm.gene.pcg.exp)   ## Gene-level, protein-coding-gene TPMs (without 0 values)
-# [1] 13759
-save(tpm, tpm.gene, file=paste0(wd.de, "data/all_kallisto_tpm.gene.RData"))
-
-##
-rownames <- rownames(tpm.gene.pcg)
-unexpressed.0 <- rownames[getNotExpressed(tpm.gene.pcg[, rownames(subset(pheno.all, Cancer_Type == 0))])]
-unexpressed.1 <- rownames[getNotExpressed(tpm.gene.pcg[, rownames(subset(pheno.all, Cancer_Type == 1))])]
-unexpressed.2 <- rownames[getNotExpressed(tpm.gene.pcg[, rownames(subset(pheno.all, Cancer_Type == 2))])]
-
-#unexpressed <- intersect(unexpressed.0, intersect(unexpressed.1, unexpressed.2))
-#tpm.gene.pcg.exp3 <- tpm.gene.pcg[setdiff(rownames, unexpressed),]
-#tpm.gene.pcg.exp3.non <- tpm.gene.pcg[unexpressed,]
-
-#test <- mapply(x = 1:nrow(tpm.gene.pcg.exp3.non), function(x) length(which(tpm.gene.pcg.exp3.non[x,] == 0)))
-
-##
-rownames <- rownames(tpm.gene.pcg)
-unexpressed.half.0 <- rownames[getNotExpressedInHalf(tpm.gene.pcg[, rownames(subset(pheno.all, Cancer_Type == 0))])]
-unexpressed.half.1 <- rownames[getNotExpressedInHalf(tpm.gene.pcg[, rownames(subset(pheno.all, Cancer_Type == 1))])]
-unexpressed.half.2 <- rownames[getNotExpressedInHalf(tpm.gene.pcg[, rownames(subset(pheno.all, Cancer_Type == 2))])]
-
-unexpressed.half <- intersect(unexpressed.half.0, intersect(unexpressed.half.1, unexpressed.half.2))
-
-##
-pdf("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/hist_tpm.gene.pcg.exp_n198.pdf")
-plot(hist(median0(tpm.gene.pcg.exp.log2)))
-dev.off()
-
-##
-unexpressed <- mapply(x = 1:nrow(tpm.gene.pcg.log2), function(x) length(which(tpm.gene.pcg.log2[x,] == log2(0.01))))
-pdf("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/hist_tpm.gene.pcg_unexpressed_n198.pdf")
-plot(hist(unexpressed))
-dev.off()
-
-pdf("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/hist_tpm.gene.pcg_unexpressed-20_n198.pdf")
-plot(hist(unexpressed[which(unexpressed <= 20)]))
-dev.off()
-
-# -----------------------------------------------------------------------------
-# Phenotypes
-# Last Modified: 17/08/17
-# -----------------------------------------------------------------------------
-#load("/ngs/cangen/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/all_kallisto_tpm.gene.RData")
-#pheno.all <- readTable("/ngs/cangen/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/pheno.all_n198.txt", header=T, rownames=T, sep="\t")
-#codings <- intersect(rownames(subset(ensGene.gene, gene_biotype == "protein_coding")), rownames(tpm.gene))
+## Gene Biotypes in Ensembl
+## https://www.gencodegenes.org/gencode_biotypes.html
+#codings <- intersect(rownames(subset(ensGene, gene_biotype == "protein_coding")), rownames(tpm.gene))
 #tpm.gene.pcg <- tpm.gene[codings,]
-
-load("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/all_kallisto_tpm.gene.pcg.exp.log2_n198.RData")#writeTable(pheno.all, file="/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/pheno.all.txt", colnames=T, rownames=F, sep="\t")
-pheno.all <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/pheno.all_n198.txt", header=T, rownames=T, sep="\t")
-
-## SCLC
-sclc.rb1 <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/ngs/WGS/sclc_wgs_n101_rb92.list", header=F, rownames=F, sep="")
-sclc.rna <- rownames(subset(pheno.all, Cancer_Type == 2))
-sclc.rna.rb1 <- intersect(sclc.rna, sclc.rb1)
-sclc.rna.wt  <- setdiff(sclc.rna, sclc.rna.rb1)
-pheno.all[sclc.rna.rb1,]$RB1 <- "RB1"
-pheno.all[sclc.rna.wt,]$RB1 <- "WT"
-
-## LUAD
-luad <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/LUAD/ngs/WGS/luad_ngs_n230.list", header=F, rownames=F, sep="")
-luad.rb1 <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/LUAD/ngs/WGS/luad_ngs_n230_rb10.list", header=F, rownames=F, sep="") 
-
-writeTable(pheno.all, "/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/data/pheno.all_n198.txt", colnames=T, rownames=F, sep="\t")
+# > nrow(tpm.norm.filt)   ## Transcript-level TPMs
+# [1] 88145
+# > nrow(tpm.gene.patch)  ## Gene-level TPMs with patches
+# [1] 20593 
+# > nrow(tpm.gene)        ## Gene-level TPMs (including pseudogenes, and Immunoglobulin (Ig) variable chain and T-cell receptor (TcR) genes)
+# [1] 18898
+# > nrow(tpm.gene.pcg)    ## Gene-level, protein-coding-gene TPMs
+# [1] 16897
+save(tpm.gene, file=paste0(wd.all.de, "data/all_sleuth_tpm.gene_0.29.0.RData"))
 
 # -----------------------------------------------------------------------------
-# Find D.E genes between SCLC, LUAD and LCNEC (with "additive" effects)
+# Find genes with "additive" effects between SCLC, LUAD and LCNEC
 # Last Modified: 17/08/17
 # -----------------------------------------------------------------------------
-testANOVA <- function(x, expr, pheno) {
-   fit1 <- lm(as.numeric(expr[x,]) ~ pheno$Cancer_Type)
-   fit2 <- lm(as.numeric(expr[x,]) ~ 1)
-   a1 <- anova(fit1, fit2)
- 
-   return(a1$Pr[2])
-}
-
 getMedian <- function(x, expr, pheno, type) {
    return(median(as.numeric(expr[x, rownames(subset(pheno, Cancer_Type == type))])))
 }
 
 ##
-#tpm.gene.pcg.exp <- tpm.gene.pcg[getExpressedGTEx(tpm.gene.pcg),]   ## Gene-level, protein-coding-gene TPMs (without 0 values)
-#tpm.gene.pcg.exp.log2 <- log2(tpm.gene.pcg.exp + 0.01)
+pheno.all <- readTable(paste0(wd.all.de, "data/pheno.all_n198.txt"), header=T, rownames=T, sep="\t")
+pheno.all$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
 
-###
-## !!!
-expr.pheno.log2 <- tpm.gene.pcg.exp3.log2[,rownames(pheno.all)]   ## VERY VERY VERY IMPORTANT!!!
-#expr.pheno.log2 <- tpm.gene.pcg.log2[,rownames(pheno.all)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2 <- log2(tpm.gene + 0.01)
+expr.pheno.log2 <- tpm.gene.log2[,rownames(pheno.all)]   ## VERY VERY VERY IMPORTANT!!!
 
-colnames <- c("Ensembl_Gene_ID", "SRC_RHO", "SRC_P", "SRC_FDR", "ANOVA_P", "ANOVA_FDR", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")
+colnames <- c("Ensembl_Gene_ID", "SRC_RHO", "SRC_P", "SRC_FDR", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")
 de <- toTable(NA, length(colnames), nrow(expr.pheno.log2), colnames)
 rownames(de) <- rownames(expr.pheno.log2)
 de$Ensembl_Gene_ID <- rownames(expr.pheno.log2)
-
-## ANOVA
-pheno.all$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
-de$ANOVA_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) testANOVA(x, expr.pheno.log2, pheno.all))
 
 ## SRC
 de$SRC_RHO   <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[4]])
@@ -197,82 +119,26 @@ de$LCNEC_LUAD <- de$LCNEC - de$LUAD
 de$SCLC_LUAD  <- de$SCLC - de$LUAD
 
 library(qvalue)
-de$ANOVA_FDR <- qvalue(de$ANOVA_P)$qvalue
 de$SRC_FDR   <- qvalue(de$SRC_P)$qvalue
 de <- de[order(de$SRC_P),]
 
 ##
-annot.gene <- ensGene.gene[,c("ensembl_gene_id", "external_gene_name")]
-#overlaps <- intersect(rownames(de), rownames(annot.gene))         ## BE EXTRA CAREFUL!! NOT intersect(rownames(annot.gene), rownames(de)) 
-de.all.tpm.gene.pcg.exp3 <- cbind(annot.gene[rownames(de),], de[,-1])   ## BE EXTRA CAREFUL!!
+annot.gene <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name",  "strand", "start_position", "end_position", "gene_biotype")]
+overlaps <- intersect(rownames(de), rownames(annot.gene))   ## BE EXTRA CAREFUL!! NOT intersect(rownames(annot.gene), rownames(de)) 
+de.all.tpm.gene <- cbind(annot.gene[overlaps,], de[,-1])    ## BE EXTRA CAREFUL!!
 
-save(de.all.tpm.gene.pcg.exp3, pheno.all, file="/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-all-tpm-gene-pcg-exp3/de_all_kallisto_tpm.gene.pcg.exp3_anova_src_n198.RData")
-writeTable(de.all.tpm.gene.pcg.exp3, file="/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-all-tpm-gene-pcg-exp3/de_all_kallisto_tpm.gene.pcg.exp3_anova_src_n198.txt", colnames=T, rownames=F, sep="\t")
-
-##
-annot.gene <- ensGene.gene[,c("ensembl_gene_id", "external_gene_name")]
-#overlaps <- intersect(rownames(de), rownames(annot.gene))         ## BE EXTRA CAREFUL!! NOT intersect(rownames(annot.gene), rownames(de)) 
-de.tpm.gene.pcg.exp <- cbind(annot.gene[rownames(de),], de[,-1])   ## BE EXTRA CAREFUL!!
-
-save(de.tpm.gene.pcg.exp, pheno.all, file="/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-tpm-gene-pcg-exp/de_all_kallisto_tpm.gene.pcg.exp_anova_src_n198.RData")
-writeTable(de.tpm.gene.pcg.exp, file="/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-tpm-gene-pcg-exp/de_all_kallisto_tpm.gene.pcg.exp_anova_src_n198.txt", colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Not expressed genes
-# Last Modified: 17/09/17
-# -----------------------------------------------------------------------------
-notexp <- setdiff(rownames(tpm.gene.pcg.log2), rownames(tpm.gene.pcg.exp.log2))
-
-sig <- rownames(rbind(subset(de.tpm.gene.pcg, SRC_RHO >= 0.6), subset(de.tpm.gene.pcg, SRC_RHO <= -0.6)))
-# > length(sig)
-# [1] 1008
-sig.exp <- rownames(rbind(subset(de.tpm.gene.pcg.exp, SRC_RHO >= 0.6), subset(de.tpm.gene.pcg.exp, SRC_RHO <= -0.6)))
-# > length(sig.exp)
-# [1] 783
-notsig <- rownames(rbind(subset(de.tpm.gene.pcg, SRC_RHO < 0.6), subset(de.tpm.gene.pcg, SRC_RHO > -0.6)))
-notsig.exp <- rownames(rbind(subset(de.tpm.gene.pcg.exp, SRC_RHO < 0.6), subset(de.tpm.gene.pcg.exp, SRC_RHO > -0.6)))
-
-length(intersect(notexp, sig))
-length(intersect(notexp, notsig))
-
-length(intersect(notexp, sig.exp))
-length(intersect(notexp, notsig.exp))
-
-# -----------------------------------------------------------------------------
-# Not expressed genes in all cancer/tissue type
-# Last Modified: 28/10/17
-# -----------------------------------------------------------------------------
-notexp <- setdiff(rownames(tpm.gene.pcg.log2), rownames(tpm.gene.pcg.exp3.log2))
-
-sig <- rownames(rbind(subset(de.tpm.gene.pcg, SRC_RHO >= 0.6), subset(de.tpm.gene.pcg, SRC_RHO <= -0.6)))
-# > length(sig)
-# [1] 1008
-sig.exp <- rownames(rbind(subset(de.all.tpm.gene.pcg.exp3, SRC_RHO >= 0.6), subset(de.all.tpm.gene.pcg.exp3, SRC_RHO <= -0.6)))
-# > length(sig.exp)
-# [1] 946
-notsig <- rownames(rbind(subset(de.tpm.gene.pcg, SRC_RHO < 0.6), subset(de.tpm.gene.pcg, SRC_RHO > -0.6)))
-notsig.exp <- rownames(rbind(subset(de.all.tpm.gene.pcg.exp3, SRC_RHO < 0.6), subset(de.all.tpm.gene.pcg.exp3, SRC_RHO > -0.6)))
-
-length(intersect(notexp, sig))
-length(intersect(notexp, notsig))
-
-length(intersect(notexp, sig.exp))
-length(intersect(notexp, notsig.exp))
-
+save(de.all.tpm.gene, pheno.all, file=paste0(wd.all.de, "de-all-tpm-gene/de_all_tpm.gene_src_n198.RData"))
+writeTable(de.all.tpm.gene, file=paste0(wd.all.de, "de-all-tpm-gene/de_all_tpm.gene_src_n198.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Comparisions between SCLC, LUAD and LCNEC
 # Last Modified: 18/08/17
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2/ALL/"
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2/ALL/"
-wd.de <- paste0(wd, "analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-all-tpm-gene-pcg-exp3/")
-
 #install.packages('beeswarm')
 library(beeswarm)
 
 plotBeeswarm <- function(gene, wd.de, expr.pheno.log2, pheno.all, position) {
-   ensembl_gene_id <- subset(ensGene.gene, external_gene_name == gene)$ensembl_gene_id
+   ensembl_gene_id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
    gene.tpms <- cbind(t(expr.pheno.log2)[rownames(pheno.all), ensembl_gene_id], pheno.all)
    colnames(gene.tpms)[1] <- "LOG2_TPM"
  
@@ -297,7 +163,7 @@ plotBeeswarm <- function(gene, wd.de, expr.pheno.log2, pheno.all, position) {
 }
 
 plotBox <- function(gene, wd.de, expr.pheno.log2, pheno.all) {
-   ensembl_gene_id <- subset(ensGene.gene, external_gene_name == gene)$ensembl_gene_id[1]   ## To avoid ENSG00000269846 (one of RBL1)
+   ensembl_gene_id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id[1]   ## To avoid ENSG00000269846 (one of RBL1)
    gene.tpms <- cbind(t(expr.pheno.log2)[rownames(pheno.all), ensembl_gene_id], pheno.all)
    colnames(gene.tpms)[1] <- "LOG2_TPM"
  
@@ -346,8 +212,9 @@ genes <- c("RAG1")
 genes <- c("E2F4")
 genes <- c("LIG4")
 genes <- c("E2F1", "E2F2", "E2F3", "E2F5", "E2F6", "E2F7", "E2F8")
+genes <- c("IGLV8-61", "TRAV4", "TRBV5-1", "IGHA1")
 for (g in 1:length(genes)) {
-   plotBox(genes[g], wd.de, tpm.gene.pcg.log2[setdiff(rownames(tpm.gene.pcg.log2), "ENSG00000269846"),], pheno.all)
+   plotBox(genes[g], wd.all.de, tpm.gene.log2[setdiff(rownames(tpm.gene.log2), "ENSG00000269846"),], pheno.all)
 }
 
 # -----------------------------------------------------------------------------
@@ -462,129 +329,134 @@ pToRHO <- function(p, de) {
    return(max(abs(de.sig$SRC_RHO)))
 }
 
-plotVolcanoALL <- function(de, rho, genes, file.de, file.main) {
+plotVolcanoALL <- function(de, rho, genes, file.de, file.main, isIg) {
    p <- rhoToP(rho, de)
    de.sig <- subset(de, SRC_P <= p)
    de.sig$log10P <- -log10(de.sig$SRC_P)
    #rho <- pToRHO(p, de)
  
    de$log10P <- -log10(de$SRC_P)
-   xmax <- max(de$SCLC_LUAD)
+   xmax <- max(de$Effect)
    ymax <- max(de$log10P)
    #p <- max(significantAndVariable(de, effect, fdr)$P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$SCLC_LUAD, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=c("Effect size (log2FC SCLC/LUAD)", "", ""), ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
+   plot(de$Effect, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=c("Effect size (log2FC SCLC/LUAD)", "", ""), ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
    abline(h=c(-log10(rhoToP(0.4, de))), lty=5, col="darkgray")
    text(xmax*-1 + 2*xmax/29, -log10(rhoToP(0.4, de)) + ymax/42, paste0("rho=±", 0.4), col="darkgray")
    
-   de.up <- subset(de.sig, SCLC_LUAD > 0)
-   points(de.up$SCLC_LUAD, de.up$log10P, pch=16, col="red")
-
-   de.down <- subset(de.sig, SCLC_LUAD < 0)
-   points(de.down$SCLC_LUAD, de.down$log10P, pch=16, col="dodgerblue")
+   if (isIg) {   ## ADD 02/11/17: Immunoglobulin (Ig) variable chain and T-cell receptor (TcR) genes
+      de.ig <- de[c(grep("IG", de.all.tpm.gene$gene_biotype), grep("TR", de.all.tpm.gene$gene_biotype)),]
+      points(de.ig$Effect, de.ig$log10P, pch=16, col="gold")
+   }
+   de.up <- subset(de.sig, Effect > 0)
+   points(de.up$Effect, de.up$log10P, pch=16, col="red")
+   de.down <- subset(de.sig, Effect < 0)
+   points(de.down$Effect, de.down$log10P, pch=16, col="dodgerblue")
    
    for (g in 1:length(genes)) {
       gene <- subset(de, external_gene_name == genes[g])
       if (nrow(gene) > 0) {
-         points(gene$SCLC_LUAD, gene$log10P, pch=1, col="black")
+         points(gene$Effect, gene$log10P, pch=1, col="black")
        
          if (genes[g] == "TP53BP1" || genes[g] == "DNMT1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.07, 1.2), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.07, 1.2), cex=0.75)
          else if (genes[g] == "ATM" || genes[g] == "DLL3")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.05, 1.2), cex=0.75)
-         else if (genes[g] == "")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.02, 1.2), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.05, 1.2), cex=0.75)
          else if (genes[g] == "SMARCA4")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.06, 0.9), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.06, 0.9), cex=0.75)
          else if (genes[g] == "WRN" || genes[g] == "KAT5")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.12, 1.2), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.12, 1.2), cex=0.75)
          else if (genes[g] == "LIG4" || genes[g] == "NHEJ1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=1.15, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.15, cex=0.75)
          else if (genes[g] == "TLR6" || genes[g] == "TLR3" || genes[g] == "CD28")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=1.12, cex=0.75)
-         else if (genes[g] == "CDC7" || genes[g] == "XRCC3" || genes[g] == "HMGB1" || genes[g] == "CTLA4" || genes[g] == "CD86")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=1.1, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.12, cex=0.75)
+         else if (genes[g] == "CDC7" || genes[g] == "XRCC3" || genes[g] == "HMGB1" || genes[g] == "CTLA4" || genes[g] == "CD86" || genes[g] == "NOTCH2")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.1, cex=0.75)
          else if (genes[g] == "XRCC1" || genes[g] == "RUNX1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=1.07, cex=0.75)  
-         else if (genes[g] == "SMARCB1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.05, 0), cex=0.75)
-         else if (genes[g] == "CD274")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.11, 0.4), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.07, cex=0.75)  
+         else if (genes[g] == "SMARCB1" || genes[g] == "PDCD1LG2" || genes[g] == "CDK9")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.07, 0), cex=0.75)
+         else if (genes[g] == "MYD88")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.09, 0), cex=0.75)
          else if (genes[g] == "TLR7")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.14, 0.8), cex=0.75)
-         else if (genes[g] == "HES1" || genes[g] == "REST" || genes[g] == "NFKB1" || genes[g] == "NFKB2" || genes[g] == "RUNX2"  || genes[g] == "TLR4")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.14, 0.8), cex=0.75)
+         else if (genes[g] == "HES1" || genes[g] == "REST" || genes[g] == "RUNX2" || genes[g] == "NFKB1")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
          else if (genes[g] == "BRIP1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.05, -0.45), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.05, -0.45), cex=0.75)
          else if (genes[g] == "BRCA2")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.1, 0), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.1, 0), cex=0.75)
          else if (genes[g] == "TOP2A" || genes[g] == "ERCC6L")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=-0.09, cex=0.75)
-         else if (genes[g] == "BRCA1" || genes[g] == "WRN" || genes[g] == "TP53" || genes[g] == "EXO1" || genes[g] == "XRCC2" || genes[g] == "AHRR" || genes[g] == "MYD88" || genes[g] == "DNMT3A")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=-0.1, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.09, cex=0.75)
+         else if (genes[g] == "BRCA1" || genes[g] == "WRN" || genes[g] == "TP53" || genes[g] == "EXO1" || genes[g] == "XRCC2")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.1, cex=0.75)
          else if (genes[g] == "POLQ")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=-0.11, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.11, cex=0.75)
          else if (genes[g] == "BLM")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=-0.15, cex=0.75)
-         else if (genes[g] == "XRCC4" || genes[g] == "NOTCH1" || genes[g] == "HMGB2" || genes[g] == "CDK6" || genes[g] == "ATR" || genes[g] == "RAD51B" || genes[g] == "SETD2" || genes[g] == "PARP3" || genes[g] == "TLR8" || genes[g] == "TGFBR3")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.05, 1.3), cex=0.75)
-         else if (genes[g] == "DNA2" || genes[g] == "RAD51D" || genes[g] == "EZH2" || genes[g] == "MAD2L2" || genes[g] == "ASCL1" || genes[g] == "DPYSL5" || genes[g] == "FBXO5" || genes[g] == "RNF138" || genes[g] == "RNASEH2A" || genes[g] == "PARP1" || genes[g] == "CDK2" || genes[g] == "PCNA" || genes[g] == "PSIP1" || genes[g] == "TMPO" || genes[g] == "MSH2" || genes[g] == "SIRT1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.15, cex=0.75)
+         else if (genes[g] == "XRCC4" || genes[g] == "NOTCH1" || genes[g] == "HMGB2" || genes[g] == "CDK6" || genes[g] == "CD274" || genes[g] == "ATR" || genes[g] == "RAD51B" || genes[g] == "SETD2" || genes[g] == "PARP3" || genes[g] == "TLR8" || genes[g] == "TGFBR3")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.05, 1.3), cex=0.75)
+         else if (genes[g] == "DNA2" || genes[g] == "RAD51D" || genes[g] == "EZH2" || genes[g] == "MAD2L2" || genes[g] == "ASCL1" || genes[g] == "FBXO5" || genes[g] == "RNF138" || genes[g] == "RNASEH2A" || genes[g] == "PARP1" || genes[g] == "CDK2" || genes[g] == "PCNA" || genes[g] == "PSIP1" || genes[g] == "TMPO" || genes[g] == "MSH2" || genes[g] == "SIRT1")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
          else if (genes[g] == "RBBP8" || genes[g] == "RBL1" || genes[g] == "ERCC6L2")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.05, -0.4), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.05, -0.4), cex=0.75)
          else if (genes[g] == "PARP2")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.06, -0.43), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.06, -0.43), cex=0.75)
          else
-            if (gene$SCLC_LUAD > 0)
-               text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
+            if (gene$Effect > 0)
+               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
             else
-               text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
       } else
          print(genes[g])
    }
    
+   if (isIg)
+      legend("topleft", legend=c("Upregulation", "Downregulation", "Ig and TcR genes"), col=c("red", "dodgerblue", "gold"), pch=19)
+   else
+      legend("topleft", legend=c("Upregulation", "Downregulation"), col=c("red", "dodgerblue"), pch=19)
+   
    abline(h=c(-log10(p)), lty=5)
    text(xmax*-1 + 2*xmax/29, -log10(p) + ymax/42, paste0("rho=±", 0.6))
-   legend("topleft", legend=c("Upregulation", "Downregulation"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ###
 ## Volcano plot
-colnames <- c("Ensembl_Gene_ID", "external_gene_name", "SRC_RHO", "SRC_P", "SRC_FDR", "ANOVA_P", "ANOVA_FDR", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")
-colnames(de.all.tpm.gene.pcg.exp3) <- colnames
-de.all <- de.all.tpm.gene.pcg.exp3
-#de.all[setdiff(rownames(de.all), "ENSG00000269846"),]
+colnames <- c("Ensembl_Gene_ID", "external_gene_name", "chromosome_name",  "strand", "start_position", "end_position", "gene_biotype", "SRC_RHO", "SRC_P", "SRC_FDR", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")
+colnames(de.all.tpm.gene) <- colnames
+de.all <- de.all.tpm.gene
+de.all[setdiff(rownames(de.all), "ENSG00000269846"),]
+de.all$Effect <- de.all$SCLC_LUAD
 
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2/ALL/"
-wd.de <- paste0(wd, "analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-all-tpm-gene-pcg-exp3/")
-file.de <- paste0(wd.de, "volcanoplot_all_tpm-gene-pcg-exp3_rho6")
+plot.main <- "RB1mut-correlated differential expression in LUAD, LCNEC and SCLC"
+plot.de <- paste0(wd.all.de, "volcanoplot_all_tpm-gene_rho6")
 
 ## Cycle   ##"ERCC6L2", "ERCC6L"
 genes <- c("CDK6", "CDK4", "MCM2", "RNASEH2A", "CDKN2A", "CDKN2C", "PARP1", "PARP2", "BARD1", "BRIP1", "BRCA1", "BRCA2", "CDC7", "CCNE2", "CCND1", "E2F2", "E2F7", "E2F1", "ATM", "ATR", "CHEK1", "CHEK2", "CDK2", "POLD4", "TOPBP1", "CLSPN", "TOP2A", "TOP1", "RB1", "RBL1", "RBL2", "TP73", "TP53", "TP53BP1", "PCNA")
 genes <- c("STMN1", "FBXO5", "TUBA1A", "TMPO", "MAD2L2", genes)
-file.main <- c("RB1mut-associated differential expression in LUAD, LCNEC and SCLC", "", "Cell cycle pathway", "")
-plot.de <- paste0(file.de, "_Cycle.pdf")
-plotVolcanoALL(de.all, 0.6, genes, plot.de, file.main)
+file.main <- c(plot.main, "", "Cell cycle pathway", "")
+file.de   <- paste0(plot.de, "_Cycle.pdf")
+plotVolcanoALL(de.all, 0.6, genes, file.de, file.main, F)
 
-## 53BP1   ##"UBE2N", "RNF8", "DNMT3A", "DNMT3B", "DNMT3A", "KAT5", "SIRT1", "HELLS", "MAX"
+## 53BP1   ##"UBE2N", "RNF8", "DNMT3A", "DNMT3B", "KAT5", "SIRT1", "HELLS", "MAX"
 genes <- c("MSH2", "MSH6", "DNMT1", "E2F2", "E2F7", "E2F1", "SMARCA4", "SMARCB1", "ARID1A", "NHEJ1", "LIG1", "CHEK2", "LIG4", "POLQ", "DNA2", "SETD2", "RNF138", "RNF168", "PSIP1", "HMGB1", "HMGB2", "PARP1", "PARP2", "PARP3", "BARD1", "BRIP1", "BRCA1", "BRCA2", "RB1", "RBL1", "RBL2", "TP53", "TP53BP1", "XRCC1", "EZH2", "XRCC2", "XRCC3", "XRCC4", "RAD51AP1", "RBBP8", "FEN1", "EXO1", "BLM", "WRN")
-file.main <- c("RB1mut-associated gene expression profiling in SCLC", "", "DNA repair pathway", "")
-plot.de <- paste0(file.de, "_53BP1.pdf")
-plotVolcanoALL(de.all, 0.6, genes, plot.de, file.main)
+file.main <- c(plot.main, "", "DNA repair pathway", "")
+file.de   <- paste0(plot.de, "_53BP1.pdf")
+plotVolcanoALL(de.all, 0.6, genes, file.de, file.main, F)
 
 ## XRCC   ##"UBE2N", "RNF8" 
 genes <- c("SMARCA4", "SMARCB1", "NHEJ1", "LIG4", "POLQ", "SETD2", "RNF138", "RNF168", "PSIP1", "HMGB1", "HMGB2", "PARP1", "PARP2", "PARP3", "BARD1", "BRIP1", "BRCA1", "BRCA2", "RB1", "RBL1", "RBL2", "TP53", "TP53BP1", "XRCC1", "EZH2", "XRCC2", "XRCC3", "XRCC4", "RAD51AP1", "RBBP8", "FEN1", "EXO1", "BLM", "WRN")
-file.main <- c("RB1mut-associated gene expression profiling in SCLC", "", "DNA repair pathway", "")
-plot.de <- paste0(file.de, "_XRCC.pdf")
-plotVolcanoALL(de.all, 0.6, genes, plot.de, file.main)
+file.main <- c(plot.main, "", "DNA repair pathway", "")
+file.de   <- paste0(plot.de, "_XRCC.pdf")
+plotVolcanoALL(de.all, 0.6, genes, file.de, file.main, F)
 
 ## NOTCH
 genes <- c("CDK9", "KRAS", "MYC", "MAX", "MYCL", "MYCN", "NEUROD1", "ASCL1", "DLL3", "PSIP1", "HMGB2", "BRD4", "EZH2", "UCHL1", "HES1", "REST", "NOTCH1", "NOTCH2", "NOTCH3", "NOTCH4", "EGFR", "ERBB2", "ERBB3", "DPYSL5", "CRMP1", "DPYSL3")
-file.main <- c("RB1mut-associated gene expression profiling in SCLC", "", "Neuroendocrine marker", "")
-plot.de <- paste0(file.de, "_NOTCH.pdf")
-plotVolcanoALL(de.all, 0.6, genes, plot.de, file.main)
+file.main <- c(plot.main, "", "Neuroendocrine marker", "")
+file.de   <- paste0(plot.de, "_Neuroendocrine.pdf")
+plotVolcanoALL(de.all, 0.6, genes, file.de, file.main, F)
 
 #file.main <- c("RB1mut-associated gene expression profiling in SCLC", "(with genes not-expressed in LUAD)", "Neuroendocrine marker", "")
 #file.de <- paste0(wd.de, "volcanoplot_all_tpm-gene-pcg_rho6_NOTCH.pdf")
@@ -597,9 +469,9 @@ plotVolcanoALL(de.all, 0.6, genes, plot.de, file.main)
 #plotVolcanoALL(de.all, 0.6, genes, file.de, file.main)
 
 genes <- c("CD274", "PDCD1LG2", "MYD88", "NFKB1", "NFKB2", "TLR2", "BCL3", "IL6", "IL6ST", "IL6R")
-file.main <- c("RB1mut-associated gene expression profiling in SCLC", "", "Immune response", "")
-plot.de <- paste0(file.de, "_Immune.pdf")
-plotVolcanoALL(de.all, 0.6, genes, plot.de, file.main)
+file.main <- c("RB1mut-correlated differential expression in LUAD, LCNEC and SCLC", "", "Immune response", "")
+file.de   <- paste0(plot.de, "_Immune.pdf")
+plotVolcanoALL(de.all, 0.6, genes, file.de, file.main, T)
 
 # -----------------------------------------------------------------------------
 # Volcano plots
@@ -618,45 +490,45 @@ plotVolcanoALLLite <- function(de, rho, genes, file.de, file.main) {
    #rho <- round(pToRHO(p, de), 2)
  
    de$log10P <- -log10(de$SRC_P)
-   xmax <- max(de$SCLC_LUAD)
+   xmax <- max(de$Effect)
    ymax <- max(de$log10P)
    #p <- max(significantAndVariable(de, effect, fdr)$P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$SCLC_LUAD, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=c("Effect size (log2FC SCLC/LUAD)", "", ""), ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
+   plot(de$Effect, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=c("Effect size (log2FC SCLC/LUAD)", "", ""), ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
    abline(h=c(-log10(rhoToP(0.4, de))), lty=5, col="darkgray")
    text(xmax*-1 + 2*xmax/29, -log10(rhoToP(0.4, de)) + ymax/42, paste0("rho=±", 0.4), col="darkgray")
  
-   de.up <- subset(de.sig, SCLC_LUAD > 0)
-   points(de.up$SCLC_LUAD, de.up$log10P, pch=16, col="red")
+   de.up <- subset(de.sig, Effect > 0)
+   points(de.up$Effect, de.up$log10P, pch=16, col="red")
  
-   de.down <- subset(de.sig, SCLC_LUAD < 0)
-   points(de.down$SCLC_LUAD, de.down$log10P, pch=16, col="dodgerblue")
+   de.down <- subset(de.sig, Effect < 0)
+   points(de.down$Effect, de.down$log10P, pch=16, col="dodgerblue")
  
    for (g in 1:length(genes)) {
       gene <- subset(de, external_gene_name == genes[g])
       if (nrow(gene) > 0) {
-         points(gene$SCLC_LUAD, gene$log10P, pch=1, col="black")
+         points(gene$Effect, gene$log10P, pch=1, col="black")
    
          if (genes[g] == "TP53BP1" || genes[g] == "DNMT1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.07, 1.2), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.07, 1.2), cex=0.75)
          else if (genes[g] == "NHEJ1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=1.08, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.08, cex=0.75)
          else if (genes[g] == "LIG4" || genes[g] == "RBL2")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=1.15, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.15, cex=0.75)
          else if (genes[g] == "PARP1")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
          else if (genes[g] == "BRCA2")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(-0.1, 0), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.1, 0), cex=0.75)
          else if (genes[g] == "TP53BP2")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=-0.08, cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.08, cex=0.75)
          else if (genes[g] == "XRCC4")
-            text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1.04, 1.4), cex=0.75)
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.04, 1.4), cex=0.75)
          else
-            if (gene$SCLC_LUAD > 0)
-               text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
+            if (gene$Effect > 0)
+               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
             else
-               text(gene$SCLC_LUAD, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
       } else
          print(genes[g])
    }
@@ -669,22 +541,20 @@ plotVolcanoALLLite <- function(de, rho, genes, file.de, file.main) {
 
 ###
 ## Volcano plot
-de.all <- de.all.tpm.gene.pcg.exp3
+#de.all <- de.all.tpm.gene.pcg.exp3
 #de.all[setdiff(rownames(de.all), "ENSG00000269846"),]
 
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2/ALL/"
-wd.de <- paste0(wd, "analysis/expression/kallisto/all-rnaseq-de-kallisto-ensembl/de-all-tpm-gene-pcg-exp3/")
-file.de <- paste0(wd.de, "volcanoplot_all_tpm-gene-pcg-exp3_rho6")
+file.de <- paste0(wd.all.de, "volcanoplot_all_tpm-gene-pcg-exp3_rho6")
 
 ## NHEJ and alternative pathways to DSB repair
 genes <- c("XRCC1", "XRCC2", "XRCC3", "XRCC4", "NHEJ1", "LIG1", "LIG3", "LIG4", "RB1", "RBL1", "RBL2", "E2F4", "TP53", "TP53BP1", "TP53BP2", "MAX")  #"BRCA1", "BRCA2", "PARP1", "PARP2", "CHEK1", "CHEK2", "MSH2", "FEN1", "BLM", "EXO1", "WRN")
-file.main <- c("RB1mut-associated differential expression in LUAD, LCNEC and SCLC", "", "NHEJ and alternative pathways to DSB repair", "")
+file.main <- c("RB1mut-correlated differential expression in LUAD, LCNEC and SCLC", "", "NHEJ and alternative pathways to DSB repair", "")
 plot.de <- paste0(file.de, "_53BP1_Lite5.pdf")
 plotVolcanoALLLite(de.all, 0.6, genes, plot.de, file.main)
 
 ## Proliferation / Apoptosis inhibition
 genes <- c("TRADD", "TNFRSF1A", "PARP3", "BCL2", "BCL2L11", "BBC3", "PMAIP1")
-file.main <- c("RB1mut-associated differential expression in LUAD, LCNEC and SCLC", "", "Apoptosis inhibition (Proliferation)", "")
+file.main <- c("RB1mut-correlated differential expression in LUAD, LCNEC and SCLC", "", "Apoptosis inhibition (Proliferation)", "")
 plot.de <- paste0(file.de, "_BCL2_Lite.pdf")
 plotVolcanoALLLite(de.all, 0.6, genes, plot.de, file.main)
 

@@ -6,41 +6,6 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Methods: GTEx threshold on determining a detected/expressed gene
-# Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
-# Last Modified: 03/02/17
-# -----------------------------------------------------------------------------
-getDetectedGTEx <- function(expr, value) {   ## Genes being expressed at FPKM > 0.1 in at least one sample
-   detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
-   
-   return(which(detected >= 1))
-}
-
-getExpressedGTEx <- function(expr) {   ## Not expressed (FPKM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
-}
-
-getNotExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) any(as.numeric(expr[x,]) == 0)))
-}
-
-getNumberOfNotExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in half of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) length(which(expr[x,] == 0))))
-}
-
-getNotExpressedGTEx <- function(expr) {   ## Not expressed (TPM = 0) genes in half of the samples 
-   numbers <- mapply(x = 1:nrow(expr), function(x) length(which(expr[x,] == 0)))
-   
-   return(which(numbers > ncol(expr) - 10))
-}
-
-getNotExpressedInHalf <- function(expr) {   ## Not expressed (TPM = 0) genes in half of the samples 
-   numbers <- mapply(x = 1:nrow(expr), function(x) length(which(expr[x,] == 0)))
- 
-   return(which(numbers > ncol(expr)/2))
-}
-
-# -----------------------------------------------------------------------------
 # Methods: Principal component analysis (PCA)
 # Last Modified: 05/02/17
 # -----------------------------------------------------------------------------
@@ -274,13 +239,6 @@ plotVolcano <- function(de, fdr, effect, file.de, file.main, legend.x) {
 }
 
 # -----------------------------------------------------------------------------
-# Method: Heatmap
-# Last Modified: 17/02/17
-# -----------------------------------------------------------------------------
-## install.packages("gplots")
-plotHeatmap <- function(P, test.fdr) {}
-
-# -----------------------------------------------------------------------------
 # Methods: Miscellaneous/shortcuts
 # Last Modified: 28/04/17
 # -----------------------------------------------------------------------------
@@ -291,7 +249,6 @@ getEnsGene <- function(name) {
 getEnsGeneID <- function(name) {
    return(subset(ensGene.gene, external_gene_name == name)$ensembl_gene_id)
 }
-
 
 # =============================================================================
 # Inner Class: kallisto/Sleuth FileReader
@@ -321,41 +278,45 @@ orderBySamples <- function(tpm) {
    return(tpm[,order(colnames(tpm), decreasing=F)])
 }
 
-# -----------------------------------------------------------------------------
-# Method: Gene-level TPM estimates/aboundants from kallisto
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-getGeneTPM <- function(t2g, tpm) {
-   t2g.tpm <- t2g[rownames(tpm),]      ## Keep only filtered transcripts
-   genes <- unique(t2g.tpm$ens_gene)
- 
-   tpm.gene <- toTable(0, ncol(tpm), length(genes), colnames(tpm))
+kallisto_table_to_matrix <- function(kallisto.table) {
+   genes <- unique(kallisto.table$target_id)
+   tpms <- kallisto.table$tpm
+   
+   tpm.gene <- data.frame(matrix(tpms, nrow=length(genes), byrow=T))
    rownames(tpm.gene) <- genes
-   for (g in 1:length(genes)) {
-      transcripts <- rownames(subset(t2g.tpm, ens_gene == genes[g]))   ## Find corresponding transcripts
-      tpm.transcripts <- tpm[transcripts,]                             ## and sum up TPM estimates of each gene
-  
-      if (length(transcripts) == 1)
-         tpm.gene[g,] <- tpm.transcripts
-      else
-         tpm.gene[g,] <- mapply(s = 1:ncol(tpm.gene), function(s) sum(tpm.transcripts[,s]))
-   }
- 
+   colnames(tpm.gene) <- unique(kallisto.table$sample)
+
    return(tpm.gene)
 }
-
 
 # =============================================================================
 # Inner Class: Collections of test/obsolete/deprecated methods
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 24/04/17
+# Last Modified: 01/11/17
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Methods: GTEx threshold to determine a gene to be detected/expressed
+# Method: Heatmap
+# Last Modified: 17/02/17
+# -----------------------------------------------------------------------------
+## install.packages("gplots")
+plotHeatmap <- function(P, test.fdr) {}
+
+# -----------------------------------------------------------------------------
+# Methods: GTEx threshold on determining a detected/expressed gene
 # Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
 # Last Modified: 03/02/17
 # -----------------------------------------------------------------------------
+getDetectedGTEx <- function(expr, value) {   ## Genes being expressed at FPKM > 0.1 in at least one sample
+   detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
+ 
+   return(which(detected >= 1))
+}
+
+getExpressedGTEx <- function(expr) {   ## Not expressed (FPKM = 0) genes in any of the samples 
+   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
+}
+
 reportZeroTPM <- function(tpm) {
    zeros <- toTable(0, 2, nrow(tpm), c("ID", "Zero"))
    rownames(zeros) <- rownames(tpm)
@@ -388,7 +349,7 @@ reportGTExThreshold <- function(genes) {
 }
 
 # -----------------------------------------------------------------------------
-# Method: Modification of sleuth_to_matrix
+# Method: Modification (cheat sheet) of sleuth_to_matrix
 # Tricks: To be able to output obs_norm_filt
 # Last Modified: 28/03/17
 # -----------------------------------------------------------------------------
@@ -409,4 +370,27 @@ sleuth_to_matrix0 <- function(obj, which_df, which_units) {
    res[["condition"]] <- obj$sample_to_condition$condition[condition_order]
  
    res
+}
+
+# -----------------------------------------------------------------------------
+# Method: Gene-level TPM estimates from kallisto
+# Last Modified: 28/03/17
+# -----------------------------------------------------------------------------
+getGeneTPM <- function(t2g, tpm) {
+   t2g.tpm <- t2g[rownames(tpm),]      ## Keep only filtered transcripts
+   genes <- unique(t2g.tpm$ens_gene)
+ 
+   tpm.gene <- toTable(0, ncol(tpm), length(genes), colnames(tpm))
+   rownames(tpm.gene) <- genes
+   for (g in 1:length(genes)) {
+      transcripts <- rownames(subset(t2g.tpm, ens_gene == genes[g]))   ## Find corresponding transcripts
+      tpm.transcripts <- tpm[transcripts,]                             ## and sum up TPM estimates of each gene
+  
+      if (length(transcripts) == 1)
+         tpm.gene[g,] <- tpm.transcripts
+      else
+         tpm.gene[g,] <- mapply(s = 1:ncol(tpm.gene), function(s) sum(tpm.transcripts[,s]))
+      }
+ 
+   return(tpm.gene)
 }
