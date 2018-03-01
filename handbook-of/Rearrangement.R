@@ -1,7 +1,7 @@
 # =============================================================================
-# Library: Handbook of Genome Rearrangements
-# Name: handbook-of/Rearrangement.R
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Library      : Structural Genomic Rearrangement
+# Name         : handbook-of/Rearrangement.R
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================
 
@@ -168,10 +168,9 @@ getBreakPointFreqTable <- function(sv.bp.tpm.cln.pcg, cutoff) {
    return(sv.bp.tpm.cln.pcg.freq)
 }
 
-
 # =============================================================================
-# Inner Class: PeifLyne FileReader
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Inner Class  : PeifLyne FileReader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================
 read.peiflyne.iCN.seg <- function(cna.file) {
@@ -187,10 +186,3 @@ read.peiflyne.unsnarl.txt <- function(sv.file, cutoff) {
    
    return(sv.qc)
 }
-
-
-# =============================================================================
-# Inner Class: Collections of test/obsolete/deprecated methods
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified:
-# =============================================================================

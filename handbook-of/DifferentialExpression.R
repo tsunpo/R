@@ -1,7 +1,7 @@
 # =============================================================================
-# Library: Handbook of Differential Gene Expression
-# Name: handbook-of/DifferentialExpression.R
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Library      : Differential Gene Expression
+# Name         : handbook-of/DifferentialExpression.R
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================
 
@@ -12,6 +12,7 @@
 getPCA <- function(expr) {
    pca <- prcomp(expr, retx=T, center=T, scale=T)   ## Perform PCA using normalised data!!
    #loadings <- pca$rotation
+   
    return(pca)
 }
 
@@ -25,6 +26,7 @@ pcaSummary <- function(pca) {
 
 pcaProportionofVariance <- function(pca, pc) {
    summary <- pcaSummary(pca)
+   
    return(round(summary[2, pc]*100, 1))
 }
 
@@ -39,7 +41,7 @@ plotPCA <- function(x, y, pca, trait, wd.pca, variable, file.main, legend.x, leg
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait))
-  
+   
    if (isNA(cols))
       cols <- c("red","deepskyblue","forestgreen","purple3","blue","gold","lightsalmon","turquoise1","limegreen")   #,"salmon","tomato","steelblue2","cyan")
    if (length(trait.v) > length(cols))
@@ -193,6 +195,14 @@ significantAndVariable <- function(de, effect, fdr) {
 }
 
 # -----------------------------------------------------------------------------
+# Method: Fisher's combined probability test
+# Last Modified: 06/11/17
+# -----------------------------------------------------------------------------
+fishers <- function(x, y) {
+   return(pchisq(-2*log(x)-2*log(y), 4, low=F))
+}
+
+# -----------------------------------------------------------------------------
 # Method: Residuals of expression
 # Last Modified: 06/02/17
 # -----------------------------------------------------------------------------
@@ -240,7 +250,7 @@ plotVolcano <- function(de, fdr, effect, file.de, file.main, legend.x) {
 
 # -----------------------------------------------------------------------------
 # Methods: Miscellaneous/shortcuts
-# Last Modified: 28/04/17
+# Last Modified: 01/02/18
 # -----------------------------------------------------------------------------
 getEnsGene <- function(name) {
    return(subset(ensGene, external_gene_name == name))
@@ -250,9 +260,34 @@ getEnsGeneID <- function(name) {
    return(subset(ensGene.gene, external_gene_name == name)$ensembl_gene_id)
 }
 
+getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, withHLA) {   ## ADD 01/02/18
+   if (autosomeOnly)
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, chromosome_name %in% paste0("chr", 1:22)))),]
+   if (proteinCodingOnly)
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+   if (!withHLA)
+      tpm.gene <- tpm.gene[rownames(tpm.gene)[!grepl("^HLA-", ensGene[rownames(tpm.gene),]$external_gene_name)],]
+   
+   return(tpm.gene)
+}
+
+getEnsGeneHLA <- function(tpm.gene, ensGene) {
+   tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+ 
+   return(tpm.gene[rownames(tpm.gene)[grepl("^HLA-", ensGene[rownames(tpm.gene),]$external_gene_name)],])
+}
+
+getEnsGeneTCR <- function(tpm.gene, ensGene) {
+   return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("TR_", c("C", "V", "D", "J"), "_gene")))),])
+}
+
+getEnsGeneIG <- function(tpm.gene, ensGene) {
+   return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("IG_", c("C", "V", "D", "J"), "_gene")))),])
+}
+
 # =============================================================================
-# Inner Class: kallisto/Sleuth FileReader
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Inner Class  : kallisto/Sleuth FileReader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================
 
@@ -263,6 +298,7 @@ getEnsGeneID <- function(name) {
 tx2gene <- function(t2g) {
    colnames(t2g) <- c("target_id", "ens_gene", "ext_gene")
    #rownames(t2g) <- t2g$target_id
+   
    return(t2g)
 }
 
@@ -278,119 +314,26 @@ orderBySamples <- function(tpm) {
    return(tpm[,order(colnames(tpm), decreasing=F)])
 }
 
-kallisto_table_to_matrix <- function(kallisto.table) {
+getFiltered <- function(reads, min_reads, min_prop) { 
+   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
+ 
+   return(which(numbers/ncol(reads) >= min_prop))
+}
+
+list2Matrix <- function(list, kallisto.table) {
    genes <- unique(kallisto.table$target_id)
-   tpms <- kallisto.table$tpm
+   samples <- unique(kallisto.table$sample)  
+ 
+   list.matrix <- data.frame(matrix(list, nrow=length(genes), byrow=T))
+   rownames(list.matrix) <- genes
+   colnames(list.matrix) <- samples
    
-   tpm.gene <- data.frame(matrix(tpms, nrow=length(genes), byrow=T))
-   rownames(tpm.gene) <- genes
-   colnames(tpm.gene) <- unique(kallisto.table$sample)
-
-   return(tpm.gene)
+   return(list.matrix)
 }
 
-# =============================================================================
-# Inner Class: Collections of test/obsolete/deprecated methods
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 01/11/17
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Method: Heatmap
-# Last Modified: 17/02/17
-# -----------------------------------------------------------------------------
-## install.packages("gplots")
-plotHeatmap <- function(P, test.fdr) {}
-
-# -----------------------------------------------------------------------------
-# Methods: GTEx threshold on determining a detected/expressed gene
-# Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
-# Last Modified: 03/02/17
-# -----------------------------------------------------------------------------
-getDetectedGTEx <- function(expr, value) {   ## Genes being expressed at FPKM > 0.1 in at least one sample
-   detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
- 
-   return(which(detected >= 1))
-}
-
-getExpressedGTEx <- function(expr) {   ## Not expressed (FPKM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
-}
-
-reportZeroTPM <- function(tpm) {
-   zeros <- toTable(0, 2, nrow(tpm), c("ID", "Zero"))
-   rownames(zeros) <- rownames(tpm)
-   zeros$Zero <- mapply(x = 1:nrow(tpm), function(x) length(which(as.numeric(tpm[x,]) == 0)))
- 
-   zeros <- zeros[order(zeros$Zero, decreasing=T),]
-   return(zeros)
-}
-
-reportGTExThreshold <- function(genes) {
-   reports <- toTable(0, 5, length(genes), c("RefGene", "Raw", "Final", "Not_Detected", "Not_Expressed"))
-   rownames(reports) <- genes
-   notDetected <- setdiff(rownames(expr), rownames(expr.d))
-   notExpressed <- setdiff(rownames(expr.d), rownames(expr.d.e))
- 
-   for (g in 1:length(genes)) {
-      gene <- genes[g]
-      transcripts <- rownames(getRefGene("name2", gene))
-      reports$RefGene[g] <- length(transcripts)
-  
-      transcripts.raw <- intersect(transcripts, rownames(expr))
-      reports$Raw[g] <- length(transcripts.raw)
-  
-      reports$Final[g] <- length(intersect(transcripts.raw, rownames(expr.d.e)))
-      reports$Not_Detected[g] <- length(intersect(transcripts.raw, notDetected))
-      reports$Not_Expressed[g] <- length(intersect(transcripts.raw, notExpressed))
-   }
- 
-   return(reports)
-}
-
-# -----------------------------------------------------------------------------
-# Method: Modification (cheat sheet) of sleuth_to_matrix
-# Tricks: To be able to output obs_norm_filt
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-sleuth_to_matrix0 <- function(obj, which_df, which_units) {
-   data <- as.data.frame(obj[[which_df]])
- 
-   res <- list()
- 
-   s_data <- data %>%
-   select_("target_id", "sample", which_units) %>% tidyr::spread_("sample", which_units)
-   rownames(s_data) <- s_data$target_id
-   s_data$target_id <- NULL
-   s_data <- as.matrix(s_data)
-   s_data <- s_data[, sample(1:ncol(s_data))]
-   res[["data"]] <- s_data
- 
-   condition_order <- match(colnames(s_data), as.character(obj$sample_to_condition$sample))
-   res[["condition"]] <- obj$sample_to_condition$condition[condition_order]
- 
-   res
-}
-
-# -----------------------------------------------------------------------------
-# Method: Gene-level TPM estimates from kallisto
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-getGeneTPM <- function(t2g, tpm) {
-   t2g.tpm <- t2g[rownames(tpm),]      ## Keep only filtered transcripts
-   genes <- unique(t2g.tpm$ens_gene)
- 
-   tpm.gene <- toTable(0, ncol(tpm), length(genes), colnames(tpm))
-   rownames(tpm.gene) <- genes
-   for (g in 1:length(genes)) {
-      transcripts <- rownames(subset(t2g.tpm, ens_gene == genes[g]))   ## Find corresponding transcripts
-      tpm.transcripts <- tpm[transcripts,]                             ## and sum up TPM estimates of each gene
-  
-      if (length(transcripts) == 1)
-         tpm.gene[g,] <- tpm.transcripts
-      else
-         tpm.gene[g,] <- mapply(s = 1:ncol(tpm.gene), function(s) sum(tpm.transcripts[,s]))
-      }
- 
-   return(tpm.gene)
+kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
+   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
+   tpms <- list2Matrix(kallisto.table$tpm, kallisto.table)
+   
+   return(tpms[getFiltered(reads, min_reads, min_prop),])
 }

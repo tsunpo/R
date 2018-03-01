@@ -1,7 +1,7 @@
 # =============================================================================
-# Reference: The Bioinformatician's Guide to the Human Genome
-# Name: guide-to-the/hg19.R
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Library      : The bioinformatician's guide to the reference genome
+# Name         : guide-to-the/hg19.R
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 02/11/17
 # =============================================================================
 wd.reference <- "/Users/tpyang/Work/local/reference/hg19/"
@@ -10,9 +10,9 @@ wd.guidetothe <- "/Users/tpyang/Work/dev/R/guide-to-the/"
 source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 
 # =============================================================================
-# Source: Ensembl BioMart
-# Link: http://grch37.ensembl.org/biomart/martview/
-#       ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
+# Reference    : Ensembl BioMart
+# Link(s)      : http://grch37.ensembl.org/biomart/martview/
+#                ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
 # Last Modified: 02/11/17
 # =============================================================================
 
@@ -66,9 +66,9 @@ ensGene.transcript$chromosome_name <- paste0("chr", ensGene.transcript$chromosom
 # [1] 55773
 
 # =============================================================================
-# Source: UCSC Table Browser
-# Link: https://genome.ucsc.edu/cgi-bin/hgTables
-#       http://genome.ucsc.edu/FAQ/FAQdownloads#download10
+# Reference    : UCSC Table Browser
+# Link(s)      : https://genome.ucsc.edu/cgi-bin/hgTables
+#                http://genome.ucsc.edu/FAQ/FAQdownloads#download10
 # Last Modified: 02/11/17
 # =============================================================================
 
@@ -104,8 +104,8 @@ refGene <- subset(refGene, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
 #save(refGene, ensGene, ensGene.gene, file=paste0(wd.guidetothe, "hg19.transcript.RData"))
 
 # =============================================================================
-# Source: UCSC Genome Browser (Feb 2009/GRCh37/hg19)
-# Link: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/
+# Reference    : UCSC Genome Browser (Feb 2009/GRCh37/hg19)
+# Link(s)      : http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/
 # Last Modified: 26/04/17
 # =============================================================================
 
@@ -141,14 +141,14 @@ rmsk <- rmsk[,c("genoName", "genoStart", "genoEnd", "strand", "repName", "repCla
 save(rmsk, file=paste0(wd.guidetothe, "hg19.rmsk.RData"))
 
 # =============================================================================
-# Source: Miscellaneous
+# Reference: Miscellaneous
 # Last Modified: 13/05/17
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # File: human-genome.1kb-grid.bed
-# Link: https://github.com/andrej-fischer/cloneHD
-#       ftp://ftp.sanger.ac.uk/pub/teams/153/bed/
+# Link(s): https://github.com/andrej-fischer/cloneHD
+#          ftp://ftp.sanger.ac.uk/pub/teams/153/bed/
 # -----------------------------------------------------------------------------
 chrs <- paste0("chr", c(1:22, "X", "Y"))
 

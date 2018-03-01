@@ -173,6 +173,8 @@ plotRT <- function(filename, title, chr, samples, xmin, xmax, rpkms.chr, bed.gc.
 
 
 
+
+
 # -----------------------------------------------------------------------------
 # Methods: File manipulation and plotting
 # Last Modified: 13/06/17
@@ -257,8 +259,8 @@ plotRT2 <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
 
 
 # =============================================================================
-# Inner Class: In-house FileReader
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Inner Class  : In-house FileReader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 08/05/17
 # =============================================================================
 read.bam.rpkm.txt.gz <- function(rpkm.file) {
@@ -270,8 +272,8 @@ read.rpkm.corr.gc.txt.gz <- function(rpkm.file) {
 }
 
 # =============================================================================
-# Inner Class: PeifLyne FileReader
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Inner Class  : PeifLyne FileReader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/05/17
 # =============================================================================
 read.peiflyne.cn.txt <- function(cn.file) {
@@ -288,9 +290,20 @@ read.peiflyne.cn.seg <- function(cn.file) {
    return(cn)
 }
 
+read.peiflyne.mutcall.filtered.vcf <- function(vcf.file, pass, rs) {
+   vcf <- readTable(vcf.file, header=F, rownames=F, sep="")
+   colnames(vcf) <- c("CHROM",	"POS",	"ID",	"REF",	"ALT",	"QUAL",	"FILTER",	"INFO")
+ 
+   if (pass)
+      vcf <- subset(vcf, FILTER == "PASS")
+   if (!rs)
+      vcf <- subset(vcf, ID == ".")
+   return(vcf)
+}
+
 # =============================================================================
-# Inner Class: Bedtools FileReader
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Inner Class  : Bedtools FileReader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 10/05/17
 # =============================================================================
 read.bedtools.multicov.cov <- function(cov.file) {
@@ -302,10 +315,9 @@ read.bedtools.multicov.cov <- function(cov.file) {
    return(cov)
 }
 
-
 # =============================================================================
-# Inner Class: Collections of test/obsolete/deprecated methods
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Inner Class  : Collections of test/obsolete/deprecated methods
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified:
 # =============================================================================
 getRatioFromSegment <- function(bed, segs) {

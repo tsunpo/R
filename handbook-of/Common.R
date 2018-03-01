@@ -1,7 +1,7 @@
 # =============================================================================
-# Library: Daily Data Analytics
-# Name: handbook-of/Analytics.R 
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Library      : Common Daily R Meal
+# Name         : handbook-of/Analytics.R 
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 16/02/17
 # =============================================================================
 
@@ -79,10 +79,3 @@ subset0 <- function(df, filter, value) {
       return(subsets)
    }
 }
-
-
-# =============================================================================
-# Inner Class: Collections of test/obsolete/deprecated methods
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified:
-# =============================================================================
