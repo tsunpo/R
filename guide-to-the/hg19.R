@@ -61,9 +61,9 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 
 ## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" without warning message
 #ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% paste0("chr", c(1:22, "X", "Y", "MT")))   ## ADD 23/02/17
-# > nrow(ensGene.transcript)
+# > nrow(ensGene.transcript)                             ## Same as line 92
 # [1] 196354
-# > length(unique(ensGene.transcript$ensembl_gene_id))
+# > length(unique(ensGene.transcript$ensembl_gene_id))   ## Same as line 95
 # [1] 57773
 # > length(unique(ensGene.transcript$external_gene_name))
 # [1] 55773
@@ -73,7 +73,7 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 # > ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% paste0("chr", c(1:22, "X", "Y", "MT")))
 # > length(unique(subset(ensGene.transcript, transcript_biotype == "protein_coding")$ensembl_gene_id))
 # [1] 20167
-# > length(unique(ensGene.transcript.exon$name2))
+# > length(unique(ensGene.transcript.exon$name2))   ## After line 122
 # [1] 20167
 
 # =============================================================================
@@ -91,6 +91,8 @@ rownames(ensGene.tmp) <- ensGene.tmp$name
 ensGene.tmp <- subset(ensGene.tmp, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
 # > nrow(ensGene.tmp)
 # [1] 196354
+# > length(unique(ensGene.tmp$name2))
+# [1] 57773
 
 ensGene.transcript.protein_coding <- subset(ensGene.transcript, transcript_biotype == "protein_coding")
 codings <- intersect(ensGene.tmp$name, ensGene.transcript.protein_coding$ensembl_transcript_id)
@@ -103,8 +105,8 @@ for (t in 1:length(codings)) {
    transcript <- ensGene.tmp[codings[t],]
    exonStarts <- as.numeric(unlist(strsplit(transcript$exonStarts, ",")))
    exonEnds   <- as.numeric(unlist(strsplit(transcript$exonEnds, ",")))
-   exonFrames <- as.numeric(unlist(strsplit(transcript$exonFrames, ",")))   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
-                                                                            ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
+   exonFrames <- as.numeric(unlist(strsplit(transcript$exonFrames, ",")))
+   
    exons <- toTable(0, length(colnames), length(exonStarts), colnames)
    exons$name   <- transcript$name
    exons$name2  <- transcript$name2
@@ -121,13 +123,11 @@ ensGene.transcript.exon$exonStart <- ensGene.transcript.exon$exonStart + 1   ## 
                                                                              ## https://www.biostars.org/p/6131/
 # > nrow(ensGene.transcript.exon)
 # [1] 603154
-# > nrow(subset(ensGene.transcript.exon, exonFrame != -1))
-# [1] 555597
+# > nrow(subset(ensGene.transcript.exon, exonFrame != -1))                   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
+# [1] 555597                                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
 
 #ensGene.tmp <- subset(subset(ensGene.tmp, cdsStartStat == "cmpl"), cdsEndStat == "cmpl")  ## Only keep transcripts with "complete" CDS start and end information (like in RefGene)
-## > nrow(ensGene.tmp)                                                                     ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ
-## [1] 66240
-
+                                                                                           ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ
 # -----------------------------------------------------------------------------
 # Database: RefSeq Gene
 # Table: refGene / Download Version: 04-Mar-2018
