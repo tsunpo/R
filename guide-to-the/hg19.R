@@ -2,7 +2,7 @@
 # Library      : The bioinformatician's guide to the reference genome
 # Name         : guide-to-the/hg19.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 02/11/17
+# Last Modified: 15/03/18
 # =============================================================================
 wd.reference <- "/Users/tpyang/Work/local/reference/hg19/"
 wd.guidetothe <- "/Users/tpyang/Work/dev/R/guide-to-the/"
@@ -60,7 +60,7 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 # [1] 56638
 
 ## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" without warning message
-#ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% paste0("chr", c(1:22, "X", "Y", "MT")))   ## ADD 23/02/17
+#ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% c(1:22, "X", "Y", "MT"))   ## ADD 23/02/17
 # > nrow(ensGene.transcript)                             ## Same as line 92
 # [1] 196354
 # > length(unique(ensGene.transcript$ensembl_gene_id))   ## Same as line 95
@@ -123,11 +123,11 @@ ensGene.transcript.exon$exonStart <- ensGene.transcript.exon$exonStart + 1   ## 
                                                                              ## https://www.biostars.org/p/6131/
 # > nrow(ensGene.transcript.exon)
 # [1] 603154
-# > nrow(subset(ensGene.transcript.exon, exonFrame != -1))                   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
-# [1] 555597                                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
+# > nrow(subset(ensGene.transcript.exon, exonFrame != -1))   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
+# [1] 555597                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
 
-#ensGene.tmp <- subset(subset(ensGene.tmp, cdsStartStat == "cmpl"), cdsEndStat == "cmpl")  ## Only keep transcripts with "complete" CDS start and end information (like in RefGene)
-                                                                                           ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ
+#ensGene.tmp <- subset(subset(ensGene.tmp, cdsStartStat == "cmpl"), cdsEndStat == "cmpl")   ## Only keep transcripts with "complete" CDS start and end information (like in RefGene)
+                                                                                            ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ
 # -----------------------------------------------------------------------------
 # Database: RefSeq Gene
 # Table: refGene / Download Version: 04-Mar-2018
