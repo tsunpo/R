@@ -3,5 +3,9 @@
 .Rapp.history
 .DS_Store
 
+# Huge files
+guide-to-the/hg19.1kb.gc.RData
+guide-to-the/hg19.rmsk.RData
+
 # Temporary files
 tmp/*
