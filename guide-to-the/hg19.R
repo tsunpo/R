@@ -25,6 +25,8 @@ colnames(ensGene) <- c("ensembl_gene_id", "chromosome_name", "strand", "start_po
 rownames(ensGene) <- ensGene$ensembl_gene_id
 # > nrow(ensGene)
 # [1] 63677
+# > nrow(subset(ensGene, gene_biotype == "protein_coding"))
+# [1] 20327
 
 ## Remove patches (*_PATCH)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
@@ -35,19 +37,21 @@ ensGene$chromosome_name <- paste0("chr", ensGene$chromosome_name)          ## AD
 
 freq <- as.data.frame(table(ensGene$external_gene_name))   ## ADD 20/08/17
 freq <- freq[order(freq$Freq, decreasing=T),]
-# > dim(subset(freq, Freq == 1))
-# [1] 55539     2
+# > nrow(subset(freq, Freq == 1))
+# [1] 55539
 # > subset(freq, Var1 == "RBL1")   ## NOTE 20/08/17
-# Var1 Freq
-# 30073 RBL1    2
+#       Var1 Freq
+# 29322 RBL1    2
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts
 # Table: ensGene / Count: 215,170 / Download Version: 2017-03-25
 # -----------------------------------------------------------------------------
-ensGene.transcript <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene_20170325.txt.gz"), header=T, rownames=F, sep="\t")
+ensGene.transcript <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene.ensembl_transcript_id_20170325.txt.gz"), header=T, rownames=F, sep="\t")
 colnames(ensGene.transcript) <- c("ensembl_transcript_id", "ensembl_gene_id", "chromosome_name", "strand", "transcript_start", "transcript_end", "start_position", "end_position", "transcript_biotype", "gene_biotype", "external_gene_name")   ##"hugo_gene", "refseq_mrna", "refseq_mrna"
 rownames(ensGene.transcript) <- ensGene.transcript$ensembl_transcript_id
+#ensGene.transcript$chromosome_name <- paste0("chr", ensGene.transcript$chromosome_name)   ## REMOVED 15/03/18
+ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 # > nrow(ensGene.transcript)
 # [1] 215170
 # > length(unique(ensGene.transcript$ensembl_gene_id))
@@ -55,9 +59,8 @@ rownames(ensGene.transcript) <- ensGene.transcript$ensembl_transcript_id
 # > length(unique(ensGene.transcript$external_gene_name))
 # [1] 56638
 
-## MASKED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" without warning message
-#ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% c(1:22, "X", "Y", "MT"))   ## ADD 23/02/17
-ensGene.transcript$chromosome_name <- paste0("chr", ensGene.transcript$chromosome_name)           ## ADD 27/04/17
+## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" without warning message
+#ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% paste0("chr", c(1:22, "X", "Y", "MT")))   ## ADD 23/02/17
 # > nrow(ensGene.transcript)
 # [1] 196354
 # > length(unique(ensGene.transcript$ensembl_gene_id))
@@ -65,49 +68,90 @@ ensGene.transcript$chromosome_name <- paste0("chr", ensGene.transcript$chromosom
 # > length(unique(ensGene.transcript$external_gene_name))
 # [1] 55773
 
-# =============================================================================
-# Reference    : UCSC Table Browser
-# Link(s)      : https://genome.ucsc.edu/cgi-bin/hgTables
-#                http://genome.ucsc.edu/FAQ/FAQdownloads#download10
-# Last Modified: 02/11/17
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Database: RefSeq Gene
-# Table: refGene / Row Count: 59,840 (out of 62,815) / Download Version: 2017-01-25
-# -----------------------------------------------------------------------------
-refGene <- readTable(paste0(wd.reference, "ucsc/ucsc.hg19.refGene_20170125.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
-# > nrow(refGene)
-# [1] 62815
-
-#table <- as.data.frame(table(refGene$name))
-#refGene <- subset(refGene, name %in% subset(table, Freq == 1)$Var1)
-#rownames(refGene) <- refGene$name
-# Should NOT remove duplicate names (not random chrs) first, otherwise e.g. NM_001191005 will be excluded in the final refGene
-# > subset(refGene, name == "NM_001191005")
-#               name                chrom strand  txStart    txEnd cdsStart   cdsEnd exonCount
-# 2325  NM_001191005                 chr1      - 24290836 24306953 24297631 24306745         6
-# 62667 NM_001191005 chr1_gl000191_random      -    34172    50281    40974    50073         6
-# > nrow(refGene)
-# [1] 57262
-
-refGene <- subset(refGene, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
-# > nrow(refGene)
-# [1] 59840
-# > nrow(refGene[grep("NM_", refGene$name),])
-# [1] 45867
-# > nrow(refGene[grep("NR_", refGene$name),])
-# [1] 12861
-
-###
-## The Bioinformatician's Guide to the Transcription
-#save(refGene, ensGene, ensGene.gene, file=paste0(wd.guidetothe, "hg19.transcript.RData"))
+# > length(unique(subset(ensGene.transcript, transcript_biotype == "protein_coding")$ensembl_gene_id))
+# [1] 22642
+# > ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% paste0("chr", c(1:22, "X", "Y", "MT")))
+# > length(unique(subset(ensGene.transcript, transcript_biotype == "protein_coding")$ensembl_gene_id))
+# [1] 20167
+# > length(unique(ensGene.transcript.exon$name2))
+# [1] 20167
 
 # =============================================================================
 # Reference    : UCSC Genome Browser (Feb 2009/GRCh37/hg19)
 # Link(s)      : http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/
-# Last Modified: 26/04/17
+# Last Modified: 15/03/18
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# Database: Ensembl Gene / Transcripts / Exons
+# Table: ensGene / Download Version: 06-Apr-2014
+# -----------------------------------------------------------------------------
+ensGene.tmp <- readTable(paste0(wd.reference, "ucsc/ensGene.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
+rownames(ensGene.tmp) <- ensGene.tmp$name
+ensGene.tmp <- subset(ensGene.tmp, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
+# > nrow(ensGene.tmp)
+# [1] 196354
+
+ensGene.transcript.protein_coding <- subset(ensGene.transcript, transcript_biotype == "protein_coding")
+codings <- intersect(ensGene.tmp$name, ensGene.transcript.protein_coding$ensembl_transcript_id)
+# > length(codings)
+# [1] 81745
+
+colnames <- c("name", "name2", "chrom", "strand", "exonStart", "exonEnd", "cdsStartStat", "cdsEndStat", "exonFrame")
+ensGene.transcript.exon <- toTable(0, length(colnames), 0, colnames)
+for (t in 1:length(codings)) {
+   transcript <- ensGene.tmp[codings[t],]
+   exonStarts <- as.numeric(unlist(strsplit(transcript$exonStarts, ",")))
+   exonEnds   <- as.numeric(unlist(strsplit(transcript$exonEnds, ",")))
+   exonFrames <- as.numeric(unlist(strsplit(transcript$exonFrames, ",")))   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
+                                                                            ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
+   exons <- toTable(0, length(colnames), length(exonStarts), colnames)
+   exons$name   <- transcript$name
+   exons$name2  <- transcript$name2
+   exons$chrom  <- transcript$chrom
+   exons$strand <- transcript$strand
+   exons$cdsStartStat <- transcript$cdsStartStat
+   exons$cdsEndStat   <- transcript$cdsEndStat
+   for (e in 1:length(exonStarts))
+      exons[e, c(5,6,9)] <- c(exonStarts[e], exonEnds[e], exonFrames[e])
+   
+   ensGene.transcript.exon <- rbind(ensGene.transcript.exon, exons)
+}
+ensGene.transcript.exon$exonStart <- ensGene.transcript.exon$exonStart + 1   ## Convert 0-based start coordinates (in 0-start 1-end UCSC format) to 1-based start coordinates (Ensembl)
+                                                                             ## https://www.biostars.org/p/6131/
+# > nrow(ensGene.transcript.exon)
+# [1] 603154
+# > nrow(subset(ensGene.transcript.exon, exonFrame != -1))
+# [1] 555597
+
+#ensGene.tmp <- subset(subset(ensGene.tmp, cdsStartStat == "cmpl"), cdsEndStat == "cmpl")  ## Only keep transcripts with "complete" CDS start and end information (like in RefGene)
+## > nrow(ensGene.tmp)                                                                     ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ
+## [1] 66240
+
+# -----------------------------------------------------------------------------
+# Database: RefSeq Gene
+# Table: refGene / Download Version: 04-Mar-2018
+# -----------------------------------------------------------------------------
+refGene <- readTable(paste0(wd.reference, "ucsc/refGene.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
+# > nrow(refGene)
+# [1] 70019
+
+refGene <- subset(refGene, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
+# > nrow(refGene)
+# [1] 66872
+# > nrow(refGene[grep("NM_", refGene$name),])
+# [1] 50799
+# > nrow(refGene[grep("NR_", refGene$name),])
+# [1] 16073
+
+#table <- as.data.frame(table(refGene$name))
+#refGene <- subset(refGene, name %in% subset(table, Freq == 1)$Var1)
+#rownames(refGene) <- refGene$name
+# Should NOT remove duplicate names first, otherwise e.g. NM_001191005 will be excluded in the final refGene
+# > subset(refGene, name == "NM_001191005")
+#               name                chrom strand  txStart    txEnd cdsStart   cdsEnd exonCount
+# 2325  NM_001191005                 chr1      - 24290836 24306953 24297631 24306745         6
+# 62667 NM_001191005 chr1_gl000191_random      -    34172    50281    40974    50073         6
 
 # -----------------------------------------------------------------------------
 # File: cytoBand.txt.gz / Download Version: 14-Jun-2009
@@ -129,7 +173,8 @@ chromInfo <- chromInfo[1:24, 1:2]
 
 ###
 ## The Bioinformatician's Guide to the Human Genome
-save(ensGene, ensGene.transcript, refGene, cytoBand, chromInfo, file=paste0(wd.guidetothe, "hg19.RData"))
+save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, file=paste0(wd.guidetothe, "hg19.RData"))
+save(refGene, file=paste0(wd.guidetothe, "hg19.refGene.RData"))
 
 # -----------------------------------------------------------------------------
 # File: rmsk.txt.gz / Download Version: 27-Apr-2009
@@ -162,3 +207,10 @@ rownames(bed) <- bed$BED
 bed <- bed[,-1]
 
 save(bed, chrs, file=paste0(wd.guidetothe, "hg19.1kb.gc.RData"))
+
+# =============================================================================
+# Reference    : UCSC Table Browser (Feb 2009/GRCh37/hg19)
+# Link(s)      : https://genome.ucsc.edu/cgi-bin/hgTables
+#                http://genome.ucsc.edu/FAQ/FAQdownloads#download10
+# Last Modified: 14/03/18
+# =============================================================================
