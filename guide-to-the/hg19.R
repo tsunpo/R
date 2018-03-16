@@ -26,7 +26,7 @@ rownames(ensGene) <- ensGene$ensembl_gene_id
 # > nrow(ensGene)
 # [1] 63677
 # > nrow(subset(ensGene, gene_biotype == "protein_coding"))
-# [1] 20327
+# [1] 22810
 
 ## Remove patches (*_PATCH)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
@@ -34,6 +34,8 @@ ensGene <- subset(ensGene, chromosome_name %in% c(1:22, "X", "Y", "MT"))   ## AD
 ensGene$chromosome_name <- paste0("chr", ensGene$chromosome_name)          ## ADD 27/04/17
 # > nrow(ensGene)
 # [1] 57773
+# > nrow(subset(ensGene, gene_biotype == "protein_coding"))
+# [1] 20327
 
 freq <- as.data.frame(table(ensGene$external_gene_name))   ## ADD 20/08/17
 freq <- freq[order(freq$Freq, decreasing=T),]
@@ -122,9 +124,9 @@ for (t in 1:length(codings)) {
 ensGene.transcript.exon$exonStart <- ensGene.transcript.exon$exonStart + 1   ## Convert 0-based start coordinates (in 0-start 1-end UCSC format) to 1-based start coordinates (Ensembl)
                                                                              ## https://www.biostars.org/p/6131/
 # > nrow(ensGene.transcript.exon)
-# [1] 603154
+# [1] 739328
 # > nrow(subset(ensGene.transcript.exon, exonFrame != -1))   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
-# [1] 555597                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
+# [1] 667505                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
 
 #ensGene.tmp <- subset(subset(ensGene.tmp, cdsStartStat == "cmpl"), cdsEndStat == "cmpl")   ## Only keep transcripts with "complete" CDS start and end information (like in RefGene)
                                                                                             ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ

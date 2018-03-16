@@ -1,26 +1,25 @@
 # =============================================================================
-# Manuscript   : The dangeous timing of DNA replication in NBL
+# Manuscript   : The dangeous case of transcription in NBL
 # Chapter I    : Transcriptional strand asymmetry
 # Name         : manuscripts/asymmetries/sclc-asym-tx.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 08/03/18
 # =============================================================================
 #wd.source <- "/projects/cangen/tyang2/dev/R"              ## tyang2@cheops
-#wd.source <- "/ngs/cangen/tyang2/dev/R"                    ## tyang2@gauss
-wd.source <- "/Users/tpyang/Work/dev/R"                   ## tpyang@localhost
+#wd.source <- "/ngs/cangen/tyang2/dev/R"                   ## tyang2@gauss
+wd.source <- "/Users/tpyang/Work/dev/R"                    ## tpyang@localhost
 
 handbooks <- c("Common.R", "Asymmetry.R", "ReplicationTiming.R", "DifferentialExpression.R")   ## Required handbooks/libraries for the manuscript
 invisible(sapply(handbooks, function(b) source(file.path(wd.source, "handbook-of", b))))
 
 load(file.path(wd.source, "guide-to-the", "hg19.RData"))   ## The bioinformatician's guide to the reference genome
-load(file.path(wd.source, "guide-to-the", "hg19.1kb.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
 # Last Modified: 29/01/18
 # -----------------------------------------------------------------------------
 BASE <- "NBL"
-#wd     <- paste0("/ngs/cangen/tyang2/", BASE, "/analysis/")                     ## tyang2@gauss
+#wd     <- paste0("/ngs/cangen/tyang2/", BASE, "/analysis/")                   ## tyang2@gauss
 #wd.ngs <- paste0("/ngs/cangen/tyang2/", BASE, "/ngs/WGS/")
 wd     <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/analysis/")   ## tpyang@localhost
 wd.ngs <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/ngs/WGS/")
@@ -78,16 +77,12 @@ for (s in 1:length(samples)) {
 }
 
 # -----------------------------------------------------------------------------
-# Step 2: Filtering out genes that is transcribed in SCLC 
+# Step 2: Filtering out genes that is transcribed in NBL 
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
-#load("/ngs/cangen/tyang2/dev/R/manuscripts/luad-lcnec-sclc-rnaseq-de/de-sclc-tpm/data/sclc_kallisto_0.43.1_tpm.gene_r5_p47.RData")            ## tyang2@gauss
-#load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-rnaseq-de/data/sclc_kallisto_0.43.1_tpm.gene_r5_p47.RData")   ## tpyang@localhost
+load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-rnaseq-de/data/nbl_kallisto_0.43.1_tpm.gene_r5_p47.RData")   ## tpyang@localhost
 tpm.gene.nbl <- tpm.gene
 tpm.gene.nbl.pcg <- getEnsGeneFiltered(tpm.gene.nbl, ensGene, autosomeOnly=T, proteinCodingOnly=T, withHLA=T)   ## CHANGE 05/02/18
-#tpm.gene.nbl.hla <- getEnsGeneHLA(tpm.gene.nbl, ensGene)
-#tpm.gene.nbl.tcr <- getEnsGeneTCR(tpm.gene.nbl, ensGene)
-#tpm.gene.nbl.ig  <- getEnsGeneIG(tpm.gene.nbl, ensGene)
 
 for (s in 1:length(samples)) {
    #sample <- SAMPLE 
@@ -124,6 +119,8 @@ for (s in 1:length(samples)) {
    tx.snv <- rbind(tx.snv, snv)
 }
 save(tx.snv, file=paste0(wd.asym.data, "nbl_asym_tx_snv.RData"))   ## All SNVs on "expressed" genes, regardless protein coding or not
+# > nrow(tx.snv)
+# [1] 47207
 
 # -----------------------------------------------------------------------------
 # Step 3.2: Build up S6 table
@@ -203,7 +200,7 @@ getTxQ4 <- function(tpm.gene.nbl.log2) {
 
 ###
 ##
-ens.tx.pcg.snv <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.nbl.pcg))   ## Needed in Step 6.0; ADD 02/02/18
+ens.tx.pcg.snv <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.nbl.pcg))   ## Needed in Step 5; ADD 02/02/18
 tx.pcg.snv <- subset(tx.snv, ensembl_gene_id %in% ens.tx.pcg.snv)
 # > nrow(tx.snv)
 # [1] 47207
@@ -217,14 +214,14 @@ tx.pcg.snv <- subset(tx.snv, ensembl_gene_id %in% ens.tx.pcg.snv)
 # [1] 10083
 
 ###
-## SCLC
+## Compare to SCLC
 # > nrow(tx.snv)
 # [1] 1441258
 # > nrow(tx.pcg.snv)
 # [1] 1414677
-# > nrow(tpm.gene.nbl)
+# > nrow(tpm.gene.sclc)
 # [1] 19131
-# > nrow(tpm.gene.nbl.pcg)   ## With HLAs; 05/02/18
+# > nrow(tpm.gene.sclc.pcg)   ## With HLAs; 05/02/18
 # [1] 16410
 # > length(ens.tx.pcg.snv)
 # [1] 15943
@@ -236,7 +233,6 @@ tpm.gene.nbl.pcg.log2 <- getLog2andMedian(tpm.gene.nbl.pcg)
 #tpm.gene.nbl.pcg.log2 <- tpm.gene.nbl.pcg.log2[ens.tx.pcg.snv,]   ## ADD 02/02/18; REMOVE 06/02/18
 
 tx.q4 <- getTxQ4(tpm.gene.nbl.pcg.log2)
-
 # > for (q in 1:4)
 #  +    print(length(intersect(ens.tx.pcg.snv, tx.q4[[q]])))
 # [1] 2488
@@ -319,9 +315,13 @@ for (i in 1:length(idxs)) {
 dev.off()
 save(tx.snv.s6, asyms, q4s, file=paste0(wd.asym.data, "nbl_asym_tx_pcg_snv_s6_asyms_q4s.RData"))
 
+## ADD 16/03/18
+q4s.exon <- list()
+q4s.exon[[1]] <- q4s
+
 ## ADD 22/02/18
-q4s.rt <- list()
-q4s.rt[[1]] <- q4s
+#q4s.rt <- list()
+#q4s.rt[[1]] <- q4s
 
 ###
 ## Refining the plot
@@ -359,202 +359,3 @@ for (i in 1:length(idxs)) {
    mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
-
-
-
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# Step 4.0: Reports
-# Last Modified: 01/02/18
-# -----------------------------------------------------------------------------
-tpm.gene.nbl.pcg.log2 <- getLog2Median(tpm.gene.nbl.pcg)
-tpm.gene.nbl.hla.log2 <- getLog2Median(tpm.gene.nbl.hla)
-tpm.gene.nbl.tcr.log2 <- getLog2Median(tpm.gene.nbl.tcr)
-tpm.gene.nbl.ig.log2  <- getLog2Median(tpm.gene.nbl.ig)
-
-report <- toTable(0, 4, 4, c("TPM_MEDIAN", "SNV_MB", "INV_MB", "SV_MB"))
-rownames(report) <- c("Protein_Coding", "HLA", "TCR", "IG")
-
-median(tpm.gene.nbl.pcg.log2$MEDIAN)
-
-getMutPerMbTxs(tx.snv, rownames(tpm.gene.nbl.pcg.log2))
-getMutPerMbTxs(tx.snv, rownames(tpm.gene.nbl.hla.log2))
-getMutPerMbTxs(tx.snv, rownames(tpm.gene.nbl.tcr.log2))
-getMutPerMbTxs(tx.snv, rownames(tpm.gene.nbl.ig.log2))
-
-getMutPerMbTxs(tx.indel, rownames(tpm.gene.nbl.pcg.log2))
-getMutPerMbTxs(tx.indel, rownames(tpm.gene.nbl.hla.log2))
-getMutPerMbTxs(tx.indel, rownames(tpm.gene.nbl.tcr.log2))
-getMutPerMbTxs(tx.indel, rownames(tpm.gene.nbl.ig.log2))
-
-getMutPerMbTxs(tx.bp, rownames(tpm.gene.nbl.pcg.log2))
-getMutPerMbTxs(tx.bp, rownames(tpm.gene.nbl.hla.log2))
-getMutPerMbTxs(tx.bp, rownames(tpm.gene.nbl.tcr.log2))
-getMutPerMbTxs(tx.bp, rownames(tpm.gene.nbl.ig.log2))
-
-# =============================================================================
-# Inner Class  : Collections of test/obsolete/deprecated methods
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified:
-# =============================================================================
-for (s in 1:length(samples)) {
-   sample <- samples[s]
-   
-   pdf(paste0(wd.asym.plots, "sclc_snv_s6_", sample, ".pdf"))
-   par(mfrow=c(3,1))
-   #par(mar=c(3.5, 3.5, 1,1), mgp=c(2, 0.65, 0), cex=0.9)
-   for (i in 1:length(idxs)) {
-      idx <- idxs[i]
-  
-      hist(wt)
-      hist(mpg)
-      hist(disp)
-      
-      tx.snv.s6[[i]][[1]][[1]]   ## E.g. C>A Tx(+)
-      tx.snv.s6[[i]][[1]][[2]]   ##      C>A Tx(-)
-  
-      tx.snv.s6[[i]][[2]][[1]]   ##      G>T Tx(+)
-      tx.snv.s6[[i]][[2]][[2]]   ##      G>T Tx(-)
-   }
-   dev.off()
-}
-
-
-
-
-
-
-
-
-
-
-# > getMutPerMb(tx.snv.s6[[i]][[1]][[1]])   ## E.g. C>A Tx(+)
-# [1] 162.091
-# >    getMutPerMb(tx.snv.s6[[i]][[1]][[2]])   ##      C>A Tx(-)
-# [1] 293.3805
-# >    getMutPerMb(tx.snv.s6[[i]][[2]][[1]])   ##      G>T Tx(+)
-# [1] 281.7484
-# >    getMutPerMb(tx.snv.s6[[i]][[2]][[2]])   ##      G>T Tx(-)
-# [1] 175.6149
-# >    
-#  >    getMutPerMb0(tx.snv.s6[[i]][[1]][[1]])   ## E.g. C>A Tx(+)
-# [1] 176.2969
-# >    getMutPerMb0(tx.snv.s6[[i]][[1]][[2]])   ##      C>A Tx(-)
-# [1] 264.0553
-# >    getMutPerMb0(tx.snv.s6[[i]][[2]][[1]])   ##      G>T Tx(+)
-# [1] 262.0042
-# >    getMutPerMb0(tx.snv.s6[[i]][[2]][[2]])   ##      G>T Tx(-)
-# [1] 194.1061
-
-
-
-
-
-
-
-
- 
-   snv.s6[[1]][[1]][[1]] <- vcf.CA.p   ## C>A/G>T
-   snv.s6[[1]][[1]][[2]] <- vcf.CA.m
-   snv.s6[[1]][[2]][[1]] <- vcf.GT.p
-   snv.s6[[1]][[2]][[2]] <- vcf.GT.m
-   
-   snv.s6[[2]][[1]][[1]] <- vcf.CG.p   ## C>G/G>C
-   snv.s6[[2]][[1]][[2]] <- vcf.CG.m
-   snv.s6[[2]][[2]][[1]] <- vcf.GC.p
-   snv.s6[[2]][[2]][[2]] <- vcf.GC.m
-   
-   snv.s6[[3]][[1]][[1]] <- vcf.CT.p   ## C>T/G>A
-   snv.s6[[3]][[1]][[2]] <- vcf.CT.m
-   snv.s6[[3]][[2]][[1]] <- vcf.GA.p
-   snv.s6[[3]][[2]][[2]] <- vcf.GA.m
-   
-   snv.s6[[4]][[1]][[1]] <- vcf.CG.p
-   snv.s6[[4]][[1]][[2]] <- vcf.CG.m
-   snv.s6[[4]][[2]][[1]] <- vcf.GC.p
-   snv.s6[[4]][[2]][[2]] <- vcf.GC.m
-   
-   
-   snv.s6[[1]][[1]] <- vcf.CA
-   snv.s6[[1]][[2]] <- vcf.GT
-   snv.s6[[2]][[1]] <- vcf.CG
-   snv.s6[[2]][[2]] <- vcf.GC
-   
-   
-   ## C>A/G>T (Smoking)
-   vcf.CA <- subset(subset(vcf, REF == "C"), ALT == "A")
-   vcf.CA.p <- subset(vcf.CA, strand == 1)
-   vcf.CA.m <- subset(vcf.CA, strand == -1)
- 
-   vcf.GT <- subset(subset(vcf, REF == "G"), ALT == "T")
-   vcf.GT.p <- subset(vcf.GT, strand == 1)
-   vcf.GT.m <- subset(vcf.GT, strand == -1)
-
-
-
-##for (s in 1:length(samples)) {
-for (s in 1:10) {
-   #sample <- SAMPLE
-   sample <- samples[s]
-   vcf <- readTable(paste0(wd.asym.data, sample, "_mut.ens.tx.snv.vcf.gz"), header=T, rownames=F, sep="")
-  
-   ## C>A/G>T (Smoking)
-   vcf.CA <- subset(subset(vcf, REF == "C"), ALT == "A")
-   vcf.CA.p <- subset(vcf.CA, strand == 1)
-   vcf.CA.m <- subset(vcf.CA, strand == -1)
-      
-   vcf.GT <- subset(subset(vcf, REF == "G"), ALT == "T")
-   vcf.GT.p <- subset(vcf.GT, strand == 1)
-   vcf.GT.m <- subset(vcf.GT, strand == -1)
-
-   ## C>G/G>C
-   vcf.CG <- subset(subset(vcf, REF == "C"), ALT == "G")
-   vcf.CG.p <- subset(vcf.CG, strand == 1)
-   vcf.CG.m <- subset(vcf.CG, strand == -1)
-   
-   vcf.GC <- subset(subset(vcf, REF == "G"), ALT == "C")
-   vcf.GC.p <- subset(vcf.GC, strand == 1)
-   vcf.GC.m <- subset(vcf.GC, strand == -1)
-   
-   ## C>T/G>A (APOBEC/AID)
-   vcf.CT <- subset(subset(vcf, REF == "C"), ALT == "T")
-   vcf.CT.p <- subset(vcf.CT, strand == 1)
-   vcf.CT.m <- subset(vcf.CT, strand == -1)
-   
-   vcf.GA <- subset(subset(vcf, REF == "G"), ALT == "A")
-   vcf.GA.p <- subset(vcf.GA, strand == 1)
-   vcf.GA.m <- subset(vcf.GA, strand == -1)
-
-   ## T>A/A>T
-   vcf.TA <- subset(subset(vcf, REF == "T"), ALT == "A")
-   vcf.TA.p <- subset(vcf.TA, strand == 1)
-   vcf.TA.m <- subset(vcf.TA, strand == -1)
-   
-   vcf.AT <- subset(subset(vcf, REF == "A"), ALT == "T")
-   vcf.AT.p <- subset(vcf.AT, strand == 1)
-   vcf.AT.m <- subset(vcf.AT, strand == -1)
-   
-   ## T>C/A>G (Sig. 5)
-   vcf.TC <- subset(subset(vcf, REF == "T"), ALT == "C")
-   vcf.TC.p <- subset(vcf.TC, strand == 1)
-   vcf.TC.m <- subset(vcf.TC, strand == -1)
-   
-   vcf.AG <- subset(subset(vcf, REF == "A"), ALT == "G")
-   vcf.AG.p <- subset(vcf.AG, strand == 1)
-   vcf.AG.m <- subset(vcf.AG, strand == -1)
-   
-   ## T>G/A>C
-   vcf.TG <- subset(subset(vcf, REF == "T"), ALT == "G")
-   vcf.TG.p <- subset(vcf.TG, strand == 1)
-   vcf.TG.m <- subset(vcf.TG, strand == -1)
-   
-   vcf.AC <- subset(subset(vcf, REF == "A"), ALT == "C")
-   vcf.AC.p <- subset(vcf.AC, strand == 1)
-   vcf.AC.m <- subset(vcf.AC, strand == -1)
-}
