@@ -1,7 +1,7 @@
 # =============================================================================
-# Manuscript   : The dangeous case of transcription in NBL
+# Manuscript   : The dangeous case of transcription in SCLC
 # Chapter III  : 
-# Name         : manuscripts/asymmetries/nbl-asym-tx-exon.R
+# Name         : manuscripts/asymmetries/sclc-asym-tx-exon.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 16/03/18
 # =============================================================================
@@ -18,7 +18,7 @@ load(file.path(wd.source, "guide-to-the", "hg19.RData"))   ## The bioinformatici
 # Step 0: Set working directory
 # Last Modified: 29/01/18
 # -----------------------------------------------------------------------------
-BASE <- "NBL"
+BASE <- "SCLC"
 #wd     <- paste0("/ngs/cangen/tyang2/", BASE, "/analysis/")                   ## tyang2@gauss
 #wd.ngs <- paste0("/ngs/cangen/tyang2/", BASE, "/ngs/WGS/")
 wd     <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/analysis/")   ## tpyang@localhost
@@ -29,7 +29,7 @@ wd.asym.data  <- paste0(wd.asym, "data/")
 wd.asym.plots <- paste0(wd.asym, "plots/")
 setwd(wd.asym)
 
-samples <- readTable(paste0(wd.ngs, "nbl_wgs_n56-1.list"), header=F, rownames=F, sep="")
+samples <- readTable(paste0(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
 # Step 8: Read in all the SNVs
@@ -47,13 +47,13 @@ isSNVonExon <- function(chr, pos, ensGene.transcript.exon) {
 
 ###
 ##
-load(file=paste0(wd.asym.data, "nbl_asym_tx_snv.RData"))   ## All SNVs on "expressed" genes, regardless protein coding or not
-ens.tx.pcg.snv <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.nbl.pcg))   ## From Step 4.0; ADD 16/03/18
+load(file=paste0(wd.asym.data, "sclc_asym_tx_snv.RData"))   ## All SNVs on "expressed" genes, regardless protein coding or not
+ens.tx.pcg.snv <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.sclc.pcg))   ## From Step 4.0; ADD 16/03/18
 tx.pcg.snv <- subset(tx.snv, ensembl_gene_id %in% ens.tx.pcg.snv)
 # > nrow(tx.snv)
-# [1] 47207
+# [1] 1441258
 # > nrow(tx.pcg.snv)
-# [1] 45909
+# [1] 1414677
 
 ensGene.transcript.exon <- subset(ensGene.transcript.exon, exonFrame != -1)   ## exonFrames value of -1 means that the exon is UTR
 # > nrow(ensGene.transcript.exon)
@@ -61,24 +61,24 @@ ensGene.transcript.exon <- subset(ensGene.transcript.exon, exonFrame != -1)   ##
 
 tx.pcg.snv$exon <- F
 tx.pcg.snv$exon <- mapply(x = 1:nrow(tx.pcg.snv), function(x) isSNVonExon(tx.pcg.snv$CHROM[x], tx.pcg.snv$POS[x], ensGene.transcript.exon))
-save(tx.pcg.snv, file=paste0(wd.asym.data, "nbl_asym_tx_pcg_snv_exon.RData"))   ## All SNVs on expressed, protein coding genes
+save(tx.pcg.snv, file=paste0(wd.asym.data, "sclc_asym_tx_pcg_snv_exon.RData"))   ## All SNVs on expressed, protein coding genes
 #for (x in 1:nrow(tx.pcg.snv))
 #   tx.pcg.snv$exon[x] <- isSNVonExon(tx.pcg.snv$CHROM[x], tx.pcg.snv$POS[x], ensGene.transcript.exon)
 # > nrow(subset(tx.pcg.snv, exon == T))
-# [1] 2418
+# [1] 58852
 # > nrow(subset(tx.pcg.snv, exon == F))
-# [1] 43491
-# > 2418/43491
-# [1] 0.05559771
+# [1] 1355825
+# > 58852/1355825
+# [1] 0.04340678
 
 # > length(unique(tx.pcg.snv$ensembl_gene_id))
-# [1] 10083
+# [1] 15943
 # > length(unique(subset(tx.pcg.snv, exon == T)$ensembl_gene_id))
-# [1] 2076
-# > 2076/10083
-# [1] 0.2058911
+# [1] 13596
+# > 13596/15943
+# [1] 0.8527881
 # > length(unique(subset(tx.pcg.snv, exon == T)$SAMPLE))
-# [1] 55
+# [1] 101
 
 # -----------------------------------------------------------------------------
 # Step 2: Divide SNVs into two groups (exons and introns)
@@ -100,12 +100,12 @@ tx.input <- subset(tx.pcg.snv, exon == F)
 
 ens.tx.input <- unique(tx.input$ensembl_gene_id)
 # > length(ens.tx.input)   ## Exon
-# [1] 2076
+# [1] 13596
 # > length(ens.tx.input)   ## Intron
-# [1] 9482
+# [1] 15102
 ensGene.protein_coding <- subset(ensGene, gene_biotype == "protein_coding")
 length(intersect(ens.tx.input, ensGene.protein_coding$ensembl_gene_id))
-# [1] 2076
+# [1] 13596
 
 ensGene.tx.input <- ensGene[ens.tx.input,]
 tx.q4.input <- getTxQ4Exon(tx.q4, ensGene.tx.input)
@@ -113,22 +113,22 @@ tx.q4.input <- getTxQ4Exon(tx.q4, ensGene.tx.input)
 ##
 for (q in 1:4)   ## Exons
    print(length(intersect(ens.tx.input, tx.q4[[q]])))
-# [1] 565
-# [1] 561
-# [1] 479
-# [1] 471
+# [1] 3458
+# [1] 3509
+# [1] 3467
+# [1] 3162
 
 for (q in 1:4)   ## Introns
    print(length(intersect(ens.tx.input, tx.q4[[q]])))
-# [1] 2311
-# [1] 2522
-# [1] 2449
-# [1] 2200
+# [1] 3557
+# [1] 3809
+# [1] 3901
+# [1] 3835
 
 ### 
 ## (Figure S4)
 q4s <- list()
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_pcg_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
@@ -161,16 +161,19 @@ for (i in 1:length(idxs)) {
    barplot(q4, ylab="SNVs/Mb", main=paste(rownames(q4), collapse="/"), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"))
 }
 dev.off()
-save(q4s, file=paste0(wd.asym.data, "nbl_asym_tx_pcg_snv_q4s_", prefix, ".RData"))
+save(q4s, file=paste0(wd.asym.data, "sclc_asym_tx_pcg_snv_q4s_", prefix, ".RData"))
 
 ## ADD 16/03/18
+#q4s.exon <- list()
+#q4s.exon[[1]] <- q4s
+
 #q4s.exon[[2]] <- q4s
 q4s.exon[[3]] <- q4s
-save(q4s.exon, file=paste0(wd.asym.data, "nbl_asym_tx_pcg_snv_q4s_exon.RData"))
+save(q4s.exon, file=paste0(wd.asym.data, "sclc_asym_tx_pcg_snv_q4s_exon.RData"))
 
 ###
 ## Refining the plot
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_pcg_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -190,7 +193,7 @@ dev.off()
 # Step 6.2: Log2 transcription-associated SNV asymmetry (Figure S5)
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_pcg_snv_q4s_", prefix, "_log2_ylim0.5.pdf"), height=4.5, width=7)
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_snv_q4s_", prefix, "_log2_ylim1.5.pdf"), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -206,7 +209,7 @@ for (i in 1:length(idxs)) {
       else
          cols <- c(cols, "#E6E6E6")    
  
-   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.5, 0.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=cols)
+   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=cols)
    mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
@@ -231,16 +234,13 @@ getQ4 <- function(j, i) {
 ##
 idx <- 0
 for (i in 1:6) {
-   pdf(paste0(wd.asym.plots, "nbl_asym_tx_pcg_snv_q4s_exonintron_", REFS[i+idx], ">", ALTS[i+idx], ".pdf"), height=4.5, width=7)
+   pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_snv_q4s_exonintron_", REFS[i+idx], ">", ALTS[i+idx], ".pdf"), height=4.5, width=7)
    par(mfrow=c(2, 3)) 
    
    for (j in 1:3) {
       q4 <- getQ4(j, i)
       
-      #barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"), ylim=c(0, q4s.exon[[2]][[i]][2, 1]))   ##, xlab="Number of genes")   ## For C>A only
-      #barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"), ylim=c(0, q4s.exon[[1]][[i]][1, 4]))   ##, xlab="Number of genes")   ## For T>A
-      barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"), ylim=c(0, q4s.exon[[1]][[i]][2, 4]))   ##, xlab="Number of genes")   ## For T>C
-      #barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"), ylim=c(0, q4s.exon[[2]][[i]][1, 4]))   ##, xlab="Number of genes")
+      barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"), ylim=c(0, q4s.exon[[2]][[i]][2, 1]))   ##, xlab="Number of genes")   ## For C>A only
       mtext(paste(rownames(q4), collapse=" vs "), cex=0.55, font=3, line=0.5)      
    }
  
@@ -254,7 +254,7 @@ for (i in 1:6) {
          else
             cols <- c(cols, "#E6E6E6")    
       
-      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.5, 0.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=cols)
+      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=cols)
       mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
    }
    
