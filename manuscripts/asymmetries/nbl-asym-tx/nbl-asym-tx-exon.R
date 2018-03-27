@@ -94,9 +94,9 @@ getTxQ4Exon <- function(tx.q4, ensGene.tx.exon) {
    return(tx.q4.exon)
 }
 
-exon <- F
-prefix <- "intron"
-tx.input <- subset(tx.pcg.snv, exon == F)
+exon <- T
+prefix <- "exon"
+tx.input <- subset(tx.pcg.snv, exon == T)
 
 ens.tx.input <- unique(tx.input$ensembl_gene_id)
 # > length(ens.tx.input)   ## Exon
@@ -105,7 +105,6 @@ ens.tx.input <- unique(tx.input$ensembl_gene_id)
 # [1] 9482
 ensGene.protein_coding <- subset(ensGene, gene_biotype == "protein_coding")
 length(intersect(ens.tx.input, ensGene.protein_coding$ensembl_gene_id))
-# [1] 2076
 
 ensGene.tx.input <- ensGene[ens.tx.input,]
 tx.q4.input <- getTxQ4Exon(tx.q4, ensGene.tx.input)
@@ -124,6 +123,8 @@ for (q in 1:4)   ## Introns
 # [1] 2522
 # [1] 2449
 # [1] 2200
+
+## To Step 8
 
 ### 
 ## (Figure S4)
@@ -212,7 +213,7 @@ for (i in 1:length(idxs)) {
 dev.off()
 
 # -----------------------------------------------------------------------------
-# Step 7: Replication–transcription collision-induced SNV asymmetry (Figure 1)
+# Step 7: Exon-Intron SNV asymmetry (Figure ?)
 # Last Modified: 22/02/18
 # -----------------------------------------------------------------------------
 getQ4 <- function(j, i) {
@@ -262,8 +263,191 @@ for (i in 1:6) {
    idx <- idx + 1
 }
 
+# -----------------------------------------------------------------------------
+# Step 8: Find genes with intronic T-to-G transversions, which might result in splice defect
+# Last Modified: 21/03/18
+# -----------------------------------------------------------------------------
+i <- 6
+genes <- c()
+#for (i in 1:length(idxs)) {
+   #idx <- idxs[i]
+ 
+   for (q in 4:4) {
+      txs <- tx.q4.input[[q]]
+  
+      ## Cntx:Gtx  =   tx.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.snv.s6[[1]][[2]][[2]] G>T Tx(-)
+      CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
+      #CntxGtx <- subset(CntxGtx, ensembl_gene_id %in% txs)
+      #q4[1, q] <- getMutPerMbTxs(bp, unique(CntxGtx$ensembl_gene_id))
+      txs.cg <- intersect(unique(CntxGtx$ensembl_gene_id), txs)
+      
+      ## Gntx:Ctx  =   tx.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
+      GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
+      #GntxCtx <- subset(GntxCtx, ensembl_gene_id %in% txs) 
+      #q4[2, q] <- getMutPerMbTxs(bp, unique(GntxCtx$ensembl_gene_id))
+      txs.gc <- intersect(unique(GntxCtx$ensembl_gene_id), txs)
+      
+      genes <- c(genes, txs.cg, txs.gc)
+   }
+#}
+
+# > q4   ## Intron
+# n=1022 (678+599) n=1348 (875+809) n=1422 (903+842) n=1114 (705+611)
+# Tntx:Atx         6.376393         7.207369         9.776346         13.99181
+# Antx:Ttx         6.006419         7.095780         9.152282         12.80701
+
+# > length(genes)   
+# [1] 2861
+# > 599+809+842+611
+# [1] 2861
+
+# > q4   ## Exon
+# n=307 (188+196) n=335 (221+207) n=276 (185+158) n=300 (199+175)
+# Tntx:Atx        8.460223        8.487677        10.85219        17.22087
+# Antx:Ttx        8.097678        8.883980        11.19737        12.98638   
+
+genes.exon <- unique(genes)
+writeTable(unique(genes), paste0(wd.asym.data, "genes_exon_C>A_Q4.txt"), colnames=F, rownames=F, sep="\t")
+save(genes.exon, file=paste0(wd.asym.data, "genes_exon_C>A_Q4.RData"))
 
 
+genes.tx.exon <- genes
+genes.ntx.exon <- genes
+# > length(intersect(genes.tx.exon, genes.ntx.exon))
+# [1] 74  
+
+writeTable(unique(genes), paste0(wd.asym.data, "genes_exon_Q4.txt"), colnames=F, rownames=F, sep="\t")
+save(genes.exon, file=paste0(wd.asym.data, "genes_exon_Q4.RData"))
+
+##   
+writeTable(genes, paste0(wd.asym.data, "genes_exon_T>G_Ttx_Q4.txt"), colnames=F, rownames=F, sep="\t")
+save(genes.tx.exon, genes.ntx.exon, file=paste0(wd.asym.data, "genes_exon_T>G_Q4.RData"))
+
+writeTable(intersect(genes.tx, genes.ntx), paste0(wd.asym.data, "genes_intron_T>G_Ttx_Q4.txt"), colnames=F, rownames=F, sep="\t")
+save(genes.tx.intron, genes.ntx.intron, file=paste0(wd.asym.data, "genes_intron_T>G_Ttx_Tntx_Q4.RData"))
+
+##
+writeTable(ens.tx.input, paste0(wd.asym.data, "ens.tx.input.txt"), colnames=F, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results
+# -----------------------------------------------------------------------------
+wd.reactome <- "/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/asymmetries/nbl-wgs-asym/pathway/genes_exon_C>A_Q4/"
+list <- readTable(paste0(wd.reactome, "genes_exon_C>A_Q4.txt"), header=F, rownames=F, sep="\t")
+list <- ensGene[list, c("ensembl_gene_id",	"external_gene_name")]
+
+reactome <- read.csv(paste0(wd.reactome, "result.csv"))
+colnames(reactome) <- gsub("X.", "", colnames(reactome))
+reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+for (r in 1:nrow(reactome)) {
+   ids <- as.vector(reactome$Submitted.entities.found[r])
+   ids <- unlist(strsplit(ids, ";"))
+ 
+   for (i in 1:length(ids))
+      if (nrow(list[ids[i],]) != 0)
+         ids[i] <- list[ids[i],]$external_gene_name
+ 
+   reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+}
+writeTable(reactome, paste0(wd.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
+
+##
+file.de <- paste0(wd.reactome, "genes_exon_C>A_Q4.pdf")
+pdf(file.de, height=7, width=8)
+par(las=1)             ## make label text perpendicular to axis
+par(mar=c(5,30,4,2))   ## increase y-axis margin
+barplot(-log10(reactome[20:1,]$Entities.pValue), names.arg=reactome[20:1,]$Pathway.name, xlab="Significance (-log10 P-value)", horiz=T)
+dev.off()
+
+##
+file.de <- paste0(wd.reactome, "genes_intron_T>G_Tntx_Q4.pdf")
+pdf(file.de, height=7, width=7.5)
+par(las=1)             ## make label text perpendicular to axis
+par(mar=c(5,27,4,2))   ## increase y-axis margin
+barplot(-log10(reactome[20:1,]$Entities.pValue), names.arg=reactome[20:1,]$Pathway.name, xlab="Significance (-log10 P-value)", horiz=T)
+dev.off()
+
+##
+file.de <- paste0(wd.reactome, "genes_exon_T>G_Q4.pdf")
+pdf(file.de, height=7, width=8.7)
+par(las=1)             ## make label text perpendicular to axis
+par(mar=c(5,33,4,2))   ## increase y-axis margin
+barplot(-log10(reactome[20:1,]$Entities.pValue), names.arg=reactome[20:1,]$Pathway.name, xlab="Significance (-log10 P-value)", horiz=T)
+dev.off()
+
+##
+file.de <- paste0(wd.reactome, "genes_exon_T>G_Ttx_Q4.pdf")
+pdf(file.de, height=7, width=8.9)
+par(las=1)             ## make label text perpendicular to axis
+par(mar=c(5,34,4,2))   ## increase y-axis margin
+barplot(-log10(reactome[20:1,]$Entities.pValue), names.arg=reactome[20:1,]$Pathway.name, xlab="Significance (-log10 P-value)", horiz=T)
+dev.off()
+
+##
+file.de <- paste0(wd.reactome, "genes_intron_Q4.pdf")
+pdf(file.de, height=7, width=7.5)
+par(las=1)             ## make label text perpendicular to axis
+par(mar=c(5,27,4,2))   ## increase y-axis margin
+barplot(-log10(reactome[20:1,]$Entities.pValue), names.arg=reactome[20:1,]$Pathway.name, xlab="Significance (-log10 P-value)", horiz=T)
+dev.off()
+
+
+
+# -----------------------------------------------------------------------------
+# Recruitment of NuMA to mitotic centrosomes (n=9)
+# -----------------------------------------------------------------------------
+genes <- c("ENSG00000234745")   ##
+genes <- c("ENSG00000155366")   ## RHOC
+subset(tx.input, ensembl_gene_id %in% genes)
+
+## 16 genes (9 samples)
+genes <- c("ENSG00000072864", "ENSG00000104833", "ENSG00000197102", "ENSG00000175216", "ENSG00000136861", "ENSG00000137822", "ENSG00000136811", "ENSG00000170027", "ENSG00000141551", "ENSG00000054282", "ENSG00000077380", "ENSG00000088986", "ENSG00000078674", "ENSG00000258947", "ENSG00000127914", "ENSG00000160299")
+
+#genes <- c("ENSG00000088986", "ENSG00000104833", "ENSG00000258947", "ENSG00000197102", "ENSG00000127914", "ENSG00000160299", "ENSG00000136861", "ENSG00000137822", "ENSG00000136811")
+#genes <- c("ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811")
+samples <- unique(subset(tx.input, ensembl_gene_id %in% genes)$SAMPLE)
+
+## 19 genes (13 samples)
+genes <- c("ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000150093", "ENSG00000182871", "ENSG00000142798", "ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000063660", "ENSG00000142798", "ENSG00000063660", "ENSG00000142798", "ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000149182", "ENSG00000104833", "ENSG00000151150", "ENSG00000197102", "ENSG00000173898", "ENSG00000063660", "ENSG00000142798", "ENSG00000063660", "ENSG00000142798", "ENSG00000063660", "ENSG00000142798", "ENSG00000104833", "ENSG00000197102", "ENSG00000127914", "ENSG00000136861", "ENSG00000136811", "ENSG00000176884", "ENSG00000127914", "ENSG00000176884", "ENSG00000127914", "ENSG00000107643", "ENSG00000177889", "ENSG00000068796", "ENSG00000150093", "ENSG00000104833", "ENSG00000197102", "ENSG00000018236", "ENSG00000110492", "ENSG00000106367", "ENSG00000068796", "ENSG00000104833", "ENSG00000197102", "ENSG00000173898")
+samples <- unique(subset(tx.input, ensembl_gene_id %in% genes)$SAMPLE)
+samples <- samples[-13]
+
+# > samples <- c("P15239", "P15403", "P23122")
+# > subset(subset(tx.input, ensembl_gene_id %in% genes), SAMPLE %in% samples)
+# SAMPLE CHROM       POS REF ALT ensembl_gene_id strand exon
+# 3297  P15239 chr21  47851564   G   A ENSG00000160299      1 TRUE
+# 5450  P15403 chr19   6502292   T   G ENSG00000104833     -1 TRUE
+# 34569 P23122  chr9 131219552   A   C ENSG00000136811      1 TRUE
+# 35173 P23122 chr12 120934118   T   G ENSG00000088986      1 TRUE
+
+# -----------------------------------------------------------------------------
+# Pre-D.E.
+# -----------------------------------------------------------------------------
+pheno <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/metadata/Peifer 2015/nature14980-s1.txt", header=T, rownames=T, sep="\t")
+lookups <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/metadata/Peifer 2015/Samples_NEW_NUMBERS.txt", header=T, rownames=2, sep="")
+rownames(pheno) <- lookups[rownames(pheno),]$OLD
+
+pheno$Sample_Old <- ""
+pheno$Sample_Old <- rownames(pheno)
+pheno <- pheno[c(1,6,2:5)]
+
+## T>G SNVs (Recruitment of NuMA to mitotic centrosomes; n=9)
+pheno$T_C_Q4 <- "no"
+pheno[match(samples, rownames(pheno)),]$T_C_Q4 <- "yes"
+
+## MYCN expression
+#subset(ensGene, external_gene_name == "MYCN")
+#quantile(tpm.gene.nbl.log2["ENSG00000134323",])
+#mycn <- colnames(tpm.gene.nbl.log2["ENSG00000134323", which(tpm.gene.nbl.log2["ENSG00000134323",] >= 4.890977),])
+
+#pheno$MYCN <- "low"
+#pheno[match(mycn, rownames(pheno)),]$MYCN <- "high"
+
+## ACD
+acd <- unique(c(rownames(subset(pheno, MYCN.amp == "yes")), rownames(subset(pheno, T_C_Q4 == "yes"))))
+
+pheno$ACD <- "yes"
+pheno[match(acd, rownames(pheno)),]$ACD <- "no"
 
 
 

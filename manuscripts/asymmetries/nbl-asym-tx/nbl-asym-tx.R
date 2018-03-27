@@ -82,6 +82,11 @@ for (s in 1:length(samples)) {
 # -----------------------------------------------------------------------------   
 load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-rnaseq-de/data/nbl_kallisto_0.43.1_tpm.gene_r5_p47.RData")   ## tpyang@localhost
 tpm.gene.nbl <- tpm.gene
+
+lookups <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/metadata/Peifer 2015/SEQC_RNAseq_ID_table.txt", header=T, rownames=2, sep="")
+lookups$Patient_ID_WGS <- paste0("P", lookups$Patient_ID_WGS)
+colnames(tpm.gene.nbl) <- lookups[colnames(tpm.gene.nbl),]$Patient_ID_WGS
+
 tpm.gene.nbl.pcg <- getEnsGeneFiltered(tpm.gene.nbl, ensGene, autosomeOnly=T, proteinCodingOnly=T, withHLA=T)   ## CHANGE 05/02/18
 
 for (s in 1:length(samples)) {
