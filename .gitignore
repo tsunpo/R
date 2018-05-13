@@ -7,4 +7,5 @@
 guide-to-the/hg19.rmsk.RData
 
 # Temporary files
+backup/*
 tmp/*
