@@ -36,7 +36,7 @@ isNA <- function(input) {
    return(F)
 }
 
-## http://sape.inf.usi.ch/quick-reference/ggplot2/colour
+## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
 plotPCA <- function(x, y, pca, trait, wd.pca, variable, file.main, legend.x, legend.y, cols) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
@@ -260,33 +260,49 @@ getEnsGeneID <- function(name) {
    return(subset(ensGene.gene, external_gene_name == name)$ensembl_gene_id)
 }
 
-getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, withHLA) {   ## ADD 01/02/18
+getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, proteinCodingNonRedundantOnly) {   ## ADD 11/04/18; ADD 01/02/18
    if (autosomeOnly)
       tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, chromosome_name %in% paste0("chr", 1:22)))),]
    if (proteinCodingOnly)
       tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
-   if (!withHLA)
-      tpm.gene <- tpm.gene[rownames(tpm.gene)[!grepl("^HLA-", ensGene[rownames(tpm.gene),]$external_gene_name)],]
+   if (proteinCodingNonRedundantOnly) {
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, protein_coding_non_redundant == T))),]
+   }
    
    return(tpm.gene)
 }
 
-getEnsGeneHLA <- function(tpm.gene, ensGene) {
-   tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+# -----------------------------------------------------------------------------
+# Get non-redundant gene list
+# Last Modified: 10/04/18
+# -----------------------------------------------------------------------------
+isNonRedundant <- function(ensembl_gene_id, ensGene) {
+   gene <- ensGene[ensembl_gene_id,]
  
-   return(tpm.gene[rownames(tpm.gene)[grepl("^HLA-", ensGene[rownames(tpm.gene),]$external_gene_name)],])
+   ensGene.chr <- subset(ensGene, chromosome_name == gene$chromosome_name)
+   ensGene.chr.start <- subset(ensGene.chr, end_position >= gene$start_position)
+   ensGene.chr.start.end <- subset(ensGene.chr.start, start_position <= gene$end_position)
+ 
+   if (nrow(ensGene.chr.start.end) == 1)
+      return(T)
+   return(F)
 }
 
-getEnsGeneTCR <- function(tpm.gene, ensGene) {
-   return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("TR_", c("C", "V", "D", "J"), "_gene")))),])
-}
-
-getEnsGeneIG <- function(tpm.gene, ensGene) {
-   return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("IG_", c("C", "V", "D", "J"), "_gene")))),])
-}
+#ensGene.pcg <- subset(ensGene, gene_biotype == "protein_coding")
+#ensGene.pcg$non_redundant <- F
+#ensGene.pcg$non_redundant <- mapply(x = 1:nrow(ensGene.pcg), function(x) isNonRedundant(ensGene.pcg$ensembl_gene_id[x], ensGene.pcg))
+## > nrow(ensGene.pcg)
+## [1] 20327
+## > nrow(subset(ensGene.pcg, non_redundant == T))
+## [1] 13487
+## > nrow(subset(ensGene.pcg, non_redundant == F))
+## [1] 6840
+#
+#ensGene$protein_coding_non_redundant <- NA
+#ensGene[rownames(ensGene.pcg),]$protein_coding_non_redundant <- ensGene.pcg$non_redundant
 
 # =============================================================================
-# Inner Class  : kallisto/Sleuth FileReader
+# Inner Class  : kallisto/Sleuth File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================
@@ -337,3 +353,22 @@ kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
    
    return(tpms[getFiltered(reads, min_reads, min_prop),])
 }
+
+# =============================================================================
+# Inner Class: Collections of test/obsolete/deprecated methods
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 01/02/18
+# =============================================================================
+# getEnsGeneHLA <- function(tpm.gene, ensGene) {
+#    tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+#  
+#    return(tpm.gene[rownames(tpm.gene)[grepl("^HLA-", ensGene[rownames(tpm.gene),]$external_gene_name)],])
+# }
+
+# getEnsGeneTCR <- function(tpm.gene, ensGene) {
+#    return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("TR_", c("C", "V", "D", "J"), "_gene")))),])
+# }
+
+# getEnsGeneIG <- function(tpm.gene, ensGene) {
+#    return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("IG_", c("C", "V", "D", "J"), "_gene")))),])
+# }

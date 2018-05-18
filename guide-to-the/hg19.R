@@ -5,20 +5,29 @@
 # Last Modified: 15/03/18
 # =============================================================================
 wd.reference <- "/Users/tpyang/Work/local/reference/hg19/"
-wd.guidetothe <- "/Users/tpyang/Work/dev/R/guide-to-the/"
+wd.guide     <- "/Users/tpyang/Work/dev/R/guide-to-the/"
 
 source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 
 # =============================================================================
+# Reference    : Ensembl FASTA and GTF file (for running kallisto and pizzly)
+# Link(s)      : ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
+#                ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
+# Last Modified: 30/04/18
+# =============================================================================
+# pizzly -k 31 --gtf $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.gz --cache $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.cache.txt --align-score 2 --insert-size 400 --fasta $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.cdna.all.fa.gz --output S02397 ../kallisto_hg19.ensembl_quant-b100--bias--fusion/S02397/fusion.txt
+# 
+# GTF file contains 63677 genes and 215170 transcripts
+
+# =============================================================================
 # Reference    : Ensembl BioMart
 # Link(s)      : http://grch37.ensembl.org/biomart/martview/
-#                ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
 # Last Modified: 02/11/17
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene
-# Table: ensGene / Count: 57,773 (out of 63,677; Unique results only) / Download Version: 2017-03-27
+# Table   : ensGene / Count: 57,773 (out of 63,677; Unique results only) / Download Version: 2017-03-27
 # -----------------------------------------------------------------------------
 ensGene <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene.ensembl_gene_id_20170327.txt.gz"), header=T, rownames=F, sep="\t")
 colnames(ensGene) <- c("ensembl_gene_id", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype", "external_gene_name")
@@ -37,6 +46,8 @@ ensGene$chromosome_name <- paste0("chr", ensGene$chromosome_name)          ## AD
 # > nrow(subset(ensGene, gene_biotype == "protein_coding"))
 # [1] 20327
 
+# non_redundant_protein_coding   ## TO-DO
+
 freq <- as.data.frame(table(ensGene$external_gene_name))   ## ADD 20/08/17
 freq <- freq[order(freq$Freq, decreasing=T),]
 # > nrow(subset(freq, Freq == 1))
@@ -47,7 +58,7 @@ freq <- freq[order(freq$Freq, decreasing=T),]
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts
-# Table: ensGene / Count: 215,170 / Download Version: 2017-03-25
+# Table   : ensGene / Count: 215,170 / Download Version: 2017-03-25
 # -----------------------------------------------------------------------------
 ensGene.transcript <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene.ensembl_transcript_id_20170325.txt.gz"), header=T, rownames=F, sep="\t")
 colnames(ensGene.transcript) <- c("ensembl_transcript_id", "ensembl_gene_id", "chromosome_name", "strand", "transcript_start", "transcript_end", "start_position", "end_position", "transcript_biotype", "gene_biotype", "external_gene_name")   ##"hugo_gene", "refseq_mrna", "refseq_mrna"
@@ -63,20 +74,6 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 
 ## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" without warning message
 #ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% c(1:22, "X", "Y", "MT"))   ## ADD 23/02/17
-# > nrow(ensGene.transcript)                             ## Same as line 92
-# [1] 196354
-# > length(unique(ensGene.transcript$ensembl_gene_id))   ## Same as line 95
-# [1] 57773
-# > length(unique(ensGene.transcript$external_gene_name))
-# [1] 55773
-
-# > length(unique(subset(ensGene.transcript, transcript_biotype == "protein_coding")$ensembl_gene_id))
-# [1] 22642
-# > ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% paste0("chr", c(1:22, "X", "Y", "MT")))
-# > length(unique(subset(ensGene.transcript, transcript_biotype == "protein_coding")$ensembl_gene_id))
-# [1] 20167
-# > length(unique(ensGene.transcript.exon$name2))   ## After line 122
-# [1] 20167
 
 # =============================================================================
 # Reference    : UCSC Genome Browser (Feb 2009/GRCh37/hg19)
@@ -86,25 +83,27 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts / Exons
-# Table: ensGene / Download Version: 06-Apr-2014
+# Table   : ensGene / Download Version: 06-Apr-2014
 # -----------------------------------------------------------------------------
+chrs <- paste0("chr", c(1:22, "X", "Y", "M"))
+
 ensGene.tmp <- readTable(paste0(wd.reference, "ucsc/ensGene.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
 rownames(ensGene.tmp) <- ensGene.tmp$name
-ensGene.tmp <- subset(ensGene.tmp, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
+ensGene.tmp <- subset(ensGene.tmp, chrom %in% chrs)
 # > nrow(ensGene.tmp)
 # [1] 196354
 # > length(unique(ensGene.tmp$name2))
 # [1] 57773
 
-ensGene.transcript.protein_coding <- subset(ensGene.transcript, transcript_biotype == "protein_coding")
-codings <- intersect(ensGene.tmp$name, ensGene.transcript.protein_coding$ensembl_transcript_id)
-# > length(codings)
-# [1] 81745
+overlaps <- intersect(ensGene.tmp$name, ensGene.transcript$ensembl_transcript_id)
+length(overlaps)
+# > length(overlaps)
+# [1] 204940
 
 colnames <- c("name", "name2", "chrom", "strand", "exonStart", "exonEnd", "cdsStartStat", "cdsEndStat", "exonFrame")
 ensGene.transcript.exon <- toTable(0, length(colnames), 0, colnames)
-for (t in 1:length(codings)) {
-   transcript <- ensGene.tmp[codings[t],]
+for (t in 1:length(overlaps)) {
+   transcript <- ensGene.tmp[overlaps[t],]
    exonStarts <- as.numeric(unlist(strsplit(transcript$exonStarts, ",")))
    exonEnds   <- as.numeric(unlist(strsplit(transcript$exonEnds, ",")))
    exonFrames <- as.numeric(unlist(strsplit(transcript$exonFrames, ",")))
@@ -124,21 +123,45 @@ for (t in 1:length(codings)) {
 ensGene.transcript.exon$exonStart <- ensGene.transcript.exon$exonStart + 1   ## Convert 0-based start coordinates (in 0-start 1-end UCSC format) to 1-based start coordinates (Ensembl)
                                                                              ## https://www.biostars.org/p/6131/
 # > nrow(ensGene.transcript.exon)
-# [1] 739328
+# [1] 1195408
 # > nrow(subset(ensGene.transcript.exon, exonFrame != -1))   ## Note that an exonFrames value of -1 means that the exon is entirely UTR
-# [1] 667505                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
+# [1] 724012                                                 ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/U-w4b_ZS2j0
 
 #ensGene.tmp <- subset(subset(ensGene.tmp, cdsStartStat == "cmpl"), cdsEndStat == "cmpl")   ## Only keep transcripts with "complete" CDS start and end information (like in RefGene)
                                                                                             ## https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/Uz5ozC9vkCQ
 # -----------------------------------------------------------------------------
+# File: cytoBand.txt.gz / Download Version: 14-Jun-2009
+# -----------------------------------------------------------------------------
+cytoBand <- readTable(paste0(wd.reference, "ucsc/cytoBand.txt.gz"), header=F, rownames=F, sep="")
+colnames(cytoBand) <- c("chrom", "chromStart", "chromEnd", "name", "gieStain")
+# > nrow(cytoBand)
+# [1] 862
+
+cytoBand$name2 <- paste0(gsub("chr", "", cytoBand$chrom), cytoBand$name)
+cytoBand$size <- cytoBand$chromEnd - cytoBand$chromStart
+
+# -----------------------------------------------------------------------------
+# File: chromInfo.txt.gz / Download Version: 27-Apr-2009
+# -----------------------------------------------------------------------------
+chromInfo <- readTable(paste0(wd.reference, "ucsc/chromInfo.txt.gz"), header=F, rownames=F, sep="")
+colnames(chromInfo) <- c("chrom", "size")
+rownames(chromInfo) <- chromInfo$chrom
+chromInfo <- subset(chromInfo, chrom %in% chrs)[, 1:2]
+
+###
+## The Bioinformatician's Guide to the Human Genome
+save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, chrs, file=paste0(wd.guide, "hg19.RData"))
+
+# -----------------------------------------------------------------------------
 # Database: RefSeq Gene
-# Table: refGene / Download Version: 04-Mar-2018
+# Table   : refGene / Download Version: 04-Mar-2018
 # -----------------------------------------------------------------------------
 refGene <- readTable(paste0(wd.reference, "ucsc/refGene.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
 # > nrow(refGene)
 # [1] 70019
 
-refGene <- subset(refGene, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
+refGene <- subset(refGene, chrom %in% chrs)
+save(refGene, file=paste0(wd.guide, "hg19.refGene.RData"))
 # > nrow(refGene)
 # [1] 66872
 # > nrow(refGene[grep("NM_", refGene$name),])
@@ -156,49 +179,24 @@ refGene <- subset(refGene, chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
 # 62667 NM_001191005 chr1_gl000191_random      -    34172    50281    40974    50073         6
 
 # -----------------------------------------------------------------------------
-# File: cytoBand.txt.gz / Download Version: 14-Jun-2009
-# -----------------------------------------------------------------------------
-cytoBand <- readTable(paste0(wd.reference, "ucsc/cytoBand.txt.gz"), header=F, rownames=F, sep="")
-colnames(cytoBand) <- c("chrom", "chromStart", "chromEnd", "name", "gieStain")
-# > nrow(cytoBand)
-# [1] 862
-
-cytoBand$name2 <- paste0(gsub("chr", "", cytoBand$chrom), cytoBand$name)
-cytoBand$size <- cytoBand$chromEnd - cytoBand$chromStart
-
-# -----------------------------------------------------------------------------
-# File: chromInfo.txt.gz / Download Version: 27-Apr-2009
-# -----------------------------------------------------------------------------
-chromInfo <- readTable(paste0(wd.reference, "ucsc/chromInfo.txt.gz"), header=F, rownames=F, sep="")
-colnames(chromInfo) <- c("chrom", "size")
-chromInfo <- chromInfo[1:24, 1:2]
-
-###
-## The Bioinformatician's Guide to the Human Genome
-save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, file=paste0(wd.guidetothe, "hg19.RData"))
-save(refGene, file=paste0(wd.guidetothe, "hg19.refGene.RData"))
-
-# -----------------------------------------------------------------------------
 # File: rmsk.txt.gz / Download Version: 27-Apr-2009
 # -----------------------------------------------------------------------------
 rmsk <- readTable(paste0(wd.reference, "ucsc/rmsk.txt.gz"), header=F, rownames=F, sep="")[,-1]
 colnames(rmsk) <- c("bin", "milliDiv", "milliDel", "milliIns", "genoName", "genoStart", "genoEnd", "genoLeft", "strand", "repName", "repClass", "repFamily", "repStart", "repEnd", "repLeft", "id")
 rmsk <- rmsk[,c("genoName", "genoStart", "genoEnd", "strand", "repName", "repClass", "repFamily")]
 
-save(rmsk, file=paste0(wd.guidetothe, "hg19.rmsk.RData"))
+save(rmsk, file=paste0(wd.guide, "hg19.rmsk.RData"))
 
 # =============================================================================
-# Reference: Miscellaneous
+# Reference    : Miscellaneous
 # Last Modified: 13/05/17
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# File: human-genome.1kb-grid.bed
+# File   : human-genome.1kb-grid.bed
 # Link(s): https://github.com/andrej-fischer/cloneHD
 #          ftp://ftp.sanger.ac.uk/pub/teams/153/bed/
 # -----------------------------------------------------------------------------
-chrs <- paste0("chr", c(1:22, "X", "Y"))
-
 #bed.raw <- readTable(paste0(wd.reference, "collections/human-genome.1kb-grid.bed.gz"), header=F, rownames=F, sep="")
 #colnames(bed.raw) <- c("CHR", "START", "END")
 #bed.raw$BED <- paste0("P", rownames(bed.raw))
@@ -208,7 +206,7 @@ colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
 rownames(bed) <- bed$BED
 bed <- bed[,-1]
 
-save(bed, chrs, file=paste0(wd.guidetothe, "hg19.1kb.gc.RData"))
+save(bed, file=paste0(wd.guide, "hg19.1kb.gc.RData"))
 
 # =============================================================================
 # Reference    : UCSC Table Browser (Feb 2009/GRCh37/hg19)

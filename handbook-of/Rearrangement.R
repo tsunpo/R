@@ -169,7 +169,7 @@ getBreakPointFreqTable <- function(sv.bp.tpm.cln.pcg, cutoff) {
 }
 
 # =============================================================================
-# Inner Class  : PeifLyne FileReader
+# Inner Class  : PeifLyne File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================

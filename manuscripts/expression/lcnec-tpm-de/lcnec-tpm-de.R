@@ -5,15 +5,17 @@
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 02/11/17
 # =============================================================================
-#wd.source <- "/projects/cangen/tyang2/dev/R"   ## tyang2@cheops
-#wd.source <- "/ngs/cangen/tyang2/dev/R"        ## tyang2@gauss
-#wd.source <- "/re/home/tyang2/dev/R"           ## tyang2@gauss
-wd.source <- "/Users/tpyang/Work/dev/R"         ## tpyang@localhost
+#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
+#wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
+#wd.src <- "/re/home/tyang2/dev/R"                    ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
-handbooks <- c("Common.R", "DifferentialExpression.R")     ## Required handbooks/libraries for the manuscript
-invisible(sapply(handbooks, function(b) source(file.path(wd.source, "handbook-of", b))))
+wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
+handbooks <- c("Common.R", "DifferentialExpression.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
-load(file.path(wd.source, "guide-to-the", "hg19.RData"))   ## The bioinformatician's guide to the human genome
+wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.guide, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
 # Set working directory
@@ -86,6 +88,28 @@ trait[which(trait == 1)] <- "RB1"
 
 file.main <- "LCNEC RB1 status on 510 D.E. (FDR=10%) genes"
 plotPCA(1, 2, pca.de, trait, wd.lcnec.de, "RB1_510DE_TEST", file.main, NA, NA, c("purple", "red", "dodgerblue", "blue"))
+
+# -----------------------------------------------------------------------------
+# PCA (with SCLC and HeLa)
+# Last Modified: 14/12/17
+# -----------------------------------------------------------------------------
+signature.rb1 <- rownames(subset(de.lcnec.tpm.gene, FDR <= 0.1))
+signature.rb1.overlaps <- intersect(signature.rb1, rownames(hela.tpm.gene.log2))
+## > length(signature.rb1.overlaps)
+## [1] 464
+
+test <- cbind(all.tpm.gene.log2[signature.rb1.overlaps, c(samples.lcnec, samples.sclc)], hela.tpm.gene.log2[signature.rb1.overlaps, hela.samples])
+pca.de <- getPCA(t(test))
+
+trait <- pheno.expr[,"RB1NEW"]
+trait[which(trait == 0)] <- "WT"
+trait[which(trait == 1)] <- "RB1"
+
+trait <- c(trait, rep("SCLC", length(samples.sclc)))
+trait <- c(trait, rep("HeLa", length(samples.hela)))
+
+file.main <- "SCLC and HeLa (n=14) on LCNEC 464 D.E. (RB1 v WT; FDR=10%) genes"
+plotPCA(1, 2, pca.de, trait, wd.de, "pca_RB1_464DE_PC1-PC2_SCLC+HeLa", file.main, NA, -15, c("purple", "lightgray", "red", "orange", "dodgerblue"))
 
 # -----------------------------------------------------------------------------
 # Volcano plots
@@ -690,11 +714,11 @@ dev.off()
 # -----------------------------------------------------------------------------
 # Last Modified: 04/04/17
 # -----------------------------------------------------------------------------
-#wd.source <- "/Users/tpyang/Work/local/R"
-wd.source <- "/re/home/tyang2/local/R"
+#wd.src <- "/Users/tpyang/Work/local/R"
+wd.src <- "/re/home/tyang2/local/R"
 sources <- c("DailyMeal.R", "DifferentialAnalysis.R")
-invisible(sapply(sources, function(s) source(file.path(wd.source, "handbook-of", s))))
-load(file.path(wd.source, "guide-to-the", "hg19.transcript.RData"))
+invisible(sapply(sources, function(s) source(file.path(wd.src, "handbook-of", s))))
+load(file.path(wd.src, "guide-to-the", "hg19.transcript.RData"))
 
 ##
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/rearrangements/"

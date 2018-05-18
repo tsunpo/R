@@ -259,7 +259,7 @@ plotRT2 <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
 
 
 # =============================================================================
-# Inner Class  : In-house FileReader
+# Inner Class  : In-house File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 08/05/17
 # =============================================================================
@@ -272,7 +272,7 @@ read.rpkm.corr.gc.txt.gz <- function(rpkm.file) {
 }
 
 # =============================================================================
-# Inner Class  : PeifLyne FileReader
+# Inner Class  : PeifLyne File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/05/17
 # =============================================================================
@@ -290,19 +290,8 @@ read.peiflyne.cn.seg <- function(cn.file) {
    return(cn)
 }
 
-read.peiflyne.mutcall.filtered.vcf <- function(vcf.file, pass, rs) {
-   vcf <- readTable(vcf.file, header=F, rownames=F, sep="")
-   colnames(vcf) <- c("CHROM",	"POS",	"ID",	"REF",	"ALT",	"QUAL",	"FILTER",	"INFO")
- 
-   if (pass)
-      vcf <- subset(vcf, FILTER == "PASS")
-   if (!rs)
-      vcf <- subset(vcf, ID == ".")
-   return(vcf)
-}
-
 # =============================================================================
-# Inner Class  : Bedtools FileReader
+# Inner Class  : Bedtools File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 10/05/17
 # =============================================================================

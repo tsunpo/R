@@ -5,15 +5,17 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 30/01/18
 # =============================================================================
-#wd.source <- "/projects/cangen/tyang2/dev/R"              ## tyang2@cheops
-#wd.source <- "/ngs/cangen/tyang2/dev/R"                   ## tyang2@gauss
-wd.source <- "/Users/tpyang/Work/dev/R"                    ## tpyang@localhost
+#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
+#wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
-handbooks <- c("Common.R", "Asymmetry.R", "ReplicationTiming.R", "Rearrangement.R")   ## Required handbooks/libraries for the manuscript
-invisible(sapply(handbooks, function(b) source(file.path(wd.source, "handbook-of", b))))
+wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
+handbooks <- c("Common.R", "Asymmetry.R", "ReplicationTiming.R", "DifferentialExpression.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
-load(file.path(wd.source, "guide-to-the", "hg19.RData"))   ## The bioinformatician's guide to the reference genome
-load(file.path(wd.source, "guide-to-the", "hg19.1kb.gc.RData"))
+wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.guide, "hg19.RData"))
+load(file.path(wd.src.guide, "hg19.1kb.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -27,17 +29,17 @@ wd.ngs <- "/Users/tpyang/Work/uni-koeln/tyang2/SCLC/ngs/WGS/"
 wd.rt       <- paste0(wd, "replication/sclc-wgs-rt/")
 wd.rt.data  <- paste0(wd.rt, "data/")
 wd.rt.plots <- paste0(wd.rt, "plots/")
-wd.asym       <- paste0(wd, "asymmetries/sclc-wgs-asym/")
-wd.asym.data  <- paste0(wd.asym, "data/")
-wd.asym.plots <- paste0(wd.asym, "plots/")
+wd.asym       <- paste0(wd, "asymmetries/sclc-asym-tx/")
+wd.asym.data  <- paste0(wd.asym, "data2/")
+wd.asym.plots <- paste0(wd.asym, "plots3/")
 setwd(wd.asym)
 
 samples <- readTable(paste0(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
-# Step 5: Define replicaiton timing direction for expressed genes (Following Step 4 in "asym-sclc-tx.R" and Step 5 from rt-sclc-wgs.R)
-# Link(s): http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
-#          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
+# Step 6.1: Define replicaiton timing direction for expressed genes (Following Step 4 in "asym-sclc-tx.R" and Step 5 from rt-sclc-wgs.R)
+# Link(s):  http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
+#           https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 29/01/18
 # -----------------------------------------------------------------------------
 plotRT0 <- function(wd.rt.plots, title, chr, n, xmin, xmax, rpkms.chr.rt, bed.gc.chr, pair1, pair0, ext) {
@@ -135,38 +137,12 @@ save(ensGene.tx.rt, file=paste0(wd.asym.data, "sclc_asym_tx_rt.RData"))
 # > nrow(tpm.gene.sclc)   ## All chromosomes
 # [1] 19131
 # > nrow(ensGene.tx.rt)   ## Only autosomes
-# [1] 18093
+# [1] 18440
 
 # -----------------------------------------------------------------------------
-# Step 6.1: Divide genes into two groups (hand-on and co-directional)
+# Step 6.2: Divide genes into two groups (hand-on and co-directional)
 # Last Modified: 20/02/18
 # -----------------------------------------------------------------------------
-getHeadOnCollision <- function(ensGene.tx.rt, headon) {
-   if (headon)
-      return(rbind(subset(subset(ensGene.tx.rt, strand == -1), SLOPE_START > 0), subset(subset(ensGene.tx.rt, strand == 1), SLOPE_END < 0)))
-   else
-      return(rbind(subset(subset(ensGene.tx.rt, strand == -1), SLOPE_END < 0), subset(subset(ensGene.tx.rt, strand == 1), SLOPE_START > 0)))
-}
-
-getHeadOnCollision0 <- function(ensGene.tx.rt, headon) {
-   if (headon)
-      return(rbind(subset(subset(ensGene.tx.rt, SLOPE_START > 0), strand == -1), subset(subset(ensGene.tx.rt, SLOPE_START < 0), strand == 1)))
-   else
-      return(rbind(subset(subset(ensGene.tx.rt, SLOPE_START > 0), strand == 1), subset(subset(ensGene.tx.rt, SLOPE_START < 0), strand == -1)))
-}
-
-getTxQ4RT <- function(tx.q4, ensGene.tx.rt, headon) {
-   tx.q4.rt <- list()
-   tx.q4.rt[[4]] <- intersect(tx.q4[[4]], rownames(getHeadOnCollision(ensGene.tx.rt, headon)))
-   tx.q4.rt[[3]] <- intersect(tx.q4[[3]], rownames(getHeadOnCollision(ensGene.tx.rt, headon)))
-   tx.q4.rt[[2]] <- intersect(tx.q4[[2]], rownames(getHeadOnCollision(ensGene.tx.rt, headon)))
-   tx.q4.rt[[1]] <- intersect(tx.q4[[1]], rownames(getHeadOnCollision(ensGene.tx.rt, headon)))
- 
-   return(tx.q4.rt)
-}
-
-###
-##
 ensGene.tx.rt.nona <- subset(subset(ensGene.tx.rt, !is.na(SLOPE_START)), !is.na(SLOPE_END))
 ensGene.tx.rt.nona$SIGN <- sign(ensGene.tx.rt.nona$SLOPE_START / ensGene.tx.rt.nona$SLOPE_END)
 ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-10]
@@ -175,47 +151,48 @@ ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-10]
 # > nrow(ensGene.tx.rt.nona.sign)
 # [1] 16896
 
-tx.input <- tx.pcg.snv             ## ADD 21/02/18; Test for SNVs (before jumping to SVs)
-#tx.input <- tx.pcg.snv.indel.bp   ## For SVs
+###
+## TRICK: Reight replication has a "-" slope, therefore change/flip it's RT slope to "+" to be consistant with e.g. Tx(+)
+ensGene.tx.rt.nona.sign$RT <- -1
+ensGene.tx.rt.nona.sign[ensGene.tx.rt.nona.sign$SLOPE_START < 0,]$RT <- 1
+
+## ADD 13/05/18 from sclc-asym-tx-pcg-non.R
+tpm.gene.input <- tpm.gene.pcg.non.sclc   ## ADD 12/04/18
+#tpm.gene.input <- tpm.gene.non.pcg.sclc   ## ADD 15/04/18
+ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.input))   ## CHANGE 10/04/18 Needed in Step 5; ADD 02/02/18
+tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
+
+tx.input <- tx.snv.input   ## ADD 21/02/18; Test for SNVs
 headon <- F   ## Replication–transcription Head-on (T) / Co-directional (F) collisions
 prefix <- "ho"
 if (headon == F) prefix <- "cd"
 
 ens.tx.rt.input <- intersect(unique(tx.input$ensembl_gene_id), unique(ensGene.tx.rt.nona.sign$ensembl_gene_id))
 ensGene.tx.rt.input <- ensGene.tx.rt.nona.sign[ens.tx.rt.input,]
-tx.q4.rt.input <- getTxQ4RT(tx.q4, ensGene.tx.rt.input, headon=headon)
+tx.q4.rt.input <- getTxQ4RT(ensGene.tx.rt.input, headon=headon, tpm.gene.pcg.non.sclc.log2)
 # > length(unique(tx.input$ensembl_gene_id))
-# [1] 15943
+# [1] 15944
 # > nrow(ensGene.tx.rt.input)
-# [1] 14648
+# [1] 14649
 
-### 
-##
-for (q in 1:4)
-   print(length(intersect(ens.tx.rt.input, tx.q4[[q]])))
-# [1] 3629
-# [1] 3622
-# [1] 3670
-# [1] 3727
+# for (q in 1:4)   ## CD
+#    print(length(intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])))
+# [1] 1154
+# [1] 1154
+# [1] 1154
+# [1] 1154
 
-for (q in 1:4)   ## HO
-   print(length(intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])))
-# [1] 1739
-# [1] 1788
-# [1] 1806
-# [1] 1857
+# for (q in 1:4)   ## HO
+#    print(length(intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])))
+# [1] 1219
+# [1] 1219
+# [1] 1218
+# [1] 1219
 
-for (q in 1:4)   ## CD
-   print(length(intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])))
-# [1] 1890
-# [1] 1834
-# [1] 1864
-# [1] 1870
-
-### 
+###
 ## (Figure S4)
 q4s <- list()
-pdf(paste0(wd.asym.plots, "sclc_asym_tx_rt_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_non_rt_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
@@ -225,16 +202,16 @@ for (i in 1:length(idxs)) {
    for (q in 1:4) {
       txs <- tx.q4.rt.input[[q]]
   
-      ## Cntx:Gtx  =   tx.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.snv.s6[[1]][[2]][[2]] G>T Tx(-)
-      CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
+      ## Cntx:Gtx  =   tx.pcg.non.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.pcg.non.snv.s6[[1]][[2]][[2]] G>T Tx(-)
+      CntxGtx <- rbind(tx.pcg.non.snv.s6[[i]][[1]][[1]],               tx.pcg.non.snv.s6[[i]][[2]][[2]])
       #CntxGtx <- subset(CntxGtx, ensembl_gene_id %in% txs)
       #q4[1, q] <- getMutPerMbTxs(bp, unique(CntxGtx$ensembl_gene_id))
       txs.cg <- intersect(unique(CntxGtx$ensembl_gene_id), txs)
       #q4[1, q] <- getMutPerMbTxs(tx.input, txs.cg)
       q4[1, q] <- getMutPerMbTxs(CntxGtx, txs.cg)
       
-      ## Gntx:Ctx  =   tx.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
-      GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
+      ## Gntx:Ctx  =   tx.pcg.non.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.pcg.non.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
+      GntxCtx <- rbind(tx.pcg.non.snv.s6[[i]][[2]][[1]],               tx.pcg.non.snv.s6[[i]][[1]][[2]])
       #GntxCtx <- subset(GntxCtx, ensembl_gene_id %in% txs) 
       #q4[2, q] <- getMutPerMbTxs(bp, unique(GntxCtx$ensembl_gene_id))
       txs.gc <- intersect(unique(GntxCtx$ensembl_gene_id), txs)
@@ -245,19 +222,22 @@ for (i in 1:length(idxs)) {
    }
  
    q4s[[i]] <- q4
-   barplot(q4, ylab="SNVs/Mb", main=paste(rownames(q4), collapse="/"), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"))
+   barplot(q4, ylab="SNVs/Mb", main=paste(rownames(q4), collapse="/"), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"))
 }
 dev.off()
-save(q4s, file=paste0(wd.asym.data, "sclc_asym_tx_rt_snv_q4s_rt_", prefix, ".RData"))
+save(q4s, file=paste0(wd.asym.data, "sclc_asym_tx_pcg_non_rt_snv_q4s_rt_", prefix, ".RData"))
 
 ## ADD 22/02/18
-q4s.rt[[2]] <- q4s
-q4s.rt[[3]] <- q4s
-save(q4s.rt, file=paste0(wd.asym.data, "sclc_asym_tx_rt_snv_q4s_rt.RData"))
+if (headon == F) {
+   q4s.rt[[2]] <- q4s
+} else {
+   q4s.rt[[3]] <- q4s
+   save(q4s.rt, file=paste0(wd.asym.data, "sclc_asym_tx_pcg_non_rt_snv_q4s_rt.RData"))
+}
 
 ###
 ## Refining the plot
-pdf(paste0(wd.asym.plots, "sclc_asym_tx_rt_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_non_rt_snv_q4s_", prefix, ".pdf"), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -268,16 +248,16 @@ for (i in 1:length(idxs)) {
    #for (c in 1:ncol(q4))
    #   colnames(q4)[c] <- gsub("n=", "", unlist(strsplit(colnames(q4)[c], " "))[1])
  
-   barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"))   ##, xlab="Number of genes")
-   mtext(paste(rownames(q4), collapse=" vs "), cex=0.55, font=3, line=0.5)
+   barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"))   ##, xlab="Number of genes")
+   mtext(paste(rownames(q4), collapse="/"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
 
 # -----------------------------------------------------------------------------
-# Step 6.2: Log2 transcription-associated SNV asymmetry (Figure S5)
+# Step 6.3: Log2 transcription-associated SNV asymmetry (Figure S5)
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
-pdf(paste0(wd.asym.plots, "sclc_asym_tx_rt_snv_q4s_", prefix, "_log2_ylim1.5.pdf"), height=4.5, width=7)
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_non_rt_snv_q4s_", prefix, "_log2_ylim1.5.pdf"), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -286,14 +266,7 @@ for (i in 1:length(idxs)) {
    else
       colnames(q4) <- c("                                     RT-Tx (Co-directional)", "", "", "")
  
-   cols <- c()   
-   for (c in 1:ncol(q4))
-      if (log2(q4[1,c]/q4[2,c]) > 0)
-         cols <- c(cols, "#4D4D4D")
-      else
-         cols <- c(cols, "#E6E6E6")    
- 
-   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=cols)
+   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))
    mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
@@ -302,46 +275,261 @@ dev.off()
 # Step 7: Replication–transcription collision-induced SNV asymmetry (Figure 1)
 # Last Modified: 22/02/18
 # -----------------------------------------------------------------------------
-getQ4 <- function(j, i) {
-   q4 <- q4s.rt[[j]][[i]]
-   if (j == 1)
-      colnames(q4) <- c("", "            Tx", "", "")
-   else if (j == 2)
-      colnames(q4) <- c("                                     RT-Tx (Head-on)", "", "", "")
-   else if (j ==3)
-      colnames(q4) <- c("                                     RT-Tx (Co-directional)", "", "", "")
+for (i in 1:length(idxs)) {
+   idx <- idxs[i]
    
-   return(q4)
+   pdf(paste0(wd.asym.plots, "sclc_asym_tx_pcg_non_rt_snv_q4s_collision_", REFS[idx], ">", ALTS[idx], ".pdf"), height=4.5, width=7)
+   par(mfrow=c(2, 3)) 
+   for (j in 1:3) {
+      q4 <- getRTTxQ4(j, i)
+      
+      barplot(q4, ylab="SNVs/Mb", main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"), ylim=c(0, q4s.rt[[1]][[i]][2, 1]))   ##, xlab="Number of genes")
+      mtext(paste(rownames(q4), collapse="/"), cex=0.55, font=3, line=0.5)      
+   }
+   
+   for (j in 1:3) {
+      q4 <- getRTTxQ4(j, i)
+  
+      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
+      mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
+   }
+   dev.off()
 }
+
+# =============================================================================
+# Inner Class  : Test gene to gene distance 
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 13/05/18
+# =============================================================================
+tx.q4.rt.ho <- list()
+for (q in 1:4)
+   tx.q4.rt.ho[[q]] <- intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])
+
+tx.q4.rt.cd <- list()
+for (q in 1:4)
+   tx.q4.rt.cd[[q]] <- intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])
+
+tx.q4.rt <- getTxQ4(ens.tx.rt.input, tpm.gene.pcg.non.sclc.log2)
+# > for (q in 1:4)
+#  + print(length(intersect(ens.tx.rt.input, tx.q4.rt[[q]])))
+# [1] 2373
+# [1] 2373
+# [1] 2372
+# [1] 2373
 
 ###
 ##
-idx <- 0
-for (i in 1:6) {
-   pdf(paste0(wd.asym.plots, "sclc_asym_tx_rt_snv_q4s_collision_", REFS[i+idx], ">", ALTS[i+idx], ".pdf"), height=4.5, width=7)
-   par(mfrow=c(2, 3)) 
+getTSS <- function(ensGene.genes) {
+   ensGene.genes$TSS <- 0
  
-   for (j in 1:3) {
-      q4 <- getQ4(j, i)
-      
-      barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=c("#E6E6E6", "#4D4D4D"), ylim=c(0, q4s.rt[[1]][[i]][2, 1]))   ##, xlab="Number of genes")
-      mtext(paste(rownames(q4), collapse=" vs "), cex=0.55, font=3, line=0.5)      
+   for (g in 1:nrow(ensGene.genes)) {
+      if (ensGene.genes$strand[g] > 0)
+         ensGene.genes$TSS[g] <- ensGene.genes$start_position[g]
+      else
+         ensGene.genes$TSS[g] <- ensGene.genes$end_position[g]
    }
  
-   for (j in 1:3) {
-      q4 <- getQ4(j, i)
-  
-      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=cols)
-      mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
-   }
-   
-   dev.off()
-   idx <- idx + 1
+   return(ensGene.genes)
 }
 
+g2g.rt.collision <- list()
+
+## All genes
+g2g.rt <- list()
+for (q in 1:4) {
+   genes <- tx.q4.rt[[q]]
+   ensGene.genes <- ensGene[genes,]
+   ensGene.genes <- getTSS(ensGene.genes)
+ 
+   g2g <- list()
+   for (g in 1:length(genes)) {
+      ensGene.gene <- ensGene.genes[genes[g],]
+      ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
+      ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
+    
+      g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+   }
+   g2g.rt[[q]] <- g2g
+}
+g2g.rt.collision[[1]] <- g2g.rt
+
+## CD genes
+g2g.rt <- list()
+for (q in 1:4) {
+   genes <- tx.q4.rt.cd[[q]]
+   ensGene.genes <- ensGene[genes,]
+   ensGene.genes <- getTSS(ensGene.genes)
+ 
+   g2g <- list()
+   for (g in 1:length(genes)) {
+      ensGene.gene <- ensGene.genes[genes[g],]
+      ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
+      ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
+      
+      g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+   }
+   g2g.rt[[q]] <- g2g
+}
+g2g.rt.collision[[2]] <- g2g.rt
+
+##
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_rt_gene-to-gene.pdf"), height=2.25, width=7)
+par(mfrow=c(1, 3))
+
+for (i in 1:3) {
+ g2g.rt <- g2g.rt.collision[[i]]
+ 
+ boxplot(as.numeric(g2g.rt), ylab="Distance", main="", beside=TRUE, width=.3)  #, ylim=c(ymin, ymax))
+}
+
+dev.off()
+
+## Moment of truth
+median(as.numeric(g2g.rt.collision[[1]][[1]]))
+median(as.numeric(g2g.rt.collision[[1]][[2]]))
+median(as.numeric(g2g.rt.collision[[1]][[3]]))
+median(as.numeric(g2g.rt.collision[[1]][[4]]))
+
+median(as.numeric(g2g.rt.collision[[2]][[1]]))
+median(as.numeric(g2g.rt.collision[[2]][[2]]))
+median(as.numeric(g2g.rt.collision[[2]][[3]]))
+median(as.numeric(g2g.rt.collision[[2]][[4]]))
+
+median(as.numeric(g2g.rt.collision[[3]][[1]]))
+median(as.numeric(g2g.rt.collision[[3]][[2]]))
+median(as.numeric(g2g.rt.collision[[3]][[3]]))
+median(as.numeric(g2g.rt.collision[[3]][[4]]))
+
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[1]])), ylab="Distance", main="")
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[2]])), ylab="Distance", main="")
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[3]])), ylab="Distance", main="")
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[4]])), ylab="Distance", main="")
+
+plot(density(as.numeric(g2g.rt.collision[[1]][[1]])/1000000), ylab="Distance", main="", beside=TRUE, width=.3) 
+plot(density(as.numeric(g2g.rt.collision[[1]][[2]])/1000000), ylab="Distance", main="", beside=TRUE, width=.3) 
+plot(density(as.numeric(g2g.rt.collision[[1]][[3]])/1000000), ylab="Distance", main="", beside=TRUE, width=.3) 
+plot(density(as.numeric(g2g.rt.collision[[1]][[4]])/1000000), ylab="Distance", main="", beside=TRUE, width=.3)
+
+plot(density(log10(as.numeric(g2g.rt.collision[[1]][[1]]))), ylab="Distance", main="", beside=TRUE, width=.3) 
+plot(density(log10(as.numeric(g2g.rt.collision[[1]][[2]]))), ylab="Distance", main="", beside=TRUE, width=.3) 
+plot(density(log10(as.numeric(g2g.rt.collision[[1]][[3]]))), ylab="Distance", main="", beside=TRUE, width=.3) 
+plot(density(log10(as.numeric(g2g.rt.collision[[1]][[4]]))), ylab="Distance", main="", beside=TRUE, width=.3)
+
+###
+##
+xmax <- 0
+ymax <- 0
+for (q in 1:4) {
+   d <- density(log10(as.numeric(g2g.rt.collision[[1]][[q]])))
+ 
+   if (max(d$x) > xmax) {
+      xmax <- max(d$x)
+   } else if (max(d$y) > ymax) {
+      ymax <- max(d$y)
+   }
+}
+
+plot(density(log10(as.numeric(g2g.rt.collision[[1]][[1]]))), ylab="Distance", ylim=c(0, ymax+0.05), main="") 
+lines(density(log10(as.numeric(g2g.rt.collision[[1]][[2]])))) 
+lines(density(log10(as.numeric(g2g.rt.collision[[1]][[3]])))) 
+lines(density(log10(as.numeric(g2g.rt.collision[[1]][[4]]))))
+
+###
+##
+distances <- c()
+quantiles <- c()
+for (q in 1:4) {
+   distances <- c(distances, as.numeric(g2g.rt.collision[[1]][[q]]))
+   quantiles <- c(quantiles, mapply(x = 1:length(g2g.rt.collision[[1]][[q]]), function(x) paste0("q", q)))
+}
+
+pdf(paste0(wd.asym.plots, "sclc_asym_tx_rt_gene-to-gene.pdf"), height=5, width=5)
+boxplot(log10(distances)~quantiles, ylab="Minumum gene-to-gene distance (log10)", xlab="Expression", main="SCLC")
+dev.off()
 
 
 
+
+
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[1]])), ylab="Distance", main="")
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[2]])), ylab="Distance", main="")
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[3]])), ylab="Distance", main="")
+boxplot(log10(as.numeric(g2g.rt.collision[[1]][[4]])), ylab="Distance", main="")
+
+
+
+# -----------------------------------------------------------------------------
+# Examples: RB1
+# Last Modified: 13/04/18
+# -----------------------------------------------------------------------------
+# > ensGene.chr.start.end
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name overlapping
+# ENSG00000238086 ENSG00000238086           chr13     -1       48890999     48894611     pseudogene          PPP1R26P1          NA
+# ENSG00000177197 ENSG00000177197           chr13     -1       48902220     48902700     pseudogene             PCNPP5          NA
+# ENSG00000139687 ENSG00000139687           chr13      1       48877887     49056122 protein_coding                RB1        TRUE
+# ENSG00000139679 ENSG00000139679           chr13     -1       48963707     49018840 protein_coding              LPAR6        TRUE
+
+# > ensGene.tx.rt.nona.sign[c("ENSG00000139687", "ENSG00000139679"),]
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name SLOPE_START SLOPE_END RT
+# ENSG00000139687 ENSG00000139687           chr13      1       48877887     49056122 protein_coding                RB1   0.1551074 0.2126124 -1
+# ENSG00000139679 ENSG00000139679           chr13     -1       48963707     49018840 protein_coding              LPAR6   0.1981649 0.2111415 -1
+
+# > nrow(subset(tx.snv, ensembl_gene_id == "ENSG00000139687"))
+# [1] 102
+# > nrow(subset(tx.snv, ensembl_gene_id == "ENSG00000139679"))
+# [1] 17
+
+# -----------------------------------------------------------------------------
+# Examples: TP53
+# Last Modified: 13/04/18
+# -----------------------------------------------------------------------------
+# > ensGene.chr.start.end
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name overlapping
+# ENSG00000262251 ENSG00000262251           chr17     -1        7588578      7589689 sense_intronic      RP11-199F11.2          NA
+# ENSG00000141510 ENSG00000141510           chr17     -1        7565097      7590856 protein_coding               TP53        TRUE
+# ENSG00000141499 ENSG00000141499           chr17      1        7589389      7606820 protein_coding             WRAP53        TRUE
+
+# > ensGene.tx.rt.nona.sign[c("ENSG00000141510", "ENSG00000141499", "ENSG00000262251"),]
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name SLOPE_START    SLOPE_END RT
+# ENSG00000141510 ENSG00000141510           chr17     -1        7565097      7590856 protein_coding               TP53 -0.05183592 -0.019433001  1
+# ENSG00000141499 ENSG00000141499           chr17      1        7589389      7606820 protein_coding             WRAP53 -0.02064783 -0.002023487  1
+# NA                         <NA>            <NA>     NA             NA           NA           <NA>               <NA>          NA           NA NA
+
+# > nrow(subset(tx.snv, ensembl_gene_id == "ENSG00000141510"))
+# [1] 88
+# > nrow(subset(tx.snv, ensembl_gene_id == "ENSG00000141499"))
+# [1] 16
+
+# -----------------------------------------------------------------------------
+# Examples: MYCN and NCYM
+# Last Modified: 13/04/18
+# -----------------------------------------------------------------------------
+# > ensGene.chr.start.end
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name overlapping
+# ENSG00000233718 ENSG00000233718            chr2     -1       16061159     16082371      antisense             MYCNOS          NA
+# ENSG00000134323 ENSG00000134323            chr2      1       16080686     16087129 protein_coding               MYCN       FALSE
+
+# > ensGene.tx.rt.nona.sign[c("ENSG00000134323", "ENSG00000233718"),]
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name SLOPE_START  SLOPE_END RT
+# ENSG00000134323 ENSG00000134323            chr2      1       16080686     16087129 protein_coding               MYCN  -0.2278129 -0.2309268  1
+# NA                         <NA>            <NA>     NA             NA           NA           <NA>               <NA>          NA         NA NA
+
+
+
+
+
+
+# =============================================================================
+# Inner Class  : Collections of test/obsolete/deprecated methods
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified:
+# =============================================================================
+#getHeadOnCollision <- function(ensGene.tx.rt, headon) {
+#   if (headon)
+#      return(rbind(subset(subset(ensGene.tx.rt, strand == -1), SLOPE_START > 0), subset(subset(ensGene.tx.rt, strand == 1), SLOPE_END < 0)))
+#   else
+#      return(rbind(subset(subset(ensGene.tx.rt, strand == -1), SLOPE_END < 0), subset(subset(ensGene.tx.rt, strand == 1), SLOPE_START > 0)))
+#}
 
 
 
