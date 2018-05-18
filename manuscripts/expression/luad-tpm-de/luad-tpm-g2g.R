@@ -21,23 +21,24 @@ load(file.path(wd.src.guide, "hg19.RData"))
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
 BASE <- "LUAD"
-#wd     <- paste0("/ngs/cangen/tyang2/", BASE, "/analysis/")                   ## tyang2@gauss
-#wd.ngs <- paste0("/ngs/cangen/tyang2/", BASE, "/ngs/RNA/")
-wd     <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/analysis/")   ## tpyang@localhost
-wd.ngs <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/ngs/RNA/")
+base <- tolower(BASE)
+#wd     <- file.path("/ngs/cangen/tyang2", BASE, "analysis")                   ## tyang2@gauss
+#wd.ngs <- file.path("/ngs/cangen/tyang2", BASE, "ngs/RNA")
+wd     <- file.path("/Users/tpyang/Work/uni-koeln/tyang2", BASE, "analysis")   ## tpyang@localhost
+wd.ngs <- file.path("/Users/tpyang/Work/uni-koeln/tyang2", BASE, "ngs/RNA")
 
-wd.asym       <- paste0(wd, "asymmetries/", tolower(BASE), "-asym-tx/")
-wd.asym.data  <- paste0(wd.asym, "data/")
-wd.asym.plots <- paste0(wd.asym, "plots/")
+wd.asym       <- file.path(wd, "asymmetries", paste0(base, "-asym-tx"))
+wd.asym.data  <- file.path(wd.asym, "data")
+wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
-samples <- readTable(paste0(wd.ngs, "luad_rna_n49-1.list"), header=F, rownames=F, sep="")[,1]
+samples <- readTable(file.path(wd.ngs, "luad_rna_n49-1.list"), header=F, rownames=F, sep="")
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/analysis/expression/kallisto/", tolower(BASE), "-tpm-de/data/", tolower(BASE), "_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
+load(file.path("/Users/tpyang/Work/uni-koeln/tyang2", base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
@@ -58,4 +59,7 @@ c(p1, p2, p3)
 p.adjust(c(p1, p2, p3), method="bonferroni")
 # [1] 4.975665e-06 1.096348e-03 2.394080e-02
 
-plotG2GQ4(wd.asym.plots, BASE, length(samples), g2g.q4)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", nrow(samples), ")")
+plotG2GQ4(g2g.q4, file.name, file.main)
+

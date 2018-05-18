@@ -1,6 +1,6 @@
 # =============================================================================
-# Manuscript   : 
-# Chapter      : RB-loss additive effect in SCLC (DE2)
+# Manuscript   : Loss of RB1 escapes cell cycle arrest
+# Chapter      : RB-loss additive effect in SCLC
 # Name         : manuscripts/expression/all-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 30/11/17

@@ -1,9 +1,9 @@
 # =============================================================================
-# Manuscript   : Loss of RB1 escapes cell cycle arrest
-# Chapter      : RB-loss differential effect in LCNEC
-# Name         : manuscripts/expression/lcnec-tpm-de.R
+# Manuscript   : 
+# Chapter      : 
+# Name         : manuscripts/expression/lusq-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 02/11/17
+# Last Modified: 18/05/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
@@ -23,7 +23,7 @@ load(file.path(wd.src.guide, "hg19.RData"))
 #wd <- "/ngs/cangen/tyang2/"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2/"   ## tyang2@local
 
-wd.all <- paste0(wd, "ALL/analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/")
+wd.all <- paste0(wd, "LUSQ/analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/")
 wd.lcnec.de <- paste0(wd.all, "de-lcnec-tpm-gene/")
 setwd(wd.lcnec.de)
 

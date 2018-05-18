@@ -44,7 +44,7 @@ getG2GQ4 <- function(tx.q4) {
    return(g2g.q4)
 }
 
-plotG2GQ4 <- function(wd.asym.plots, BASE, sample.size, g2g.q4) {
+plotG2GQ4 <- function(g2g.q4, file.name, file.main, ylim) {
    distances <- c()
    quantiles <- c()
    for (q in 1:4) {
@@ -52,8 +52,9 @@ plotG2GQ4 <- function(wd.asym.plots, BASE, sample.size, g2g.q4) {
       quantiles <- c(quantiles, mapply(x = 1:length(g2g.q4[[q]]), function(x) paste0("q", q)))
    }
  
-   pdf(paste0(wd.asym.plots, tolower(BASE), "_asym_tx_g2g.pdf"), height=6, width=4)
-   boxplot(log10(distances)~quantiles, ylab="Gene-to-gene min dist. (log10)", xlab="Expression", names=c("25%", "50%", "75%", "100%"), main=paste0(BASE, " (n=", sample.size, ")"))
+   pdf(file.name, height=6, width=4)
+   names <- c("25%", "50%", "75%", "100%")
+   boxplot(log10(distances)~quantiles, ylab="Gene-to-gene min dist. (log10)", xlab="Expression", names=names, ylim=ylim, main=file.main)
    dev.off()
 }
 
