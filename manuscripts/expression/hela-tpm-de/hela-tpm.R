@@ -5,26 +5,34 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 05/05/18
 # =============================================================================
-wd.src <- "/ngs/cangen/tyang2/dev/R"                  ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"                 ## tpyang@localhost
+wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
-wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Common.R", "DifferentialExpression.R")
-invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
+handbooks  <- c("Common.R", "DifferentialExpression.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
-wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
-load(file.path(wd.src.guide, "hg19.RData"))
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2/HeLa/"                     ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2/HeLa/"   ## tyang2@local
-wd.rna <- paste0(wd, "ngs/RNA/")
-wd.rna.kallisto <- paste0(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion/")
-wd.de <- paste0(wd, "analysis/expression/kallisto/hela-tpm-de/")
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 
-samples <- readTable(paste0(wd.rna, "hela_rna_n14.list"), header=F, rownames=F, sep="\t")[,1]
+BASE <- "HeLa"
+base <- tolower(BASE)
+wd.rna   <- file.path(wd, BASE, "ngs/RNA")
+wd.anlys <- file.path(wd, BASE, "analysis")
+
+wd.rna.raw  <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
+wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
+wd.de.data  <- file.path(wd.de, "data")
+wd.de.plots <- file.path(wd.de, "plots")
+setwd(wd.de)
+
+samples <- readTable(paste0(wd.rna, "hela_rna_n14.list"), header=F, rownames=T, sep="")[,1]
 
 # -----------------------------------------------------------------------------
 # Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
@@ -37,8 +45,8 @@ samples <- readTable(paste0(wd.rna, "hela_rna_n14.list"), header=F, rownames=F, 
 library("sleuth")
 
 tsvs <- sapply(samples, function(s) file.path(wd.rna.kallisto, s))
-s2c <- data.frame(path=tsvs, sample=samples, stringsAsFactors=F)
-t2g <- tx2Ens(ensGene.transcript)
+s2c  <- data.frame(path=tsvs, sample=samples, stringsAsFactors=F)
+t2g  <- tx2Ens(ensGene.transcript)
 
 so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
 # reading in kallisto results
@@ -53,8 +61,8 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
 tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
-save(tpm.norm,      file=paste0(wd.de, "data/hela_kallisto_0.43.1_tpm.norm_r5_p47.RData"))
-save(tpm.norm.filt, file=paste0(wd.de, "data/hela_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData"))
+save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm_r5_p47.RData")))
+save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData")))
 
 ## Genes with patches
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
@@ -66,6 +74,6 @@ tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
 overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
 tpm.gene <- tpm.gene.patch[overlaps,]
-save(tpm.gene, file=paste0(wd.de, "data/hela_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 # > nrow(tpm.gene)         ## Gene-level TPMs
 # [1] 17197

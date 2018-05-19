@@ -5,21 +5,42 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 30/11/17
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
-#wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
-#wd.src <- "/re/home/tyang2/dev/R"                    ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
+#wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
-wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Common.R", "DifferentialExpression.R")
-invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
+handbooks  <- c("Common.R", "DifferentialExpression.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
-wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
-load(file.path(wd.src.guide, "hg19.RData"))
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
-# Set working directory
+# Step 0: Set working directory
 # -----------------------------------------------------------------------------
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+
+BASE <- "ALL"
+base <- tolower(BASE)
+wd.rna   <- file.path(wd, BASE, "ngs/RNA")
+wd.anlys <- file.path(wd, BASE, "analysis")
+
+wd.de       <- file.path(wd.anlys, "expression/kallisto", "luad-lcnec-sclc-tpm-de")
+wd.de.data  <- file.path(wd.de, "data")
+wd.de.plots <- file.path(wd.de, "plots")
+setwd(wd.de)
+
+load(file.path(wd, base, "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
+tpm.gene.log2 <- log2(tpm.gene + 0.01)
+
+
+
+
+
+
 #wd <- "/ngs/cangen/tyang2/"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2/"   ## tyang2@local
 

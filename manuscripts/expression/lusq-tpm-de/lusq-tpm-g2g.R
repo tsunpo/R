@@ -20,26 +20,26 @@ load(file.path(wd.src.guide, "hg19.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+
 BASE <- "LUSQ"
 base <- tolower(BASE)
-#wd     <- file.path("/ngs/cangen/tyang2", BASE, "analysis")                   ## tyang2@gauss
-#wd.ngs <- file.path("/ngs/cangen/tyang2", BASE, "ngs/RNA")
-wd     <- file.path("/Users/tpyang/Work/uni-koeln/tyang2", BASE, "analysis")   ## tpyang@localhost
-wd.ngs <- file.path("/Users/tpyang/Work/uni-koeln/tyang2", BASE, "ngs/RNA")
+wd.rna   <- file.path(wd, BASE, "ngs/RNA")
+wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.asym       <- file.path(wd, "asymmetries", paste0(base, "-asym-tx"))
-wd.asym.data  <- file.path(wd.asym, "data")
 wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
-samples <- readTable(file.path(wd.ngs, "lusq_rna_n21.list"), header=F, rownames=F, sep="")
+samples <- readTable(file.path(wd.rna, "lusq_rna_n21.list"), header=F, rownames=T, sep="")
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-load(file.path("/Users/tpyang/Work/uni-koeln/tyang2", base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)

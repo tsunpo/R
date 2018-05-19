@@ -5,19 +5,9 @@
 # Last Modified: 15/03/18
 # =============================================================================
 wd.reference <- "/Users/tpyang/Work/local/reference/hg19/"
-wd.guide     <- "/Users/tpyang/Work/dev/R/guide-to-the/"
+wd.src.ref   <- "/Users/tpyang/Work/dev/R/guide-to-the/"
 
 source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
-
-# =============================================================================
-# Reference    : Ensembl FASTA and GTF file (for running kallisto and pizzly)
-# Link(s)      : ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
-#                ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
-# Last Modified: 30/04/18
-# =============================================================================
-# pizzly -k 31 --gtf $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.gz --cache $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.cache.txt --align-score 2 --insert-size 400 --fasta $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.cdna.all.fa.gz --output S02397 ../kallisto_hg19.ensembl_quant-b100--bias--fusion/S02397/fusion.txt
-# 
-# GTF file contains 63677 genes and 215170 transcripts
 
 # =============================================================================
 # Reference    : Ensembl BioMart
@@ -27,7 +17,7 @@ source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene
-# Table   : ensGene / Count: 57,773 (out of 63,677; Unique results only) / Download Version: 2017-03-27
+# Table: ensGene / Count: 57,773 (out of 63,677; Unique results only) / Download Version: 2017-03-27
 # -----------------------------------------------------------------------------
 ensGene <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene.ensembl_gene_id_20170327.txt.gz"), header=T, rownames=F, sep="\t")
 colnames(ensGene) <- c("ensembl_gene_id", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype", "external_gene_name")
@@ -46,7 +36,8 @@ ensGene$chromosome_name <- paste0("chr", ensGene$chromosome_name)          ## AD
 # > nrow(subset(ensGene, gene_biotype == "protein_coding"))
 # [1] 20327
 
-# non_redundant_protein_coding   ## TO-DO
+## Add non-redundant protein coding gene list
+## in handbook-of/DifferentialExpression.R from line 275
 
 freq <- as.data.frame(table(ensGene$external_gene_name))   ## ADD 20/08/17
 freq <- freq[order(freq$Freq, decreasing=T),]
@@ -58,7 +49,7 @@ freq <- freq[order(freq$Freq, decreasing=T),]
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts
-# Table   : ensGene / Count: 215,170 / Download Version: 2017-03-25
+# Table: ensGene / Count: 215,170 / Download Version: 2017-03-25
 # -----------------------------------------------------------------------------
 ensGene.transcript <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene.ensembl_transcript_id_20170325.txt.gz"), header=T, rownames=F, sep="\t")
 colnames(ensGene.transcript) <- c("ensembl_transcript_id", "ensembl_gene_id", "chromosome_name", "strand", "transcript_start", "transcript_end", "start_position", "end_position", "transcript_biotype", "gene_biotype", "external_gene_name")   ##"hugo_gene", "refseq_mrna", "refseq_mrna"
@@ -83,7 +74,7 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts / Exons
-# Table   : ensGene / Download Version: 06-Apr-2014
+# Table: ensGene / Download Version: 06-Apr-2014
 # -----------------------------------------------------------------------------
 chrs <- paste0("chr", c(1:22, "X", "Y", "M"))
 
@@ -150,18 +141,18 @@ chromInfo <- subset(chromInfo, chrom %in% chrs)[, 1:2]
 
 ###
 ## The Bioinformatician's Guide to the Human Genome
-save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, chrs, file=paste0(wd.guide, "hg19.RData"))
+save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, chrs, file=paste0(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
 # Database: RefSeq Gene
-# Table   : refGene / Download Version: 04-Mar-2018
+# Table: refGene / Download Version: 04-Mar-2018
 # -----------------------------------------------------------------------------
 refGene <- readTable(paste0(wd.reference, "ucsc/refGene.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
 # > nrow(refGene)
 # [1] 70019
 
 refGene <- subset(refGene, chrom %in% chrs)
-save(refGene, file=paste0(wd.guide, "hg19.refGene.RData"))
+save(refGene, file=paste0(wd.src.ref, "hg19.refGene.RData"))
 # > nrow(refGene)
 # [1] 66872
 # > nrow(refGene[grep("NM_", refGene$name),])
@@ -185,7 +176,7 @@ rmsk <- readTable(paste0(wd.reference, "ucsc/rmsk.txt.gz"), header=F, rownames=F
 colnames(rmsk) <- c("bin", "milliDiv", "milliDel", "milliIns", "genoName", "genoStart", "genoEnd", "genoLeft", "strand", "repName", "repClass", "repFamily", "repStart", "repEnd", "repLeft", "id")
 rmsk <- rmsk[,c("genoName", "genoStart", "genoEnd", "strand", "repName", "repClass", "repFamily")]
 
-save(rmsk, file=paste0(wd.guide, "hg19.rmsk.RData"))
+save(rmsk, file=paste0(wd.src.ref, "hg19.rmsk.RData"))
 
 # =============================================================================
 # Reference    : Miscellaneous
@@ -193,7 +184,7 @@ save(rmsk, file=paste0(wd.guide, "hg19.rmsk.RData"))
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# File   : human-genome.1kb-grid.bed
+# File: human-genome.1kb-grid.bed
 # Link(s): https://github.com/andrej-fischer/cloneHD
 #          ftp://ftp.sanger.ac.uk/pub/teams/153/bed/
 # -----------------------------------------------------------------------------
@@ -206,7 +197,7 @@ colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
 rownames(bed) <- bed$BED
 bed <- bed[,-1]
 
-save(bed, file=paste0(wd.guide, "hg19.1kb.gc.RData"))
+save(bed, file=paste0(wd.src.ref, "hg19.1kb.gc.RData"))
 
 # =============================================================================
 # Reference    : UCSC Table Browser (Feb 2009/GRCh37/hg19)
@@ -214,3 +205,14 @@ save(bed, file=paste0(wd.guide, "hg19.1kb.gc.RData"))
 #                http://genome.ucsc.edu/FAQ/FAQdownloads#download10
 # Last Modified: 14/03/18
 # =============================================================================
+
+# =============================================================================
+# Reference    : Ensembl FASTA and GTF file (for running kallisto and pizzly)
+# Link(s)      : ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
+#                ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
+# Last Modified: 30/04/18
+# =============================================================================
+# pizzly -k 31 --gtf $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.gz --cache $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.cache.txt --align-score 2 --insert-size 400 --fasta $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.cdna.all.fa.gz --output S02397 ../kallisto_hg19.ensembl_quant-b100--bias--fusion/S02397/fusion.txt
+# 
+# GTF file contains 63677 genes and 215170 transcripts
+

@@ -5,34 +5,35 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 15/05/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
-#wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
-wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Common.R", "Asymmetry.R", "ReplicationOrigin.R")
-invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
+handbooks  <- c("Common.R", "Asymmetry.R", "ReplicationOrigin.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
-wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
-load(file.path(wd.src.guide, "hg19.RData"))
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+
 BASE <- "LCNEC"
 base <- tolower(BASE)
-#wd     <- file.path("/ngs/cangen/tyang2", BASE, "analysis")                   ## tyang2@gauss
-#wd.ngs <- file.path("/ngs/cangen/tyang2", BASE, "ngs/RNA")
-wd     <- file.path("/Users/tpyang/Work/uni-koeln/tyang2", BASE, "analysis")   ## tpyang@localhost
-wd.ngs <- file.path("/Users/tpyang/Work/uni-koeln/tyang2", BASE, "ngs/RNA")
+wd.rna   <- file.path(wd, BASE, "ngs/RNA")
+wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.asym       <- file.path(wd, "asymmetries", paste0(base, "-asym-tx"))
+wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx"))
 wd.asym.data  <- file.path(wd.asym, "data")
 wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
-samples <- readTable(file.path(wd.ngs, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
+samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
@@ -42,7 +43,7 @@ load("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/luad-
 #tpm.gene <- tpm.gene[,rownames(samples)]
 #tpm.gene <- tpm.gene[,rownames(subset(samples, V4 == 1))]
 tpm.gene <- tpm.gene[,rownames(subset(samples, V4 == 0))]
-tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
