@@ -22,14 +22,13 @@ load(file.path(wd.src.guide, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-
 BASE <- "NBL"
 base <- tolower(BASE)
-wd.rna   <- file.path(wd, BASE, "ngs/RNA")
-wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.asym       <- file.path(wd, "asymmetries", paste0(base, "-asym-tx"))
-wd.asym.data  <- file.path(wd.asym, "data")
+wd.rna <- file.path(wd, BASE, "ngs/RNA")
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx"))
 wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
@@ -62,4 +61,4 @@ p.adjust(c(p1, p2, p3), method="bonferroni")
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
 file.main <- paste0(BASE, " (n=", nrow(samples), ")")
-plotG2GQ4(g2g.q4, file.name, file.main)
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
