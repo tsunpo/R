@@ -37,7 +37,7 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.pca, variable, file.main, legend.x, legend.y, cols) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, file.main, legend.x, legend.y, cols) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait))
@@ -56,7 +56,7 @@ plotPCA <- function(x, y, pca, trait, wd.pca, variable, file.main, legend.x, leg
    xlab <- paste0("Principal component ", x, " (", pcaProportionofVariance(pca, x), "%)")
    ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
    
-   pdf(paste0(wd.pca, "pca_", variable, "_", names(scores)[x], "-", names(scores)[y], ".pdf"))
+   pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")))
    plot(scores[,x], scores[,y], col=trait.col, pch=16, cex=1.5, main=file.main, xlab=xlab, ylab=ylab)
    
    if (is.na(legend.x))
@@ -78,7 +78,7 @@ plotPCAs <- function(x, y, pca, traits, wd.pca, file.main, legend.x, legend.y, c
 }
 
 # -----------------------------------------------------------------------------
-# Methods: Differential expression
+# Methods: Differential expression analysis
 # Last Modified: 06/02/17
 # -----------------------------------------------------------------------------
 median0 <- function(expr) {
@@ -173,25 +173,27 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    ## FDR
    de$FDR <- testFDR(de$P, test.fdr)
    
-   ## Effect size
+   ## Log fold change
    de[,3] <- median00(expr.pheno, samples.expr.wt)
    de[,4] <- median00(expr.pheno, samples.expr.mut)
-   de$Effect <- de[,4] - de[,3]
+   de$LOG_FC <- de[,4] - de[,3]
  
-   ## NOTE: Must sort AFTER effect size and BEFORE annotation!!
+   ## NOTE: Must sort AFTER fold change and BEFORE annotation!!
    de <- sortP(de)
-   #return(cbind(refGene[rownames(de), c("name2", "chrom", "strand", "txStart", "txEnd")], de))   ## CHANGE 08/03/17: For MAGIC pipeline
    return(de)
 }
 
-onlyVariable <- function(de, effect) {
-   de.effect <- rbind(subset(de, Effect >= effect), subset(de, Effect <= -effect))
-
-   return(sortP(de.effect))
-}
-
-significantAndVariable <- function(de, effect, fdr) {
-   return(subset(onlyVariable(de, effect), FDR <= fdr))
+# -----------------------------------------------------------------------------
+# Pipeline of differential expression analysis (D.E.)
+# Last Modified: 28/03/17
+# -----------------------------------------------------------------------------
+pipeDE <- function(expr, pheno, argv, ensGene) {
+   annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+ 
+   de <- differentialAnalysis(expr, pheno, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+   de <- cbind(annot[rownames(de),], de)
+ 
+   return(de)
 }
 
 # -----------------------------------------------------------------------------
@@ -214,7 +216,7 @@ residualsOf <- function(expr, pheno, covariate) {
    
    expr.res <- expr.pheno
    for (x in 1:nrow(expr.pheno))
-      expr.res[x,] <- resid(lm(as.numeric(expr.pheno[x,]) ~ trait))
+      expr.res[x,] <- as.vector(as.numeric(resid(lm(as.numeric(expr.pheno[x,]) ~ trait))))
  
    return(expr.res)
 }
@@ -249,17 +251,9 @@ plotVolcano <- function(de, fdr, effect, file.de, file.main, legend.x) {
 }
 
 # -----------------------------------------------------------------------------
-# Methods: Miscellaneous/shortcuts
-# Last Modified: 01/02/18
+# Get non-redundant gene list
+# Last Modified: 10/04/18
 # -----------------------------------------------------------------------------
-getEnsGene <- function(name) {
-   return(subset(ensGene, external_gene_name == name))
-}
-
-getEnsGeneID <- function(name) {
-   return(subset(ensGene.gene, external_gene_name == name)$ensembl_gene_id)
-}
-
 getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, proteinCodingNonRedundantOnly) {   ## ADD 11/04/18; ADD 01/02/18
    if (autosomeOnly)
       tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, chromosome_name %in% paste0("chr", 1:22)))),]
@@ -272,10 +266,6 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
    return(tpm.gene)
 }
 
-# -----------------------------------------------------------------------------
-# Get non-redundant gene list
-# Last Modified: 10/04/18
-# -----------------------------------------------------------------------------
 isNonRedundant <- function(ensembl_gene_id, ensGene) {
    gene <- ensGene[ensembl_gene_id,]
  
@@ -326,16 +316,6 @@ tx2Ref <- function(refGene) {
    return(tx2gene(refGene[,c("name", "name2", "name2")]))
 }
 
-orderBySamples <- function(tpm) {
-   return(tpm[,order(colnames(tpm), decreasing=F)])
-}
-
-getFiltered <- function(reads, min_reads, min_prop) { 
-   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
- 
-   return(which(numbers/ncol(reads) >= min_prop))
-}
-
 list2Matrix <- function(list, kallisto.table) {
    genes <- unique(kallisto.table$target_id)
    samples <- unique(kallisto.table$sample)  
@@ -347,18 +327,38 @@ list2Matrix <- function(list, kallisto.table) {
    return(list.matrix)
 }
 
-kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
-   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
-   tpms <- list2Matrix(kallisto.table$tpm, kallisto.table)
-   
-   return(tpms[getFiltered(reads, min_reads, min_prop),])
-}
-
 # =============================================================================
 # Inner Class: Collections of test/obsolete/deprecated methods
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/02/18
 # =============================================================================
+# orderBySamples <- function(tpm) {
+#    return(tpm[,order(colnames(tpm), decreasing=F)])
+# }
+# 
+# getFiltered <- function(reads, min_reads, min_prop) { 
+#    numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
+#  
+#    return(which(numbers/ncol(reads) >= min_prop))
+# }
+# 
+# kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
+#    reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
+#    tpms <- list2Matrix(kallisto.table$tpm, kallisto.table)
+#  
+#    return(tpms[getFiltered(reads, min_reads, min_prop),])
+# }
+
+# onlyVariable <- function(de, effect) {
+#    de.effect <- rbind(subset(de, Effect >= effect), subset(de, Effect <= -effect))
+#  
+#    return(sortP(de.effect))
+# }
+# 
+# significantAndVariable <- function(de, effect, fdr) {
+#    return(subset(onlyVariable(de, effect), FDR <= fdr))
+# }
+
 # getEnsGeneHLA <- function(tpm.gene, ensGene) {
 #    tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
 #  

@@ -18,21 +18,21 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-
+wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
 base <- tolower(BASE)
-wd.rna   <- file.path(wd, BASE, "ngs/RNA")
-wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rna.raw  <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
-wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
+wd.rna <- file.path(wd, BASE, "ngs/RNA")
+wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 setwd(wd.de)
 
-samples <- readTable(paste0(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")[,1]
+samples <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")[,1]
 
 # -----------------------------------------------------------------------------
 # Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
@@ -44,9 +44,9 @@ samples <- readTable(paste0(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, 
 # -----------------------------------------------------------------------------
 library("sleuth")
 
-tsvs <- sapply(samples, function(s) file.path(wd.rna.kallisto, s))
-s2c  <- data.frame(path=tsvs, sample=samples, stringsAsFactors=F)
-t2g  <- tx2Ens(ensGene.transcript)
+tsv <- file.path(wd.rna.raw, samples)
+s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
+t2g <- tx2Ens(ensGene.transcript)
 
 so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
 # reading in kallisto results
@@ -66,7 +66,6 @@ save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tp
 
 ## Genes with patches
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
-# tpm.gene.patch <- kallisto_table_to_matrix(tpm.norm, min_reads=5, min_prop=0.47)
 # > nrow(tpm.gene.patch)   ## Gene-level TPMs with patches
 # [1] 20818
 

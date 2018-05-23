@@ -29,35 +29,38 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Read in transcript TPM estimates/aboundants from kallisto (v0.43.1)
 # Based on https://rawgit.com/pachterlab/sleuth/master/inst/doc/intro.html
 # -----------------------------------------------------------------------------
-getTSV <- function(wd, samples) {
-   return(file.path(wd, "kallisto_hg19.ensembl_quant-b100--bias--fusion", samples))
+getTSV <- function(wd.rna, samples) {
+   return(file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion", samples))
 }
 
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 
 wd.rna <- file.path(wd, "LUAD/ngs/RNA")
 samples.luad <- readTable(file.path(wd.rna, "luad_rna_n49-1.list"), header=F, rownames=T, sep="")[,1]   ## ADD 28/04/18: S01728 is SCLC
-tsvs.luad    <- getTSV(wd.rna, samples.luad)
+tsv.luad <- getTSV(wd.rna, samples.luad)
 
 wd.rna <- file.path(wd, "LCNEC/ngs/RNA")
 samples.lcnec <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")[,1]
-tsvs.lcnec    <- getTSV(wd.rna, samples.lcnec)
+tsv.lcnec <- getTSV(wd.rna, samples.lcnec)
 
 wd.rna <- file.path(wd, "SCLC/ngs/RNA")
 samples.sclc <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")[,1]
-tsvs.sclc    <- getTSV(wd.rna, samples.sclc)
+tsv.sclc <- getTSV(wd.rna, samples.sclc)
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
+wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "ALL"
 base <- tolower(BASE)
-wd.rna   <- file.path(wd, BASE, "ngs/RNA")
-wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rna.raw  <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
-wd.de       <- file.path(wd.anlys, "expression/kallisto/luad-lcnec-sclc-tpm-de")
+wd.rna <- file.path(wd, BASE, "ngs/RNA")
+wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 setwd(wd.de)
@@ -74,9 +77,9 @@ samples <- c(samples.luad, samples.lcnec, samples.sclc)   ## ALL (n=198)
 # -----------------------------------------------------------------------------
 library("sleuth")   ## R version 3.2.2 (on gauss)
 
-tsvs <- c(tsvs.luad, tsvs.lcnec, tsvs.sclc)
-s2c  <- data.frame(path=tsvs, sample=samples, stringsAsFactors=F)
-t2g  <- tx2Ens(ensGene.transcript)
+tsv <- c(tsv.luad, tsv.lcnec, tsv.sclc)
+s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
+t2g <- tx2Ens(ensGene.transcript)
 
 so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
 # reading in kallisto results
@@ -96,7 +99,6 @@ save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tp
 save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData")))
 
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
-# tpm.gene.patch <- kallisto_table_to_matrix(tpm.norm, min_reads=5, min_prop=0.47)
 # > nrow(tpm.gene.patch)   ## Gene-level TPMs with patches
 # [1] 20593 
 

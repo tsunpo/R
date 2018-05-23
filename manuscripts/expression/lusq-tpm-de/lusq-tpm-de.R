@@ -11,7 +11,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Common.R", "DifferentialExpression.R")
+handbooks  <- c("Common.R", "Asymmetry.R", "DifferentialExpression.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -38,6 +38,174 @@ colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "FGFR_AMP")
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
+
+# -----------------------------------------------------------------------------
+# D.E. using non-parametric test (4 FGFR AMP vs 17 NON; n=21)
+# Last Modified: 22/05/18
+# -----------------------------------------------------------------------------
+## Parameters for this test
+## Test: Wilcoxon/Wilcox/U/Students/ttest
+## FDR : Q/BH
+## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
+argv      <- data.frame(predictor="FGFR_AMP", predictor.wt=F, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm_gene_fgfr_wilcox_q_n21")
+file.main <- paste0("FGFR AMP (n=4) vs NON (n=17) in ", BASE)
+
+de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+###
+## If NOT significant, test only on variale genes
+tpm.gene.sd <- tpm.gene[rownames(de.tpm.gene),]   ## Order tpm.gene.log2 according to de.tpm.gene
+de.tpm.gene$SD <- mapply(x = 1:nrow(de.tpm.gene), function(x) sd(as.numeric(tpm.gene.sd[x,])))
+
+de.tpm.gene.var <- subset(de.tpm.gene, SD >= 5)
+de.tpm.gene.var$FDR <- testFDR(de.tpm.gene.var$P, argv$test.fdr)
+
+writeTable(de.tpm.gene.var, file.path(wd.de.data, paste0(file.name, "_sd_5.txt")), colnames=T, rownames=F, sep="\t")
+
+###
+## If STILL NOT significant, test only on most expressed genes
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+tx.q4 <- getTxQ4(NA, tpm.gene.log2)
+
+de.tpm.gene.q34 <- de.tpm.gene[c(tx.q4[[3]], tx.q4[[4]]),]
+de.tpm.gene.q34$FDR <- testFDR(de.tpm.gene.q34$P, argv$test.fdr)
+de.tpm.gene.q34 <- sortP(de.tpm.gene.q34)
+
+writeTable(de.tpm.gene.q34, file.path(wd.de.data, paste0(file.name, "_q34.txt")), colnames=T, rownames=F, sep="\t")
+
+##
+tpm.gene.q34.log2 <- tpm.gene.log2[rownames(de.tpm.gene.q34),]   ## Order tpm.gene.log2 according to de.tpm.gene
+de.tpm.gene.q34$SD <- mapply(x = 1:nrow(de.tpm.gene.q34), function(x) sd(as.numeric(tpm.gene.q34.log2[x,])))
+
+de.tpm.gene.q34.var <- subset(de.tpm.gene.q34, SD >= 0.6)
+de.tpm.gene.q34.var$FDR <- testFDR(de.tpm.gene.q34.var$P, argv$test.fdr)
+
+writeTable(de.tpm.gene.q34.var, file.path(wd.de.data, paste0(file.name, "_q34_sd_0.6.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 23/11/17
+# -----------------------------------------------------------------------------
+pca.de <- getPCA(t(tpm.gene.log2))   ## BUG FIX 13/02/17: Perform PCA using normalised data
+
+###
+## MAX_INSERT_SIZE
+trait <- as.numeric(samples[,"MAX_INSERT_SIZE"])
+greater <- which(trait > 300)
+lesser  <- which(trait < 300)
+trait[greater] <- ">300"
+trait[lesser]  <- "<300"
+
+file.main <- "Max insert size in LUSQ"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "MAX_INSERT_SIZE", file.main, NA, NA, c("dodgerblue", "red"))
+
+###
+## FGFR AMP
+trait <- as.numeric(samples[,"FGFR_AMP"])
+trait[which(trait == 1)] <- "FGFR AMP"
+trait[which(trait == 0)] <- "FGFR NON"
+
+file.main <- "FGFR AMP in LUSQ"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "FGFR_AMP", file.main, NA, NA, c("red", "dodgerblue"))
+
+# -----------------------------------------------------------------------------
+# Correct for insert size
+# Last Modified: 23/11/17
+# -----------------------------------------------------------------------------
+samples$MAX_INSERT_SIZE_FACTOR <- NA
+samples[which(samples$MAX_INSERT_SIZE > 300),]$MAX_INSERT_SIZE_FACTOR <- ">300"
+samples[which(samples$MAX_INSERT_SIZE < 300),]$MAX_INSERT_SIZE_FACTOR <- "<300"
+samples$MAX_INSERT_SIZE_FACTOR <- as.factor(samples$MAX_INSERT_SIZE_FACTOR)
+
+tpm.gene.res      <- residualsOf(tpm.gene, samples, "MAX_INSERT_SIZE_FACTOR")
+tpm.gene.log2.res <- residualsOf(tpm.gene.log2, samples, "MAX_INSERT_SIZE_FACTOR")
+
+###
+## PCA
+pca <- getPCA(t(tpm.gene.log2.res))   ## BUG FIX 13/02/17: Perform PCA using normalised data
+
+###
+## MAX_INSERT_SIZE
+trait <- as.vector(samples[,"MAX_INSERT_SIZE_FACTOR"])
+
+file.name <- "pca_res_MAX_INSERT_SIZE"
+file.main <- "Max insert size in LUSQ (Residuals)"
+plotPCA(1, 2, pca, trait, wd.de.plots, file.name, file.main, NA, NA, c("dodgerblue", "red"))
+
+###
+## FGFR AMP
+trait <- as.numeric(samples[,"FGFR_AMP"])
+trait[which(trait == 1)] <- "FGFR AMP"
+trait[which(trait == 0)] <- "FGFR NON"
+
+file.name <- "pca_res_FGFE_AMP"
+file.main <- "FGFR AMP in LUSQ (Residuals)"
+plotPCA(1, 2, pca, trait, wd.de.plots, file.name, file.main, NA, NA, c("red", "dodgerblue"))
+
+# -----------------------------------------------------------------------------
+# D.E. using residuals on non-parametric test (4 FGFR AMP vs 17 NON; n=21)
+# Last Modified: 22/05/18
+# -----------------------------------------------------------------------------
+## Parameters for this test
+## Test: Wilcoxon/Wilcox/U/Students/ttest
+## FDR : Q/BH
+## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
+argv      <- data.frame(predictor="FGFR_AMP", predictor.wt=F, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm_gene_log2_res_fgfr_wilcox_q_n21")
+file.main <- paste0("FGFR AMP (n=4) vs NON (n=17) in ", BASE)
+
+de.tpm.gene.log2.res <- pipeDE(tpm.gene.log2.res, samples, argv, ensGene)
+
+save(de.tpm.gene.log2.res, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene.log2.res, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+###
+## If NOT significant, test only on variale genes
+tpm.gene.res.sd <- tpm.gene.log2.res[rownames(de.tpm.gene.log2.res),]   ## Order tpm.gene.log2 according to de.tpm.gene
+de.tpm.gene.log2.res$SD <- mapply(x = 1:nrow(de.tpm.gene.log2.res), function(x) sd(as.numeric(tpm.gene.res.sd[x,])))
+
+de.tpm.gene.log2.res.var <- subset(de.tpm.gene.log2.res, SD >= 0.8)
+de.tpm.gene.log2.res.var$FDR <- testFDR(de.tpm.gene.log2.res.var$P, argv$test.fdr)
+
+writeTable(de.tpm.gene.log2.res.var, file.path(wd.de.data, paste0(file.name, "_sd_0.8.txt")), colnames=T, rownames=F, sep="\t")
+
+###
+## If STILL NOT significant, test only on most expressed genes
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+tx.q4 <- getTxQ4(NA, tpm.gene.log2)
+
+de.tpm.gene.q34 <- de.tpm.gene[c(tx.q4[[3]], tx.q4[[4]]),]
+de.tpm.gene.q34$FDR <- testFDR(de.tpm.gene.q34$P, argv$test.fdr)
+de.tpm.gene.q34 <- sortP(de.tpm.gene.q34)
+
+writeTable(de.tpm.gene.q34, file.path(wd.de.data, paste0(file.name, "_q34.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# D.E. using residuals on non-parametric test (3 FGFR AMP vs 17 NON; n=20)
+# Last Modified: 22/05/18
+# -----------------------------------------------------------------------------
+## Parameters for this test
+## Test: Wilcoxon/Wilcox/U/Students/ttest
+## FDR : Q/BH
+## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
+argv      <- data.frame(predictor="FGFR_AMP", predictor.wt=F, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm_gene_res_fgfr_wilcox_q_n20")
+file.main <- paste0("FGFR AMP (n=3) vs NON (n=17) in ", BASE)
+
+de.tpm.gene.res <- pipeDE(tpm.gene.res[,-1], samples[,-1], argv, ensGene)
+
+save(de.tpm.gene.res, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene.res, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
 
 
 

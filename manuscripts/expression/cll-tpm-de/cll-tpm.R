@@ -1,9 +1,9 @@
 # =============================================================================
 # Manuscript   :
 # Chapter      :
-# Name         : manuscripts/expression/sclc-tpm.R
+# Name         : manuscripts/expression/nbl-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 05/05/18
+# Last Modified: 23/05/18
 # =============================================================================
 wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
@@ -20,7 +20,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "HeLa"
+BASE <- "CLL"
 base <- tolower(BASE)
 
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
@@ -32,7 +32,7 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 setwd(wd.de)
 
-samples <- readTable(file.path(wd.rna, "hela_rna_n14.list"), header=F, rownames=T, sep="")[,1]
+samples <- readTable(file.path(wd.rna, "cll_rna_n74.list"), header=F, rownames=T, sep="")[,1]
 
 # -----------------------------------------------------------------------------
 # Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
@@ -44,19 +44,20 @@ samples <- readTable(file.path(wd.rna, "hela_rna_n14.list"), header=F, rownames=
 # -----------------------------------------------------------------------------
 library("sleuth")
 
-tsv <- sapply(samples, function(s) file.path(wd.rna.raw, s))
+tsv <- file.path(wd.rna.raw, samples)
 s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
 t2g <- tx2Ens(ensGene.transcript)
 
 so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
 # reading in kallisto results
-# .....................................................................
+# dropping unused factor levels
+# ......................................................
 # normalizing est_counts
-# 88382 targets passed the filter
+# 69151 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-# 18596 genes passed the filter
+# 17680 genes passed the filter
 # summarizing bootstraps
 
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
@@ -67,7 +68,7 @@ save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tp
 ## Genes with patches
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
 # > nrow(tpm.gene.patch)   ## Gene-level TPMs with patches
-# [1] 18596
+# [1] 17680
 
 ## Remove patches (*_PATCH)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
@@ -75,4 +76,4 @@ overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
 tpm.gene <- tpm.gene.patch[overlaps,]
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 # > nrow(tpm.gene)         ## Gene-level TPMs
-# [1] 17197
+# [1] 16379

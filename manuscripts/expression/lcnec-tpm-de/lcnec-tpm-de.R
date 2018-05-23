@@ -38,47 +38,25 @@ colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "RB1_MUT")
 
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 load(file.path(wd, "ALL", "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
+tpm.gene      <- tpm.gene[,rownames(samples)]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
-
-
-
-
 # -----------------------------------------------------------------------------
-# Perform differential analysis using non-parametric test (RB1NEW vs WT; n=69-15NA)
-# Last Modified: 28/03/17
+# D.E. using non-parametric test (20 RB1 vs 34 WT; n=69-15NA)
+# Last Modified: 22/05/18
 # -----------------------------------------------------------------------------
-pipeDE <- function(expr, pheno.expr, dao, file.de, file.main, annot) {
-   ## Differential expression
-   de <- differentialAnalysis(expr, pheno.expr, dao$predictor, dao$predictor.wt, dao$test, dao$test.fdr)
-   de <- cbind(annot[rownames(de),], de)
-   
-   writeTable(de, paste0(file.de, ".txt"), colnames=T, rownames=T, sep="\t")
-   #writeTable(onlyVariable(de, dao$effect), paste0(file.de, "_Effect>", dao$effect, ".txt"), colnames=T, rownames=T, sep="\t")   ## Only varible genes
-   
-   ## Volcano plot
-   #plotVolcano(de, dao$fdr, dao$effect, file.de, file.main, legend.x=NA)
-   
-   return(de)
-}
-
-filenameDE <- function(wd.de, title, dao) {
-   return(paste0(wd.de, title, "_", dao$predictor, "_", dao$test, "_", dao$test.fdr))
-}
-
-## Data access object (DAO) for test parameters
+## Parameters for this test
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
-## FDR:  Q/BH
-## DE:   RB1NEW vs WT(0) as factor
-dao <- data.frame(test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, predictor="RB1NEW", predictor.wt=0, stringsAsFactors=F)
-expr <- lcnec.tpm.gene.log2
-#pheno.expr.final <- getFinalPhenotype(expr, pheno.expr, dao$predictor)
-#expr.pheno <- getFinalExpression(expr, pheno.expr.final)
+## FDR : Q/BH
+## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
+argv      <- data.frame(predictor="RB1_MUT", predictor.wt=0, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm_gene_rb1_wilcox_q_n54")
+file.main <- paste0("RB1 MUT (n=20) vs WT (n=34) in ", BASE)
 
-de.lcnec.tpm.gene <- pipeDE(expr, pheno.expr, dao, file.de, file.main, annot.gene)
+de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
 
-save(de.lcnec.tpm.gene, file=paste0(wd.lcnec.de, "de_lcnec_tpm-gene_rb1_wilcox_n54.RData"))
-writeTable(de.lcnec.tpm.gene, paste0(file.de, ".txt"), colnames=T, rownames=F, sep="\t")
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA
@@ -95,7 +73,7 @@ trait[which(trait == 0)] <- "WT"
 trait[which(trait == 1)] <- "RB1"
 
 file.main <- "LCNEC RB1 status on 510 D.E. (FDR=10%) genes"
-plotPCA(1, 2, pca.de, trait, wd.lcnec.de, "RB1_510DE_TEST", file.main, NA, NA, c("purple", "red", "dodgerblue", "blue"))
+plotPCA(1, 2, pca.de, trait, wd.lcnec.de, "RB1_510DE_TEST", file.main, NA, NA, c("red", "dodgerblue"))
 
 # -----------------------------------------------------------------------------
 # PCA (with SCLC and HeLa)
