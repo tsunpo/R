@@ -25,13 +25,12 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "LCNEC"
 base <- tolower(BASE)
 
-wd.rna <- file.path(wd, BASE, "ngs/RNA")
-
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx"))
 wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
+wd.rna <- file.path(wd, BASE, "ngs/RNA")
 samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
 
 # =============================================================================

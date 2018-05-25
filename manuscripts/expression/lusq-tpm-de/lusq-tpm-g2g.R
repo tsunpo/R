@@ -25,14 +25,10 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "LUSQ"
 base <- tolower(BASE)
 
-wd.rna <- file.path(wd, BASE, "ngs/RNA")
-
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx"))
 wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
-
-samples <- readTable(file.path(wd.rna, "lusq_rna_n21.list"), header=F, rownames=T, sep="")
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
@@ -41,6 +37,9 @@ samples <- readTable(file.path(wd.rna, "lusq_rna_n21.list"), header=F, rownames=
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+# > quantile(tpm.gene.input.log2$MEDIAN)
+# 0%        25%        50%        75%       100% 
+# -6.6438562  0.9306769  3.1420399  4.6683693 12.5701306 
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
@@ -60,5 +59,5 @@ p.adjust(c(p1, p2, p3), method="bonferroni")
 # [1] 0.0001269443 0.0086402903 0.0450220118
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
-file.main <- paste0(BASE, " (n=", nrow(samples), ")")
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)

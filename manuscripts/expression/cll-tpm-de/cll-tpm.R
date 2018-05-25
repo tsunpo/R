@@ -53,11 +53,11 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 # dropping unused factor levels
 # ......................................................
 # normalizing est_counts
-# 69151 targets passed the filter
+# 87172 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-# 17680 genes passed the filter
+# 20328 genes passed the filter
 # summarizing bootstraps
 
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
@@ -68,7 +68,7 @@ save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tp
 ## Genes with patches
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
 # > nrow(tpm.gene.patch)   ## Gene-level TPMs with patches
-# [1] 17680
+# [1] 20328
 
 ## Remove patches (*_PATCH)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
@@ -76,4 +76,4 @@ overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
 tpm.gene <- tpm.gene.patch[overlaps,]
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 # > nrow(tpm.gene)         ## Gene-level TPMs
-# [1] 16379
+# [1] 18502
