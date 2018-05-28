@@ -22,18 +22,18 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+BASE <- "LUAD"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.files <- file.path(wd.asym, "files")
-wd.asym.data  <- file.path(wd.asym, "data2")
-wd.asym.plots <- file.path(wd.asym, "plots2")
+wd.asym.data  <- file.path(wd.asym, "data")
+wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
+samples <- readTable(file.path(wd.ngs, "luad_wgs_n39-5.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
 # Step 1: Finding mutations locate within Ensembl genes
@@ -41,7 +41,7 @@ samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames
 # -----------------------------------------------------------------------------
 for (s in 1:length(samples)) {
    sample <- samples[s]
-   
+
    vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.ngs, "peiflyne", sample, paste0(sample, "_ANALYSIS"), paste0(sample, "_mutcall_filtered.vcf")), pass=T, rs=F)
    vcf.gene <- getSNVinEnsGene(sample, vcf, ensGene)
    
@@ -90,7 +90,7 @@ for (s in 1:length(samples)) {
 }
 save(tx.snv, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv.RData")))   ## All SNVs on "expressed" genes (regardless protein coding or not)
 # > nrow(tx.snv)
-# [1] 1441303
+# [1] 395454
 
 ###
 ## Build up S6 table
@@ -108,7 +108,7 @@ ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "non-redundant" protein coding genes
-# [1] 1021827
+# [1] 272763
 
 ###
 ## Keep only genes with at least one SNV
@@ -118,10 +118,10 @@ tx.q4 <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divid
 save(tx.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_q4.RData")))
 # for (q in 1:4)
 #    print(length(intersect(ens.tx.snv.input, tx.q4[[q]])))
-# [1] 2587
-# [1] 2587
-# [1] 2586
-# [1] 2587
+# [1] 2375
+# [1] 2375
+# [1] 2374
+# [1] 2375
 
 # -----------------------------------------------------------------------------
 # Step 5.1: SNV asymetrey (Figure S1)
@@ -152,13 +152,13 @@ save(tx.snv.s6, asyms, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s
 
 ###
 ## Refining the plot
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim300.pdf")), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim85.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    asym <- asyms[[i]]
    idx <- idxs[i]
    
-   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 300))
+   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 85))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()

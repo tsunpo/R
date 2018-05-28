@@ -90,3 +90,16 @@ ymax <- log10(max(as.numeric(g2g.q4[[2]])))
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_RB1-WT_test.pdf"))
 file.main <- paste0(BASE, " (RB1-WT; n=", nrow(subset(samples, V4 == 0)), ")")
 plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.3, ymax))
+
+# =============================================================================
+# Step 2: Density plots
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_RB1.pdf"))
+file.main <- paste0(BASE, " (RB1; n=", nrow(subset(samples, V4 == 1)), ")")
+plotDensity(g2g.q4, file.name, file.main)
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_RB1-WT.pdf"))
+file.main <- paste0(BASE, " (RB1-WT; n=", nrow(subset(samples, V4 == 0)), ")")
+plotDensity(g2g.q4, file.name, file.main)

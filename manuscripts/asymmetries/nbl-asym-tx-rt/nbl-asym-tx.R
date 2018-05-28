@@ -1,113 +1,82 @@
 # =============================================================================
-# Manuscript   : The dangeous case of transcription in NBL
-# Chapter I    : Transcriptional strand asymmetry
-# Name         : manuscripts/asymmetries/sclc-asym-tx.R
+# Manuscript   : The dangeous case of DNA replication
+# Chapter      : Transcriptional strand asymmetry in NBL
+# Name         : manuscripts/asymmetries/nbl-asym-tx.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 21/04/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
-#wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
-wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Common.R", "Asymmetry.R", "Mutation.R", "DifferentialExpression.R")
-invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
+handbooks <- c("Common.R", "Asymmetry.R", "DifferentialExpression.R", "Mutation.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
-wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
-load(file.path(wd.src.guide, "hg19.RData"))
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
 # Last Modified: 29/01/18
 # -----------------------------------------------------------------------------
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "NBL"
-#wd     <- paste0("/ngs/cangen/tyang2/", BASE, "/analysis/")                   ## tyang2@gauss
-#wd.ngs <- paste0("/ngs/cangen/tyang2/", BASE, "/ngs/WGS/")
-wd     <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/analysis/")   ## tpyang@localhost
-wd.ngs <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/", BASE, "/ngs/WGS/")
+base <- tolower(BASE)
 
-wd.asym       <- paste0(wd, "asymmetries/", tolower(BASE), "-asym-tx/")
-wd.asym.data  <- paste0(wd.asym, "data/")
-wd.asym.plots <- paste0(wd.asym, "plots/")
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
+wd.asym.files <- file.path(wd.asym, "files")
+wd.asym.data  <- file.path(wd.asym, "data")
+wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
-samples <- readTable(paste0(wd.ngs, "nbl_wgs_n57.list"), header=F, rownames=F, sep="")
+wd.ngs <- file.path(wd, BASE, "ngs/WGS")
+samples <- readTable(file.path(wd.ngs, "nbl_wgs_n57.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
 # Step 1: Finding mutations locate within Ensembl genes
 # Last Modified: 23/01/18
 # -----------------------------------------------------------------------------
 for (s in 1:length(samples)) {
-   #sample <- SAMPLE 
    sample <- samples[s]
-   vcf <- read.peiflyne.mutcall.filtered.vcf(paste0(wd.ngs, sample, "/", sample, "_ANALYSIS/", sample, "_mutcall_filtered.vcf"), pass=T, rs=F)
 
-   colnames <- c(colnames(ensGene), colnames(vcf))
-   vcf.gene <- toTable("", length(colnames), 0, colnames)
-   #vcf.gene.10kb <- NA
-   for (c in 1:24) {
-      chr <- chrs[c]
-      vcf.chr <- subset(vcf, CHROM == chr)
-      ensGene.chr <- subset(ensGene, chromosome_name == chr)  
-      
-      vcf.gene.chr <- toTable("", length(colnames), 0, colnames)
-      for (g in 1:nrow(ensGene.chr)) {
-         ensGene.chr.gene <- ensGene.chr[g,]
-         
-         vcf.gene.chr0 <- getEnsGeneSNVs(vcf.chr, ensGene.chr.gene)
-         if (nrow(vcf.gene.chr0) != 0) {
-            if (nrow(vcf.gene.chr) == 0)
-               vcf.gene.chr <- getMergedTable(ensGene.chr.gene, vcf.gene.chr0)
-            else
-               vcf.gene.chr <- rbind(vcf.gene.chr, getMergedTable(ensGene.chr.gene, vcf.gene.chr0))
-            
-            #vcf.chr.gene.10kb <- getEnsGeneTSS(vcf.chr, ensGene.chr.gene, 10000)
-         }
-      }
-      
-      if (nrow(vcf.gene.chr) != 0) {
-         vcf.gene.chr <- vcf.gene.chr[order(vcf.gene.chr$POS),]
-      
-         if (nrow(vcf.gene) == 0)
-            vcf.gene <- vcf.gene.chr
-         else
-            vcf.gene <- rbind(vcf.gene, vcf.gene.chr)
-      }
-   }
+   vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.ngs, "peiflyne", sample, paste0(sample, "_ANALYSIS"), paste0(sample, "_mutcall_filtered.vcf")), pass=T, rs=F)
+   vcf.gene <- getSNVinEnsGene(sample, vcf, ensGene)
    
-   writeTable(vcf.gene, gzfile(paste0(wd.asym.data, sample, "_mut.ens.vcf.gz")), colnames=T, rownames=F, sep="\t")
+   writeTable(vcf.gene, gzfile(file.path(wd.asym.files, paste0(sample, "_mut.ens.vcf.gz"))), colnames=T, rownames=F, sep="\t")
 }
 
 # -----------------------------------------------------------------------------
-# Step 2: Keep only genes that are transcribed in NBL 
+# Step 2: Keep only genes that are transcribed in this cancer type 
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
-load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/nbl_kallisto_0.43.1_tpm.gene_r5_p47.RData")   ## tpyang@localhost
-tpm.gene.nbl <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, nonOverlappingOnly=F)   ## CHANGE 02/04/18
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, nonOverlappingOnly=F)
 
 lookups <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/metadata/Peifer 2015/SEQC_RNAseq_ID_table.txt", header=T, rownames=2, sep="")
 lookups$Patient_ID_WGS <- paste0("P", lookups$Patient_ID_WGS)
-colnames(tpm.gene.nbl) <- lookups[colnames(tpm.gene.nbl),]$Patient_ID_WGS
+colnames(tpm.gene.input) <- lookups[colnames(tpm.gene.input),]$Patient_ID_WGS
 
-tpm.gene.input <- tpm.gene.nbl   ## ADD 21/04/18
 for (s in 1:length(samples)) {
    #sample <- SAMPLE 
    sample <- samples[s]
    
-   vcf <- readTable(paste0(wd.asym.data, sample, "_mut.ens.vcf.gz"), header=T, rownames=F, sep="")
+   vcf <- readTable(file.path(wd.asym.files, paste0(sample, "_mut.ens.vcf.gz")), header=T, rownames=F, sep="")
    ens.tx <- intersect(unique(vcf$ensembl_gene_id), rownames(tpm.gene.input))   ## All SNVs on "expressed" genes (regardless protein coding or not)
    vcf.tx <- subset(vcf, ensembl_gene_id %in% ens.tx)
-   writeTable(vcf.tx, gzfile(paste0(wd.asym.data, sample, "_mut.ens.tx.vcf.gz")), colnames=T, rownames=F, sep="\t")
+   writeTable(vcf.tx, gzfile(file.path(wd.asym.files, paste0(sample, "_mut.ens.tx.vcf.gz"))), colnames=T, rownames=F, sep="\t")
    
    ## Seperate SNVs
    vcf.tx.snv <- subset(vcf.tx,     REF %in% c("A", "T", "C", "G"))
    vcf.tx.snv <- subset(vcf.tx.snv, ALT %in% c("A", "T", "C", "G"))   
-   writeTable(vcf.tx.snv, gzfile(paste0(wd.asym.data, sample, "_mut.ens.tx.snv.vcf.gz")), colnames=T, rownames=F, sep="\t")
+   writeTable(vcf.tx.snv, gzfile(file.path(wd.asym.files, paste0(sample, "_mut.ens.tx.snv.vcf.gz"))), colnames=T, rownames=F, sep="\t")
    
    ## Seperate Indels
    vcf.tx$TMP <- paste0(vcf.tx$REF, vcf.tx$ALT)
    vcf.tx.indel <- vcf.tx[which(nchar(vcf.tx$TMP) != 2),]
-   writeTable(vcf.tx.indel[,-16], gzfile(paste0(wd.asym.data, sample, "_mut.ens.tx.indel.vcf.gz")), colnames=T, rownames=F, sep="\t")
+   writeTable(vcf.tx.indel[,-16], gzfile(file.path(wd.asym.files, paste0(sample, "_mut.ens.tx.indel.vcf.gz"))), colnames=T, rownames=F, sep="\t")
 }
 
 # -----------------------------------------------------------------------------
@@ -118,12 +87,12 @@ tx.snv <- initMergedReport(F)
 for (s in 1:length(samples)) {
    sample <- samples[s]
  
-   vcf <- readTable(paste0(wd.asym.data, sample, "_mut.ens.tx.snv.vcf.gz"), header=T, rownames=F, sep="")
+   vcf <- readTable(file.path(wd.asym.files, paste0(sample, "_mut.ens.tx.snv.vcf.gz")), header=T, rownames=F, sep="")
    vcf <- subset(vcf, CHROM %in% paste0("chr", c(1:22)))   ## Keep only autosomes
    snv <- getMergedReport(sample, vcf)
    tx.snv <- rbind(tx.snv, snv)
 }
-save(tx.snv, file=paste0(wd.asym.data, "nbl_asym_tx_snv.RData"))   ## All SNVs on "expressed" genes (regardless protein coding or not)
+save(tx.snv, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv.RData")))   ## All SNVs on "expressed" genes (regardless protein coding or not)
 # > nrow(tx.snv)   ## BWA-MEM (n=57)
 # [1] 52468
 # > nrow(tx.snv)   ## BWA (n=56)
@@ -132,7 +101,7 @@ save(tx.snv, file=paste0(wd.asym.data, "nbl_asym_tx_snv.RData"))   ## All SNVs o
 ###
 ## Build up S6 table
 tx.snv.s6 <- getTableS6(tx.snv, isExon=F)
-save(tx.snv.s6, file=paste0(wd.asym.data, "nbl_asym_tx_snv_s6.RData"))   ## All SNVs on "expressed" genes (regardless protein coding or not)
+save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData")))   ## All SNVs on "expressed" genes (regardless protein coding or not)
 
 # -----------------------------------------------------------------------------
 # Step 4.1: Keep only SNVs on expressed genes

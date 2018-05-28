@@ -67,6 +67,66 @@ plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18
 # =============================================================================
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+BASE <- "CLL"
+base <- tolower(BASE)
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
+wd.asym.plots <- file.path(wd.asym, "plots")
+setwd(wd.asym)
+
+tpm.gene.input <- pipeTPM(BASE)
+g2g.q4 <- pipeRO("CLL", tpm.gene.input)
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
+
+
+# =============================================================================
+# Step 2: Density plots
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+plotDensity <- function(g2g.q4, file.name, file.main) {
+   distances <- c()
+   for (q in 1:4)
+      distances <- c(distances, as.numeric(g2g.q4[[q]]))
+   
+   pdf(file.name, height=6, width=6)
+   plot(density(distances), ylab="Frequency", xlab="Gene-to-gene min dist. (log10)")
+   
+   lines(density(as.numeric(g2g.q4[[4]])), col="red")
+   lines(density(as.numeric(g2g.q4[[3]])), col="salmon")
+   lines(density(as.numeric(g2g.q4[[2]])), col="deepskyblue")
+   lines(density(as.numeric(g2g.q4[[1]])), col="blue")
+   
+   dev.off()
+}
+
+plotDensity <- function(g2g.q4, file.name, file.main) {
+   pdf(file.name, height=6, width=6)
+   plot(density(log10(as.numeric(g2g.q4[[1]])), bw=0.15), col="blue", ylab="Frequency", xlab="Gene-to-gene min dist. (log10)")
+   lines(density(log10(as.numeric(g2g.q4[[2]])), bw=0.15), col="deepskyblue")
+   lines(density(log10(as.numeric(g2g.q4[[3]])), bw=0.15), col="salmon")
+   lines(density(log10(as.numeric(g2g.q4[[4]])), bw=0.15), col="red")
+   dev.off()
+}
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_test.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main)
+
+
+
+
+
 distances <- c()
 medians <- c()
 for (q in 1:4) {

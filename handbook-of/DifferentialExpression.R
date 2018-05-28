@@ -184,7 +184,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
 }
 
 # -----------------------------------------------------------------------------
-# Pipeline of differential expression analysis (D.E.)
+# Pipeline: Differential expression analysis
 # Last Modified: 28/03/17
 # -----------------------------------------------------------------------------
 pipeDE <- function(expr, pheno, argv, ensGene) {

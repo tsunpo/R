@@ -61,3 +61,43 @@ p.adjust(c(p1, p2, p3), method="bonferroni")
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+
+# =============================================================================
+# Step 2: Density plots
+# https://www.statmethods.net/graphs/density.html
+# https://homepage.divms.uiowa.edu/~luke/classes/STAT4580/histdens.html
+# Last Modified: 23/05/18
+# =============================================================================
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+BASE <- "LUAD"
+base <- tolower(BASE)
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
+wd.asym.plots <- file.path(wd.asym, "plots")
+setwd(wd.asym)
+
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+g2g.q4 <- pipeRO(tpm.gene.input.log2)
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Step 2: Density plots
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main)
