@@ -62,18 +62,20 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # PCA
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
-pca.de <- getPCA(t(lcnec.tpm.gene.log2[rownames(subset(de.lcnec.tpm.gene, FDR <= 0.1)),]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
+genes <- rownames(subset(de.tpm.gene, FDR <= 0.1))
+pca.de <- getPCA(t(tpm.gene[genes,]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
 
 ###
 ## RB1 status on D.E genes
 pheno.expr <- pheno[samples.expr,]
 
-trait <- pheno.expr[,"RB1NEW"]
+#trait <- pheno.expr[,"RB1NEW"]
+trait <- as.numeric(samples[,"RB1_MUT"])
 trait[which(trait == 0)] <- "WT"
 trait[which(trait == 1)] <- "RB1"
 
 file.main <- "LCNEC RB1 status on 510 D.E. (FDR=10%) genes"
-plotPCA(1, 2, pca.de, trait, wd.lcnec.de, "RB1_510DE_TEST", file.main, NA, NA, c("red", "dodgerblue"))
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "test2_RB1_510DE_TEST", file.main, NA, NA, c("red", "dodgerblue"))
 
 # -----------------------------------------------------------------------------
 # PCA (with SCLC and HeLa)

@@ -53,7 +53,7 @@ for (s in 1:length(samples)) {
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, nonOverlappingOnly=F)
+tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)
 
 lookups <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/metadata/Peifer 2015/SEQC_RNAseq_ID_table.txt", header=T, rownames=2, sep="")
 lookups$Patient_ID_WGS <- paste0("P", lookups$Patient_ID_WGS)

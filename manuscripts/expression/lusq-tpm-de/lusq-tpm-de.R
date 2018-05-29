@@ -34,7 +34,7 @@ wd.de.plots <- file.path(wd.de, "plots")
 setwd(wd.de)
 
 samples <- readTable(file.path(wd.rna, "lusq_rna_n21.list"), header=F, rownames=T, sep="")
-colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "FGFR_AMP")
+colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "RESPONDER")
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
@@ -46,10 +46,10 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 ## Parameters for this test
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
 ## FDR : Q/BH
-## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
-argv      <- data.frame(predictor="FGFR_AMP", predictor.wt=F, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm_gene_fgfr_wilcox_q_n21")
-file.main <- paste0("FGFR AMP (n=4) vs NON (n=17) in ", BASE)
+## D.E.: RESPONDER (1) vs NON_RESPONDER (0) as factor
+argv      <- data.frame(predictor="RESPONDER", predictor.wt=0, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm_gene_responder_wilcox_q_n21")
+file.main <- paste0("RESPONDER (n=4) vs NON RESPONDER (n=17) in ", BASE)
 
 de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
 
@@ -57,34 +57,43 @@ save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 ###
-## If NOT significant, test only on variale genes
-tpm.gene.sd <- tpm.gene[rownames(de.tpm.gene),]   ## Order tpm.gene.log2 according to de.tpm.gene
-de.tpm.gene$SD <- mapply(x = 1:nrow(de.tpm.gene), function(x) sd(as.numeric(tpm.gene.sd[x,])))
+## FGFR AMP
+genes <- rownames(subset(de.tpm.gene, P <= 1E-2))
+pca.de <- getPCA(t(tpm.gene.log2[genes,]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
+#pca.de <- getPCA(t(tpm.gene.log2[sample(1:2824, 105, replace=F),]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
 
-de.tpm.gene.var <- subset(de.tpm.gene, SD >= 5)
-de.tpm.gene.var$FDR <- testFDR(de.tpm.gene.var$P, argv$test.fdr)
+trait <- as.numeric(samples[,"FGFR_AMP"])
+trait[which(trait == 1)] <- "FGFR AMP"
+trait[which(trait == 0)] <- "FGFR NON"
 
-writeTable(de.tpm.gene.var, file.path(wd.de.data, paste0(file.name, "_sd_5.txt")), colnames=T, rownames=F, sep="\t")
+file.main <- "FGFR AMP in LUSQ on P <= 3E-3"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "random_FGFR_AMP", file.main, NA, NA, c("red", "dodgerblue"))
+
+rownames <- rownames(subset(de.tpm.gene, P <= 1E-2))
+genes <- c(20)
+for (g in 21:30) {
+   genes <- c(genes, g)
+   pca.de <- getPCA(t(tpm.gene.log2[rownames[genes],]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
+ 
+   trait <- as.numeric(samples[,"FGFR_AMP"])
+   trait[which(trait == 1)] <- "FGFR AMP"
+   trait[which(trait == 0)] <- "FGFR NON"
+ 
+   file.main <- paste0("FGFR AMP in LUSQ after adding ", ensGene[rownames[g],]$external_gene_name)
+   plotPCA(1, 2, pca.de, trait, wd.de.plots, paste0(g, "_FGFR_AMP"), file.main, NA, NA, c("red", "dodgerblue"))
+}
 
 ###
-## If STILL NOT significant, test only on most expressed genes
-tpm.gene.log2 <- getLog2andMedian(tpm.gene)
-tx.q4 <- getTxQ4(NA, tpm.gene.log2)
+## FGFR AMP (Residuals)
+pca.de <- getPCA(t(tpm.gene[rownames(subset(de.tpm.gene.log2.res, P <= 1E-2)),]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
 
-de.tpm.gene.q34 <- de.tpm.gene[c(tx.q4[[3]], tx.q4[[4]]),]
-de.tpm.gene.q34$FDR <- testFDR(de.tpm.gene.q34$P, argv$test.fdr)
-de.tpm.gene.q34 <- sortP(de.tpm.gene.q34)
+trait <- as.numeric(samples[,"FGFR_AMP"])
+trait[which(trait == 1)] <- "FGFR AMP"
+trait[which(trait == 0)] <- "FGFR NON"
 
-writeTable(de.tpm.gene.q34, file.path(wd.de.data, paste0(file.name, "_q34.txt")), colnames=T, rownames=F, sep="\t")
+file.main <- "FGFR AMP in LUSQ on P<0.01 (TPM not log2)"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "raw_p0.01_FGFR_AMP", file.main, NA, NA, c("red", "dodgerblue"))
 
-##
-tpm.gene.q34.log2 <- tpm.gene.log2[rownames(de.tpm.gene.q34),]   ## Order tpm.gene.log2 according to de.tpm.gene
-de.tpm.gene.q34$SD <- mapply(x = 1:nrow(de.tpm.gene.q34), function(x) sd(as.numeric(tpm.gene.q34.log2[x,])))
-
-de.tpm.gene.q34.var <- subset(de.tpm.gene.q34, SD >= 0.6)
-de.tpm.gene.q34.var$FDR <- testFDR(de.tpm.gene.q34.var$P, argv$test.fdr)
-
-writeTable(de.tpm.gene.q34.var, file.path(wd.de.data, paste0(file.name, "_q34_sd_0.6.txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA
@@ -100,17 +109,19 @@ lesser  <- which(trait < 300)
 trait[greater] <- ">300"
 trait[lesser]  <- "<300"
 
+file.name <- "pca_MAX_INSERT_SIZE"
 file.main <- "Max insert size in LUSQ"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "MAX_INSERT_SIZE", file.main, NA, NA, c("dodgerblue", "red"))
+plotPCA(1, 2, pca.de, trait, wd.de.plots, file.name, file.main, NA, NA, c("dodgerblue", "red"))
 
 ###
 ## FGFR AMP
-trait <- as.numeric(samples[,"FGFR_AMP"])
-trait[which(trait == 1)] <- "FGFR AMP"
-trait[which(trait == 0)] <- "FGFR NON"
+trait <- as.numeric(samples[,"RESPONDER"])
+trait[which(trait == 1)] <- "RESPONDER"
+trait[which(trait == 0)] <- "NON RESPONDER"
 
-file.main <- "FGFR AMP in LUSQ"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "FGFR_AMP", file.main, NA, NA, c("red", "dodgerblue"))
+file.name <- "pca_RESPONDER"
+file.main <- "RESPONDER in LUSQ"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, file.name, file.main, NA, NA, c("red", "dodgerblue"))
 
 # -----------------------------------------------------------------------------
 # Correct for insert size
@@ -121,7 +132,7 @@ samples[which(samples$MAX_INSERT_SIZE > 300),]$MAX_INSERT_SIZE_FACTOR <- ">300"
 samples[which(samples$MAX_INSERT_SIZE < 300),]$MAX_INSERT_SIZE_FACTOR <- "<300"
 samples$MAX_INSERT_SIZE_FACTOR <- as.factor(samples$MAX_INSERT_SIZE_FACTOR)
 
-tpm.gene.res      <- residualsOf(tpm.gene, samples, "MAX_INSERT_SIZE_FACTOR")
+#tpm.gene.res      <- residualsOf(tpm.gene, samples, "MAX_INSERT_SIZE_FACTOR")
 tpm.gene.log2.res <- residualsOf(tpm.gene.log2, samples, "MAX_INSERT_SIZE_FACTOR")
 
 ###
@@ -138,12 +149,12 @@ plotPCA(1, 2, pca, trait, wd.de.plots, file.name, file.main, NA, NA, c("dodgerbl
 
 ###
 ## FGFR AMP
-trait <- as.numeric(samples[,"FGFR_AMP"])
-trait[which(trait == 1)] <- "FGFR AMP"
-trait[which(trait == 0)] <- "FGFR NON"
+trait <- as.numeric(samples[,"RESPONDER"])
+trait[which(trait == 1)] <- "RESPONDER"
+trait[which(trait == 0)] <- "NON RESPONDER"
 
-file.name <- "pca_res_FGFE_AMP"
-file.main <- "FGFR AMP in LUSQ (Residuals)"
+file.name <- "pca_res_RESPONDER"
+file.main <- "RESPONDER in LUSQ (Residuals)"
 plotPCA(1, 2, pca, trait, wd.de.plots, file.name, file.main, NA, NA, c("red", "dodgerblue"))
 
 # -----------------------------------------------------------------------------
@@ -153,138 +164,15 @@ plotPCA(1, 2, pca, trait, wd.de.plots, file.name, file.main, NA, NA, c("red", "d
 ## Parameters for this test
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
 ## FDR : Q/BH
-## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
-argv      <- data.frame(predictor="FGFR_AMP", predictor.wt=F, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm_gene_log2_res_fgfr_wilcox_q_n21")
-file.main <- paste0("FGFR AMP (n=4) vs NON (n=17) in ", BASE)
+## D.E.: FGFR_AMP (1) vs FGFR_NON (0) as factor
+argv      <- data.frame(predictor="RESPONDER", predictor.wt=0, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm_gene_log2_res_responder_wilcox_q_n21")
+file.main <- paste0("RESPONDER (n=4) vs NON RESPONDER (n=17) in ", BASE)
 
 de.tpm.gene.log2.res <- pipeDE(tpm.gene.log2.res, samples, argv, ensGene)
 
 save(de.tpm.gene.log2.res, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene.log2.res, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-###
-## If NOT significant, test only on variale genes
-tpm.gene.res.sd <- tpm.gene.log2.res[rownames(de.tpm.gene.log2.res),]   ## Order tpm.gene.log2 according to de.tpm.gene
-de.tpm.gene.log2.res$SD <- mapply(x = 1:nrow(de.tpm.gene.log2.res), function(x) sd(as.numeric(tpm.gene.res.sd[x,])))
-
-de.tpm.gene.log2.res.var <- subset(de.tpm.gene.log2.res, SD >= 0.8)
-de.tpm.gene.log2.res.var$FDR <- testFDR(de.tpm.gene.log2.res.var$P, argv$test.fdr)
-
-writeTable(de.tpm.gene.log2.res.var, file.path(wd.de.data, paste0(file.name, "_sd_0.8.txt")), colnames=T, rownames=F, sep="\t")
-
-###
-## If STILL NOT significant, test only on most expressed genes
-tpm.gene.log2 <- getLog2andMedian(tpm.gene)
-tx.q4 <- getTxQ4(NA, tpm.gene.log2)
-
-de.tpm.gene.q34 <- de.tpm.gene[c(tx.q4[[3]], tx.q4[[4]]),]
-de.tpm.gene.q34$FDR <- testFDR(de.tpm.gene.q34$P, argv$test.fdr)
-de.tpm.gene.q34 <- sortP(de.tpm.gene.q34)
-
-writeTable(de.tpm.gene.q34, file.path(wd.de.data, paste0(file.name, "_q34.txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# D.E. using residuals on non-parametric test (3 FGFR AMP vs 17 NON; n=20)
-# Last Modified: 22/05/18
-# -----------------------------------------------------------------------------
-## Parameters for this test
-## Test: Wilcoxon/Wilcox/U/Students/ttest
-## FDR : Q/BH
-## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
-argv      <- data.frame(predictor="FGFR_AMP", predictor.wt=F, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm_gene_res_fgfr_wilcox_q_n20")
-file.main <- paste0("FGFR AMP (n=3) vs NON (n=17) in ", BASE)
-
-de.tpm.gene.res <- pipeDE(tpm.gene.res[,-1], samples[,-1], argv, ensGene)
-
-save(de.tpm.gene.res, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene.res, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-
-
-
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# Perform differential analysis using non-parametric test (RB1NEW vs WT; n=69-15NA)
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-pipeDE <- function(expr, pheno.expr, dao, file.de, file.main, annot) {
-   ## Differential expression
-   de <- differentialAnalysis(expr, pheno.expr, dao$predictor, dao$predictor.wt, dao$test, dao$test.fdr)
-   de <- cbind(annot[rownames(de),], de)
-   
-   writeTable(de, paste0(file.de, ".txt"), colnames=T, rownames=T, sep="\t")
-   #writeTable(onlyVariable(de, dao$effect), paste0(file.de, "_Effect>", dao$effect, ".txt"), colnames=T, rownames=T, sep="\t")   ## Only varible genes
-   
-   ## Volcano plot
-   #plotVolcano(de, dao$fdr, dao$effect, file.de, file.main, legend.x=NA)
-   
-   return(de)
-}
-
-filenameDE <- function(wd.de, title, dao) {
-   return(paste0(wd.de, title, "_", dao$predictor, "_", dao$test, "_", dao$test.fdr))
-}
-
-## Data access object (DAO) for test parameters
-## Test: Wilcoxon/Wilcox/U/Students/ttest
-## FDR:  Q/BH
-## DE:   RB1NEW vs WT(0) as factor
-dao <- data.frame(test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, predictor="RB1NEW", predictor.wt=0, stringsAsFactors=F)
-expr <- lcnec.tpm.gene.log2
-#pheno.expr.final <- getFinalPhenotype(expr, pheno.expr, dao$predictor)
-#expr.pheno <- getFinalExpression(expr, pheno.expr.final)
-
-de.lcnec.tpm.gene <- pipeDE(expr, pheno.expr, dao, file.de, file.main, annot.gene)
-
-save(de.lcnec.tpm.gene, file=paste0(wd.lcnec.de, "de_lcnec_tpm-gene_rb1_wilcox_n54.RData"))
-writeTable(de.lcnec.tpm.gene, paste0(file.de, ".txt"), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# PCA
-# Last Modified: 23/11/17
-# -----------------------------------------------------------------------------
-pca.de <- getPCA(t(lcnec.tpm.gene.log2[rownames(subset(de.lcnec.tpm.gene, FDR <= 0.1)),]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
-
-###
-## RB1 status on D.E genes
-pheno.expr <- pheno[samples.expr,]
-
-trait <- pheno.expr[,"RB1NEW"]
-trait[which(trait == 0)] <- "WT"
-trait[which(trait == 1)] <- "RB1"
-
-file.main <- "LCNEC RB1 status on 510 D.E. (FDR=10%) genes"
-plotPCA(1, 2, pca.de, trait, wd.lcnec.de, "RB1_510DE_TEST", file.main, NA, NA, c("purple", "red", "dodgerblue", "blue"))
-
-# -----------------------------------------------------------------------------
-# PCA (with SCLC and HeLa)
-# Last Modified: 14/12/17
-# -----------------------------------------------------------------------------
-signature.rb1 <- rownames(subset(de.lcnec.tpm.gene, FDR <= 0.1))
-signature.rb1.overlaps <- intersect(signature.rb1, rownames(hela.tpm.gene.log2))
-## > length(signature.rb1.overlaps)
-## [1] 464
-
-test <- cbind(all.tpm.gene.log2[signature.rb1.overlaps, c(samples.lcnec, samples.sclc)], hela.tpm.gene.log2[signature.rb1.overlaps, hela.samples])
-pca.de <- getPCA(t(test))
-
-trait <- pheno.expr[,"RB1NEW"]
-trait[which(trait == 0)] <- "WT"
-trait[which(trait == 1)] <- "RB1"
-
-trait <- c(trait, rep("SCLC", length(samples.sclc)))
-trait <- c(trait, rep("HeLa", length(samples.hela)))
-
-file.main <- "SCLC and HeLa (n=14) on LCNEC 464 D.E. (RB1 v WT; FDR=10%) genes"
-plotPCA(1, 2, pca.de, trait, wd.de, "pca_RB1_464DE_PC1-PC2_SCLC+HeLa", file.main, NA, -15, c("purple", "lightgray", "red", "orange", "dodgerblue"))
 
 # -----------------------------------------------------------------------------
 # Volcano plots
@@ -297,80 +185,48 @@ fdrToP <- function(fdr, de) {
    return(max(de.sig$P))
 }
 
-plotVolcano <- function(de, fdr, genes, file.de, file.main, isIg) {
-   de.sig <- subset(de, FDR <= fdr)
+plotVolcano <- function(de, p, file.name, file.main) {
+   de.sig <- subset(de, P <= p)
    de.sig$log10P <- -log10(de.sig$P)
  
    de$log10P <- -log10(de$P)
-   xmax <- max(de$Effect)
+   xmax <- max(de$LOG_FC)
    ymax <- max(de$log10P)
-   p <- max(de.sig$P)
+   #p <- max(de.sig$P)
  
-   pdf(file.de, height=7, width=7)
-   plot(de$Effect, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2 RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
-   abline(h=c(-log10(fdrToP(0.05, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/29, -log10(fdrToP(0.05, de)) + ymax/42, "FDR=5%", col="darkgray")
-   
-   if (isIg) {   ## ADD 02/11/17: Immunoglobulin (Ig) variable chain and T-cell receptor (TcR) genes
-      de.ig <- de[grep("IG", de$gene_biotype),]
-      points(de.ig$Effect, de.ig$log10P, pch=16, col="gold")
-      de.tr <- de[grep("TR", de$gene_biotype),]
-      points(de.tr$Effect, de.tr$log10P, pch=16, col="forestgreen")
-   }
-   de.up <- subset(de.sig, Effect > 0)
-   points(de.up$Effect, de.up$log10P, pch=16, col="red")
-   de.down <- subset(de.sig, Effect < 0)
-   points(de.down$Effect, de.down$log10P, pch=16, col="dodgerblue")
- 
-   for (g in 1:length(genes)) {
-      gene <- subset(de, external_gene_name == genes[g])
-      if (nrow(gene) > 0) {
-         points(gene$Effect, gene$log10P, pch=1, col="black")
+   pdf(file.name, height=7, width=7)
+   plot(de$LOG_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2 FGFR AMP/NON)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
+   text(xmax*-1 + 2*xmax/18, -log10(p) + ymax/42, "P=1.00E-02", col="black")
 
-         if (genes[g] == "CD274")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.04, 1.3), cex=0.75)   
-         else if (genes[g] == "NOTCH4" || genes[g] == "BRD4" || genes[g] == "TOP1")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.07, 1.3), cex=0.75)
-         else if (genes[g] == "REST" || genes[g] == "CDK9")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1.05, 1.3), cex=0.75)
-         else if (genes[g] == "NOTCH3" || genes[g] == "IL6R" || genes[g] == "IL6ST")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
-         else if (genes[g] == "TUBA1A")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.08, cex=0.75)
-         else if (genes[g] == "CHEK2" || genes[g] == "NOTCH2" || genes[g] == "CYP1B1")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.1, cex=0.75)
-         else if (genes[g] == "TNFRSF1A")
-             text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.08, cex=0.75)
-         else if (genes[g] == "TOP2A" || genes[g] == "STMN1" || genes[g] == "BRCA2" || genes[g] == "BRIP1")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.1, cex=0.75)
-         else if (genes[g] == "ASCL1" || genes[g] == "MYCN")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.13, cex=0.75)
-         else if (genes[g] == "E2F2" || genes[g] == "RAD51AP1")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.15, cex=0.75)  
-         else if (genes[g] == "BLM" || genes[g] == "ATM")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.17, cex=0.75)
-         else if (genes[g] == "RNASEH2A" || genes[g] == "BRCA1" || genes[g] == "HMGB2" || genes[g] == "XRCC1" || genes[g] == "XRCC4" || genes[g] == "NOTCH1" || genes[g] == "XRCC4" || genes[g] == "HES1" || genes[g] == "MYD88")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
-         else if (genes[g] == "PARP1" || genes[g] == "PCNA" || genes[g] == "RBL1" || genes[g] == "RBL2")
-            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.55), cex=0.75)
-         else
-            if (gene$Effect > 0)
-               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
-            else
-               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
-      } else
-         print(genes[g])
-   }
-   
-   if (isIg)
-      legend("topleft", legend=c("Up-regulation", "Down-regulation", "Ig VJC genes (no D)", "TCR VC genes (no DJ)"), col=c("red", "dodgerblue", "gold", "forestgreen"), pch=19)
-   else
-      legend("topleft", legend=c("Up-regulation", "Down-regulation"), col=c("red", "dodgerblue"), pch=19)
-   
+   de.up <- subset(de.sig, LOG_FC > 0)
+   points(de.up$LOG_FC, de.up$log10P, pch=16, col="red")
+   de.down <- subset(de.sig, LOG_FC < 0)
+   points(de.down$LOG_FC, de.down$log10P, pch=16, col="dodgerblue")
+
    abline(h=c(-log10(p)), lty=5)
-   text(xmax*-1 + 2*xmax/24, -log10(p) + ymax/42, "FDR=10%")
    dev.off()
 }
+
+##
+#de.input <- de.tpm.gene
+de.input <- de.tpm.gene.log2.res
+plot.name <- paste0("volcanoplot_", base, "_res_tpm_gene_responder_wilcox_q_n21_p-02.pdf")
+plot.main <- paste0("RESPONDER (n=4) vs NON RESPONDER (n=17) in ", BASE)
+
+##
+file.main <- c(plot.main, "", "", "")
+file.name <- file.path(wd.de.plots, plot.name)
+plotVolcano(de.input, 1e-02, file.name, file.main)
+
+
+
+
+
+
+
+
+
+
 
 ## Volcano plot
 de.lcnec <- de.lcnec.tpm.gene

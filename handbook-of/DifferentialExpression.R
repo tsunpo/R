@@ -225,11 +225,12 @@ residualsOf <- function(expr, pheno, covariate) {
 # Method: Volcano plots
 # Last Modified: 13/02/17
 # -----------------------------------------------------------------------------
-plotVolcano <- function(de, fdr, effect, file.de, file.main, legend.x) {
+plotVolcano <- function(de, p, fdr, effect, file.name, file.main, legend.x) {
    de$log10P <- -log10(de$P)
    xmax <- max(de$Effect)
    ymax <- max(de$log10P)
-   p <- max(significantAndVariable(de, effect, fdr)$P)
+   if (is.null(p))
+      p <- max(significantAndVariable(de, effect, fdr)$P)
  
    pdf(paste0(file.de, "_Effect>", effect, ".pdf"))
    plot(de$Effect, de$log10P, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Effect size (log2 FC)", ylab="Significance (-log10 P)", col="darkgray", main=file.main)
