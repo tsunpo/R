@@ -6,8 +6,8 @@
 # Last Modified: 30/01/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
-#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
 handbooks <- c("Common.R", "ReplicationTiming.R", "DifferentialExpression.R")
@@ -21,8 +21,8 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
 base <- tolower(BASE)
 
@@ -30,12 +30,14 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
-setwd(wd.rt)
+wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
+wd.asym.data  <- file.path(wd.asym,  "data")
+wd.asym.plots <- file.path(wd.asym,  "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 
 # -----------------------------------------------------------------------------
@@ -44,9 +46,9 @@ tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinC
 #           https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 29/01/18
 # -----------------------------------------------------------------------------
-plotRT0 <- function(wd.rt.plots, base, chr, n, xmin, xmax, rpkms.chr.rt, bed.gc.chr, pair1, pair0, ext) {
-   file.name  <- file.path(wd.rt.plots, paste0(base, "_wgs_rt_", chr, "_", pair1, "-", pair0, "_n", n))
-   main.text <- paste0("Read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ") in ", base)
+plotRT0 <- function(wd.rt.plots, BASE, chr, n, xmin, xmax, rpkms.chr.rt, bed.gc.chr, pair1, pair0, ext) {
+   file.name  <- file.path(wd.rt.plots, paste0(tolower(BASE), "_wgs_rt_", chr, "_", pair1, "-", pair0, "_n", n))
+   main.text <- paste0("Read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ") in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    ylab.text <- "Replication time (log2 FC)"
  
@@ -90,7 +92,7 @@ BASE  <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "N"
 PAIR  <- paste0(PAIR1, "-", PAIR0)
-CHR   <- 2
+#CHR   <- 2
 CUTOFF <- 0.15
 
 ###
@@ -115,7 +117,7 @@ for (c in 1:22) {
    rpkms.chr.rt <- rpkms.chr.rt[which(rpkms.chr.rt$MEDIAN < CUTOFF),]
    bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt),]
    
-   plotRT0(wd.rt.plots, base, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
+   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 50000000, 100000000, rpkms.chr.rt$MEDIAN, bed.gc.chr,PAIR1, PAIR0, "png")
    
    ## Determin replication direction for each expressed gene
@@ -134,12 +136,18 @@ for (c in 1:22) {
    }
    ensGene.tx.rt <- rbind(ensGene.tx.rt, ensGene.tx.chr)
 }
-save(ensGene.tx.rt, file=paste0(wd.asym.data, "sclc_asym_tx_rt.RData"))
+save(ensGene.tx.rt, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
+# > nrow(ensGene.tx.rt)
+# [1] 10604
 
-# > nrow(tpm.gene.sclc)   ## All chromosomes
-# [1] 19131
-# > nrow(ensGene.tx.rt)   ## Only autosomes
-# [1] 18440
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Step 6.2: Divide genes into two groups (hand-on and co-directional)

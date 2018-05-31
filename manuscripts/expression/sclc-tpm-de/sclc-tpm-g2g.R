@@ -26,9 +26,8 @@ BASE <- "SCLC"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx"))
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.plots <- file.path(wd.asym, "plots")
-setwd(wd.asym)
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 

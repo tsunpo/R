@@ -74,7 +74,6 @@ base <- tolower(BASE)
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.plots <- file.path(wd.asym, "plots")
-setwd(wd.asym)
 
 tpm.gene.input <- pipeTPM(BASE)
 g2g.q4 <- pipeRO("CLL", tpm.gene.input)
@@ -82,6 +81,43 @@ g2g.q4 <- pipeRO("CLL", tpm.gene.input)
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
+
+# -----------------------------------------------------------------------------
+# Max insert size
+# Last Modified: 23/11/17
+# -----------------------------------------------------------------------------
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.log2 <- log2(tpm.gene + 0.01)
+
+samples <- readTable(file.path(wd.rna, "cll_rna_n74.list"), header=F, rownames=T, sep="")
+colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE")
+
+samples$MEDIAN <- mapply(x = 1:nrow(samples), function(x) median(as.numeric(tpm.gene.log2[,x])))
+
+pdf(file.path(wd.de.plots, "max_insert_size.pdf"))
+plot(samples$MEDIAN, samples$MAX_INSERT_SIZE)
+lm.fit <- lm(samples$MEDIAN ~ samples$MAX_INSERT_SIZE)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 23/11/17
+# -----------------------------------------------------------------------------
+pca.de <- getPCA(t(tpm.gene.log2))   ## BUG FIX 13/02/17: Perform PCA using normalised data
+
+###
+## MAX_INSERT_SIZE
+trait <- as.numeric(samples[,"MAX_INSERT_SIZE"])
+greater <- which(trait > 300)
+lesser  <- which(trait <= 300)
+trait[greater] <- ">300"
+trait[lesser]  <- "<300"
+
+file.name <- "pca_MAX_INSERT_SIZE"
+file.main <- "Max insert size in CLL"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, file.name, file.main, NA, NA, c("dodgerblue", "red"))
+
+
 
 
 

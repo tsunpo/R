@@ -30,7 +30,6 @@ wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.files <- file.path(wd.asym, "files")
 wd.asym.data  <- file.path(wd.asym, "data")
 wd.asym.plots <- file.path(wd.asym, "plots")
-setwd(wd.asym)
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")

@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : The dangeous case of DNA replication in SCLC
 # Chapter II   : Correlating replicaiton-fork stress with transcriptional strand asymmetry
-# Name         : manuscripts/asymmetries/sclc-asym-tx-rt.R
+# Name         : manuscripts/asymmetries/nbl-asym-tx-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 31/05/18
 # =============================================================================
@@ -22,7 +22,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+BASE <- "NBL"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -31,7 +31,7 @@ wd.asym.data  <- file.path(wd.asym,  "data")
 wd.asym.plots <- file.path(wd.asym,  "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
+samples <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
 
 load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
@@ -43,15 +43,15 @@ tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 # -----------------------------------------------------------------------------
 load(file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
 # > nrow(ensGene.tx.rt)
-# [1] 10604
+# [1] 10328
 
 ensGene.tx.rt.nona <- subset(subset(ensGene.tx.rt, !is.na(SLOPE_START)), !is.na(SLOPE_END))
 ensGene.tx.rt.nona$SIGN <- sign(ensGene.tx.rt.nona$SLOPE_START / ensGene.tx.rt.nona$SLOPE_END)
 ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-10]
 # > nrow(ensGene.tx.rt.nona)
-# [1] 10468
+# [1] 10201
 # > nrow(ensGene.tx.rt.nona.sign)
-# [1] 9694
+# [1] 9318
 
 ## TRICK: Assign replication has a "-" slope, therefore change/flip it's RT slope to "+" to be consistant with e.g. Tx(+)
 ensGene.tx.rt.nona.sign$RT <- -1
@@ -72,23 +72,23 @@ ens.tx.rt.input <- intersect(unique(tx.snv.input$ensembl_gene_id), unique(ensGen
 ensGene.tx.rt.input <- ensGene.tx.rt.nona.sign[ens.tx.rt.input,]
 tx.q4.rt.input <- getTxQ4RT(ensGene.tx.rt.input, headon=headon, tpm.gene.input.log2)
 # > length(unique(tx.snv.input$ensembl_gene_id))
-# [1] 10347
+# [1] 6881
 # > nrow(ensGene.tx.rt.input)
-# [1] 9485
+# [1] 6053
 
 # for (q in 1:4)   ## CD
 #    print(length(intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])))
-# [1] 1154
-# [1] 1153
-# [1] 1153
-# [1] 1153
+# [1] 764
+# [1] 763
+# [1] 763
+# [1] 763
 
 # for (q in 1:4)   ## HO
 #    print(length(intersect(ens.tx.rt.input, tx.q4.rt.input[[q]])))
-# [1] 1218
-# [1] 1218
-# [1] 1218
-# [1] 1218
+# [1] 750
+# [1] 750
+# [1] 750
+# [1] 750
 
 ###
 ## (Figure S4)
@@ -162,7 +162,7 @@ dev.off()
 # Step 6.3: Log2 transcription-associated SNV asymmetry (Figure S5)
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_", prefix, "_log2_ylim1.5.pdf")), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_", prefix, "_log2_ylim0.4.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -171,7 +171,7 @@ for (i in 1:length(idxs)) {
    else
       colnames(q4) <- c("                                     RT-Tx (Co-directional)", "", "", "")
  
-   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))
+   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.4, 0.4), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))
    mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
@@ -180,7 +180,7 @@ dev.off()
 # Step 7: Replication–transcription collision-induced SNV asymmetry (Figure 1)
 # Last Modified: 22/02/18
 # -----------------------------------------------------------------------------
-for (i in 1:length(idxs)) {
+for (i in 5:5) {
    idx <- idxs[i]
    
    pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_collision_", REFS[idx], ">", ALTS[idx], ".pdf")), height=4.5, width=7)
@@ -188,14 +188,15 @@ for (i in 1:length(idxs)) {
    for (j in 1:3) {
       q4 <- getRTTxQ4(j, i)
       
-      barplot(q4, ylab="SNVs/Mb", main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"), ylim=c(0, q4s.rt[[1]][[i]][2, 1]))   ##, xlab="Number of genes")
+      #barplot(q4, ylab="SNVs/Mb", main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"), ylim=c(0, q4s.rt[[1]][[i]][2, 1]))   ##, xlab="Number of genes")
+      barplot(q4, ylab="SNVs/Mb", main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"), ylim=c(0, q4s.rt[[2]][[i]][2, 4]))   ##, xlab="Number of genes")
       mtext(paste(rownames(q4), collapse="/"), cex=0.55, font=3, line=0.5)      
    }
    
    for (j in 1:3) {
       q4 <- getRTTxQ4(j, i)
   
-      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
+      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.4, 0.4), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
       mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
    }
    dev.off()

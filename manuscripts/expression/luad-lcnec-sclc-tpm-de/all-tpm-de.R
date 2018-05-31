@@ -31,7 +31,6 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de       <- file.path(wd.anlys, "expression/kallisto", "luad-lcnec-sclc-tpm-de")
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
-setwd(wd.de)
 
 load(file.path(wd, base, "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)

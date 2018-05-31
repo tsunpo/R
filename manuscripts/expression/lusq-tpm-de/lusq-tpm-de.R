@@ -31,13 +31,13 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
-setwd(wd.de)
 
 samples <- readTable(file.path(wd.rna, "lusq_rna_n21.list"), header=F, rownames=T, sep="")
 colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "RESPONDER")
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
+tpm.gene.log2.plus1 <- log2(tpm.gene + 1)
 
 # -----------------------------------------------------------------------------
 # D.E. using non-parametric test (4 FGFR AMP vs 17 NON; n=21)
@@ -52,22 +52,46 @@ file.name <- paste0("de_", base, "_tpm_gene_responder_wilcox_q_n21")
 file.main <- paste0("RESPONDER (n=4) vs NON RESPONDER (n=17) in ", BASE)
 
 de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
+de.tpm.gene.plus1 <- pipeDE(tpm.gene.log2.plus1, samples, argv, ensGene)
+# > log2(2 + 0.01)
+# [1] 1.007196
+# > log2(4 + 0.01)
+# [1] 2.003602
+# > log2(8 + 0.01)
+# [1] 3.001802
+# 
+# > log(2 + 1)
+# [1] 1.098612
+# > log(4 + 1)
+# [1] 1.609438
+# > log(8 + 1)
+# [1] 2.197225
 
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 ###
+## If NOT significant, test only on variale genes
+tpm.gene.log2.sd <- tpm.gene.log2[rownames(de.tpm.gene),]   ## Order tpm.gene.log2 according to de.tpm.gene
+de.tpm.gene$SD <- mapply(x = 1:nrow(de.tpm.gene), function(x) sd(as.numeric(tpm.gene.log2.sd[x,])))
+
+de.tpm.gene.var <- subset(de.tpm.gene, SD >= 2)
+de.tpm.gene.var$FDR <- testFDR(de.tpm.gene.var$P, argv$test.fdr)
+
+writeTable(de.tpm.gene.var, file.path(wd.de.data, paste0(file.name, "_sd_2.txt")), colnames=T, rownames=F, sep="\t")
+
+###
 ## FGFR AMP
-genes <- rownames(subset(de.tpm.gene, P <= 1E-2))
+genes <- rownames(subset(de.tpm.gene.log2.res, P <= 1E-2))
 pca.de <- getPCA(t(tpm.gene.log2[genes,]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
 #pca.de <- getPCA(t(tpm.gene.log2[sample(1:2824, 105, replace=F),]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
 
-trait <- as.numeric(samples[,"FGFR_AMP"])
-trait[which(trait == 1)] <- "FGFR AMP"
-trait[which(trait == 0)] <- "FGFR NON"
+trait <- as.numeric(samples[,"RESPONDER"])
+trait[which(trait == 1)] <- "RESPONDER"
+trait[which(trait == 0)] <- "NON RESPONDER"
 
-file.main <- "FGFR AMP in LUSQ on P <= 3E-3"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "random_FGFR_AMP", file.main, NA, NA, c("red", "dodgerblue"))
+file.main <- "RESPONDER in LUSQ on P < 1E-2 (Residuals)"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "p1e-02_pca_res_RESPONDER", file.main, NA, NA, c("red", "dodgerblue"))
 
 rownames <- rownames(subset(de.tpm.gene, P <= 1E-2))
 genes <- c(20)
@@ -93,7 +117,6 @@ trait[which(trait == 0)] <- "FGFR NON"
 
 file.main <- "FGFR AMP in LUSQ on P<0.01 (TPM not log2)"
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "raw_p0.01_FGFR_AMP", file.main, NA, NA, c("red", "dodgerblue"))
-
 
 # -----------------------------------------------------------------------------
 # PCA

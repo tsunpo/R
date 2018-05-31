@@ -30,7 +30,6 @@ wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.files <- file.path(wd.asym, "files")
 wd.asym.data  <- file.path(wd.asym, "data2")
 wd.asym.plots <- file.path(wd.asym, "plots2")
-setwd(wd.asym)
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
@@ -198,8 +197,8 @@ dev.off()
 save(tx.snv.s6, asyms, q4s, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6_q4s.RData")))
 
 ## ADD 16/03/18
-#q4s.exon <- list()
-#q4s.exon[[1]] <- q4s
+q4s.rt <- list()
+q4s.rt[[1]] <- q4s
 
 ###
 ## Refining the plot
