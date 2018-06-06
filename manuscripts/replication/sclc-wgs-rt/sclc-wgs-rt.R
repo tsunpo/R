@@ -55,7 +55,7 @@ plotRT0 <- function(wd.rt.plots, BASE, chr, n, xmin, xmax, rpkms.chr.rt, bed.gc.
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    ymin <- min(rpkms.chr.rt$MEDIAN)
    ymax <- max(rpkms.chr.rt$MEDIAN)
-   if (!is.na(xmin) && !is.na(xmax)) filename <- paste0(filename, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
 

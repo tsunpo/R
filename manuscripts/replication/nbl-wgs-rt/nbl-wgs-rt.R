@@ -21,8 +21,8 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Calculate normalised read counts (RPKM)
 # Last Modified: 01/05/17
 # -----------------------------------------------------------------------------
-wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "NBL"
 base <- tolower(BASE)
 
@@ -62,7 +62,7 @@ ensGene.tx.rt <- ensGene.tx[1,]
 ensGene.tx.rt$SLOPE_START <- 0
 ensGene.tx.rt$SLOPE_END <- 0
 ensGene.tx.rt <- ensGene.tx.rt[-1,]
-for (c in 1:22) {
+for (c in 2:2) {
    #chr <- chrs[CHR]
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -75,8 +75,8 @@ for (c in 1:22) {
    rpkms.chr.rt <- rpkms.chr.rt[which(rpkms.chr.rt$MEDIAN < CUTOFF),]
    bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt),]
  
-   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
-   #plotRT0(wd.rt.plots, BASE, chr, length(samples), 50000000, 100000000, rpkms.chr.rt$MEDIAN, bed.gc.chr,PAIR1, PAIR0, "png")
+   plotRT0(wd.rt.plots, BASE, chr, length(samples), 5000000, 25000000, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
+   #plotRT0(wd.rt.plots, BASE, chr, length(samples), 60000000, 80000000, rpkms.chr.rt$MEDIAN, bed.gc.chr,PAIR1, PAIR0, "png")
  
    ## Determin replication direction for each expressed gene
    slopes <- diff(smooth.spline(rpkms.chr.rt$MEDIAN)$y)/diff((bed.gc.chr$START)/1E7)   ## WHY?

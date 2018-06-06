@@ -62,8 +62,8 @@ testT <- function(q3, q4) {
    return(t.test(as.numeric(q3), as.numeric(q4))$p.value)
 }
 
-testT <- function(q3, q4) {
- return(t.test(as.numeric(qX), as.numeric(q4))$p.value)
+testW <- function(q3, q4) {
+   return(t.test(as.numeric(qX), as.numeric(q4))$p.value)
 }
 
 # -----------------------------------------------------------------------------
