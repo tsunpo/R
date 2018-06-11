@@ -26,7 +26,7 @@ BASE <- "CLL"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx"))
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.plots <- file.path(wd.asym, "plots")
 setwd(wd.asym)
 
@@ -81,6 +81,11 @@ g2g.q4 <- pipeRO("CLL", tpm.gene.input)
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Max insert size

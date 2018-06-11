@@ -33,11 +33,9 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
 samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
-colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "RB1_MUT")
+colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "AVG_FRAGMENT_LENGTH", "RB1_MUT")
 
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd, "ALL", "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
-tpm.gene      <- tpm.gene[,rownames(samples)]
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
 # -----------------------------------------------------------------------------
@@ -56,6 +54,15 @@ de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
 
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# SET (Jen et al, 2007)
+# Last Modified: 09/06/18
+# -----------------------------------------------------------------------------
+genes <- rownames(subset(de.tpm.gene, FDR < 0.1))
+writeTable(tpm.gene[genes,], file.path(wd.de.data, "lcnec_rb1_genes.txt"), colnames=T, rownames=T, sep="\t")
+
+
 
 # -----------------------------------------------------------------------------
 # PCA

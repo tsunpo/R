@@ -33,7 +33,11 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
 samples <- readTable(file.path(wd.rna, "lusq_rna_n21.list"), header=F, rownames=T, sep="")
-colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "RESPONDER")
+colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "AVG_FRAGMENT_LENGTH", "RESPONDER")
+# > testT(subset(samples, V5 == 1)$V3, subset(samples, V5 == 0)$V3)
+# [1] 0.0002451653
+# > testT(subset(samples, V5 == 1)$V4, subset(samples, V5 == 0)$V4)
+# [1] 0.6456143
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)

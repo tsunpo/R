@@ -38,8 +38,8 @@ samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames
 # =============================================================================
 load("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData")
 #tpm.gene <- tpm.gene[,rownames(samples)]
-#tpm.gene <- tpm.gene[,rownames(subset(samples, V4 == 1))]
-tpm.gene <- tpm.gene[,rownames(subset(samples, V4 == 0))]
+#tpm.gene <- tpm.gene[,rownames(subset(samples, V5 == 1))]
+tpm.gene <- tpm.gene[,rownames(subset(samples, V5 == 0))]
 tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 

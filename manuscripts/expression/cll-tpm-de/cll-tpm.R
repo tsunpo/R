@@ -18,8 +18,8 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
 base <- tolower(BASE)
 
@@ -61,18 +61,65 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
 tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
-save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm_r5_p47.RData")))
+save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
 save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData")))
 
-## Genes with patches
-tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)
-# > nrow(tpm.gene.patch)   ## Gene-level TPMs with patches
-# [1] 20328
+###
+## Full gene list without any filtering
+tpm.gene.patch <- list2Matrix(tpm.norm$tpm, tpm.norm)   ## Gene-level TPMs with patches
 
 ## Remove patches (*_PATCH)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
 overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
-tpm.gene <- tpm.gene.patch[overlaps,]
+tpm.gene <- tpm.gene.patch[overlaps,]                   ## Gene-level TPMs
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+# > nrow(tpm.gene)
+# [1] 34908
+
+## Remove not expressed genes (ADD 10/06/18)
+tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+# > nrow(tpm.gene)
+# [1] 16448
+# > 16448 - 16361   ## Different with line 105
+# [1] 69   ## Genes with no 0 TPM in any of the samples, but failed at least 5 read in 47% of the samples (i.e. very low-expressed genes)
+
+###
+## Gene list after default filtering
+tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)   ## Gene-level TPMs with patches
+# > nrow(tpm.gene.patch)
+# [1] 20328   ## Matched to line 59
+
+## Remove patches (*_PATCH)
+## https://www.ncbi.nlm.nih.gov/grc/help/patches
+overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
+tpm.gene <- tpm.gene.patch[overlaps,]                             ## Gene-level TPMs
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-# > nrow(tpm.gene)         ## Gene-level TPMs
-# [1] 18502
+# > nrow(tpm.gene)
+# [1] 18913
+
+## Remove not expressed genes (ADD 10/06/18)
+tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.RData")))
+# > nrow(tpm.gene)
+# [1] 16361
+
+# =============================================================================
+# Density plots
+# Last Modified: 11/06/18
+# =============================================================================
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pdf")))
+
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.pdf")))
+
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.pdf")))
+
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.RData")))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.pdf")))

@@ -6,6 +6,61 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
+# Methods: Density plot
+# Last Modified: 11/06/18
+# -----------------------------------------------------------------------------
+getDensityCount <- function(median) {
+   d <- density(median)
+   d$y <- d$y * d$n
+ 
+   return(d)
+}
+
+plotDensityCount <- function(median, file.main, file.name) {
+   d <- getDensityCount(median)
+ 
+   pdf(file.name, height=6, width=6)
+   plot(d, ylab="Frequency", xlab="log2(TPM + 0.01)", main=paste0("Genes (n=", file.main, ")"))
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Methods: kallisto
+# Last Modified: 10/06/18
+# -----------------------------------------------------------------------------
+getFiltered <- function(reads, min_reads, min_prop) { 
+   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
+ 
+   return(which(numbers/ncol(reads) >= min_prop))
+}
+
+kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
+   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
+   tpm <- list2Matrix(kallisto.table$tpm, kallisto.table)
+ 
+   return(tpm[getFiltered(reads, min_reads, min_prop),])
+}
+
+# -----------------------------------------------------------------------------
+# Methods: GTEx threshold to determine a detected/expressed gene
+# Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
+# Last Modified: 03/02/17
+# -----------------------------------------------------------------------------
+getDetected <- function(expr, value) {   ## Genes being expressed at TPM > 0.1 in at least one sample
+   detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
+ 
+   return(which(detected >= 1))
+}
+
+getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
+   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
+}
+
+getNotExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
+   return(mapply(x = 1:nrow(expr), function(x) any(as.numeric(expr[x,]) == 0)))
+}
+
+# -----------------------------------------------------------------------------
 # Methods: Principal component analysis (PCA)
 # Last Modified: 05/02/17
 # -----------------------------------------------------------------------------

@@ -108,6 +108,16 @@ save(de.all.tpm.gene, pheno.all, file=paste0(wd.all.de, "de-all-tpm-gene/de_all_
 writeTable(de.all.tpm.gene, file=paste0(wd.all.de, "de-all-tpm-gene/de_all_tpm-gene_rb1_src+anova_n198.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
+# SET (Jen et al, 2007)
+# Last Modified: 09/06/18
+# -----------------------------------------------------------------------------
+genes <- subset(de.all.tpm.gene, SRC_FDR <= 8.2537311409347E-20)$external_gene_name
+writeTable(tpm.gene[genes,], file.path(wd.de.data, "lcnec_rb1_genes.txt"), colnames=T, rownames=T, sep="\t")
+
+
+
+
+# -----------------------------------------------------------------------------
 # Comparisions between SCLC, LUAD and LCNEC
 # Last Modified: 18/08/17
 # -----------------------------------------------------------------------------

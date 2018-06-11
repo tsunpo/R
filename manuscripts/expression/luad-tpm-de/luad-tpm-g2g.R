@@ -89,8 +89,19 @@ plotDensity(g2g.q4, file.name, file.main, count=T)
 
 
 
+# =============================================================================
+# Step: Smoking status
+# Last Modified: 08/06/18
+# =============================================================================
+wd.ngs <- file.path(wd, "LUAD/ngs/WGS")
+wd.rna <- file.path(wd, "LUAD/ngs/RNA")
+samples.broad <- readTable(file.path(wd.ngs, "luad_wgs_Broad_n15.list"), header=F, rownames=F, sep="")
+samples.dkfz  <- readTable(file.path(wd.ngs, "luad_wgs_DKFZ_n16.list"), header=F, rownames=F, sep="")
+samples.pan   <- readTable(file.path(wd.ngs, "luad_wgs_PanNeg_n7.list"), header=F, rownames=F, sep="")
+samples.ngx   <- readTable(file.path(wd.ngs, "luad_wgs_NGXBIO_n1.list"), header=F, rownames=F, sep="")
 
-
+samples.wgs <- c(samples.broad, samples.dkfz, samples.pan, samples.ngx)
+samples.rna <- readTable(file.path(wd.rna, "luad_rna_n49-1.list"), header=F, rownames=T, sep="")[,1]
 
 # =============================================================================
 # Step 2: Density plots
