@@ -28,50 +28,22 @@ base <- tolower(BASE)
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.de       <- file.path(wd.anlys, "expression/kallisto", "luad-lcnec-sclc-tpm-de")
+wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0( base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
-
-load(file.path(wd, base, "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData"))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)
-
-
-
-
-
-
-#wd <- "/ngs/cangen/tyang2/"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2/"   ## tyang2@local
-
-wd.all <- paste0(wd, "ALL/")
-wd.all.de <- paste0(wd.all, "analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/")
-setwd(wd.all)
 
 # -----------------------------------------------------------------------------
 # Find genes with "additive" effects between SCLC, LUAD and LCNEC
 # Last Modified: 17/08/17
 # -----------------------------------------------------------------------------
-testANOVA <- function(x, expr, pheno) {
-   fit1 <- lm(as.numeric(expr[x,]) ~ pheno$Cancer_Type)
-   fit2 <- lm(as.numeric(expr[x,]) ~ 1)
-   a1 <- anova(fit1, fit2)
- 
-   return(a1$Pr[2])
-}
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/all_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
-getMedian <- function(x, expr, pheno, type) {
-   return(median(as.numeric(expr[x, rownames(subset(pheno, Cancer_Type == type))])))
-}
-
-##
-pheno.all <- readTable(paste0(wd.all.de, "data/pheno.all_n198.txt"), header=T, rownames=T, sep="")
+pheno.all <- readTable(file.path(wd.de.data, "pheno.all_n198.txt"), header=T, rownames=T, sep="")
 pheno.all$RB1[which(is.na(pheno.all$RB1))] <- "NA"
 pheno.all$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
 
-load("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData")
-# > dim(tpm.gene)
-# [1] 18898   198
-tpm.gene.log2 <- log2(tpm.gene + 0.01)
+##
 expr.pheno.log2 <- tpm.gene.log2[,rownames(pheno.all)]   ## VERY VERY VERY IMPORTANT!!!
 
 colnames <- c("Ensembl_Gene_ID", "SRC_RHO", "SRC_P", "SRC_FDR", "ANOVA_P", "ANOVA_FDR", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")
@@ -84,8 +56,8 @@ pheno.all$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
 de$ANOVA_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) testANOVA(x, expr.pheno.log2, pheno.all))
 
 ## SRC
-de$SRC_RHO   <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[4]])
-de$SRC_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[3]])
+de$SRC_RHO <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[4]])
+de$SRC_P   <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[3]])
 
 ## FC
 de$LUAD  <- mapply(x = 1:nrow(expr.pheno.log2), function(x) getMedian(x, expr.pheno.log2, pheno.all, 0))
@@ -104,8 +76,13 @@ annot.gene <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_na
 overlaps <- intersect(rownames(de), rownames(annot.gene))   ## BE EXTRA CAREFUL!! NOT intersect(rownames(annot.gene), rownames(de)) 
 de.all.tpm.gene <- cbind(annot.gene[overlaps,], de[,-1])    ## BE EXTRA CAREFUL!!
 
-save(de.all.tpm.gene, pheno.all, file=paste0(wd.all.de, "de-all-tpm-gene/de_all_tpm-gene_rb1_src+anova_n198.RData"))
-writeTable(de.all.tpm.gene, file=paste0(wd.all.de, "de-all-tpm-gene/de_all_tpm-gene_rb1_src+anova_n198.txt"), colnames=T, rownames=F, sep="\t")
+save(de.all.tpm.gene, pheno.all, file=file.path(wd.de.data, "de_all_tpm-gene_rb1_src+anova_n198.RData"))
+writeTable(de.all.tpm.gene, file.path(wd.de.data, "de_all_tpm-gene_rb1_src+anova_n198.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # SET (Jen et al, 2007)

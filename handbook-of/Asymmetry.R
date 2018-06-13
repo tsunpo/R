@@ -228,19 +228,22 @@ getTxQ4RT <- function(ensGene.tx.rt, headon, tpm.gene.log2) {
 # -----------------------------------------------------------------------------
 getRTTxQ4 <- function(j, i) {
    q4 <- q4s.rt[[j]][[i]]
-   colnames(q4) <- c("                                     RT-Tx", "", "", "")
    if (j == 1)
       colnames(q4) <- c("", "            Tx", "", "")
- 
+   if (j == 2)
+      colnames(q4) <- c("                                     Tx (Co-directional)", "", "", "")
+   if (j == 3)
+      colnames(q4) <- c("                                     Tx (Head-on)", "", "", "")
+   
    return(q4)
 }
 
 getRTTxMain <- function(i, asyms) {
    main <- getMain(rownames(asyms[[i]]))
    if (j == 2)
-      main <- "Co-directional"
+      main <- "Leading strand"
    else if (j == 3)
-      main <- "Head-on"
+      main <- "Lagging strand"
  
    return(main)
 }

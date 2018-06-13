@@ -28,8 +28,8 @@ base <- tolower(BASE)
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.files <- file.path(wd.asym, "files")
-wd.asym.data  <- file.path(wd.asym, "data2")
-wd.asym.plots <- file.path(wd.asym, "plots2")
+wd.asym.data  <- file.path(wd.asym, "data")
+wd.asym.plots <- file.path(wd.asym, "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
@@ -51,7 +51,8 @@ for (s in 1:length(samples)) {
 # Step 2: Keep only genes that are transcribed in this cancer type 
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))   ## CHANGE 12/06/18
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## CHANGE 02/04/18
 
 for (s in 1:length(samples)) {
@@ -89,7 +90,8 @@ for (s in 1:length(samples)) {
 }
 save(tx.snv, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv.RData")))   ## All SNVs on "expressed" genes (regardless protein coding or not)
 # > nrow(tx.snv)
-# [1] 1441303
+# [1] 1441303   ## tpm.gene_r5_p47
+# [1] 1234158   ## tpm.gene_tpm0
 
 ###
 ## Build up S6 table
@@ -100,14 +102,18 @@ save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData
 # Step 4.1: Keep only SNVs on expressed, "non-redundant" protein coding genes
 # Last Modified: 25/01/18
 # -----------------------------------------------------------------------------
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
 
 ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.input))   ## Needed in Step 5; ADD 02/02/18
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "non-redundant" protein coding genes
-# [1] 1021827
+# [1] 1021827   ## tpm.gene_r5_p47
+# [1] 873174    ## tpm.gene_tpm0
+# > 148653/101
+# [1] 1471.812
 
 ###
 ## Keep only genes with at least one SNV
@@ -117,10 +123,10 @@ tx.q4 <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divid
 save(tx.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_q4.RData")))
 # for (q in 1:4)
 #    print(length(intersect(ens.tx.snv.input, tx.q4[[q]])))
-# [1] 2587
-# [1] 2587
-# [1] 2586
-# [1] 2587
+# [1] 2358   ## 2587; tpm.gene_r5_p47
+# [1] 2358
+# [1] 2358
+# [1] 2358
 
 # -----------------------------------------------------------------------------
 # Step 5.1: SNV asymetrey (Figure S1)
@@ -151,6 +157,8 @@ save(tx.snv.s6, asyms, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s
 
 ###
 ## Refining the plot
+max(asyms[[1]])
+
 pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim300.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {

@@ -28,35 +28,34 @@ base <- tolower(BASE)
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
 wd.asym.plots <- file.path(wd.asym, "plots")
-setwd(wd.asym)
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 # > quantile(tpm.gene.input.log2$MEDIAN)
 # 0%        25%        50%        75%       100% 
-# -5.7550939  0.4394228  3.2257788  4.9586013 13.9241600 
+# -5.0104422  0.9460277  3.4204273  5.0504898 13.9241600 
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
 #  + print(length(tx.q4[[q]]))
-# [1] 2326
-# [1] 2325
-# [1] 2325
-# [1] 2326
+# [1] 2200
+# [1] 2199
+# [1] 2199
+# [1] 2199
 
 g2g.q4 <- getG2GQ4(tx.q4)
-p3 <- testT(g2g.q4[[3]], g2g.q4[[4]])
-p2 <- testT(g2g.q4[[2]], g2g.q4[[4]])
-p1 <- testT(g2g.q4[[1]], g2g.q4[[4]])
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
 c(p1, p2, p3)
-# [1] 2.251716e-06 1.655007e-01 2.680425e-01
+# [1] 2.412153e-21 2.222029e-03 4.314073e-02
 p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 6.755149e-06 4.965022e-01 8.041276e-01
+# [1] 7.236459e-21 6.666086e-03 1.294222e-01
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
@@ -67,20 +66,83 @@ plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18
 # =============================================================================
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "CLL"
-base <- tolower(BASE)
-
-wd.anlys <- file.path(wd, BASE, "analysis")
-wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
-wd.asym.plots <- file.path(wd.asym, "plots")
-
-tpm.gene.input <- pipeTPM(BASE)
-g2g.q4 <- pipeRO("CLL", tpm.gene.input)
-
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
+
+# =============================================================================
+# Step 3: Look at the little bumps (1KB)
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- get1KBG2GQ4(tx.q4, 1000)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 0.2379321 0.1344062 0.9925154
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 0.7137963 0.4032187 1.0000000
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(log10(2), 3))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Step 3: Look at the little bumps (Q1)
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getQ1G2GQ4(tx.q4)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 6.648437e-31 7.239728e-01 5.664283e-01
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 1.994531e-30 1.000000e+00 1.000000e+00
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ro_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ro_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
+
+
+
+
 
 
 

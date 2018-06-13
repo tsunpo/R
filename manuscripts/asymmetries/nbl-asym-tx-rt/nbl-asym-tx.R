@@ -51,7 +51,8 @@ for (s in 1:length(samples)) {
 # Step 2: Keep only genes that are transcribed in this cancer type 
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))   ## CHANGE 12/06/18
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)
 
 lookups <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/metadata/Peifer 2015/SEQC_RNAseq_ID_table.txt", header=T, rownames=2, sep="")
@@ -92,10 +93,11 @@ for (s in 1:length(samples)) {
    tx.snv <- rbind(tx.snv, snv)
 }
 save(tx.snv, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv.RData")))   ## All SNVs on "expressed" genes (regardless protein coding or not)
-# > nrow(tx.snv)   ## BWA-MEM (n=57)
-# [1] 52468
 # > nrow(tx.snv)   ## BWA (n=56)
 # [1] 47207
+# > nrow(tx.snv)   ## BWA-MEM (n=57)
+# [1] 52468   ## tpm.gene_r5_p47
+# [1] 49162   ## tpm.gene_tpm0
 
 ###
 ## Build up S6 table
@@ -106,49 +108,31 @@ save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData
 # Step 4.1: Keep only SNVs on expressed genes
 # Last Modified: 25/01/18
 # -----------------------------------------------------------------------------
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
+
 ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.input))   ## Needed in Step 5; ADD 02/02/18
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
-save(ens.tx.snv.input, tx.snv.input, file=paste0(wd.asym.data, "nbl_asym_tx_snv_input.RData"))   ## All SNVs on "expressed" genes (regardless protein coding or not)
-# > nrow(tx.snv)
-# [1] 52468
-# > nrow(tx.snv.input)   ## BWA-MEM
-# [1] 52468
-# > length(ens.tx.snv.input)
-# [1] 10857
-# > nrow(tpm.gene.input)
-# [1] 18081
-
-# > nrow(tx.snv.input)   ## BWA
-# [1] 47207
-# > length(ens.tx.snv.input)
-# [1] 10516
-# > nrow(tpm.gene.input)
-# [1] 18081
-
-###
-## Compare to SCLC
-# > nrow(tx.snv.sclc)
-# [1] 1441303
-# > length(ens.tx.snv.sclc)
-# [1] 17332
-# > nrow(tpm.gene.sclc)
-# [1] 18440
-
-# > length(intersect(ens.tx.snv.nbl, ens.tx.snv.sclc))   ## TO-DO
-# [1] 10240
+save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
+# > nrow(tx.snv.input)   ## All SNVs on expressed, "non-redundant" protein coding genes
+# [1] ?   ## tpm.gene_r5_p47
+# [1] 32579   ## tpm.gene_tpm0
+# > ?/57
+# [1] 
 
 ###
 ## Keep only genes with at least one SNV
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 tx.q4 <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divide Q4 based on genes with at least one SNV (not all expressed genes)
-save(tx.q4, file=paste0(wd.asym.data, "nbl_asym_tx_q4.RData"))
+save(tx.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_q4.RData")))
 # for (q in 1:4)
 #    print(length(intersect(ens.tx.snv.input, tx.q4[[q]])))
-# [1] 2715
-# [1] 2714
-# [1] 2714
-# [1] 2714
+# [1] 1641   ## ?; tpm.gene_r5_p47
+# [1] 1641
+# [1] 1641
+# [1] 1641
 
 # -----------------------------------------------------------------------------
 # Step 5.1: SNV asymetrey (Figure S1)
@@ -175,17 +159,17 @@ for (i in 1:length(idxs)) {
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()
-save(tx.snv.s6, asyms, file=paste0(wd.asym.data, "nbl_asym_tx_snv_s6.RData"))
+save(tx.snv.s6, asyms, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData")))
 
 ###
 ## Refining the plot
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_snv_s6_ylim10.pdf"), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim10.5.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    asym <- asyms[[i]]
    idx <- idxs[i]
    
-   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 10))
+   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 10.5))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()
@@ -195,7 +179,7 @@ dev.off()
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
 q4s <- list()
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_snv_s6_q4s.pdf"), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
@@ -222,15 +206,15 @@ for (i in 1:length(idxs)) {
    barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(q4)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"))
 }
 dev.off()
-save(tx.snv.s6, asyms, q4s, file=paste0(wd.asym.data, "nbl_asym_tx_snv_s6_q4s.RData"))
+save(tx.snv.s6, asyms, q4s, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6_q4s.RData")))
 
 ## ADD 16/03/18
-q4s.exon <- list()
-q4s.exon[[1]] <- q4s
+q4s.rt <- list()
+q4s.rt[[1]] <- q4s
 
 ###
 ## Refining the plot
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_snv_s6_q4s.pdf"), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -247,13 +231,13 @@ dev.off()
 # Step 5.3: Log2 transcription-associated SNV asymmetry (Figure S3)
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
-pdf(paste0(wd.asym.plots, "nbl_asym_tx_snv_s6_q4s_log2_ylim0.25.pdf"), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_log2_ylim0.2.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
    colnames(q4) <- c("", "           Tx", "", "")
    
-   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.25, 0.25), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))   ## ADD 08/03/18
+   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.2, 0.2), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))   ## ADD 08/03/18
    mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()

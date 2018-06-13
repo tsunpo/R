@@ -21,8 +21,8 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "LUAD"
 base <- tolower(BASE)
 
@@ -37,7 +37,8 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "luad_wgs_n39-5.list"), header=F, rownames=F, sep="")
 
-load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 
 # -----------------------------------------------------------------------------
@@ -143,11 +144,24 @@ for (c in 1:22) {
    ensGene.tx.rt <- rbind(ensGene.tx.rt, ensGene.tx.chr)
 }
 save(ensGene.tx.rt, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
+# > nrow(ensGene.tx.rt)
+# [1] 10352   ## tpm.gene_r5_p47
+# [1] 9394    ## tpm.gene_tpm0
 
-# > nrow(tpm.gene.sclc)   ## All chromosomes
-# [1] 19131
-# > nrow(ensGene.tx.rt)   ## Only autosomes
-# [1] 18440
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Step 6.2: Divide genes into two groups (hand-on and co-directional)

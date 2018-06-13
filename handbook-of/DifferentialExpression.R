@@ -159,6 +159,19 @@ testWilcoxon <- function(expr, pheno, predictor) {
    return(mapply(x = 1:nrow(expr), function(x) wilcox.test(as.numeric(expr[x,]) ~ trait, exact=F)$p.value))
 }
 
+## As used in all-tpm.de.R
+testANOVA <- function(x, expr, pheno) {
+   fit1 <- lm(as.numeric(expr[x,]) ~ pheno$Cancer_Type)
+   fit2 <- lm(as.numeric(expr[x,]) ~ 1)
+   a1 <- anova(fit1, fit2)
+ 
+   return(a1$Pr[2])
+}
+
+getMedian <- function(x, expr, pheno, type) {
+   return(median(as.numeric(expr[x, rownames(subset(pheno, Cancer_Type == type))])))
+}
+
 ## source("https://bioconductor.org/biocLite.R")
 ## biocLite("qvalue")
 testFDR <- function(P, test.fdr) {

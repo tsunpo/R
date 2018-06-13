@@ -112,6 +112,11 @@ load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
 plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pdf")))
 
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+tpm.gene <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pcg.pdf")))
+
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
 plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.pdf")))

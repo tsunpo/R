@@ -44,6 +44,55 @@ getG2GQ4 <- function(tx.q4) {
    return(g2g.q4)
 }
 
+getQ1G2GQ4 <- function(tx.q4) {
+   g2g.q4 <- list()
+ 
+   for (q in 1:4) {
+      genes <- tx.q4[[q]]
+      ensGene.genes <- ensGene[genes,]
+      ensGene.genes <- getTSS(ensGene.genes)
+  
+      g2g <- list()
+      for (g in 1:length(genes)) {
+         ensGene.gene <- ensGene.genes[genes[g],]
+         ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
+         ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
+   
+         g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+      }
+      
+      ## So far same as in getG2GQ4, but only keep the least G2G distance gene
+      q1 <- quantile(as.numeric(g2g))[2]
+      g2g.q4[[q]] <- g2g[as.numeric(g2g) <= q1]
+   }
+ 
+   return(g2g.q4)
+}
+
+get1KBG2GQ4 <- function(tx.q4, min) {
+   g2g.q4 <- list()
+ 
+   for (q in 1:4) {
+      genes <- tx.q4[[q]]
+      ensGene.genes <- ensGene[genes,]
+      ensGene.genes <- getTSS(ensGene.genes)
+  
+      g2g <- list()
+      for (g in 1:length(genes)) {
+         ensGene.gene <- ensGene.genes[genes[g],]
+         ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
+         ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
+   
+         g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+      }
+  
+      ## So far same as in getG2GQ4, but only keep the least G2G distance gene
+      g2g.q4[[q]] <- g2g[as.numeric(g2g) <= min]
+   }
+ 
+   return(g2g.q4)
+}
+
 plotG2GQ4 <- function(g2g.q4, file.name, file.main, ylim) {
    distances <- c()
    quantiles <- c()
@@ -59,31 +108,16 @@ plotG2GQ4 <- function(g2g.q4, file.name, file.main, ylim) {
 }
 
 testT <- function(q3, q4) {
-   return(t.test(as.numeric(q3), as.numeric(q4))$p.value)
+   return(t.test(log10(as.numeric(q3)), as.numeric(q4))$p.value)
 }
 
 testW <- function(q3, q4) {
-   return(t.test(as.numeric(qX), as.numeric(q4))$p.value)
-}
-
-# -----------------------------------------------------------------------------
-# Pipelines: Gene-to-gene minimum distance
-# Last Modified: 18/05/18
-# -----------------------------------------------------------------------------
-pipeTPM <- function(wd, BASE) {
-   base <- tolower(BASE)
+   trait <- rep(0, length(q3))
+   trait <- c(trait, rep(1, length(q4)))
+   trait <- as.factor(trait)
  
-   load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-   tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
-
-   return(tpm.gene.input)
-}
-
-pipeRO <- function(tpm.gene.input.log2) {
-   tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-   g2g.q4 <- getG2GQ4(tx.q4)
-   
-   return(g2g.q4)
+   expr <- c(as.numeric(q3), as.numeric(q4))
+   return(wilcox.test(log10(expr) ~ trait, exact=F)$p.value)
 }
 
 # -----------------------------------------------------------------------------
@@ -118,6 +152,26 @@ plotDensity <- function(g2g.q4, file.name, file.main, count) {
 
    legend("topleft", legend=c("25%", "50%", "75%", "100%"), levels(cols), fill=cols) 
    dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Pipelines: Gene-to-gene minimum distance
+# Last Modified: 18/05/18
+# -----------------------------------------------------------------------------
+pipeTPM <- function(wd, BASE) {
+   base <- tolower(BASE)
+ 
+   load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+   tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+
+   return(tpm.gene.input)
+}
+
+pipeRO <- function(tpm.gene.input.log2) {
+   tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+   g2g.q4 <- getG2GQ4(tx.q4)
+ 
+   return(g2g.q4)
 }
 
 # =============================================================================
