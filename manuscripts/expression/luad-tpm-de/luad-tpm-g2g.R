@@ -72,6 +72,42 @@ file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
 
 # =============================================================================
+# Step 3: Look at the little bumps (Q1)
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getQ1G2GQ4(tx.q4)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 3.449370e-45 1.008533e-65 2.228323e-30
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 1.034811e-44 3.025599e-65 6.684969e-30
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_q1_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_q1_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=NULL)
+
+
+
+
+
+
+
+
+
+# =============================================================================
 # Step 3: Look at the little bumps (1KB)
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18

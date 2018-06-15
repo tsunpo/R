@@ -122,3 +122,28 @@ plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
 plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.pdf")))
+
+# =============================================================================
+# Density plots (Cell cycle)
+# Last Modified: 14/06/18
+# =============================================================================
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+samples <- readTable(file.path(wd.rna, "hela_rna_n14.txt"), header=T, rownames=T, sep="")
+
+samples.G1toS <- rownames(subset(samples, CELL_CYCLE == "G1-S"))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene[,samples.G1toS])
+# > getMaxDensityCount(tpm.gene.log2$MEDIAN)
+# [1] 2383.192
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0_G1-S.pdf")), 2389.993)
+
+samples.StoG2 <- rownames(subset(samples, CELL_CYCLE == "S-G2"))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene[,samples.StoG2])
+# > getMaxDensityCount(tpm.gene.log2$MEDIAN)
+# [1] 2389.993
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0_S-G2.pdf")), 2389.993)
+
+samples.G2toM <- rownames(subset(samples, CELL_CYCLE == "G2-M"))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene[,samples.G2toM])
+# > getMaxDensityCount(tpm.gene.log2$MEDIAN)
+# [1] 2329.508
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0_G2-M.pdf")), 2389.993)

@@ -72,32 +72,316 @@ file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
 
 # =============================================================================
-# Step 3: Look at the little bumps (1KB)
-# https://www.statmethods.net/graphs/density.html
-# Last Modified: 23/05/18
+# Step 3: Leading strands (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
 # =============================================================================
+genes.cd <- c()
+for (q in 1:4)
+   genes.cd <- c(genes.cd, intersect(ens.tx.rt.input, tx.q4.rt.input[[q]]))
+# > length(genes.cd)
+# [1] 4232
+save(genes.cd, genes.ho, file=file.path(wd.asym.data, paste0(base,"_asym_tx_q4_rt_genes-cd+ho.RData")))
+
 tpm.gene.input <- pipeTPM(wd, BASE)
-tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.cd,])
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-g2g.q4 <- get1KBG2GQ4(tx.q4, 1000)
+g2g.q4 <- getG2GQ4(tx.q4)
+# > log10(min(as.numeric(g2g.q4[[4]])))
+# [1] 3.428135
+# > ymax
+# [1] 763.311
 
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
 c(p1, p2, p3)
-# [1] 0.0007606195 0.0647591740 0.0391856377
+# [1] 5.046751e-06 3.286694e-08 4.209444e-06
 p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 0.002281858 0.194277522 0.117556913
+# [1] 1.514025e-05 9.860083e-08 1.262833e-05
 
 ##
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_cd_g2g.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(log10(2), 3))
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.428135, 7.468407))
 
 ##
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g_d.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_cd_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotDensity(g2g.q4, file.name, file.main, count=T)
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+# =============================================================================
+# Step 4: Lagging strands (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+genes.ho <- c()
+for (q in 1:4)
+ genes.ho <- c(genes.ho, intersect(ens.tx.rt.input, tx.q4.rt.input[[q]]))
+# > length(genes.ho)
+# [1] 4418
+
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.ho,])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+# > log10(max(as.numeric(g2g.q4[[2]])))
+# [1] 7.468407
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 6.362036e-08 1.076820e-05 3.289446e-09
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 1.908611e-07 3.230460e-05 9.868337e-09
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.428135, 7.468407))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Step 5: Right-lagging strands (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+# > nrow(subset(ensGene.tx.rt.input[genes.ho,], RT == 1))
+# [1] 2149
+# > nrow(subset(ensGene.tx.rt.input[genes.ho,], RT == -1))
+# [1] 2269
+genes.ho.right <- rownames(subset(ensGene.tx.rt.input[genes.ho,], RT == 1))
+genes.ho.left  <- rownames(subset(ensGene.tx.rt.input[genes.ho,], RT == -1))
+
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.ho.right,])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+# > log10(max(as.numeric(g2g.q4[[2]])))
+# [1] 7.468407
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 0.0084963829 0.0006914775 0.0026034907
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 0.025489149 0.002074433 0.007810472
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho-right_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.428135, 7.468407))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho-right_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+# =============================================================================
+# Step 6: Left-lagging strands (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.ho.left,])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+# > log10(max(as.numeric(g2g.q4[[2]])))
+# [1] 7.468407
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 0.02278788 0.46311374 0.00922025
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 0.06836365 1.00000000 0.02766075
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho-left_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.428135, 7.468407))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho-left_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Step 5: All genes (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[c(genes.cd, genes.ho),])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+# > log10(min(as.numeric(g2g.q4[[2]])))
+# [1] 0.60206
+# > ymax
+# [1] 1408.151
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 5.046751e-06 3.286694e-08 4.209444e-06
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 1.514025e-05 9.860083e-08 1.262833e-05
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_cd_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.60206, 7.468407))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_cd_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+
+
+
+
+# =============================================================================
+# Step 5: Right replication (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+
+
+genes.ho <- c()
+for (q in 1:4)
+ genes.ho <- c(genes.ho, intersect(ens.tx.rt.input, tx.q4.rt.input[[q]]))
+# > length(genes.ho)
+# [1] 4418
+
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.ho,])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 6.362036e-08 1.076820e-05 3.289446e-09
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 1.908611e-07 3.230460e-05 9.868337e-09
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.428135, 7.468407))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+# =============================================================================
+# Step 4: Leading strands (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+genes.cd <- c()
+for (q in 1:4)
+ genes.cd <- c(genes.cd, intersect(ens.tx.rt.input, tx.q4.rt.input[[q]]))
+# > length(genes.cd)
+# [1] 4232
+
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.cd,])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 5.046751e-06 3.286694e-08 4.209444e-06
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 1.514025e-05 9.860083e-08 1.262833e-05
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_cd_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.428135, 7.468407))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_cd_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=763.311)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Step 5: Leading+lagging strands (Following Step 6.2 from sclc-asym-tx-rt.R)
+# Last Modified: 14/06/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[c(genes.cd, genes.ho),])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 3.331408e-20 7.748811e-20 1.176142e-12
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 9.994224e-20 2.324643e-19 3.528426e-12
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho+cd_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main)
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ho+cd_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=NULL)
+
+
+
+
 
 
 
@@ -135,6 +419,53 @@ plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_ro_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# Step 3: Look at the little bumps (1KB)
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- get1KBG2GQ4(tx.q4, 1000)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 0.0007606195 0.0647591740 0.0391856377
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 0.002281858 0.194277522 0.117556913
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(log10(2), 3))
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T)
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -79,8 +79,8 @@ plotDensity(g2g.q4, file.name, file.main, count=T)
 tpm.gene.input <- pipeTPM(wd, BASE)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-g2g.q4 <- get1KBG2GQ4(tx.q4, 1000)
 
+g2g.q4 <- get1KBG2GQ4(tx.q4, 1000)
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
@@ -95,9 +95,65 @@ file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(log10(2), 3))
 
 ##
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1k_g2g_d.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_1kb_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotDensity(g2g.q4, file.name, file.main, count=T)
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=NULL)
+
+# =============================================================================
+# Step 4: Look at the little bumps (G1-S, S-G2, and G2-M)
+# Last Modified: 23/05/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+cycle <- "G2-M"
+
+samples.G1toS <- rownames(subset(samples, CELL_CYCLE == cycle))
+tpm.gene.input <- tpm.gene.input[,samples.G1toS]
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[,samples.G1toS])
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+
+g2g.q4 <- getG2GQ4(tx.q4)
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 1.042204e-02 8.234912e-06 1.196299e-01
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 3.126612e-02 2.470474e-05 3.588896e-01
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_", cycle, "_g2g.pdf"))
+file.main <- paste0(BASE, " (", cycle, "; n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_", cycle, "_g2g_d.pdf"))
+file.main <- paste0(BASE, " (", cycle, "; n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, NULL)
+
+###
+##
+g2g.q4 <- getQ1G2GQ4(tx.q4)
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 1.042204e-02 8.234912e-06 1.196299e-01
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 3.126612e-02 2.470474e-05 3.588896e-01
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_", cycle, "_q1_g2g.pdf"))
+file.main <- paste0(BASE, " (", cycle, "; n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+
+##
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_", cycle, "_q1_g2g_d.pdf"))
+file.main <- paste0(BASE, " (", cycle, "; n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=NULL)
+
+
+
 
 
 

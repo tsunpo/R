@@ -133,12 +133,14 @@ getDensity <- function(distances, count) {
    return(d)
 }
 
-plotDensity <- function(g2g.q4, file.name, file.main, count) {
-   ymax <- max(getDensity(g2g.q4[[1]], count)$y)
-   for (q in 2:4)
-      if (max(getDensity(g2g.q4[[q]], count)$y) > ymax)
-         ymax <- max(getDensity(g2g.q4[[q]], count)$y)
-      
+plotDensity <- function(g2g.q4, file.name, file.main, count, ymax) {
+   if (is.null(ymax)) {
+      ymax <- max(getDensity(g2g.q4[[1]], count)$y)
+      for (q in 2:4)
+         if (max(getDensity(g2g.q4[[q]], count)$y) > ymax)
+            ymax <- max(getDensity(g2g.q4[[q]], count)$y)
+   }
+
    xmax <- max(getDensity(g2g.q4[[1]], count)$x)
    for (q in 2:4)
       if (max(getDensity(g2g.q4[[q]], count)$x) > xmax)

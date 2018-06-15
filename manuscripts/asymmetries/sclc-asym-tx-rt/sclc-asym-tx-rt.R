@@ -33,15 +33,15 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
 
+# -----------------------------------------------------------------------------
+# Step 6.2: Divide genes into two groups (hand-on and co-directional)
+# Last Modified: 20/02/18
+# -----------------------------------------------------------------------------
 #load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
-# -----------------------------------------------------------------------------
-# Step 6.2: Divide genes into two groups (hand-on and co-directional)
-# Last Modified: 20/02/18
-# -----------------------------------------------------------------------------
 load(file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
 # > nrow(ensGene.tx.rt)
 # [1] 10604   ## tpm.gene_r5_p47
@@ -55,7 +55,7 @@ ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-10]
 # [1] 9533
 # > nrow(ensGene.tx.rt.nona.sign)
 # [1] 9694   ## tpm.gene_r5_p47
-# [1] 8817
+# [1] 8817   
 
 ## TRICK: Assign replication has a "-" slope, therefore change/flip it's RT slope to "+" to be consistant with e.g. Tx(+)
 ensGene.tx.rt.nona.sign$RT <- -1
@@ -68,7 +68,7 @@ tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 
 ###
 ##
-headon <- T   ## Replication–transcription Head-on (T) / Co-directional (F) collisions
+headon <- F   ## Replication–transcription Head-on (T) / Co-directional (F) collisions
 prefix <- "ho"
 if (headon == F) prefix <- "cd"
 
@@ -79,7 +79,7 @@ tx.q4.rt.input <- getTxQ4RT(ensGene.tx.rt.input, headon=headon, tpm.gene.input.l
 # [1] 10347
 # [1] 9432
 # > nrow(ensGene.tx.rt.input)
-# [1] 9485
+# [1] 9485   ## tpm.gene_r5_p47
 # [1] 8650
 
 # for (q in 1:4)   ## CD
