@@ -44,55 +44,6 @@ getG2GQ4 <- function(tx.q4) {
    return(g2g.q4)
 }
 
-getQ1G2GQ4 <- function(tx.q4) {
-   g2g.q4 <- list()
- 
-   for (q in 1:4) {
-      genes <- tx.q4[[q]]
-      ensGene.genes <- ensGene[genes,]
-      ensGene.genes <- getTSS(ensGene.genes)
-  
-      g2g <- list()
-      for (g in 1:length(genes)) {
-         ensGene.gene <- ensGene.genes[genes[g],]
-         ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
-         ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
-   
-         g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
-      }
-      
-      ## So far same as in getG2GQ4, but only keep the least G2G distance gene
-      q1 <- quantile(as.numeric(g2g))[2]
-      g2g.q4[[q]] <- g2g[as.numeric(g2g) <= q1]
-   }
- 
-   return(g2g.q4)
-}
-
-get1KBG2GQ4 <- function(tx.q4, min) {
-   g2g.q4 <- list()
- 
-   for (q in 1:4) {
-      genes <- tx.q4[[q]]
-      ensGene.genes <- ensGene[genes,]
-      ensGene.genes <- getTSS(ensGene.genes)
-  
-      g2g <- list()
-      for (g in 1:length(genes)) {
-         ensGene.gene <- ensGene.genes[genes[g],]
-         ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
-         ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
-   
-         g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
-      }
-  
-      ## So far same as in getG2GQ4, but only keep the least G2G distance gene
-      g2g.q4[[q]] <- g2g[as.numeric(g2g) <= min]
-   }
- 
-   return(g2g.q4)
-}
-
 plotG2GQ4 <- function(g2g.q4, file.name, file.main, ylim) {
    distances <- c()
    quantiles <- c()
@@ -103,7 +54,7 @@ plotG2GQ4 <- function(g2g.q4, file.name, file.main, ylim) {
  
    pdf(file.name, height=6, width=4)
    names <- c("25%", "50%", "75%", "100%")
-   boxplot(log10(distances)~quantiles, ylab="Gene-to-gene min dist. (log10)", xlab="Expression", names=names, ylim=ylim, main=file.main)
+   boxplot(log10(distances)~quantiles, ylab="Gene-to-gene min dist. (log10)", xlab="Expression", names=names, main=file.main, ylim=ylim)
    dev.off()
 }
 
@@ -169,10 +120,18 @@ pipeTPM <- function(wd, BASE) {
    return(tpm.gene.input)
 }
 
-pipeRO <- function(tpm.gene.input.log2) {
+pipeG2G <- function(wd, BASE, genes.list) {
+   tpm.gene.input <- pipeTPM(wd, BASE)
+   tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.list,])
    tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
    g2g.q4 <- getG2GQ4(tx.q4)
- 
+
+   p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+   p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+   p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+   c(p1, p2, p3)
+   p.adjust(c(p1, p2, p3), method="bonferroni")
+   
    return(g2g.q4)
 }
 
@@ -187,3 +146,51 @@ pipeRO <- function(tpm.gene.input.log2) {
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified:
 # =============================================================================
+# getQ1G2GQ4 <- function(tx.q4) {
+#  g2g.q4 <- list()
+#  
+#  for (q in 1:4) {
+#   genes <- tx.q4[[q]]
+#   ensGene.genes <- ensGene[genes,]
+#   ensGene.genes <- getTSS(ensGene.genes)
+#   
+#   g2g <- list()
+#   for (g in 1:length(genes)) {
+#    ensGene.gene <- ensGene.genes[genes[g],]
+#    ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
+#    ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
+#    
+#    g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+#   }
+#   
+  ## So far same as in getG2GQ4, but only keep the least G2G distance gene
+#   q1 <- quantile(as.numeric(g2g))[2]
+#   g2g.q4[[q]] <- g2g[as.numeric(g2g) <= q1]
+#  }
+#  
+#  return(g2g.q4)
+# }
+
+# get1KBG2GQ4 <- function(tx.q4, min) {
+#  g2g.q4 <- list()
+#  
+#  for (q in 1:4) {
+#   genes <- tx.q4[[q]]
+#   ensGene.genes <- ensGene[genes,]
+#   ensGene.genes <- getTSS(ensGene.genes)
+#   
+#   g2g <- list()
+#   for (g in 1:length(genes)) {
+#    ensGene.gene <- ensGene.genes[genes[g],]
+#    ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
+#    ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
+#    
+#    g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+#   }
+#   
+  ## So far same as in getG2GQ4, but only keep the least G2G distance gene
+#   g2g.q4[[q]] <- g2g[as.numeric(g2g) <= min]
+#  }
+#  
+#  return(g2g.q4)
+# }

@@ -71,6 +71,69 @@ file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T)
 
 # =============================================================================
+# Test: All Tx(+)
+# Last Modified: 15/06/18
+# =============================================================================
+tpm.gene.input <- pipeTPM(wd, BASE)
+genes.plus  <- rownames(subset(ensGene[rownames(tpm.gene.input),], strand == 1))
+genes.minus <- rownames(subset(ensGene[rownames(tpm.gene.input),], strand == -1))
+# > length(genes.plus)
+# [1] 4488
+# > length(genes.minus)
+# [1] 4309
+
+g2g.q4 <- pipeG2G(wd, BASE, genes.plus)
+# [1] 6.193839e-05 7.985932e-02 1.434225e-01
+# [1] 0.0001858152 0.2395779548 0.4302673601
+# > ymax
+# [1] 754.7507
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_plus_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.446848, 7.350468))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_plus_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=702.1426)
+
+##
+g2g.q4.plus <- g2g.q4[[4]]
+
+# =============================================================================
+# Test: All Tx(-)
+# Last Modified: 15/06/18
+# =============================================================================
+g2g.q4 <- pipeG2G(wd, BASE, genes.minus)
+# [1] 1.402395e-12 9.014271e-06 1.476496e-05
+# [1] 4.207184e-12 2.704281e-05 4.429489e-05
+# > ymax
+# [1] 702.1426
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_minus_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(3.446848, 7.350468))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_minus_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=702.1426)
+
+##
+g2g.q4.minus <- g2g.q4[[4]]
+testW(g2g.q4.plus, g2g.q4.minus)
+# [1] 0.2006883
+
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
 # Step 3: Look at the little bumps (1KB)
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18

@@ -37,8 +37,7 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
 
-#load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 
 # -----------------------------------------------------------------------------
@@ -118,7 +117,7 @@ for (c in 1:22) {
    rpkms.chr.rt <- rpkms.chr.rt[which(rpkms.chr.rt$MEDIAN < CUTOFF),]
    bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt),]
    
-   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
+   #plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 50000000, 100000000, rpkms.chr.rt$MEDIAN, bed.gc.chr,PAIR1, PAIR0, "png")
    
    ## Determin replication direction for each expressed gene
@@ -139,8 +138,15 @@ for (c in 1:22) {
 }
 save(ensGene.tx.rt, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
 # > nrow(ensGene.tx.rt)
-# [1] 10604   ## tpm.gene_r5_p47
-# [1] 9624    ## tpm.gene_tpm0
+# [1] 10604
+
+
+
+
+
+
+
+
 
 
 

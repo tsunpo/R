@@ -76,14 +76,6 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # > nrow(tpm.gene)
 # [1] 34908
 
-## Remove not expressed genes (ADD 10/06/18)
-tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
-# > nrow(tpm.gene)
-# [1] 15969
-# > 15969 - 15901   ## Different with line 105
-# [1] 68   ## Genes with no 0 TPM in any of the samples, but failed at least 5 read in 47% of the samples (i.e. very low-expressed genes)
-
 ###
 ## Gene list after default filtering
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)   ## Gene-level TPMs with patches
@@ -98,12 +90,6 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # > nrow(tpm.gene)
 # [1] 18674
 
-## Remove not expressed genes (ADD 10/06/18)
-tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.RData")))
-# > nrow(tpm.gene)
-# [1] 15901
-
 # =============================================================================
 # Density plots
 # Last Modified: 11/06/18
@@ -112,14 +98,6 @@ load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
 plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pdf")))
 
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
-tpm.gene.log2 <- getLog2andMedian(tpm.gene)
-plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.pdf")))
-
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
 plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.pdf")))
-
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.RData")))
-tpm.gene.log2 <- getLog2andMedian(tpm.gene)
-plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47_tpm0.pdf")))

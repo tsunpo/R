@@ -3,7 +3,7 @@
 # Chapter      : Transcriptional strand asymmetry in LUAD
 # Name         : manuscripts/asymmetries/cll-asym-tx.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 27/05/18
+# Last Modified: 20/06/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
@@ -51,8 +51,7 @@ for (s in 1:length(samples)) {
 # Step 2: Keep only genes that are transcribed in this cancer type 
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))   ## CHANGE 12/06/18
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## CHANGE 02/04/18
 
 for (s in 1:length(samples)) {
@@ -90,8 +89,7 @@ for (s in 1:length(samples)) {
 }
 save(tx.snv, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv.RData")))   ## All SNVs on "expressed" genes (regardless protein coding or not)
 # > nrow(tx.snv)
-# [1] 1441303   ## tpm.gene_r5_p47
-# [1] 1234158   ## tpm.gene_tpm0
+# [1] 1441303
 
 ###
 ## Build up S6 table
@@ -102,98 +100,104 @@ save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData
 # Step 4.1: Keep only SNVs on expressed, "non-redundant" protein coding genes
 # Last Modified: 25/01/18
 # -----------------------------------------------------------------------------
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
-tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.input))   ## Needed in Step 5; ADD 02/02/18
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "non-redundant" protein coding genes
-# [1] 1021827   ## tpm.gene_r5_p47
-# [1] 873174    ## tpm.gene_tpm0
-# > 148653/101
-# [1] 1471.812
+# [1] 1021827
 
 ###
-## Keep only genes with at least one SNV
-tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
-
-tx.q4 <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divide Q4 based on genes with at least one SNV (not all expressed genes)
-save(tx.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_q4.RData")))
+## Keep only genes with at least one SNV                   ## REMOVED 20/06/18
+#tx.q4 <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divide Q4 based on genes with at least one SNV (not all expressed genes)
+#save(tx.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_q4.RData")))
 # for (q in 1:4)
 #    print(length(intersect(ens.tx.snv.input, tx.q4[[q]])))
-# [1] 2358   ## 2587; tpm.gene_r5_p47
-# [1] 2358
-# [1] 2358
-# [1] 2358
+# [1] 2587
+# [1] 2587
+# [1] 2586
+# [1] 2587
 
 # -----------------------------------------------------------------------------
 # Step 5.1: SNV asymetrey (Figure S1)
-# Last Modified: 25/01/18
+# Last Modified: 20/06/18
 # -----------------------------------------------------------------------------
-asyms <- list()
+ens.asyms <- list()   ## ADD 20/06/18
+asyms     <- list()
 pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
 
+   ens.asym <- c()    ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
    asym <- as.matrix(toTable(0, 2, 2, c("Tx(+)", "Tx(-)")))
    rownames(asym) <- c(paste0(REFS[idx], ">", ALTS[idx]), paste0(REFS[idx+1], ">", ALTS[idx+1]))
    for (j in 1:2)
-      for (k in 1:2)
+      for (k in 1:2) {
+         ens.asym   <- c(ens.asym, getMutGenes(tx.snv.s6[[i]][[j]][[k]], tpm.gene.input))   ## ADD 20/06/18
          asym[j, k] <- getMutPerMb(tx.snv.s6[[i]][[j]][[k]], tpm.gene.input)   ## Only look at SNVs on expressed genes
                ## E.g. getMutPerMb(tx.snv.s6[[1]][[1]][[1]])   ## E.g. C>A Tx(+)
                ##      getMutPerMb(tx.snv.s6[[1]][[1]][[2]])   ##      C>A Tx(-)
                ##      getMutPerMb(tx.snv.s6[[1]][[2]][[1]])   ##      G>T Tx(+)
                ##      getMutPerMb(tx.snv.s6[[1]][[2]][[2]])   ##      G>T Tx(-)
+      }
    
+   ens.asyms[[i]] <- unique(ens.asym)
    asyms[[i]] <- asym
    barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()
-save(tx.snv.s6, asyms, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData")))
+save(tx.snv.s6, ens.asyms, asyms, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData")))
 
 ###
 ## Refining the plot
 max(asyms[[1]])
+# [1] 313.1942
 
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim300.pdf")), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim313.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    asym <- asyms[[i]]
    idx <- idxs[i]
    
-   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 300))
+   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 313.1942))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()
 
 # -----------------------------------------------------------------------------
 # Step 5.2: Transcription-associated SNV asymmetry (Figure S2)
-# Last Modified: 26/01/18
+# Last Modified: 22/06/18
 # -----------------------------------------------------------------------------
 q4s <- list()
 pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
- 
+   ## Cntx:Gtx  =   tx.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.snv.s6[[1]][[2]][[2]] G>T Tx(-)
+   CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
+   ## Gntx:Ctx  =   tx.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
+   GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
+   
+   ens.asym <- ens.asyms[[i]]   ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
+   ens.asym.q4 <- getTxQ4(ens.asym, tpm.gene.input.log2) 
+   
    q4 <- as.matrix(toTable(0, 4, 2, c("n=", "n=", "n=", "n=")))
    rownames(q4) <- c(paste0(REFS[idx], "ntx:", REFS[idx+1], "tx"), paste0(REFS[idx+1], "ntx:", REFS[idx], "tx"))
    for (q in 1:4) {
-      txs <- tx.q4[[q]]
+      txs <- ens.asym.q4[[q]]   ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
       
-      ## Cntx:Gtx  =   tx.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.snv.s6[[1]][[2]][[2]] G>T Tx(-)
-      CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
-      txs.cg <- intersect(unique(CntxGtx$ensembl_gene_id), txs)
-      q4[1, q] <- getMutPerMbTxs(CntxGtx, txs.cg)
+      CntxGtx.cg <- subset(CntxGtx, ensembl_gene_id %in% txs)
+      txs.cg <- intersect(unique(CntxGtx.cg$ensembl_gene_id), txs)
+      q4[1, q] <- getMutPerMbTxs(CntxGtx.cg, txs.cg)   ## ADD 22/06/18: Also implemented txs.cg in getMutPerMbTxs() now
 
-      ## Gntx:Ctx  =   tx.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
-      GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
-      txs.gc <- intersect(unique(GntxCtx$ensembl_gene_id), txs)
-      q4[2, q] <- getMutPerMbTxs(GntxCtx, txs.gc)
+      GntxCtx.gc <- subset(GntxCtx, ensembl_gene_id %in% txs)
+      txs.gc <- intersect(unique(GntxCtx.gc$ensembl_gene_id), txs)
+      q4[2, q] <- getMutPerMbTxs(GntxCtx.gc, txs.gc)   ## ADD 22/06/18: Also implemented txs.gc in getMutPerMbTxs() now
       
       colnames(q4)[q] <- paste0(colnames(q4)[q], length(unique(c(txs.cg, txs.gc))), " (", length(txs.cg), "+", length(txs.gc), ")")
    }
@@ -202,7 +206,7 @@ for (i in 1:length(idxs)) {
    barplot(q4, ylab="SNVs/Mb", main=getMain(rownames(q4)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"))
 }
 dev.off()
-save(tx.snv.s6, asyms, q4s, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6_q4s.RData")))
+save(tx.snv.s6, ens.asyms, asyms, q4s, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6_q4s.RData")))
 
 ## ADD 16/03/18
 q4s.rt <- list()

@@ -33,8 +33,7 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "luad_wgs_n39-5.list"), header=F, rownames=F, sep="")
 
-#load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
@@ -186,14 +185,15 @@ dev.off()
 # Step 7: Replication–transcription collision-induced SNV asymmetry (Figure 1)
 # Last Modified: 22/02/18
 # -----------------------------------------------------------------------------
-for (i in 1:length(idxs)) {
+#for (i in 1:length(idxs)) {
+for (i in 3:3) {
    idx <- idxs[i]
    ymax <- max(q4s.rt[[1]][[i]])
    for (j in 2:3)
       if (max(q4s.rt[[j]][[i]]) > ymax)
           ymax <- max(q4s.rt[[j]][[i]])
    
-   pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_strands_", REFS[idx], ">", ALTS[idx], ".pdf")), height=4.5, width=7)
+   pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_strands_", REFS[idx], ">", ALTS[idx], "_ylim0.4.pdf")), height=4.5, width=7)
    par(mfrow=c(2, 3)) 
    for (j in 1:3) {
       q4 <- getRTTxQ4(j, i)
@@ -205,7 +205,74 @@ for (i in 1:length(idxs)) {
    for (j in 1:3) {
       q4 <- getRTTxQ4(j, i)
   
-      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
+      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-0.4, 0.4), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
+      mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
+   }
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Step: Test
+# Last Modified: 17/06/18
+# -----------------------------------------------------------------------------
+load(file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6_q4s.RData")))
+q4s.rt.ho <- list()   ## ADD 31/05/18
+q4s.rt.ho[[1]] <- q4s.rt[[3]]
+
+q4s.rt.ho.tmp <- q4s.rt.ho
+q4s.rt.ho.tmp[[2]] <- q4s.rt.ho[[3]]
+q4s.rt.ho.tmp[[3]] <- q4s.rt.ho[[2]]
+
+genes.ho.plus  <- rownames(subset(ensGene[genes.ho,], strand == 1))
+genes.ho.minus <- rownames(subset(ensGene[genes.ho,], strand == -1))
+
+q4s <- list()
+for (i in 1:length(idxs)) {
+   idx <- idxs[i]
+ 
+   q4 <- as.matrix(toTable(0, 4, 2, c("n=", "n=", "n=", "n=")))
+   rownames(q4) <- c(paste0(REFS[idx], "ntx:", REFS[idx+1], "tx"), paste0(REFS[idx+1], "ntx:", REFS[idx], "tx"))
+   for (q in 1:4) {
+      txs <- tx.q4.rt.input[[q]]
+      txs <- intersect(txs, genes.ho.plus)
+  
+      ## Cntx:Gtx  =   tx.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.snv.s6[[1]][[2]][[2]] G>T Tx(-)
+      CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
+      txs.cg <- intersect(unique(CntxGtx$ensembl_gene_id), txs)
+      q4[1, q] <- getMutPerMbTxs(CntxGtx, txs.cg)
+  
+      ## Gntx:Ctx  =   tx.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
+      GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
+      txs.gc <- intersect(unique(GntxCtx$ensembl_gene_id), txs)
+      q4[2, q] <- getMutPerMbTxs(GntxCtx, txs.gc)
+  
+      colnames(q4)[q] <- paste0(colnames(q4)[q], length(unique(c(txs.cg, txs.gc))), " (", length(txs.cg), "+", length(txs.gc), ")")
+   }
+ 
+   q4s[[i]] <- q4
+}
+
+##
+for (i in 1:1) {
+   idx <- idxs[i]
+   ymax <- max(q4s.rt.ho[[1]][[i]])
+   for (j in 2:3)
+      if (max(q4s.rt.ho[[j]][[i]]) > ymax)
+         ymax <- max(q4s.rt.ho[[j]][[i]])
+ 
+   pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_strands_", REFS[idx], ">", ALTS[idx], "_ho_ylim1.5.pdf")), height=4.5, width=7)
+   par(mfrow=c(2, 3)) 
+   for (j in 1:3) {
+      q4 <- getRTTxQ4_2(q4s.rt.ho, j, i)
+  
+      barplot(q4, ylab="SNVs/Mb", main=getRTTxMain_2(i, asyms), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown"), ylim=c(0, ymax))   ##, xlab="Number of genes")
+      mtext(paste(rownames(q4), collapse=" vs "), cex=0.55, font=3, line=0.5)      
+   }
+ 
+   for (j in 1:3) {
+      q4 <- getRTTxQ4_2(q4s.rt.ho, j, i)
+  
+      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getRTTxMain_2(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
       mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
    }
    dev.off()

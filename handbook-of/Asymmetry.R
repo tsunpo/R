@@ -154,6 +154,10 @@ getTxQ4 <- function(gene.list, tpm.gene.log2) {
 # Method: SNV asymetrey (Step 5.1)
 # Last Modified: 25/01/18
 # -----------------------------------------------------------------------------
+getMutGenes <- function(s1, tpm.gene) {
+   return(intersect(unique(s1$ensembl_gene_id), rownames(tpm.gene)))
+} 
+
 getMutPerMb <- function(s1, tpm.gene) {
    txs <- intersect(unique(s1$ensembl_gene_id), rownames(tpm.gene))
    s1 <- subset(s1, ensembl_gene_id %in% txs)
@@ -184,6 +188,10 @@ getLog2Colours <- function(q4) {
 # Method: Transcription-associated SNV asymmetry (Step 5.2 and 8.1)
 # Last Modified: 01/02/18
 # -----------------------------------------------------------------------------
+getMbTx <- function(tx) {
+   return(abs(ensGene[tx,]$end_position - ensGene[tx,]$start_position))
+}
+
 getMutPerMbTx <- function(s1, tx) {
    mb <- abs(ensGene[tx,]$end_position - ensGene[tx,]$start_position)
  
@@ -191,11 +199,14 @@ getMutPerMbTx <- function(s1, tx) {
 }
 
 getMutPerMbTxs <- function(s1, txs) {
+   s1 <- subset(s1, ensembl_gene_id %in% txs)
+   txs <- intersect(unique(s1$ensembl_gene_id), txs)
+ 
    mb <- 0
    for (t in 1:length(txs))
       mb <- mb + abs(ensGene[txs[t],]$end_position - ensGene[txs[t],]$start_position)
  
-   return(nrow(subset(s1, ensembl_gene_id %in% txs)) / mb * 1000000)
+   return(nrow(s1) / mb * 1000000)
 }
 
 # =============================================================================
@@ -209,7 +220,7 @@ getMutPerMbTxs <- function(s1, txs) {
 # Last Modified: 20/02/18
 # -----------------------------------------------------------------------------
 getHeadOnCollision <- function(ensGene.tx.rt, headon) {
-   if (headon)
+   if (headon == "ho")
       return(rbind(subset(subset(ensGene.tx.rt, strand == -1), RT == 1), subset(subset(ensGene.tx.rt, strand == 1), RT == -1)))
    else
       return(rbind(subset(subset(ensGene.tx.rt, strand == -1), RT == -1), subset(subset(ensGene.tx.rt, strand == 1), RT == 1)))
@@ -222,6 +233,21 @@ getTxQ4RT <- function(ensGene.tx.rt, headon, tpm.gene.log2) {
    return(getTxQ4(gene.list, tpm.gene.log2))
 }
 
+getStrand <- function(genes.list, strand) {
+   if (strand == "fw")
+      return(rownames(subset(ensGene[genes.list,], strand == 1)))
+   else
+      return(rownames(subset(ensGene[genes.list,], strand == -1)))
+}
+
+getTxQ4RTStrand <- function(ensGene.tx.rt, headon, strand, tpm.gene.log2) {
+   gene.list <- rownames(getHeadOnCollision(ensGene.tx.rt, headon))
+   gene.list <- getStrand(gene.list, strand)
+   tpm.gene.log2 <- tpm.gene.log2[gene.list,]
+ 
+   return(getTxQ4(gene.list, tpm.gene.log2))
+}
+
 # -----------------------------------------------------------------------------
 # Method: Divide genes into two groups (hand-on and co-directional; Step 7)
 # Last Modified: 05/04/18
@@ -231,9 +257,9 @@ getRTTxQ4 <- function(j, i) {
    if (j == 1)
       colnames(q4) <- c("", "            Tx", "", "")
    if (j == 2)
-      colnames(q4) <- c("                                     Tx (Co-directional)", "", "", "")
+      colnames(q4) <- c("                                     RT-Tx (Co-directional)", "", "", "")
    if (j == 3)
-      colnames(q4) <- c("                                     Tx (Head-on)", "", "", "")
+      colnames(q4) <- c("                                     RT-Tx (Head-on)", "", "", "")
    
    return(q4)
 }
@@ -247,6 +273,52 @@ getRTTxMain <- function(i, asyms) {
  
    return(main)
 }
+
+getRTTxQ4_2 <- function(q4s.rt.ho, j, i, headon) {
+   q4 <- q4s.rt.ho[[j]][[i]]
+   if (headon == "ho") {
+      if (j == 1)
+         colnames(q4) <- c("                                     RT-Tx (Head-on)", "", "", "")
+      if (j == 2)
+         colnames(q4) <- c("                                      RT(L)-Tx(+)", "", "", "")
+      if (j == 3)
+         colnames(q4) <- c("                                      RT(R)-Tx(-)", "", "", "")
+   } else {
+      if (j == 1)
+         colnames(q4) <- c("                                     RT-Tx (Co-directional)", "", "", "")
+      if (j == 2)
+         colnames(q4) <- c("                                      RT(R)-Tx(+)", "", "", "")
+      if (j == 3)
+         colnames(q4) <- c("                                      RT(L)-Tx(-)", "", "", "")
+   }
+   
+   return(q4)
+}
+
+getRTTxMain_2 <- function(i, asyms, headon) {
+   main <- getMain(rownames(asyms[[i]]))
+   if (j == 1)
+      if (headon == "ho")
+         main <- "Lagging strand"
+      else
+         main <- "Leading strand"
+   if (j == 2)
+      main <- "Forward transcription"
+   if (j == 3)
+      main <- "Reverse transcription"
+ 
+   return(main)
+}
+
+# -----------------------------------------------------------------------------
+# Method: Final reports (s6.rt.st; Step 7)
+# Last Modified: 05/04/18
+# -----------------------------------------------------------------------------
+initTableS6RTSt <- function() {
+   return(list(list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list())))))
+}
+
+
 
 # =============================================================================
 # Inner Class: Collections of test/obsolete/deprecated methods
