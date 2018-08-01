@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Common.R", "Asymmetry.R", "ReplicationOrigin.R")
+handbooks  <- c("Common.R", "Asymmetry.R", "DifferentialExpression.R", "ReplicationOrigin.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -22,65 +22,65 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "CLL"
+BASE <- "WB2"
 base <- tolower(BASE)
 
-wd.anlys <- file.path(wd, BASE, "analysis")
-wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
+wd.anlys <- file.path(wd, "GTEx", "analysis")
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0("wb", "-asym-tx-rt"))
+wd.asym.data  <- file.path(wd.asym, "data")
 wd.asym.plots <- file.path(wd.asym, "plots")
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+#load(file.path(wd, "GTEx", "analysis/expression/kallisto", paste0("wb", "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+load(file.path(wd, "GTEx", "analysis/expression/kallisto", paste0("wb", "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd, "GTEx", "analysis/expression/kallisto", paste0("wb", "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 # > quantile(tpm.gene.input.log2$MEDIAN)
 # 0%        25%        50%        75%       100% 
-# -5.7550939  0.4394228  3.2257788  4.9586013 13.9241600 
+# -6.3903478 -1.5822828  0.3993578  2.3068759 17.5444137
 
 ## No filter
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-g2g.q4 <- getG2GQ4(tx.q4)
+g2g.q4 <- getG2GQ4(tx.q4, NULL)
 testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
-# [1] 6.356869e-03
+# [1] 8.262635e-36
 
 ## Excluded TPM=0 in any
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-g2g.q4 <- getG2GQ4(tx.q4)
+g2g.q4 <- getG2GQ4(tx.q4, NULL)
 testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
-# [1] 2.719345e-09
+# [1] 5.188315e-45
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
 #  + print(length(tx.q4[[q]]))
-# [1] 2326
-# [1] 2325
-# [1] 2325
-# [1] 2326
+# [1] 2286
+# [1] 2286
+# [1] 2286
+# [1] 2286
 
-g2g.q4 <- getG2GQ4(tx.q4)
+g2g.q4 <- getG2GQ4(tx.q4, NULL)
+save(g2g.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_g2g.RData")))
 testOnewayANOVA(g2g.q4)
-# [1] 2.27936e-05
+# [1] 0.000771341
 testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
-# [1] 1.711817e-09
-median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
-# [1] 224857
-median(as.numeric(g2g.q4[[4]]))
-# [1] 170597
+# [1] 1.703459e-51
+testT(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.343127e-82
 
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
 c(p1, p2, p3)
-# [1] 7.091613e-25 5.037483e-04 3.309833e-01
+# [1] 2.519942e-59 1.081746e-36 6.489559e-16
 p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 2.127484e-24 1.511245e-03 9.929498e-01
+# [1] 7.559826e-59 3.245238e-36 1.946868e-15
 
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_tpm0.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_nofilter.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
 # > log10(max(distances))
@@ -93,11 +93,55 @@ plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18
 # =============================================================================
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_tpm0.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_nofilter.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
-# > max(getDensity(g2g.q4[[1]], count)$y)
-# [1] 1599.855
+# > max(getDensity(g2g.q4[[2]], count)$y)
+# [1] 1881.203
+
+
+
+
+
+
+
+
+
+
+
+
+
+median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
+# [1] 
+median(as.numeric(g2g.q4[[4]]))
+# [1] 
+
+p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
+p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
+p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+c(p1, p2, p3)
+# [1] 1.484115e-37 4.173536e-18 4.373463e-18
+p.adjust(c(p1, p2, p3), method="bonferroni")
+# [1] 4.452346e-37 1.252061e-17 1.312039e-17
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
+# > log10(max(distances))
+# [1] 6.936843
+# > log10(min(distances))
+# [1] 0.30103
+
+# =============================================================================
+# Step 2: Density plots
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
+# > max(getDensity(g2g.q4[[2]], count)$y)
+# [1] 1613.451
 
 
 

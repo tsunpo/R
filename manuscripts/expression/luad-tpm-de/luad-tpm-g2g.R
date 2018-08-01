@@ -33,33 +33,46 @@ wd.asym.plots <- file.path(wd.asym, "plots")
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 # > quantile(tpm.gene.input.log2$MEDIAN)
 # 0%       25%       50%       75%      100% 
-# -4.736884  1.977526  3.628852  4.907872 13.149860
+# -5.623874  1.257033  3.372138  4.770867 13.149860
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
 #  + print(length(tx.q4[[q]]))
-# [1] 2349
-# [1] 2348
-# [1] 2348
-# [1] 2349
+# [1] 2588
+# [1] 2588
+# [1] 2588
+# [1] 2588
 
 g2g.q4 <- getG2GQ4(tx.q4)
+testOnewayANOVA(g2g.q4)
+# [1] 2.068892e-05
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.262442e-31
+median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
+# [1] 204480.5
+median(as.numeric(g2g.q4[[4]]))
+# [1] 133284
+
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
 c(p1, p2, p3)
-# [1] 3.591534e-28 4.435711e-21 1.076129e-15
+# [1] 2.299704e-29 5.478248e-19 1.787152e-17
 p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 1.077460e-27 1.330713e-20 3.228388e-15
+# [1] 6.899112e-29 1.643474e-18 5.361456e-17
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
+# > log10(max(distances))
+# [1] 6.979327
+# > log10(min(distances))
+# [1] 0.30103
 
 # =============================================================================
 # Step 2: Density plots
@@ -69,7 +82,19 @@ plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
 # =============================================================================
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotDensity(g2g.q4, file.name, file.main, count=T)
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
+# > max(getDensity(g2g.q4[[3]], count)$y)
+# [1] 1653.476
+
+
+
+
+
+
+
+
+
+
 
 # =============================================================================
 # Step 3: Look at the little bumps (Q1)

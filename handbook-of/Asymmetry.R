@@ -69,7 +69,7 @@ getMergedReport <- function(sample, vcf) {
 }
 
 ## Define transcriptional asymmetry
-## Sig.    s1(S4)    s2        s3(S2/13) s4        s5(S5)    s6
+## Sig.    s1        s2        s3        s4        s5        s6
 ## idx:    1         3         5         7         9         11
 ## w/c:    w   c     w   c     w   c     w   c     w   c     w   c   ## Reference or anti-reference strand
 ## s6:     C>A/G>T   C>G/G>C   C>T/G>A   T>A/A>T   T>C/A>G   T>G/A>C
@@ -139,6 +139,7 @@ getLog2andMedian <- function(tpm.gene) {
 getTxQ4 <- function(gene.list, tpm.gene.log2) {
    if (!is.na(gene.list)[1])
       tpm.gene.log2 <- tpm.gene.log2[gene.list,]
+   tpm.gene.log2 <- tpm.gene.log2[order(tpm.gene.log2$MEDIAN),]
    
    q <- quantile(tpm.gene.log2$MEDIAN)
    tx.q4 <- list()
@@ -159,7 +160,7 @@ getMutGenes <- function(s1, tpm.gene) {
 } 
 
 getMutPerMb <- function(s1, tpm.gene) {
-   txs <- intersect(unique(s1$ensembl_gene_id), rownames(tpm.gene))
+   txs <- getMutGenes(s1, tpm.gene)
    s1 <- subset(s1, ensembl_gene_id %in% txs)
    
    mb <- 0
@@ -188,20 +189,23 @@ getLog2Colours <- function(q4) {
 # Method: Transcription-associated SNV asymmetry (Step 5.2 and 8.1)
 # Last Modified: 01/02/18
 # -----------------------------------------------------------------------------
-getMbTx <- function(tx) {
+getLengthTx <- function(tx) {
    return(abs(ensGene[tx,]$end_position - ensGene[tx,]$start_position))
 }
 
 getMutPerMbTx <- function(s1, tx) {
-   mb <- abs(ensGene[tx,]$end_position - ensGene[tx,]$start_position)
+   s1 <- subset(s1, ensembl_gene_id == tx)
+   mb <- getLengthTx(tx)
  
-   return(nrow(subset(s1, ensembl_gene_id == tx)) / mb * 1000000)
+   return(nrow(s1) / mb * 1000000)
 }
 
 getMutPerMbTxs <- function(s1, txs) {
-   s1 <- subset(s1, ensembl_gene_id %in% txs)
-   txs <- intersect(unique(s1$ensembl_gene_id), txs)
- 
+   #s1 <- subset(s1, ensembl_gene_id %in% txs)          ## BUG?
+   #txs <- intersect(unique(s1$ensembl_gene_id), txs)   ## BUG?
+   txs <- intersect(unique(s1$ensembl_gene_id), txs)    ## SWAP 23/06/18
+   s1 <- subset(s1, ensembl_gene_id %in% txs)           ## SWAP 23/06/18
+   
    mb <- 0
    for (t in 1:length(txs))
       mb <- mb + abs(ensGene[txs[t],]$end_position - ensGene[txs[t],]$start_position)
@@ -240,12 +244,19 @@ getStrand <- function(genes.list, strand) {
       return(rownames(subset(ensGene[genes.list,], strand == -1)))
 }
 
-getTxQ4RTStrand <- function(ensGene.tx.rt, headon, strand, tpm.gene.log2) {
-   gene.list <- rownames(getHeadOnCollision(ensGene.tx.rt, headon))
+getTxQ4RTStrand <- function(ensGene.tx.rt.st, headon, strand, tpm.gene.log2) {
+   gene.list <- rownames(getHeadOnCollision(ensGene.tx.rt.st, headon))
    gene.list <- getStrand(gene.list, strand)
    tpm.gene.log2 <- tpm.gene.log2[gene.list,]
  
    return(getTxQ4(gene.list, tpm.gene.log2))
+}
+
+getTxRTStrand <- function(ensGene.tx.rt.st, headon, strand) {
+   gene.list <- rownames(getHeadOnCollision(ensGene.tx.rt.st, headon))
+   gene.list <- getStrand(gene.list, strand)
+ 
+   return(gene.list)
 }
 
 # -----------------------------------------------------------------------------

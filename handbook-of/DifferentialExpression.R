@@ -23,6 +23,9 @@ getMaxDensityCount <- function(median) {
 plotDensityCount <- function(median, file.main, file.name, ymax) {
    d <- getDensityCount(median)
  
+   if (is.null(ymax))
+      ymax <- max(d$y)
+   
    pdf(file.name, height=6, width=6)
    plot(d, ylab="Frequency", xlab="log2(TPM + 0.01)", main=paste0("Genes (n=", file.main, ")"), ylim=c(0, ymax))
    dev.off()

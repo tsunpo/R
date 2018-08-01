@@ -101,14 +101,22 @@ save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData
 # Last Modified: 25/01/18
 # -----------------------------------------------------------------------------
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
+#tpm.gene <- tpm.gene[setdiff(rownames(tpm.gene), outliers1.5),]   ## ADD 26/06/18
+#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)   ## TEST 29/06/18
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.input))   ## Needed in Step 5; ADD 02/02/18
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
+# > nrow(tx.snv.input)   ## All SNVs on expressed, "all" protein coding genes
+# [1] 1414777
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "non-redundant" protein coding genes
 # [1] 1021827
+# > nrow(tx.snv.input)   ## After removing CNTNAP2, PTPRD, LSAMP
+# [1] 992324
+# > nrow(tx.snv.input)   ## After removing CNTNAP2, PTPRD, LSAMP and RBFOX1
+# [1] 988794
 
 ###
 ## Keep only genes with at least one SNV                   ## REMOVED 20/06/18
@@ -131,21 +139,24 @@ pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6.pdf")), height=4.5, w
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
-
-   ens.asym <- c()    ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
+   
+   txs.onboth.fw <- intersect(tx.snv.s6[[i]][[1]][[1]]$ensembl_gene_id, tx.snv.s6[[i]][[2]][[1]]$ensembl_gene_id)   ## ADD 27/06/18
+   txs.onboth.re <- intersect(tx.snv.s6[[i]][[1]][[2]]$ensembl_gene_id, tx.snv.s6[[i]][[2]][[2]]$ensembl_gene_id)   
+   ens.asyms[[i]] <- intersect(rownames(tpm.gene.input), c(txs.onboth.fw, txs.onboth.re))   ## CHANGE 27/06/18; ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
+   
    asym <- as.matrix(toTable(0, 2, 2, c("Tx(+)", "Tx(-)")))
    rownames(asym) <- c(paste0(REFS[idx], ">", ALTS[idx]), paste0(REFS[idx+1], ">", ALTS[idx+1]))
    for (j in 1:2)
       for (k in 1:2) {
-         ens.asym   <- c(ens.asym, getMutGenes(tx.snv.s6[[i]][[j]][[k]], tpm.gene.input))   ## ADD 20/06/18
-         asym[j, k] <- getMutPerMb(tx.snv.s6[[i]][[j]][[k]], tpm.gene.input)   ## Only look at SNVs on expressed genes
+         #ens.asym   <- c(ens.asym, getMutGenes(tx.snv.s6[[i]][[j]][[k]], tpm.gene.input))   ## ADD 20/06/18
+         asym[j, k] <- getMutPerMb(tx.snv.s6[[i]][[j]][[k]], tpm.gene.input[ens.asyms[[i]],])   ## Only look at SNVs on expressed genes, which is with at least one SNV on each strand
                ## E.g. getMutPerMb(tx.snv.s6[[1]][[1]][[1]])   ## E.g. C>A Tx(+)
                ##      getMutPerMb(tx.snv.s6[[1]][[1]][[2]])   ##      C>A Tx(-)
                ##      getMutPerMb(tx.snv.s6[[1]][[2]][[1]])   ##      G>T Tx(+)
                ##      getMutPerMb(tx.snv.s6[[1]][[2]][[2]])   ##      G>T Tx(-)
       }
-   
-   ens.asyms[[i]] <- unique(ens.asym)
+
+   #ens.asyms[[i]] <- unique(ens.asym)   ## BUG 27/06/18
    asyms[[i]] <- asym
    barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
@@ -157,14 +168,16 @@ save(tx.snv.s6, ens.asyms, asyms, file=file.path(wd.asym.data, paste0(base, "_as
 ## Refining the plot
 max(asyms[[1]])
 # [1] 313.1942
-
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim313.pdf")), height=4.5, width=7)
+# [1] 326.1996   ## After removing genes with only SNVs on one strand
+# [1] 318.4453   ## After removing genes with only SNVs on one strand, and genes longer than 1.5MB (CNTNAP2, PTPRD, LSAMP and RBFOX1)
+# [1] 305.9242   ## After removing genes longer than 2MB (CNTNAP2, PTPRD and LSAMP)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim318.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    asym <- asyms[[i]]
    idx <- idxs[i]
    
-   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 313.1942))
+   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 318.4453))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()
@@ -192,11 +205,11 @@ for (i in 1:length(idxs)) {
       txs <- ens.asym.q4[[q]]   ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
       
       CntxGtx.cg <- subset(CntxGtx, ensembl_gene_id %in% txs)
-      txs.cg <- intersect(unique(CntxGtx.cg$ensembl_gene_id), txs)
+      txs.cg <- intersect(txs, unique(CntxGtx.cg$ensembl_gene_id))   ## SWAP txs order BUG BUG BUG 29/06/18
       q4[1, q] <- getMutPerMbTxs(CntxGtx.cg, txs.cg)   ## ADD 22/06/18: Also implemented txs.cg in getMutPerMbTxs() now
 
       GntxCtx.gc <- subset(GntxCtx, ensembl_gene_id %in% txs)
-      txs.gc <- intersect(unique(GntxCtx.gc$ensembl_gene_id), txs)
+      txs.gc <- intersect(txs, unique(GntxCtx.gc$ensembl_gene_id))   ## SWAP txs order BUG BUG BUG 29/06/18
       q4[2, q] <- getMutPerMbTxs(GntxCtx.gc, txs.gc)   ## ADD 22/06/18: Also implemented txs.gc in getMutPerMbTxs() now
       
       colnames(q4)[q] <- paste0(colnames(q4)[q], length(unique(c(txs.cg, txs.gc))), " (", length(txs.cg), "+", length(txs.gc), ")")
@@ -240,4 +253,56 @@ for (i in 1:length(idxs)) {
    barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))   ## ADD 08/03/18
    mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
+dev.off()
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Test: EZH2 ~ CNTNAP2 ?
+# Last Modified: 26/01/18
+# -----------------------------------------------------------------------------
+file.name <- file.path(wd.asym.plots, paste0(base, "_CNTNAP2-EZH2.pdf"))
+pdf(file.name, height=6, width=6)
+plot(CNTNAP2~EZH2, ylab="CNTNAP2", xlab="EZH2", main="Gene expression")
+dev.off()
+
+CNTNAP2.muts <- table[overlaps,]$Freq
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_CNTNAP2-CNTNAP2.muts.pdf"))
+pdf(file.name, height=6, width=6)
+plot(CNTNAP2~CNTNAP2.muts, ylab="CNTNAP2", xlab="CNTNAP2 mutation", main="Gene expression")
+dev.off()
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_EZH2-CNTNAP2.muts.pdf"))
+pdf(file.name, height=6, width=6)
+plot(EZH2~CNTNAP2.muts, ylab="EZH2", xlab="CNTNAP2 mutation", main="Gene expression")
+dev.off()
+
+##
+CNTNAP2 <- as.numeric(tpm.gene.input.log2["ENSG00000174469", overlaps])
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_CNTNAP2-CNTNAP2_ratio_y.pdf"))
+pdf(file.name, height=6, width=6)
+plot(CNTNAP2.ratios~CNTNAP2, ylab="CNTNAP2 TCR ratio (log2)", xlab="CNTNAP2 log2(TPM + 0.01)", main="SCLC (n=70)")
+dev.off()
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_CNTNAP2_mut-CNTNAP2_ratio_y.pdf"))
+pdf(file.name, height=6, width=6)
+plot(CNTNAP2.ratios~CNTNAP2.muts, ylab="CNTNAP2 TCR ratio (log2)", xlab="CNTNAP2 mutation", main="SCLC (n=70)")
+dev.off()
+
+##
+RB1 <- as.numeric(tpm.gene.input.log2["ENSG00000139687", overlaps])
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_RB1-RB1_ratio_y.pdf"))
+pdf(file.name, height=6, width=6)
+plot(RB1.ratios~RB1, ylab="RB1 TCR ratio (log2)", xlab="RB1 log2(TPM + 0.01)", main="SCLC (n=70)")
+dev.off()
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_CNTNAP2_mut-CNTNAP2_ratio_y.pdf"))
+pdf(file.name, height=6, width=6)
+plot(CNTNAP2.ratios~CNTNAP2.muts, ylab="CNTNAP2 TCR ratio (log2)", xlab="CNTNAP2 mutation", main="SCLC (n=70)")
 dev.off()

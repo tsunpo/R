@@ -38,28 +38,39 @@ samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames
 # Last Modified: 20/02/18
 # -----------------------------------------------------------------------------
 load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#tpm.gene <- tpm.gene[setdiff(rownames(tpm.gene), outliers1.5),]   ## ADD 26/06/18
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+#tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 load(file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
-# > nrow(ensGene.tx.rt)
+# > nrow(ensGene.tx.rt)   ## All protein coding
+# [1] 16410
+# > nrow(ensGene.tx.rt)   ## Nonredundant proten coding
 # [1] 10604
 
 ensGene.tx.rt.nona <- subset(subset(ensGene.tx.rt, !is.na(SLOPE_START)), !is.na(SLOPE_END))
 ensGene.tx.rt.nona$SIGN <- sign(ensGene.tx.rt.nona$SLOPE_START / ensGene.tx.rt.nona$SLOPE_END)
 ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-10]
 # > nrow(ensGene.tx.rt.nona)
+# [1] 16218
+# > nrow(ensGene.tx.rt.nona.sign)   ## All protein coding
+# [1] 15053
+# > nrow(ensGene.tx.rt.nona)
 # [1] 10468
-# > nrow(ensGene.tx.rt.nona.sign)
+# > nrow(ensGene.tx.rt.nona.sign)   ## Nonredundant proten coding
 # [1] 9694
 
 ## TRICK: Assign replication has a "-" slope, therefore change/flip it's RT slope to "+" to be consistant with e.g. Tx(+)
 ensGene.tx.rt.nona.sign$RT <- -1
 ensGene.tx.rt.nona.sign[ensGene.tx.rt.nona.sign$SLOPE_START < 0,]$RT <- 1
+#ensGene.tx.rt.nona.sign <- ensGene.tx.rt.nona.sign[setdiff(rownames(ensGene.tx.rt.nona.sign), outliers1.5),]   ## ADD 26/06/18
+# > nrow(ensGene.tx.rt.nona.sign)
+# [1] 9690
 
 ###
 ##
-headon <- "cd"   ## Replication–transcription Head-on (ho) / Co-directional (cd) collisions
+headon <- "ho"   ## Replication–transcription Head-on (ho) / Co-directional (cd) collisions
 
 q4s <- list()
 pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_", headon, ".pdf")), height=4.5, width=7)
@@ -80,12 +91,12 @@ for (i in 1:length(idxs)) {
    for (q in 1:4) {
       txs <- ens.asym.rt.q4[[q]]
   
-      CntxGtx.cg <- subset(CntxGtx, ensembl_gene_id %in% txs)
-      txs.cg <- intersect(unique(CntxGtx.cg$ensembl_gene_id), txs)
+      txs.cg <- intersect(unique(CntxGtx$ensembl_gene_id), txs)    ## SWAP 23/06/18
+      CntxGtx.cg <- subset(CntxGtx, ensembl_gene_id %in% txs.cg)   ## SWAP 23/06/18
       q4[1, q] <- getMutPerMbTxs(CntxGtx.cg, txs.cg)
       
-      GntxCtx.gc <- subset(GntxCtx, ensembl_gene_id %in% txs) 
-      txs.gc <- intersect(unique(GntxCtx.gc$ensembl_gene_id), txs)
+      txs.gc <- intersect(unique(GntxCtx$ensembl_gene_id), txs)
+      GntxCtx.gc <- subset(GntxCtx, ensembl_gene_id %in% txs.gc) 
       q4[2, q] <- getMutPerMbTxs(GntxCtx.gc, txs.gc)
         
       colnames(q4)[q] <- paste0(colnames(q4)[q], length(unique(c(txs.cg, txs.gc))), " (", length(txs.cg), "+", length(txs.gc), ")")
@@ -98,7 +109,7 @@ dev.off()
 #save(q4s, file=file.path(wd.asym.data, paste0(base,"_asym_tx_rt_snv_q4s_rt_", prefix, ".RData")))
 
 ## ADD 22/02/18
-if (headon == "ho") {
+if (headon == "cd") {
    q4s.rt[[2]] <- q4s
 } else {
    q4s.rt[[3]] <- q4s

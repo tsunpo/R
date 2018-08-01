@@ -22,87 +22,69 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "CLL"
+BASE <- "HCC"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
+wd.asym  <- file.path(wd.anlys, "asymmetries", paste0(base, "-n-asym-tx-rt"))
 wd.asym.plots <- file.path(wd.asym, "plots")
 
 # =============================================================================
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-n-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 # > quantile(tpm.gene.input.log2$MEDIAN)
 # 0%        25%        50%        75%       100% 
-# -5.7550939  0.4394228  3.2257788  4.9586013 13.9241600 
-
-## No filter
-tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-g2g.q4 <- getG2GQ4(tx.q4)
-testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
-# [1] 6.356869e-03
-
-## Excluded TPM=0 in any
-tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-g2g.q4 <- getG2GQ4(tx.q4)
-testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
-# [1] 2.719345e-09
+# -5.1902846  0.2069134  2.2077376  3.7655656 16.3365409 
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
 #  + print(length(tx.q4[[q]]))
-# [1] 2326
-# [1] 2325
-# [1] 2325
-# [1] 2326
+# [1] 2421
+# [1] 2420
+# [1] 2420
+# [1] 2420
 
 g2g.q4 <- getG2GQ4(tx.q4)
+save(g2g.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_g2g.RData")))
 testOnewayANOVA(g2g.q4)
-# [1] 2.27936e-05
+# [1] 2.251229e-05
 testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
-# [1] 1.711817e-09
-median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
-# [1] 224857
-median(as.numeric(g2g.q4[[4]]))
-# [1] 170597
+# [1] 5.873976e-30
+
+
+
+
 
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
 c(p1, p2, p3)
-# [1] 7.091613e-25 5.037483e-04 3.309833e-01
+# [1] 1.484115e-37 4.173536e-18 4.373463e-18
 p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 2.127484e-24 1.511245e-03 9.929498e-01
+# [1] 9.402670e-31 1.196893e-18 9.350883e-13
 
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_tpm0.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
 # > log10(max(distances))
-# [1] 7.102413
+# [1] 7.103921
 # > log10(min(distances))
-# [1] 0.30103
+# [1] 1.146128
 
 # =============================================================================
 # Step 2: Density plots
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18
 # =============================================================================
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_tpm0.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
 plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
-# > max(getDensity(g2g.q4[[1]], count)$y)
-# [1] 1599.855
-
-
-
-
-
+# > max(getDensity(g2g.q4[[2]], count)$y)
+# [1] 1611.299
 
 
 

@@ -25,10 +25,10 @@ wd     <- "/projects/cangen/tyang2/LCL/analysis/"                ## tyang2@cheop
 wd.ngs <- "/projects/cangen/tyang2/LCL/ngs/WGS/" 
 #wd     <- "/ngs/cangen/tyang2/LCL/analysis/"                    ## tyang2@gauss
 #wd.ngs <- "/ngs/cangen/tyang2/LCL/ngs/WGS/" 
-#wd     <- "/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/"   ## tpyang@localhost
-#wd.ngs <- "/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/"
+wd     <- "/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/"   ## tpyang@localhost
+wd.ngs <- "/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/"
 
-wd.rt       <- paste0(wd, "replication/lcl-wgs-rt/")
+wd.rt       <- paste0(wd, "replication/lcl-wgs-rt-lcl/")
 wd.rt.data  <- paste0(wd.rt, "data/")
 wd.rt.plots <- paste0(wd.rt, "plots/")
 
@@ -90,7 +90,7 @@ getEnsGeneBED <- function(pos, bed.gc.chr) {
 BASE  <- "LCL"
 PAIR1 <- "S"
 PAIR0 <- "G1"
-PAIR  <- "T-N"
+PAIR  <- "LCL-LCL"   #"T-N"
 #CHR   <- 2
 CUTOFF <- 1.25
 
@@ -105,20 +105,22 @@ ensGene.tx.rt <- ensGene.tx[1,]
 ensGene.tx.rt$SLOPE_START <- 0
 ensGene.tx.rt$SLOPE_END <- 0
 ensGene.tx.rt <- ensGene.tx.rt[-1,]
-for (c in 1:22) {
+for (c in 2:2) {
    #chr <- chrs[CHR]
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
 
    ## Replication timing
-   rpkms.chr <- readTable(paste0(wd.rt.data, tolower(BASE), "_rpkm.corr.gc.d.rt_", chr, "_", PAIR, "_n", length(samples), ".txt.gz"), header=T, rownames=T, sep="\t") 
+   rpkms.chr <- readTable(paste0(wd.rt.data, tolower(BASE), "_rpkm.corr.gc.d.rt.lcl_", chr, "_", PAIR, "_n", length(samples), "-7.txt.gz"), header=T, rownames=T, sep="\t") 
+   rpkms.chr$MEDIAN <- rpkms.chr$RT
    
    ##
    rpkms.chr.rt <- rpkms.chr[which(rpkms.chr$MEDIAN > -CUTOFF),]
    rpkms.chr.rt <- rpkms.chr.rt[which(rpkms.chr.rt$MEDIAN < CUTOFF),]
-   bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt),]
+   overlaps <- intersect(rownames(rpkms.chr.rt), rownames(bed.gc.chr))
+   bed.gc.chr.rt <- bed.gc.chr[overlaps,]
    
-   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")
+   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR1, PAIR0, "png")
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 50000000, 100000000, rpkms.chr.rt$MEDIAN, bed.gc.chr,PAIR1, PAIR0, "png")
    
    ## Determin replication direction for each expressed gene

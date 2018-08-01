@@ -33,13 +33,28 @@ wd.asym.plots <- file.path(wd.asym, "plots")
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 # > quantile(tpm.gene.input.log2$MEDIAN)
 # 0%       25%       50%       75%      100% 
 # -5.737860  1.390236  3.487460  4.898448 12.365721
 
+## No filter
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4, NULL)
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 2.386369e-15
+
+## Excluded TPM=0 in any
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 2.502858e-28
+
+##
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
 #  + print(length(tx.q4[[q]]))
@@ -49,6 +64,26 @@ tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # [1] 2651
 
 g2g.q4 <- getG2GQ4(tx.q4)
+testOnewayANOVA(g2g.q4)
+# [1] 1.188892e-03
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.6051e-30
+median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
+# [1] 211105
+median(as.numeric(g2g.q4[[4]]))
+# [1] 137176
+
+###
+##
+testW(g2g.q4.sclc, g2g.q4.luad)
+# [1] 0.7609096
+testW(g2g.q4.sclc, g2g.q4.cll)
+# [1] 7.647288e-07
+testW(g2g.q4.sclc, g2g.q4.hela)
+# [1] 0.1311329
+testW(g2g.q4.cll, g2g.q4.hela)
+# [1] 0.001384357
+
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
@@ -57,18 +92,76 @@ c(p1, p2, p3)
 p.adjust(c(p1, p2, p3), method="bonferroni")
 # [1] 2.386781e-17 1.536039e-29 1.150109e-15
 
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_ho.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotG2GQ4(g2g.q4, file.name, file.main, ylim=NULL)
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
+# > log10(max(distances))
+# [1] 6.947882
+# > log10(min(distances))
+# [1] 0.30103
 
 # =============================================================================
 # Step 2: Density plots
 # https://www.statmethods.net/graphs/density.html
 # Last Modified: 23/05/18
 # =============================================================================
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_ho.pdf"))
 file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
-plotDensity(g2g.q4, file.name, file.main, count=T, ymax=NULL)
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
+# > max(getDensity(g2g.q4[[2]], count)$y)
+# [1] 1881.203
+
+# =============================================================================
+# Step: Finding overlapping genes
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+overlaps <- intersect(tx.q4.sclc[[4]], tx.q4.hela[[4]])
+# > length(overlaps)
+# [1] 1800
+# > length(tx.q4.sclc[[4]])
+# [1] 2651
+
+# > length(intersect(overlaps, tx.q4.cll[[4]]))
+# [1] 1126
+# > length(tx.q4.cll[[4]])
+# [1] 2326
+# > length(intersect(overlaps, tx.q4.cll[[3]]))
+# [1] 477
+# > length(intersect(overlaps, tx.q4.cll[[2]]))
+# [1] 127
+# > length(intersect(overlaps, tx.q4.cll[[1]]))
+# [1] 53
+
+# =============================================================================
+# Step 3: Gene-to-gene minmum distance (Head-on or Co-directional)
+# Last Modified: 10/07/18
+# =============================================================================
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+
+g2g.q4 <- getG2GQ4(tx.q4, isHeadon=NULL)
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.6051e-30
+g2g.q4 <- getG2GQ4(tx.q4, isHeadon=F)
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.214879e-21
+g2g.q4 <- getG2GQ4(tx.q4, isHeadon=T)
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 2.042518e-15
+
+# =============================================================================
+# Step: Finding overlapping 510 genes
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+load("/Users/tpyang/Work/uni-koeln/tyang2/LCNEC/analysis/expression/kallisto/lcnec-tpm-de/data/de_lcnec_tpm_gene_rb1_wilcox_q_n54.RData")
+
+
+
+
+
+
+
 
 # =============================================================================
 # Step 3: RT-Tx conflicts genes (All genes)

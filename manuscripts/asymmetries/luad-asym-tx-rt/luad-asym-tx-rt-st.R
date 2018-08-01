@@ -22,7 +22,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+BASE <- "LUAD"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -31,7 +31,7 @@ wd.asym.data  <- file.path(wd.asym,  "data")
 wd.asym.plots <- file.path(wd.asym,  "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
+samples <- readTable(file.path(wd.ngs, "luad_wgs_n39-5.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
 # Step 8: Fetching RT-Tx conflicts genes
@@ -148,20 +148,6 @@ getLog2RatioQ4 <- function(cg.q4, gc.q4) {
    return(ratio.q4)
 }
 
-getLog2RatioPerMbQ4 <- function(ratio.q4, len.q4) {
-   ratio.permb.q4 <- list()
- 
-   for (q in 1:4) {
-      ratios  <- as.numeric(ratio.q4[[q]])
-      lengths <- as.numeric(len.q4[[q]])
-  
-      ratio.permb.q4[[q]] <- ratios / lengths * 1000000
-   }
- 
-   return(ratio.permb.q4)
-}
-
-
 getLengthQ4 <- function(tx.q4) {
    length.q4 <- list()
    
@@ -233,9 +219,8 @@ getYlim <- function(q4s, start, end) {
          for (st in 1:length(strands)) {
             for (q in 1:4) {
                y <- max(as.numeric(q4s[[i]][[rt]][[st]][[q]]))
-               if (y != Inf)
-                  if (y > ymax)
-                     ymax <- y
+               if (y > ymax)
+                  ymax <- y
             }
          }
       }
@@ -297,11 +282,10 @@ strands <- c("fw", "re")
 q4s.s6.rt.st.gen <- initTableS6RTSt()
 q4s.s6.rt.st.len <- initTableS6RTSt()
 #q4s.s6.rt.st.strand <- initTableS6RTSt()
-#q4s.s6.rt.st.mut <- initTableS6RTSt()
+q4s.s6.rt.st.mut <- initTableS6RTSt()
 q4s.s6.rt.st.mut.cg <- initTableS6RTSt()
 q4s.s6.rt.st.mut.gc <- initTableS6RTSt()
 q4s.s6.rt.st.ratio  <- initTableS6RTSt()
-q4s.s6.rt.st.ratio.permb <- initTableS6RTSt()
 #q4s.s6.rt.st.rate <- initTableS6RTSt()
 #q4s.s6.rt.st.g2g <- initTableS6RTSt()
 for (i in 1:length(idxs)) {
@@ -309,9 +293,9 @@ for (i in 1:length(idxs)) {
    ensGene.tx.rt.st <- ensGene.tx.rt.nona.sign[ens.asym,]
    
    ## Cntx:Gtx  =   tx.snv.s6[[1]][[1]][[1]]) C>A Tx(+)  +  tx.snv.s6[[1]][[2]][[2]] G>T Tx(-)
-   #CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
+   CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
    ## Gntx:Ctx  =   tx.snv.s6[[1]][[2]][[1]]) G>T Tx(+)  +  tx.snv.s6[[1]][[1]][[2]] C>A Tx(-)       
-   #GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
+   GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
    
    for (rt in 1:length(headons)) {
       for (st in 1:length(strands)) {
@@ -336,24 +320,19 @@ for (i in 1:length(idxs)) {
          
          CntxGtx <- subset(CntxGtx, ensembl_gene_id %in% txs)
          GntxCtx <- subset(GntxCtx, ensembl_gene_id %in% txs)
-         #s1.all <- rbind(CntxGtx, GntxCtx)
+         s1.all <- rbind(CntxGtx, GntxCtx)
 
-         #q4s.s6.rt.st.gen[[i]][[rt]][[st]] <- txs.q4
-         #q4s.s6.rt.st.len[[i]][[rt]][[st]] <- getLengthQ4(txs.q4)
+         q4s.s6.rt.st.gen[[i]][[rt]][[st]] <- txs.q4
+         q4s.s6.rt.st.len[[i]][[rt]][[st]] <- getLengthQ4(txs.q4)
          #q4s.s6.rt.st.strand[[i]][[rt]][[st]] <- getStrandQ4(txs.q4)
-         #q4s.s6.rt.st.mut[[i]][[rt]][[st]] <- getMutationQ4(s1.all, txs.q4)
-         #q4s.s6.rt.st.mut.cg[[i]][[rt]][[st]] <- getMutationQ4(CntxGtx, txs.q4)
-         #q4s.s6.rt.st.mut.gc[[i]][[rt]][[st]] <- getMutationQ4(GntxCtx, txs.q4)
-         
-         #tx.q4.all <- getTxQ4(NA, tpm.gene.input.log2)
-         #g2g.q4.all <- getG2GQ4(tx.q4.all, NULL)
-         
-         q4s.s6.rt.st.g2g[[i]][[rt]][[st]] <- getG2GQ4fromAll(txs.q4, tx.q4.all, g2g.q4.all)
-         #q4s.s6.rt.st.g2g[[i]][[rt]][[st]] <- getG2GQ4(txs.q4, NULL)
+         q4s.s6.rt.st.mut[[i]][[rt]][[st]] <- getMutationQ4(s1.all, txs.q4)
+         q4s.s6.rt.st.mut.cg[[i]][[rt]][[st]] <- getMutationQ4(CntxGtx, txs.q4)
+         q4s.s6.rt.st.mut.gc[[i]][[rt]][[st]] <- getMutationQ4(GntxCtx, txs.q4)
+         #q4s.s6.rt.st.g2g[[i]][[rt]][[st]] <- getG2GQ4fromAll(txs.q4, getTxQ4(NA, tpm.gene.input.log2))
       }
    }
 }
-save(q4s.s6.rt.st.gen, q4s.s6.rt.st.len, q4s.s6.rt.st.mut, q4s.s6.rt.st.mut.cg, q4s.s6.rt.st.mut.gc, q4s.s6.rt.st.ratio, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt_snv_q4s_s6_rt_st_ratio.RData")))
+save(q4s.s6.rt.st.gen, q4s.s6.rt.st.len, q4s.s6.rt.st.mut, q4s.s6.rt.st.mut.cg, q4s.s6.rt.st.mut.gc, q4s.s6.rt.st.ratio, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt_snv_q4s_s6_rt_stratio.RData")))
 
 getAll<- function(i, q4s.mut, as.numeric) {
    if (!is.null(i))  
@@ -412,7 +391,7 @@ GntxCtx.gene <- subset(GntxCtx, ensembl_gene_id == "ENSG00000174469")
 # > nrow(GntxCtx.gene)
 # [1] 2591
 
-## RB1
+##
 i <- 1
 CntxGtx      <- tx.snv.s6[[i]][[1]][[1]]      ## ADD 23/06/18
 CntxGtx.gene <- subset(CntxGtx, ensembl_gene_id == "ENSG00000139687")
@@ -426,8 +405,6 @@ for (i in 2:length(idxs)) {
 }
 
 log2(nrow(CntxGtx.gene)/nrow(GntxCtx.gene))
-# [1] -2.643856   ## C>T/G>A
-# [1] -1.263034   ## All
 
 RB1.ratios <- c()
 for (s in 1:length(overlaps)) {
@@ -436,13 +413,6 @@ for (s in 1:length(overlaps)) {
    
    RB1.ratios <- c(RB1.ratios, log2(nrow(GntxCtx.gene.sample)/nrow(CntxGtx.gene.sample)))
 }
-# > length(unique(CntxGtx.gene$SAMPLE))
-# [1] 24
-# > length(unique(GntxCtx.gene$SAMPLE))
-# [1] 53
-# > intersect(unique(CntxGtx.gene$SAMPLE), unique(GntxCtx.gene$SAMPLE))
-# [1] "S00501" "S02344" "S02385" "S02209" "S01861"
-
 
 ###
 ##
@@ -545,11 +515,6 @@ for (i in 1:length(idxs))
          q4s.s6.rt.st.ratio[[i]][[rt]][[st]] <- getLog2RatioQ4(q4s.s6.rt.st.mut.cg[[i]][[rt]][[st]], q4s.s6.rt.st.mut.gc[[i]][[rt]][[st]])
 ratios <- getAll(1, q4s.s6.rt.st.ratio, as.numeric=T)
 
-for (i in 1:length(idxs))
-   for (rt in 1:length(headons))
-      for (st in 1:length(strands))
-         q4s.s6.rt.st.ratio.permb[[i]][[rt]][[st]] <- getLog2RatioPerMbQ4(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], q4s.s6.rt.st.len[[i]][[rt]][[st]])
-
 for (i in 1:1) {
   idx <- idxs[i] 
   
@@ -570,103 +535,20 @@ for (i in 1:1) {
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_rate_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
          #plotQ4S(q4s.s6.rt.st.rat[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.rat, 1, 1), "Mutation rate (log10)", isLog10=T)
          
-         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
-         #plotQ4S(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F)
+         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
+         plotQ4S(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F)
 
-         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCR-plus.pdf"))
-         #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=T)
+         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCR-plus.pdf"))
+         plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=T)
 
-         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCP-minus.pdf"))
-         #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=F)
+         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCP-minus.pdf"))
+         plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=F)
         
-         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_g2g_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
-         plotQ4S(q4s.s6.rt.st.g2g[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.g2g, 1, 1), "G2G min distance (log10)", isLog10=T)
+         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_g2g_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
+         #plotQ4S(q4s.s6.rt.st.g2g[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.g2g, 1, 1), "G2G min distance (log10)", isLog10=T)
       }
    }
 }
-
-for (i in 1:1) {
-   idx <- idxs[i] 
- 
-   for (rt in 1:length(headons)) {
-      for (st in 1:length(strands)) {
-         file.main <- getTitleRTTx(headons[rt], strands[st])
-         mtext <- paste0(REFS[idx], ">", ALTS[idx], "/", REFS[idx+1], ">", ALTS[idx+1])
-      }
-   }
-}
-
-## 12/07/18 SRC
-src.rt.st.s1 <- toTable(0, 10, 8, c("Q", "RT", "ST", "TCD", "LM_SLOPE", "LM_P", "LM_Q", "SRC_RHO", "SRC_P", "SRC_Q"))
-for (i in 1:1) {
-   idx <- idxs[i] 
- 
-   row <- 1
-   for (q in 3:3)
-      for (rt in 1:length(headons))
-         for (st in 1:length(strands)) {
-            for (tcd in 1:length(tcds)) {
-               src.rt.st.s1$Q[row] <- paste0("Q", q)
-               src.rt.st.s1$RT[row] <- headons[rt]
-               src.rt.st.s1$ST[row] <- strands[st]
-               src.rt.st.s1$TCD[row] <- tcds[tcd]
-            
-               tcd.idx <- c()
-               if (tcd == 1)
-                  tcd.idx <- which(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]] > 0)
-               else
-                  tcd.idx <- which(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]] < 0)
-             
-               src.rt.st.s1$SRC_RHO[row] <- cor.test(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]][tcd.idx]), log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]][tcd.idx])), method="spearman", exact=F)[[4]]
-               src.rt.st.s1$SRC_P[row]   <- cor.test(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]][tcd.idx]), log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]][tcd.idx])), method="spearman", exact=F)[[3]]
-         
-               fit <- lm(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]][tcd.idx])~log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]][tcd.idx])))
-               src.rt.st.s1$LM_P[row]     <- summary(fit)[[4]][2,4]
-               src.rt.st.s1$LM_SLOPE[row] <- as.numeric(fit$coefficients[2])
-               
-               file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_permb-len_", REFS[idx], ">", ALTS[idx], "_q", q, "_", headons[rt], "_", strands[st], "_", tcds[tcd], ".pdf"))
-               pdf(file.name, height=6, width=6)
-               plot(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]][tcd.idx])~log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]][tcd.idx])))
-               abline(fit)
-               dev.off()  
-            
-               row <- row+1
-            }
-         }
-}
-
-## 12/07/18 SRC
-src.rt.st.s1 <- toTable(0, 10, 4, c("Q", "RT", "ST", "TCD", "LM_SLOPE", "LM_P", "LM_Q", "SRC_RHO", "SRC_P", "SRC_Q"))
-for (i in 1:1) {
- idx <- idxs[i] 
- 
- row <- 1
- for (q in 3:3)
-  for (rt in 1:length(headons))
-   for (st in 1:length(strands)) {
-     src.rt.st.s1$Q[row] <- paste0("Q", q)
-     src.rt.st.s1$RT[row] <- headons[rt]
-     src.rt.st.s1$ST[row] <- strands[st]
-     src.rt.st.s1$TCD[row] <- tcds[tcd]
-     
-     src.rt.st.s1$SRC_RHO[row] <- cor.test(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]]), log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]])), method="spearman", exact=F)[[4]]
-     src.rt.st.s1$SRC_P[row]   <- cor.test(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]]), log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]])), method="spearman", exact=F)[[3]]
-     
-     fit <- lm(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]])~log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]])))
-     src.rt.st.s1$LM_P[row]     <- summary(fit)[[4]][2,4]
-     src.rt.st.s1$LM_SLOPE[row] <- as.numeric(fit$coefficients[2])
-     
-     file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_permb-len_", REFS[idx], ">", ALTS[idx], "_q", q, "_", headons[rt], "_", strands[st], ".pdf"))
-     pdf(file.name, height=6, width=6)
-     plot(as.numeric(q4s.s6.rt.st.ratio[[i]][[rt]][[st]][[q]])~log10(as.numeric(q4s.s6.rt.st.g2g[[i]][[rt]][[st]][[q]])))
-     abline(fit)
-     dev.off()  
-     
-     row <- row+1
-   }
-}
-
-
 
 ##
 file.name <- file.path(wd.asym.plots, paste0(base, "_tx_rt_ratios-lens.png"))

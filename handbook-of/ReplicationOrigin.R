@@ -22,25 +22,58 @@ getTSS <- function(ensGene.genes) {
    return(ensGene.genes)
 }
 
-getG2GQ4 <- function(tx.q4) {
+getG2GQ4 <- function(txs.q4, isHeadon) {
    g2g.q4 <- list()
+   #onlygenes <- list()
  
    for (q in 1:4) {
-      genes <- tx.q4[[q]]
-      ensGene.genes <- ensGene[genes,]
-      ensGene.genes <- getTSS(ensGene.genes)
+      genes <- ensGene[txs.q4[[q]],]
+      genes <- getTSS(genes)
   
       g2g <- list()
-      for (g in 1:length(genes)) {
-         ensGene.gene <- ensGene.genes[genes[g],]
-         ensGene.genes.chr <- subset(ensGene.genes, chromosome_name == ensGene.gene$chromosome_name)
-         ensGene.genes.chr <- subset(ensGene.genes.chr, ensembl_gene_id != ensGene.gene$ensembl_gene_id)
-   
-         g2g[[g]] <- min(abs(ensGene.gene$TSS - ensGene.genes.chr$TSS))
+      for (g in 1:nrow(genes)) {
+         gene <- genes[g,]
+         
+         genes.chr <- subset(genes, chromosome_name == gene$chromosome_name)
+         genes.chr <- subset(genes.chr, ensembl_gene_id != gene$ensembl_gene_id)
+         if (!is.null(isHeadon))
+            if (isHeadon == T)
+               genes.chr <- subset(genes.chr, strand != gene$strand)  
+            else if (isHeadon == F)
+               genes.chr <- subset(genes.chr, strand == gene$strand)  
+
+         g2g[[g]] <- min(abs(gene$TSS - genes.chr$TSS))
       }
       g2g.q4[[q]] <- g2g
    }
    
+   return(g2g.q4)
+}
+
+getQ <- function(gene, tx.q4.all) {
+   for (q in 1:4) {
+      genes.all <- ensGene[tx.q4.all[[q]],]
+      if (!is.na(genes.all[gene,]$ensembl_gene_id))
+         return(q)
+   }
+}
+
+getG2GQ4fromAll <- function(txs.q4, tx.q4.all, g2g.q4.all) {
+   g2g.q4 <- list()
+ 
+   for (q in 1:4) {
+      genes <- txs.q4[[q]]
+  
+      g2g <- list()
+      for (g in 1:length(genes)) {
+         q.all <- getQ(genes[g], tx.q4.all)
+         idx.all <- which(tx.q4.all[[q.all]] == genes[g])
+        
+         g2g[[g]] <- as.numeric(g2g.q4.all[[q.all]][idx.all])
+      }
+      g2g.q4[[q]] <- g2g
+   }
+ 
    return(g2g.q4)
 }
 
@@ -67,8 +100,20 @@ testW <- function(q3, q4) {
    trait <- c(trait, rep(1, length(q4)))
    trait <- as.factor(trait)
  
-   expr <- c(as.numeric(q3), as.numeric(q4))
-   return(wilcox.test(log10(expr) ~ trait, exact=F)$p.value)
+   expr <- as.numeric(c(q3, q4))
+   return(wilcox.test(expr ~ trait, exact=F)$p.value)
+}
+
+testOnewayANOVA <- function(g2g.q4) {
+   distances <- c()
+   quantiles <- c()
+   for (q in 1:4) {
+      distances <- c(distances, as.numeric(g2g.q4[[q]]))
+      quantiles <- c(quantiles, mapply(x = 1:length(g2g.q4[[q]]), function(x) paste0("q", q)))
+   }
+   
+   res.aov <- aov(distances ~ quantiles)
+   return(summary(res.aov)[[1]]$Pr[1])
 }
 
 # -----------------------------------------------------------------------------

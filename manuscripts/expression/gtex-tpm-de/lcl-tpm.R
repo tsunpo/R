@@ -1,9 +1,9 @@
 # =============================================================================
 # Manuscript   :
 # Chapter      :
-# Name         : manuscripts/expression/sclc-tpm.R
+# Name         : manuscripts/expression/lcl-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 19/06/18
+# Last Modified: 25/07/18
 # =============================================================================
 wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
@@ -18,20 +18,21 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+BASE <- "LCL"
 base <- tolower(BASE)
 
-wd.rna <- file.path(wd, BASE, "ngs/RNA")
-wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
+wd.rna <- file.path(wd, "GTEx", "ngs/RNA", BASE)
+wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias")
 
-wd.anlys <- file.path(wd, BASE, "analysis")
+wd.anlys <- file.path(wd, "GTEx", "analysis")
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")[,1]
+samples <- readTable(file.path(wd.rna, "gtex_lcl_rna.list"), header=F, rownames=F, sep="")
+samples <- samples$V1
 
 # -----------------------------------------------------------------------------
 # Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
@@ -50,13 +51,13 @@ t2g <- tx2Ens(ensGene.transcript)
 so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
 # reading in kallisto results
 # dropping unused factor levels
-# .....................................................................
+# ......................................................
 # normalizing est_counts
-# 89358 targets passed the filter
+# 83154 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-# 20818 genes passed the filter
+# 19655 genes passed the filter
 # summarizing bootstraps
 
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
@@ -76,11 +77,19 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # > nrow(tpm.gene)
 # [1] 34908
 
+## Remove not expressed genes (ADD 10/06/18)
+tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+# > nrow(tpm.gene)
+# [1] 16571
+# > ? - ?   ## Different with line 105
+# [1] ?   ## Genes with no 0 TPM in any of the samples, but failed at least 5 read in 47% of the samples (i.e. very low-expressed genes)
+
 ###
 ## Gene list after default filtering
 tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)   ## Gene-level TPMs with patches
 # > nrow(tpm.gene.patch)
-# [1] 20818   ## Matched to line 59
+# [1] 19655   ## Matched to line 60
 
 ## Remove patches (*_PATCH)
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
@@ -88,11 +97,11 @@ overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
 tpm.gene <- tpm.gene.patch[overlaps,]                             ## Gene-level TPMs
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 # > nrow(tpm.gene)
-# [1] 19131
+# [1] 18042
 
 # =============================================================================
 # Density plots
-# Last Modified: 11/06/18
+# Last Modified: 25/06/18
 # =============================================================================
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)

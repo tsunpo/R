@@ -36,50 +36,133 @@ samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames
 # Step 1: Gene-to-gene minmum distance 
 # Last Modified: 18/05/18
 # =============================================================================
-#load("/Users/tpyang/Work/uni-koeln/tyang2/ALL/analysis/expression/kallisto/luad-lcnec-sclc-rnaseq-de/data/all_kallisto_0.43.1_tpm.gene_r5_p47.RData")
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
-#tpm.gene <- tpm.gene[,rownames(subset(samples, V5 == 1))]
-tpm.gene <- tpm.gene[,rownames(subset(samples, V5 == 0))]
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
-#plotDensityCount(tpm.gene.input.log2$MEDIAN, nrow(tpm.gene.input.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pcg.non.pdf")))
 # > quantile(tpm.gene.input.log2$MEDIAN)
 # 0%       25%       50%       75%      100% 
-# -4.662388  1.876085  3.625605  4.941445 12.469278
+# -5.423718  1.144500  3.351758  4.806042 12.469278
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 # > for (q in 1:4)
 #  + print(length(tx.q4[[q]]))
-# [1] 2399
-# [1] 2399
-# [1] 2399
-# [1] 2399
+# [1] 2638
+# [1] 2638
+# [1] 2637
+# [1] 2638
 
-###
-## LCNEC
 g2g.q4 <- getG2GQ4(tx.q4)
+p <- testOnewayANOVA(g2g.q4)
+# [1] 1.762388e-05
+
+p <- testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 8.175331e-34
+
 p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
 p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
 p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
 c(p1, p2, p3)
-# [1] 1.500737e-27 1.134261e-21 4.812215e-15
+# [1] 2.594506e-24 1.067951e-27 7.484947e-18
 p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 4.502212e-27 3.402782e-21 1.443665e-14
+# [1] 7.783518e-24 3.203852e-27 2.245484e-17
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g.pdf"))
-file.main <- paste0(BASE, " (n=", nrow(samples), ")")
-plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.3, ymax))   ## Get ymax from line 89 first
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
+# > log10(max(distances))
+# [1] 6.947882
+# > log10(min(distances))
+# [1] 0.30103
 
-###
-## LCNEC (RB1)
-c(p1, p2, p3)
-# [1] 1.176313e-22 4.834066e-22 4.884784e-10
-p.adjust(c(p1, p2, p3), method="bonferroni")
-# [1] 3.528938e-22 1.450220e-21 1.465435e-09
+# =============================================================================
+# Step 2: Density plots
+# https://www.statmethods.net/graphs/density.html
+# Last Modified: 23/05/18
+# =============================================================================
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
+# > max(getDensity(g2g.q4[[2]], count)$y)
+# [1] 1881.203
+
+# =============================================================================
+# Step 1: Gene-to-gene minmum distance (RB1)
+# Last Modified: 18/05/18
+# =============================================================================
+samples <- subset(samples, V5 == 1)
+
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene[,samples$V1], ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+# > quantile(tpm.gene.input.log2$MEDIAN)
+# 0%       25%       50%       75%      100% 
+# -5.654260  1.160195  3.417934  4.849166 12.365296
+
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+testOnewayANOVA(g2g.q4)
+# [1] 1.310906e-05
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.002245e-26
+median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
+# [1] 210403
+median(as.numeric(g2g.q4[[4]]))
+# [1] 139858
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_RB1.pdf"))
-file.main <- paste0(BASE, " (RB1; n=", nrow(subset(samples, V5 == 1)), ")")
-plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.3, ymax))   ## Get ymax from line 89 first
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_RB1.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
+
+# =============================================================================
+# Step 1: Gene-to-gene minmum distance (RB1-WT)
+# Last Modified: 18/05/18
+# =============================================================================
+samples <- subset(samples, V5 == 0)
+
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene[,samples$V1], ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+# > quantile(tpm.gene.input.log2$MEDIAN)
+# 0%       25%       50%       75%      100% 
+# -5.616245  1.236817  3.387824  4.813272 12.651321
+
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+g2g.q4 <- getG2GQ4(tx.q4)
+testOnewayANOVA(g2g.q4)
+# [1] 3.73474e-05
+testW(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]]), g2g.q4[[4]])
+# [1] 1.017538e-34
+median(as.numeric(c(g2g.q4[[1]], g2g.q4[[2]], g2g.q4[[3]])))
+# [1] 210403
+median(as.numeric(g2g.q4[[4]]))
+# [1] 134036
+
+testW(g2g.q4.lenec.rb1, g2g.q4.lenec.wt)
+# [1] 0.4365798
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_RB1-WT.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotG2GQ4(g2g.q4, file.name, file.main, ylim=c(0.30103, 7.103921))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_g2g_d_RB1-WT.pdf"))
+file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")
+plotDensity(g2g.q4, file.name, file.main, count=T, ymax=1881.203)
+
+
+
+
+
+
+
+
+
+
+
+
 
 ###
 ## LCENC (RB1-WT)
