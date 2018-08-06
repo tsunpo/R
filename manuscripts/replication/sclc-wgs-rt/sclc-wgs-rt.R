@@ -36,6 +36,10 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
+bloods <- readTable(file.path(wd.ngs, "sclc_wgs_blood.list"), header=T, rownames=T, sep="\t")
+
+writeTable(samples[grep("FF", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
+writeTable(samples[grep("blood", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n9_B.list"), colnames=F, rownames=F, sep="")
 
 load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)

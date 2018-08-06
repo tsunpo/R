@@ -102,11 +102,11 @@ save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData
 # -----------------------------------------------------------------------------
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 #tpm.gene <- tpm.gene[setdiff(rownames(tpm.gene), outliers1.5),]   ## ADD 26/06/18
-#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
-tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)   ## TEST 29/06/18
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
+#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)   ## TEST 29/06/18
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
-ens.tx.snv.input <- intersect(unique(tx.snv$ensembl_gene_id), rownames(tpm.gene.input))   ## Needed in Step 5; ADD 02/02/18
+ens.tx.snv.input <- intersect(rownames(tpm.gene.input), unique(tx.snv$ensembl_gene_id))   ## Needed in Step 5; ADD 02/02/18
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "all" protein coding genes
@@ -140,8 +140,8 @@ par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    idx <- idxs[i]
    
-   txs.onboth.fw <- intersect(tx.snv.s6[[i]][[1]][[1]]$ensembl_gene_id, tx.snv.s6[[i]][[2]][[1]]$ensembl_gene_id)   ## ADD 27/06/18
-   txs.onboth.re <- intersect(tx.snv.s6[[i]][[1]][[2]]$ensembl_gene_id, tx.snv.s6[[i]][[2]][[2]]$ensembl_gene_id)   
+   txs.onboth.fw <- intersect(unique(tx.snv.s6[[i]][[1]][[1]]$ensembl_gene_id), unique(tx.snv.s6[[i]][[2]][[1]]$ensembl_gene_id))   ## ADD 27/06/18
+   txs.onboth.re <- intersect(unique(tx.snv.s6[[i]][[1]][[2]]$ensembl_gene_id), unique(tx.snv.s6[[i]][[2]][[2]]$ensembl_gene_id))   
    ens.asyms[[i]] <- intersect(rownames(tpm.gene.input), c(txs.onboth.fw, txs.onboth.re))   ## CHANGE 27/06/18; ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
    
    asym <- as.matrix(toTable(0, 2, 2, c("Tx(+)", "Tx(-)")))
@@ -306,3 +306,27 @@ file.name <- file.path(wd.asym.plots, paste0(base, "_CNTNAP2_mut-CNTNAP2_ratio_y
 pdf(file.name, height=6, width=6)
 plot(CNTNAP2.ratios~CNTNAP2.muts, ylab="CNTNAP2 TCR ratio (log2)", xlab="CNTNAP2 mutation", main="SCLC (n=70)")
 dev.off()
+
+###
+## 34 R(L)-Tx(+)/Q3/TCD genes
+i <- 1
+ratios <- log2(as.numeric(q4s.s6.rt.st.mut.cg[[1]][[1]][[1]][[3]])/as.numeric(q4s.s6.rt.st.mut.gc[[1]][[1]][[1]][[3]]))
+idx <- which(ratios > 0)
+genes <- q4s.s6.rt.st.gen[[1]][[1]][[1]][[3]][idx]
+
+CntxGtx      <- tx.snv.s6[[i]][[1]][[1]]      ## ADD 23/06/18
+GntxCtx      <- tx.snv.s6[[i]][[2]][[1]]
+n <- c()
+for (g in 1:length(genes)) {
+   gene <- genes[g]
+
+   CntxGtx.gene <- subset(CntxGtx, ensembl_gene_id == gene)
+   GntxCtx.gene <- subset(GntxCtx, ensembl_gene_id == gene)
+   s1 <- rbind(CntxGtx.gene, GntxCtx.gene)
+   samples <- unique(s1$SAMPLE)
+   n <- c(n, length(samples))
+}
+
+de$SRC_RHO <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[4]])
+de$SRC_P   <- mapply(x = 1:nrow(expr.pheno.log2), function(x) cor.test(as.numeric(expr.pheno.log2[x,]), pheno.all$RB1_RATE, method="spearman", exact=F)[[3]])
+

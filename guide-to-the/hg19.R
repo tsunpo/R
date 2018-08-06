@@ -14,7 +14,6 @@ source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 # Link(s)      : http://grch37.ensembl.org/biomart/martview/
 # Last Modified: 02/11/17
 # =============================================================================
-
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene
 # Table: ensGene / Count: 57,773 (out of 63,677; Unique results only) / Download Version: 2017-03-27
@@ -71,7 +70,6 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 # Link(s)      : http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/
 # Last Modified: 15/03/18
 # =============================================================================
-
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts / Exons
 # Table: ensGene / Download Version: 06-Apr-2014
@@ -143,46 +141,10 @@ chromInfo <- subset(chromInfo, chrom %in% chrs)[, 1:2]
 ## The Bioinformatician's Guide to the Human Genome
 save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, chrs, file=paste0(wd.src.ref, "hg19.RData"))
 
-# -----------------------------------------------------------------------------
-# Database: RefSeq Gene
-# Table: refGene / Download Version: 04-Mar-2018
-# -----------------------------------------------------------------------------
-refGene <- readTable(paste0(wd.reference, "ucsc/refGene.txt.gz"), header=T, rownames=F, sep="")[, -1]   ## Get rid of first column "bin"
-# > nrow(refGene)
-# [1] 70019
-
-refGene <- subset(refGene, chrom %in% chrs)
-save(refGene, file=paste0(wd.src.ref, "hg19.refGene.RData"))
-# > nrow(refGene)
-# [1] 66872
-# > nrow(refGene[grep("NM_", refGene$name),])
-# [1] 50799
-# > nrow(refGene[grep("NR_", refGene$name),])
-# [1] 16073
-
-#table <- as.data.frame(table(refGene$name))
-#refGene <- subset(refGene, name %in% subset(table, Freq == 1)$Var1)
-#rownames(refGene) <- refGene$name
-# Should NOT remove duplicate names first, otherwise e.g. NM_001191005 will be excluded in the final refGene
-# > subset(refGene, name == "NM_001191005")
-#               name                chrom strand  txStart    txEnd cdsStart   cdsEnd exonCount
-# 2325  NM_001191005                 chr1      - 24290836 24306953 24297631 24306745         6
-# 62667 NM_001191005 chr1_gl000191_random      -    34172    50281    40974    50073         6
-
-# -----------------------------------------------------------------------------
-# File: rmsk.txt.gz / Download Version: 27-Apr-2009
-# -----------------------------------------------------------------------------
-rmsk <- readTable(paste0(wd.reference, "ucsc/rmsk.txt.gz"), header=F, rownames=F, sep="")[,-1]
-colnames(rmsk) <- c("bin", "milliDiv", "milliDel", "milliIns", "genoName", "genoStart", "genoEnd", "genoLeft", "strand", "repName", "repClass", "repFamily", "repStart", "repEnd", "repLeft", "id")
-rmsk <- rmsk[,c("genoName", "genoStart", "genoEnd", "strand", "repName", "repClass", "repFamily")]
-
-save(rmsk, file=paste0(wd.src.ref, "hg19.rmsk.RData"))
-
 # =============================================================================
 # Reference    : Miscellaneous
 # Last Modified: 13/05/17
 # =============================================================================
-
 # -----------------------------------------------------------------------------
 # File: human-genome.1kb-grid.bed
 # Link(s): https://github.com/andrej-fischer/cloneHD
@@ -198,21 +160,3 @@ rownames(bed) <- bed$BED
 bed <- bed[,-1]
 
 save(bed, file=paste0(wd.src.ref, "hg19.1kb.gc.RData"))
-
-# =============================================================================
-# Reference    : UCSC Table Browser (Feb 2009/GRCh37/hg19)
-# Link(s)      : https://genome.ucsc.edu/cgi-bin/hgTables
-#                http://genome.ucsc.edu/FAQ/FAQdownloads#download10
-# Last Modified: 14/03/18
-# =============================================================================
-
-# =============================================================================
-# Reference    : Ensembl FASTA and GTF file (for running kallisto and pizzly)
-# Link(s)      : ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz
-#                ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz
-# Last Modified: 30/04/18
-# =============================================================================
-# pizzly -k 31 --gtf $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.gz --cache $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.gtf.cache.txt --align-score 2 --insert-size 400 --fasta $REF_PATH/hg19/ensembl/Homo_sapiens.GRCh37.75.cdna.all.fa.gz --output S02397 ../kallisto_hg19.ensembl_quant-b100--bias--fusion/S02397/fusion.txt
-# 
-# GTF file contains 63677 genes and 215170 transcripts
-
