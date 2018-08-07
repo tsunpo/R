@@ -4,7 +4,6 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 24/04/17
 # =============================================================================
-
 # -----------------------------------------------------------------------------
 # Methods: Density plot
 # Last Modified: 11/06/18
@@ -29,42 +28,6 @@ plotDensityCount <- function(median, file.main, file.name, ymax) {
    pdf(file.name, height=6, width=6)
    plot(d, ylab="Frequency", xlab="log2(TPM + 0.01)", main=paste0("Genes (n=", file.main, ")"), ylim=c(0, ymax))
    dev.off()
-}
-
-# -----------------------------------------------------------------------------
-# Methods: kallisto
-# Last Modified: 10/06/18
-# -----------------------------------------------------------------------------
-getFiltered <- function(reads, min_reads, min_prop) { 
-   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
- 
-   return(which(numbers/ncol(reads) >= min_prop))
-}
-
-kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
-   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
-   tpm <- list2Matrix(kallisto.table$tpm, kallisto.table)
- 
-   return(tpm[getFiltered(reads, min_reads, min_prop),])
-}
-
-# -----------------------------------------------------------------------------
-# Methods: GTEx threshold to determine a detected/expressed gene
-# Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
-# Last Modified: 03/02/17
-# -----------------------------------------------------------------------------
-getDetected <- function(expr, value) {   ## Genes being expressed at TPM > 0.1 in at least one sample
-   detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
- 
-   return(which(detected >= 1))
-}
-
-getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
-}
-
-getNotExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) any(as.numeric(expr[x,]) == 0)))
 }
 
 # -----------------------------------------------------------------------------
@@ -272,31 +235,6 @@ pipeDE <- function(expr, pheno, argv, ensGene) {
 }
 
 # -----------------------------------------------------------------------------
-# Method: Fisher's combined probability test
-# Last Modified: 06/11/17
-# -----------------------------------------------------------------------------
-fishers <- function(x, y) {
-   return(pchisq(-2*log(x)-2*log(y), 4, low=F))
-}
-
-# -----------------------------------------------------------------------------
-# Method: Residuals of expression
-# Last Modified: 06/02/17
-# -----------------------------------------------------------------------------
-residualsOf <- function(expr, pheno, covariate) {
-   pheno.expr <- getFinalPhenotype(expr, pheno, covariate)
-   expr.pheno <- getFinalExpression(expr, pheno.expr)
-   
-   trait <- as.factor(pheno.expr[,covariate])
-   
-   expr.res <- expr.pheno
-   for (x in 1:nrow(expr.pheno))
-      expr.res[x,] <- as.vector(as.numeric(resid(lm(as.numeric(expr.pheno[x,]) ~ trait))))
- 
-   return(expr.res)
-}
-
-# -----------------------------------------------------------------------------
 # Method: Volcano plots
 # Last Modified: 13/02/17
 # -----------------------------------------------------------------------------
@@ -326,8 +264,13 @@ plotVolcano <- function(de, p, fdr, effect, file.name, file.main, legend.x) {
    dev.off()
 }
 
+# =============================================================================
+# Inner Class  : Extentions of guide-to-the/hg19.R
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 10/04/18
+# =============================================================================
 # -----------------------------------------------------------------------------
-# Get non-redundant gene list
+# Get non-redundant gene list (ensGene)
 # Last Modified: 10/04/18
 # -----------------------------------------------------------------------------
 getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, proteinCodingNonRedundantOnly) {   ## ADD 11/04/18; ADD 01/02/18
@@ -342,6 +285,10 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
    return(tpm.gene)
 }
 
+# -----------------------------------------------------------------------------
+# Methods: Add ensGene$protein_coding_non_redundant (in guide-to-the/hg19.R)
+# Last Modified: 24/04/17
+# -----------------------------------------------------------------------------
 isNonRedundant <- function(ensembl_gene_id, ensGene) {
    gene <- ensGene[ensembl_gene_id,]
  
@@ -363,18 +310,34 @@ isNonRedundant <- function(ensembl_gene_id, ensGene) {
 ## [1] 13487
 ## > nrow(subset(ensGene.pcg, non_redundant == F))
 ## [1] 6840
-#
+
 #ensGene$protein_coding_non_redundant <- NA
 #ensGene[rownames(ensGene.pcg),]$protein_coding_non_redundant <- ensGene.pcg$non_redundant
 
 # =============================================================================
 # Inner Class  : kallisto/Sleuth File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 24/04/17
+# Last Modified: 10/06/18
 # =============================================================================
+# -----------------------------------------------------------------------------
+# Methods: kallisto
+# Last Modified: 10/06/18
+# -----------------------------------------------------------------------------
+getFiltered <- function(reads, min_reads, min_prop) { 
+   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
+ 
+   return(which(numbers/ncol(reads) >= min_prop))
+}
+
+kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
+   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
+   tpm <- list2Matrix(kallisto.table$tpm, kallisto.table)
+ 
+   return(tpm[getFiltered(reads, min_reads, min_prop),])
+}
 
 # -----------------------------------------------------------------------------
-# Methods: Transcript TPM estimates/aboundants from kallisto
+# Methods: Transcript-level TPM estimates from kallisto
 # Last Modified: 28/03/17
 # -----------------------------------------------------------------------------
 tx2gene <- function(t2g) {
@@ -408,43 +371,46 @@ list2Matrix <- function(list, kallisto.table) {
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/02/18
 # =============================================================================
-# orderBySamples <- function(tpm) {
-#    return(tpm[,order(colnames(tpm), decreasing=F)])
-# }
-# 
-# getFiltered <- function(reads, min_reads, min_prop) { 
-#    numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
+# -----------------------------------------------------------------------------
+# Methods: GTEx threshold to determine a detected/expressed gene
+# Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
+# Last Modified: 03/02/17
+# -----------------------------------------------------------------------------
+# getDetected <- function(expr, value) {   ## Genes being expressed at TPM > 0.1 in at least one sample
+#    detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
 #  
-#    return(which(numbers/ncol(reads) >= min_prop))
-# }
-# 
-# kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
-#    reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
-#    tpms <- list2Matrix(kallisto.table$tpm, kallisto.table)
-#  
-#    return(tpms[getFiltered(reads, min_reads, min_prop),])
+#    return(which(detected >= 1))
 # }
 
-# onlyVariable <- function(de, effect) {
-#    de.effect <- rbind(subset(de, Effect >= effect), subset(de, Effect <= -effect))
+# getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
+#    return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
+# }
+
+# getNotExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
+#    return(mapply(x = 1:nrow(expr), function(x) any(as.numeric(expr[x,]) == 0)))
+# }
+
+# -----------------------------------------------------------------------------
+# Method: Fisher's combined probability test
+# Last Modified: 06/11/17
+# -----------------------------------------------------------------------------
+# fishers <- function(x, y) {
+#    return(pchisq(-2*log(x)-2*log(y), 4, low=F))
+# }
+
+# -----------------------------------------------------------------------------
+# Method: Residuals of expression
+# Last Modified: 06/02/17
+# -----------------------------------------------------------------------------
+# residualsOf <- function(expr, pheno, covariate) {
+#    pheno.expr <- getFinalPhenotype(expr, pheno, covariate)
+#    expr.pheno <- getFinalExpression(expr, pheno.expr)
 #  
-#    return(sortP(de.effect))
-# }
-# 
-# significantAndVariable <- function(de, effect, fdr) {
-#    return(subset(onlyVariable(de, effect), FDR <= fdr))
-# }
-
-# getEnsGeneHLA <- function(tpm.gene, ensGene) {
-#    tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+#    trait <- as.factor(pheno.expr[,covariate])
 #  
-#    return(tpm.gene[rownames(tpm.gene)[grepl("^HLA-", ensGene[rownames(tpm.gene),]$external_gene_name)],])
-# }
-
-# getEnsGeneTCR <- function(tpm.gene, ensGene) {
-#    return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("TR_", c("C", "V", "D", "J"), "_gene")))),])
-# }
-
-# getEnsGeneIG <- function(tpm.gene, ensGene) {
-#    return(tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype %in% paste0("IG_", c("C", "V", "D", "J"), "_gene")))),])
+#    expr.res <- expr.pheno
+#    for (x in 1:nrow(expr.pheno))
+#       expr.res[x,] <- as.vector(as.numeric(resid(lm(as.numeric(expr.pheno[x,]) ~ trait))))
+#  
+#    return(expr.res)
 # }
