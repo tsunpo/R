@@ -2,7 +2,7 @@
 # Library      : Differential Gene Expression
 # Name         : handbook-of/DifferentialExpression.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 24/04/17
+# Last Modified: 07/08/18
 # =============================================================================
 # -----------------------------------------------------------------------------
 # Methods: Density plot
@@ -138,10 +138,6 @@ testANOVA <- function(x, expr, pheno) {
    return(a1$Pr[2])
 }
 
-getMedian <- function(x, expr, pheno, type) {
-   return(median(as.numeric(expr[x, rownames(subset(pheno, Cancer_Type == type))])))
-}
-
 ## source("https://bioconductor.org/biocLite.R")
 ## biocLite("qvalue")
 testFDR <- function(P, test.fdr) {
@@ -151,10 +147,6 @@ testFDR <- function(P, test.fdr) {
    
    } else if (test.fdr == "BH")
       return(p.adjust(P, "BH"))
-}
-
-sortP <- function(de) {
-   return(de[order(de$P),])
 }
 
 ## Generate final pheno.expr and expr.pheno for D.E. analysis
@@ -217,7 +209,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    de$LOG_FC <- de[,4] - de[,3]
  
    ## NOTE: Must sort AFTER fold change and BEFORE annotation!!
-   de <- sortP(de)
+   de <- de[order(de$P),]
    return(de)
 }
 
@@ -265,12 +257,77 @@ plotVolcano <- function(de, p, fdr, effect, file.name, file.main, legend.x) {
 }
 
 # =============================================================================
+# Inner Class  : kallisto/sleuth File Reader (for manuscripts/expression/*-tpm.R)
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 10/06/18
+# =============================================================================
+# -----------------------------------------------------------------------------
+# Methods: Custom filters for using kallisto
+# Last Modified: 10/06/18
+# -----------------------------------------------------------------------------
+getFiltered <- function(reads, min_reads, min_prop) { 
+   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
+ 
+  return(which(numbers/ncol(reads) >= min_prop))
+}
+
+kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
+   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
+   tpm <- list2Matrix(kallisto.table$tpm, kallisto.table)
+ 
+   return(tpm[getFiltered(reads, min_reads, min_prop),])
+}
+
+# -----------------------------------------------------------------------------
+# Methods: Transcript-level TPM estimates using sleuth
+# Last Modified: 28/03/17
+# -----------------------------------------------------------------------------
+tx2gene <- function(t2g) {
+   colnames(t2g) <- c("target_id", "ens_gene", "ext_gene")
+   #rownames(t2g) <- t2g$target_id
+   
+   return(t2g)
+}
+
+tx2Ens <- function(ensGene) {
+   return(tx2gene(ensGene[,c("ensembl_transcript_id", "ensembl_gene_id", "external_gene_name")]))
+}
+
+## Gene-level TPMs with patches/scaffold sequences (*_PATCH)   ## Please refer to line 64 (in guide-to-the/hg19.R)
+## https://www.ncbi.nlm.nih.gov/grc/help/patches
+list2Matrix <- function(list, kallisto.table) {
+   genes <- unique(kallisto.table$target_id)
+   samples <- unique(kallisto.table$sample)  
+ 
+   list.matrix <- data.frame(matrix(list, nrow=length(genes), byrow=T))
+   rownames(list.matrix) <- genes
+   colnames(list.matrix) <- samples
+   
+   return(list.matrix)
+}
+
+## Remove patches (*_PATCH)
+getTPMGene <- function(tpm.gene.patch) {
+   overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
+   tpm.gene <- tpm.gene.patch[overlaps,]
+   
+   return(tpm.gene)
+}
+
+getLog2andMedian <- function(tpm.gene) {
+   tpm.gene.log2 <- log2(tpm.gene + 0.01)
+   tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
+ 
+   return(tpm.gene.log2)
+}
+
+# =============================================================================
 # Inner Class  : Extentions of guide-to-the/hg19.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 10/04/18
 # =============================================================================
 # -----------------------------------------------------------------------------
-# Get non-redundant gene list (ensGene)
+# Method: Get non-redundant gene list (ensGene)
 # Last Modified: 10/04/18
 # -----------------------------------------------------------------------------
 getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, proteinCodingNonRedundantOnly) {   ## ADD 11/04/18; ADD 01/02/18
@@ -281,7 +338,7 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
    if (proteinCodingNonRedundantOnly) {
       tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, protein_coding_non_redundant == T))),]
    }
-   
+ 
    return(tpm.gene)
 }
 
@@ -300,7 +357,6 @@ isNonRedundant <- function(ensembl_gene_id, ensGene) {
       return(T)
    return(F)
 }
-
 #ensGene.pcg <- subset(ensGene, gene_biotype == "protein_coding")
 #ensGene.pcg$non_redundant <- F
 #ensGene.pcg$non_redundant <- mapply(x = 1:nrow(ensGene.pcg), function(x) isNonRedundant(ensGene.pcg$ensembl_gene_id[x], ensGene.pcg))
@@ -313,58 +369,6 @@ isNonRedundant <- function(ensembl_gene_id, ensGene) {
 
 #ensGene$protein_coding_non_redundant <- NA
 #ensGene[rownames(ensGene.pcg),]$protein_coding_non_redundant <- ensGene.pcg$non_redundant
-
-# =============================================================================
-# Inner Class  : kallisto/Sleuth File Reader
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 10/06/18
-# =============================================================================
-# -----------------------------------------------------------------------------
-# Methods: kallisto
-# Last Modified: 10/06/18
-# -----------------------------------------------------------------------------
-getFiltered <- function(reads, min_reads, min_prop) { 
-   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
- 
-   return(which(numbers/ncol(reads) >= min_prop))
-}
-
-kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
-   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
-   tpm <- list2Matrix(kallisto.table$tpm, kallisto.table)
- 
-   return(tpm[getFiltered(reads, min_reads, min_prop),])
-}
-
-# -----------------------------------------------------------------------------
-# Methods: Transcript-level TPM estimates from kallisto
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-tx2gene <- function(t2g) {
-   colnames(t2g) <- c("target_id", "ens_gene", "ext_gene")
-   #rownames(t2g) <- t2g$target_id
-   
-   return(t2g)
-}
-
-tx2Ens <- function(ensGene) {
-   return(tx2gene(ensGene[,c("ensembl_transcript_id", "ensembl_gene_id", "external_gene_name")]))
-}
-
-tx2Ref <- function(refGene) {
-   return(tx2gene(refGene[,c("name", "name2", "name2")]))
-}
-
-list2Matrix <- function(list, kallisto.table) {
-   genes <- unique(kallisto.table$target_id)
-   samples <- unique(kallisto.table$sample)  
- 
-   list.matrix <- data.frame(matrix(list, nrow=length(genes), byrow=T))
-   rownames(list.matrix) <- genes
-   colnames(list.matrix) <- samples
-   
-   return(list.matrix)
-}
 
 # =============================================================================
 # Inner Class: Collections of test/obsolete/deprecated methods
@@ -384,10 +388,6 @@ list2Matrix <- function(list, kallisto.table) {
 
 # getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
 #    return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
-# }
-
-# getNotExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-#    return(mapply(x = 1:nrow(expr), function(x) any(as.numeric(expr[x,]) == 0)))
 # }
 
 # -----------------------------------------------------------------------------

@@ -129,13 +129,6 @@ isSNVonExon <- function(chr, pos, ensGene.transcript.exon) {
 # Method: Keep only SNVs on expressed genes (Step 4.1)
 # Last Modified: 25/01/18
 # -----------------------------------------------------------------------------
-getLog2andMedian <- function(tpm.gene) {
-   tpm.gene.log2 <- log2(tpm.gene + 0.01)
-   tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
- 
-   return(tpm.gene.log2)
-}
-
 getTxQ4 <- function(gene.list, tpm.gene.log2) {
    if (!is.na(gene.list)[1])
       tpm.gene.log2 <- tpm.gene.log2[gene.list,]

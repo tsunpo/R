@@ -35,8 +35,7 @@ ensGene$chromosome_name <- paste0("chr", ensGene$chromosome_name)          ## AD
 # > nrow(subset(ensGene, gene_biotype == "protein_coding"))
 # [1] 20327
 
-## Add non-redundant protein coding gene list
-## in handbook-of/DifferentialExpression.R from line 275
+## Add non-redundant protein coding gene list in handbook-of/DifferentialExpression.R from line 345
 
 freq <- as.data.frame(table(ensGene$external_gene_name))   ## ADD 20/08/17
 freq <- freq[order(freq$Freq, decreasing=T),]
@@ -47,7 +46,7 @@ freq <- freq[order(freq$Freq, decreasing=T),]
 # 29322 RBL1    2
 
 # -----------------------------------------------------------------------------
-# Database: Ensembl Gene / Transcripts
+# Database: Ensembl Gene / Transcripts (with patches/scaffold sequences)
 # Table: ensGene / Count: 215,170 / Download Version: 2017-03-25
 # -----------------------------------------------------------------------------
 ensGene.transcript <- readTable(paste0(wd.reference, "ensembl/BioMart.GRCh37.p13.EnsemblGene.ensembl_transcript_id_20170325.txt.gz"), header=T, rownames=F, sep="\t")
@@ -62,7 +61,7 @@ ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
 # > length(unique(ensGene.transcript$external_gene_name))
 # [1] 56638
 
-## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" without warning message
+## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" to avoid warning messages
 #ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% c(1:22, "X", "Y", "MT"))   ## ADD 23/02/17
 
 # =============================================================================

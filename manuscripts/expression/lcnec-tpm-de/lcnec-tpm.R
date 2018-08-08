@@ -3,7 +3,7 @@
 # Chapter I    : RB1-loss differential gene expression in neuroendocrine tumours
 # Name         : manuscripts/expression/lcnec-tpm.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 07/08/18
+# Last Modified: 08/08/18
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
@@ -12,7 +12,7 @@ wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/librarie
 handbooks  <- c("Common.R", "DifferentialExpression.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
-wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Human Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
@@ -34,10 +34,10 @@ wd.de.plots <- file.path(wd.de, "plots")
 samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=F, sep="")[,1]
 
 # -----------------------------------------------------------------------------
-# Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
+# From transcript-level estimates to gene-level TPMs using sleuth (v0.29.0)
 # Based on https://pachterlab.github.io/sleuth_walkthroughs/boj/analysis.html
 #
-# By using sleuth's default filter settings: minimum 5 reads in at least 47% of the samples
+# With sleuth's default quality-control filters: minimum 5 reads in at least 47% of the samples
 # https://pachterlab.github.io/sleuth/docs/basic_filter.html
 # https://groups.google.com/forum/#!topic/kallisto-sleuth-users/QrKxxEEFnE0
 # -----------------------------------------------------------------------------
@@ -45,9 +45,9 @@ library("sleuth")   ## R version 3.2.2 (on gauss)
 
 tsv <- file.path(wd.rna.raw, samples)
 s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
-t2g <- tx2Ens(ensGene.transcript)
-
-so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
+t2g <- tx2Ens(ensGene.transcript)   ## Use full Ensembl transcripts with patches/scaffold sequences (*_PATCH) to avoid warning messages
+                                    ## Please refer to line 49 (in guide-to-the/hg19.R)
+so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default quality-control filters
 # reading in kallisto results
 # dropping unused factor levels
 # .....................................................................
@@ -59,33 +59,21 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 # 20592 genes passed the filter
 # summarizing bootstraps
 
+## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## Please refer to line 49 (in guide-to-the/hg19.R)
+## https://www.ncbi.nlm.nih.gov/grc/help/patches
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
 tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
 save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
 save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData")))
 
-###
-## Full gene list without any filtering
-tpm.gene.patch <- list2Matrix(tpm.norm$tpm, tpm.norm)   ## Gene-level TPMs with patches
-
-## Remove patches (*_PATCH)
-## https://www.ncbi.nlm.nih.gov/grc/help/patches
-overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
-tpm.gene <- tpm.gene.patch[overlaps,]                   ## Gene-level TPMs
+## Gene-level TPMs without filtering
+tpm.gene <- getTPMGene(list2Matrix(tpm.norm$tpm, tpm.norm))             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 # > nrow(tpm.gene)
 # [1] 34908
 
-###
-## Gene list after default filtering
-tpm.gene.patch <- list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt)   ## Gene-level TPMs with patches
-# > nrow(tpm.gene.patch)
-# [1] 20592   ## Matched to line 59
-
-## Remove patches (*_PATCH)
-## https://www.ncbi.nlm.nih.gov/grc/help/patches
-overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
-tpm.gene <- tpm.gene.patch[overlaps,]                             ## Gene-level TPMs
+## Gene-level TPMs with default filters
+tpm.gene <- getTPMGene(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt))   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 # > nrow(tpm.gene)
 # [1] 18913
