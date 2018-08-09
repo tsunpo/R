@@ -5,8 +5,8 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 08/08/18
 # =============================================================================
-#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
 handbooks  <- c("Common.R", "DifferentialExpression.R")
@@ -27,7 +27,7 @@ library("devtools")
 devtools::install_github("pachterlab/sleuth")   ## R version 3.3.2 (2016-10-31)
 
 # -----------------------------------------------------------------------------
-# Read in transcript TPM estimates/aboundants from kallisto (v0.43.1)
+# Read in transcript-level estimates from kallisto (v0.43.1)
 # Based on https://rawgit.com/pachterlab/sleuth/master/inst/doc/intro.html
 # -----------------------------------------------------------------------------
 getTSV <- function(wd.rna, samples) {
@@ -52,9 +52,9 @@ tsv.sclc <- getTSV(wd.rna, samples.sclc)
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "ALL"
+wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+BASE <- "LUAD-LCNEC-SCLC"
 base <- tolower(BASE)
 
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
@@ -98,17 +98,25 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
 tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
 save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
-save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData")))
+save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5p47.RData")))
 
+###
 ## Gene-level TPMs without filtering
 tpm.gene <- getTPMGene(list2Matrix(tpm.norm$tpm, tpm.norm))             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 # > nrow(tpm.gene)
 # [1] 34908
 
+## Remove not expressed (if TPM=0 in any of the samples) genes (ADD 10/06/18)
+tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
+# > nrow(tpm.gene)
+# [1] 15101
+
+###
 ## Gene-level TPMs with default filters
 tpm.gene <- getTPMGene(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt))   ## Gene-level TPMs (with default filters)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 # > nrow(tpm.gene)
 # [1] 18898
 
@@ -118,8 +126,12 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # =============================================================================
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
-plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pdf")))
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pdf")), NULL)
 
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene)
-plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5_p47.pdf")))
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.pdf")), NULL)
+
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene)
+plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.pdf")), NULL)

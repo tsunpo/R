@@ -3,11 +3,10 @@
 # Chapter I    : RB1-loss differential gene expression in neuroendocrine tumours
 # Name         : manuscripts/expression/lcnec-tpm-de-pca.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 06/08/18
+# Last Modified: 08/08/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-#wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
@@ -18,7 +17,7 @@ wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guid
 load(file.path(wd.src.ref, "hg19.RData"))
 
 # -----------------------------------------------------------------------------
-# Step 0: Set working directory
+# Set working directory
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
@@ -33,55 +32,29 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
 samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
-colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "MAX_INSERT_SIZE", "AVG_FRAGMENT_LENGTH", "RB1_MUT")
+colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "AVG_FRAGMENT_LENGTH", "MAX_INSERT_SIZE", "RB1_MUT")
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)
-
-# -----------------------------------------------------------------------------
-# D.E. using non-parametric test (20 RB1 vs 34 WT; n=69-15NA)
-# Last Modified: 22/05/18
-# -----------------------------------------------------------------------------
-## Parameters for this test
-## Test: Wilcoxon/Wilcox/U/Students/ttest
-## FDR : Q/BH
-## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
-argv      <- data.frame(predictor="RB1_MUT", predictor.wt=0, test="Wilcox", test.fdr="Q", fdr=0.05, effect=0, stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm_gene_rb1_wilcox_q_n54")
-file.main <- paste0("RB1 MUT (n=20) vs WT (n=34) in ", BASE)
-
-de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
-
-save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+#tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
 # -----------------------------------------------------------------------------
-# SET (Jen et al, 2007)
-# Last Modified: 09/06/18
-# -----------------------------------------------------------------------------
-genes <- rownames(subset(de.tpm.gene, FDR < 0.1))
-writeTable(tpm.gene[genes,], file.path(wd.de.data, "lcnec_rb1_genes.txt"), colnames=T, rownames=T, sep="\t")
-
-
-
-# -----------------------------------------------------------------------------
-# PCA
+# Principal component analysis (PCA)
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
+load(file.path(wd.de.data, "de_lcnec_tpm_gene_r5_p47_rb1_wilcox_q_n54.RData"))
 genes <- rownames(subset(de.tpm.gene, FDR <= 0.1))
+# > length(genes)
+# [1] 639
+
+## RB1 status on D.E genes
 pca.de <- getPCA(t(tpm.gene[genes,]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
 
-###
-## RB1 status on D.E genes
-pheno.expr <- pheno[samples.expr,]
-
-#trait <- pheno.expr[,"RB1NEW"]
 trait <- as.numeric(samples[,"RB1_MUT"])
 trait[which(trait == 0)] <- "WT"
 trait[which(trait == 1)] <- "RB1"
 
-file.main <- "LCNEC RB1 status on 510 D.E. (FDR=10%) genes"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "test2_RB1_510DE_TEST", file.main, NA, NA, c("red", "dodgerblue"))
+file.main <- "LCNEC RB1 status on 639 D.E. (FDR=10%) genes"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_639DE_PC1-PC2", file.main, NA, NA, c("red", "dodgerblue", "gray"))
 
 # -----------------------------------------------------------------------------
 # PCA (with SCLC and HeLa)

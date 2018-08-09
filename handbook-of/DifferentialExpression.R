@@ -62,7 +62,7 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, file.main, legend.x, legend.y, cols) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, file.main, legend, cols, samples) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait))
@@ -84,11 +84,12 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, file.main, legend.x
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")))
    plot(scores[,x], scores[,y], col=trait.col, pch=16, cex=1.5, main=file.main, xlab=xlab, ylab=ylab)
    
-   if (is.na(legend.x))
-      legend.x <- min(scores[,x])
-   if (is.na(legend.y))
-      legend.y <- max(scores[,y])
-   legend(legend.x, legend.y, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
+   if (!is.null(samples)) {
+      for (s in 1:length(samples))
+         text(scores[s, x], scores[s, y], samples[s], col="black", adj=c(0, -0.75), cex=0.75)
+   }
+
+   legend(legend, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
    dev.off()
 }
 
@@ -123,6 +124,7 @@ testStudents <- function(expr, samples.mut, samples.wt) {
 }
 
 ## Wilcoxon rank-sum test (Mann-Whitney U test) with continuity correction (logical indicator exact=F)
+## http://gdac.broadinstitute.org/runs/analyses__latest/reports/cancer/LUSC-TP/Correlate_Clinical_vs_mRNAseq/nozzle.html
 testWilcoxon <- function(expr, pheno, predictor) {
    trait <- as.factor(pheno[,predictor])
    
@@ -206,7 +208,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    ## Log fold change
    de[,3] <- median00(expr.pheno, samples.expr.wt)
    de[,4] <- median00(expr.pheno, samples.expr.mut)
-   de$LOG_FC <- de[,4] - de[,3]
+   de$LOG2_FC <- de[,4] - de[,3]
  
    ## NOTE: Must sort AFTER fold change and BEFORE annotation!!
    de <- de[order(de$P),]
@@ -370,11 +372,6 @@ isNonRedundant <- function(ensembl_gene_id, ensGene) {
 #ensGene$protein_coding_non_redundant <- NA
 #ensGene[rownames(ensGene.pcg),]$protein_coding_non_redundant <- ensGene.pcg$non_redundant
 
-# =============================================================================
-# Inner Class: Collections of test/obsolete/deprecated methods
-# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 01/02/18
-# =============================================================================
 # -----------------------------------------------------------------------------
 # Methods: GTEx threshold to determine a detected/expressed gene
 # Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
@@ -386,10 +383,15 @@ isNonRedundant <- function(ensembl_gene_id, ensGene) {
 #    return(which(detected >= 1))
 # }
 
-# getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-#    return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
-# }
+getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
+   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
+}
 
+# =============================================================================
+# Inner Class: Collections of test/obsolete/deprecated methods
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 01/02/18
+# =============================================================================
 # -----------------------------------------------------------------------------
 # Method: Fisher's combined probability test
 # Last Modified: 06/11/17
