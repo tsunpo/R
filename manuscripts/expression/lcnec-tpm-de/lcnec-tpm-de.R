@@ -53,34 +53,34 @@ de.tpm.gene <- pipeDE(tpm.gene.log2, samples, argv, ensGene)
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-
-
-
-
-
-
-
-
-
 # -----------------------------------------------------------------------------
-# PCA
+# Principal component analysis (PCA)
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
-genes <- rownames(subset(de.tpm.gene, FDR <= 0.1))
-pca.de <- getPCA(t(tpm.gene[genes,]))   ## BUG FIX 13/02/17: Perform PCA using normalised data
-# > length(genes)
-# [1] 639
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base.lcnec, "-tpm-de/data/", "de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
+
+genes.rb1.q0.1  <- rownames(subset(de.tpm.gene, FDR <= 0.1))
+genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
+## > length(genes.rb1.q0.1)
+## [1] 639
+## > length(genes.rb1.q0.05)
+## [1] 145
 
 ## RB1 status on D.E genes
-pheno.expr <- pheno[samples.expr,]
+test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+#test <- tpm.gene[genes.rb1.q0.1, rownames(samples)]
+pca.de <- getPCA(t(test))
 
-#trait <- pheno.expr[,"RB1NEW"]
 trait <- as.numeric(samples[,"RB1_MUT"])
 trait[which(trait == 0)] <- "WT"
 trait[which(trait == 1)] <- "RB1"
 
-file.main <- "LCNEC RB1 status on 639 D.E. (FDR=10%) genes"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "test2_RB1_639DE_TEST", file.main, NA, NA, c("red", "dodgerblue"))
+##
+file.main <- "LCNEC RB1 status on 145 D.E. (Q < 0.05) genes"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_Q0.05_145DE", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
+
+file.main <- "LCNEC RB1 status on 639 D.E. (Q < 0.1) genes"
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_Q0.1_639DE", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
 # Volcano plots

@@ -30,14 +30,14 @@ wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"
 wd.de.data  <- file.path(wd.de, "data")
 
 # -----------------------------------------------------------------------------
-# Replace Ensembl Gene IDs to gene name in Reactome results (Up and Down-regulation)
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
 # -----------------------------------------------------------------------------
-wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.11_up")
-#wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.11_down")
-reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
+wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_q0.47_up")
+#wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_q0.47_down")
 
 list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
 
+reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
 colnames(reactome) <- gsub("X.", "", colnames(reactome))
 reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
 for (r in 1:nrow(reactome)) {

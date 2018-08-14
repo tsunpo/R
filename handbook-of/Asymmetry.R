@@ -10,7 +10,6 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 29/01/18
 # =============================================================================
-
 # -----------------------------------------------------------------------------
 # Method: Finding mutations locate within Ensembl genes (Step 1)
 # Last Modified: 29/01/18
@@ -211,7 +210,6 @@ getMutPerMbTxs <- function(s1, txs) {
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 29/01/18
 # =============================================================================
-
 # -----------------------------------------------------------------------------
 # Method: Divide genes into two groups (hand-on and co-directional; Step 6.2)
 # Last Modified: 20/02/18
@@ -321,6 +319,11 @@ getRTTxMain_2 <- function(i, asyms, headon) {
 initTableS6RTSt <- function() {
    return(list(list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list()))), list(list(list(list(), list())), list(list(list(), list())))))
 }
+
+
+
+
+
 
 
 

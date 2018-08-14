@@ -30,12 +30,12 @@ wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"
 wd.de.data  <- file.path(wd.de, "data")
 
 # -----------------------------------------------------------------------------
-# Replace Ensembl Gene IDs to gene name in Reactome results (Up-regulation)
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
 # -----------------------------------------------------------------------------
 wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_up")
+#wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_down")
 
-list <- readTable(file.path(wd.de.data.reactome, "genes_rb1_q0.05_n117_up.txt"), header=F, rownames=F, sep="")
-list <- ensGene[list, c("ensembl_gene_id",	"external_gene_name")]
+list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
 
 reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
 colnames(reactome) <- gsub("X.", "", colnames(reactome))
@@ -47,29 +47,6 @@ for (r in 1:nrow(reactome)) {
    for (i in 1:length(ids))
       if (nrow(list[ids[i],]) != 0)
          ids[i] <- list[ids[i],]$external_gene_name
- 
-   reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
-}
-writeTable(reactome, file.path(wd.de.data.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Replace Ensembl Gene IDs to gene name in Reactome results (Down-regulation)
-# -----------------------------------------------------------------------------
-wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_down")
-
-list <- readTable(file.path(wd.de.data.reactome, "genes_rb1_q0.05_n28_down.txt"), header=F, rownames=F, sep="")
-list <- ensGene[list, c("ensembl_gene_id",	"external_gene_name")]
-
-reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
-colnames(reactome) <- gsub("X.", "", colnames(reactome))
-reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
-for (r in 1:nrow(reactome)) {
-   ids <- as.vector(reactome$Submitted.entities.found[r])
-   ids <- unlist(strsplit(ids, ";"))
- 
-   for (i in 1:length(ids))
-      if (nrow(list[ids[i],]) != 0)
-      ids[i] <- list[ids[i],]$external_gene_name
  
    reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
 }

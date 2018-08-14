@@ -62,7 +62,7 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, file.main, legend, cols, samples) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait))
@@ -81,12 +81,12 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, file.main, legend, 
    xlab <- paste0("Principal component ", x, " (", pcaProportionofVariance(pca, x), "%)")
    ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
    
-   pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")))
-   plot(scores[,x], scores[,y], col=trait.col, pch=16, cex=1.5, main=file.main, xlab=xlab, ylab=ylab)
+   pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
+   plot(scores[,x]*flip.x, scores[,y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main, xlab=xlab, ylab=ylab)
    
    if (!is.null(samples)) {
       for (s in 1:length(samples))
-         text(scores[s, x], scores[s, y], samples[s], col="black", adj=c(0, -0.75), cex=0.75)
+         text(scores[s, x]*flip.x, scores[s, y]*flip.y, samples[s], col="black", adj=c(0, -0.75), cex=0.75)
    }
 
    legend(legend, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
@@ -227,6 +227,12 @@ pipeDE <- function(expr, pheno, argv, ensGene) {
  
    return(de)
 }
+
+## https://www.biostars.org/p/186368/
+
+## https://www.biostars.org/p/157240/
+## https://www.biostars.org/p/143458/#157303                            ## estimates vs. count-based methods; transcript level quantification tools
+## https://liorpachter.wordpress.com/2015/08/17/a-sleuth-for-rna-seq/   ## estimates vs. count-based methods
 
 # -----------------------------------------------------------------------------
 # Method: Volcano plots
