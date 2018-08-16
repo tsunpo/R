@@ -152,7 +152,7 @@ testW(ens.genes.rb1.q0.05$Length, ens.genes.G2M$Length)
 # [1] 4.708969e-06
 
 # -----------------------------------------------------------------------------
-# D.E. using non-parametric test: 5 First vs 4 Second-cycle (on D.E. LCNCE RB1 genes)
+# D.E. using non-parametric test: 5 First cycle vs 4 Second cycle (on D.E. LCNCE RB1 genes)
 # Last Modified: 09/08/18
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
@@ -169,3 +169,26 @@ de.tpm.gene <- pipeDE(tpm.gene.log2[genes.rb1.q0.05, rownames(samples)], samples
 
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
+# -----------------------------------------------------------------------------
+wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_q0.14_up")
+#wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_q0.14_down")
+
+list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
+
+reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
+colnames(reactome) <- gsub("X.", "", colnames(reactome))
+reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+for (r in 1:nrow(reactome)) {
+   ids <- as.vector(reactome$Submitted.entities.found[r])
+   ids <- unlist(strsplit(ids, ";"))
+ 
+   for (i in 1:length(ids))
+      if (nrow(list[ids[i],]) != 0)
+         ids[i] <- list[ids[i],]$external_gene_name
+ 
+   reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+}
+writeTable(reactome, file.path(wd.de.data.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")

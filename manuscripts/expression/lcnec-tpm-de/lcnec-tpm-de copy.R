@@ -83,72 +83,90 @@ file.main <- "LCNEC RB1 status on 639 D.E. (Q < 0.1) genes"
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_Q0.1_639DE", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
-# Volcano plots
-# Last Modified: 15/08/18
+# Volcano plots Lite
+# Last Modified: 25/10/17
 # -----------------------------------------------------------------------------
-plotVolcano <- function(de, fdr, genes, file.de, file.main) {
+plotVolcanoLite <- function(de, fdr, genes, file.de, file.main) {
    de.sig <- subset(de, FDR <= fdr)
    de.sig$log10P <- -log10(de.sig$P)
  
    de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
+   xmax <- max(de$Effect)
    ymax <- max(de$log10P)
    p <- max(de.sig$P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2FC RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
-   
-   abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
-   text(xmax*-1 + 2*xmax/80, -log10(fdrToP(fdr, de)) + ymax/42, "Q<0.05", cex=0.85)
-   abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/200, -log10(fdrToP(0.1, de)) + ymax/42, "Q<0.1", col="darkgray", cex=0.85)
-
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="dodgerblue")
+   plot(de$Effect, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2 RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
+   abline(h=c(-log10(fdrToP(0.05, de))), lty=5, col="darkgray")
+   text(xmax*-1 + 2*xmax/29, -log10(fdrToP(0.05, de)) + ymax/42, "FDR=5%", col="darkgray")
  
-   for (g in 1:nrow(genes)) {
-      gene <- subset(de, external_gene_name == genes[g,]$GENE)
-      gene <- cbind(gene, genes[g,])
-      
+   de.up <- subset(de.sig, Effect > 0)
+   points(de.up$Effect, de.up$log10P, pch=16, col="red")
+ 
+   de.down <- subset(de.sig, Effect < 0)
+   points(de.down$Effect, de.down$log10P, pch=16, col="dodgerblue")
+ 
+   for (g in 1:length(genes)) {
+      gene <- subset(de, external_gene_name == genes[g])
       if (nrow(gene) > 0) {
-         points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
-         
-         if (!is.na(gene$ADJ_1))
-            if (is.na(gene$ADJ_2))
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=0.75)
+         points(gene$Effect, gene$log10P, pch=1, col="black")
+    
+         if (genes[g] == "XRCC2")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.10, cex=0.75)
+         else if (genes[g] == "RAD52")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.11, cex=0.75)
+         else if (genes[g] == "CDK6" || genes[g] == "E2F4" || genes[g] == "MDM2")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=1.13, cex=0.75)
+         else if (genes[g] == "RNASEH2A")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.05, cex=0.75)
+         else if (genes[g] == "MAD2L2")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.09, cex=0.75)
+         #else if (genes[g] == "RBL2")
+         #   text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.09, cex=0.75)
+         else if (genes[g] == "PARP1" || genes[g] == "XRCC4" || genes[g] == "RNF138" || genes[g] == "BRCA2" || genes[g] == "ASF1A" || genes[g] == "HMGB1" || genes[g] == "CHAF1A")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.1, cex=0.75)
+         else if (genes[g] == "PSIP1" || genes[g] == "RBBP4")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.12, cex=0.75)
+         else if (genes[g] == "E2F8")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.14, cex=0.75)
+         else if (genes[g] == "LIG1")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=-0.16, cex=0.75)
+         else if (genes[g] == "HMGB2" )
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.07, 1.3), cex=0.75)
+         else if (genes[g] == "CREBBP")
+            text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(-0.05, 1.3), cex=0.75)
          else
-            if (gene$LOG2_FC > 0)
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=0.75)
+            if (gene$Effect > 0)
+               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
             else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=0.75)
+               text(gene$Effect, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
       } else
          print(genes[g])
    }
-   
+ 
+   abline(h=c(-log10(p)), lty=5)
+   text(xmax*-1 + 2*xmax/24, -log10(p) + ymax/42, "FDR=10%")
    legend("topleft", legend=c("Up-regulation", "Down-regulation"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
-###
-##
 plot.main <- "RB1-loss differential expression in LCNEC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05")
+plot.de    <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05")
+plot.genes <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Cycle.tab")
 
-## Figure 1 (Cell cycle pathway)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Cycle.tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "", "Cell cycle pathway", "")
-file.de <- paste0(plot.de, "_Cycle.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+###
+## Figure 1 (Cell cycle)
+genes <- c("TP53", "MDM2", "RB1", "E2F1", "E2F7", "E2F8", "E2F4", "E2F5", "CDK6", "CDK4", "MCM2", "RNASEH2A", "CDKN2A", "CDKN1B", "CDKN2C", "BARD1", "CDC7", "CDK2", "CCNE2", "CCND1", "POLD4", "TOPBP1", "CHEK2", "ATR", "ATM")
+genes <- c("STMN1", "FBXO5", "TUBA1A", "TMPO", "MAD2L2", genes)
+file.main <- c(plot.main, "", "Cell cycle control", "")
+file.de <- paste0(plot.de, "_Figure_1_Cycle2.pdf")
+plotVolcanoLite(de.lcnec, 0.1, genes, file.de, file.main)
 
-## Figure 2 (Hintone modifications)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Histone.tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "", "Histone modifications", "")
-file.de <- paste0(plot.de, "_Histone.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+## Figure 1
+genes <- c("XRCC1", "XRCC2", "XRCC3", "XRCC4", "NHEJ1", "FEN1", "LIG1", "LIG4", "TP53", "MDM2", "TP53BP1", "PARP1", "RB1", "RBL1", "RBL2", "E2F1", "E2F7", "E2F8", "E2F4", "E2F5", "CDK6", "CDK4", "MCM2", "RNASEH2A", "CDKN2A", "CDKN1A", "CDKN1B", "BARD1", "CDC7", "CDK2", "CCNE2", "CCND1", "POLD4", "TOPBP1", "CHEK2", "BRCA1", "BRCA2", "PSIP1", "RBBP8", "RNF168", "BARD1")
+file.main <- c(plot.main, "", "DSB repair pathway choice & Cell cycle control", "")
+file.de <- paste0(plot.de, "_Figure_1.pdf")
+plotVolcanoLite(de.lcnec, 0.1, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
