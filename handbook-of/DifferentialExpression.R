@@ -233,7 +233,8 @@ pipeDE <- function(expr, pheno, argv, ensGene) {
 ## https://www.biostars.org/p/157240/
 ## https://www.biostars.org/p/143458/#157303                            ## estimates vs. count-based methods; transcript level quantification tools
 ## https://liorpachter.wordpress.com/2015/08/17/a-sleuth-for-rna-seq/   ## estimates vs. count-based methods
-
+## https://liorpachter.wordpress.com/2013/08/26/magnitude-of-effect-vs-statistical-significance/  ## Read counts accumulated across a gene cannot be used directly to estimate fold change 
+ 
 # -----------------------------------------------------------------------------
 # Method: Volcano plots
 # Last Modified: 13/02/17
@@ -291,6 +292,26 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
  
    legend("topleft", legend=c("Up-regulation", "Down-regulation"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Method: Gene Set Enrichment Analysis (GSEA)
+# Last Modified: 16/08/18
+# -----------------------------------------------------------------------------
+## GSEAPreranked tool
+## https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/FAQ#Can_I_use_GSEA_to_analyze_SNP.2C_SAGE.2C_ChIP-Seq_or_RNA-Seq_data.3F
+## https://gsea-msigdb.github.io/gsea-gpmodule/v19/index.html
+
+## http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#RNK:_Ranked_list_file_format_.28.2A.rnk.29
+writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
+   de.sorted <- de.tpm.gene[order(de.tpm.gene$LOG2_FC, decreasing=T),]
+   file <- file.path(wd.de.data, paste0(file.name, ".rnk"))
+   writeTable(de.sorted[,c("ensembl_gene_id", "LOG2_FC")], file, colnames=F, rownames=F, sep="\t")
+}
+
+## http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GRP
+writeGRPformat <- function(list, wd.de.data, file.name) {
+   writeTable(list, file.path(wd.de.data, paste0(file.name, ".grp")), colnames=F, rownames=F, sep="\t")
 }
 
 # =============================================================================

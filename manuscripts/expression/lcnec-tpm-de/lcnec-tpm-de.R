@@ -26,10 +26,13 @@ BASE <- "LCNEC"
 base <- tolower(BASE)
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata/Tirosh 2016")
 
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
+wd.de.gsea  <- file.path(wd.de, "gsea")
+wd.de.path  <- file.path(wd.de, "pathway")
 
 samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
 colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "AVG_FRAGMENT_LENGTH", "MAX_INSERT_SIZE", "RB1_MUT")
@@ -58,7 +61,6 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base.lcnec, "-tpm-de/data/", "de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
-
 genes.rb1.q0.1  <- rownames(subset(de.tpm.gene, FDR <= 0.1))
 genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
 ## > length(genes.rb1.q0.1)
@@ -99,9 +101,9 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2FC RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
    
    abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
-   text(xmax*-1 + 2*xmax/80, -log10(fdrToP(fdr, de)) + ymax/42, "Q<0.05", cex=0.85)
+   text(xmax*-1 + 2*xmax/40, -log10(fdrToP(fdr, de)) + ymax/42, "FDR=0.05", cex=0.85)
    abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/200, -log10(fdrToP(0.1, de)) + ymax/42, "Q<0.1", col="darkgray", cex=0.85)
+   text(xmax*-1 + 2*xmax/60, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
@@ -133,7 +135,6 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    dev.off()
 }
 
-###
 ##
 plot.main <- "RB1-loss differential expression in LCNEC"
 plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05")
@@ -151,14 +152,156 @@ file.de <- paste0(plot.de, "_Histone.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
+# Duplication in Tirosh et al 2016
+# -----------------------------------------------------------------------------
+core.G1S <- readTable(file.path(wd.meta, "Tirosh_G1-S.list"), header=F, rownames=F, sep="")
+core.G2M <- readTable(file.path(wd.meta, "Tirosh_G2-M.list"), header=F, rownames=F, sep="")
+core.SC  <- readTable(file.path(wd.meta, "Tirosh_Stemness.list"), header=F, rownames=F, sep="")
+
+## Core G1-S genes
+core.G1S <- gsub("MLF1IP", "CENPU", core.G1S)
+core.G1S <- subset(ensGene, external_gene_name %in% core.G1S)$ensembl_gene_id   ## 43/43
+
+## Core G2-M genes
+core.G2M <- unique(core.G2M)   ## HJURP is duplicates due to it has two ensembl gene IDs
+core.G2M <- subset(ensGene, external_gene_name %in% core.G2M)$ensembl_gene_id   ## 54/55
+
+## Stemness genes
+core.SC <- subset(ensGene, external_gene_name %in% core.SC)$ensembl_gene_id   ## 58/63
+
+##
+core.G1S <- intersect(core.G1S, rownames(tpm.gene.log2))   ## 41/43/43
+core.G2M <- intersect(core.G2M, rownames(tpm.gene.log2))   ## 54/54/55
+core.SC  <- intersect(core.SC, rownames(tpm.gene.log2))    ## 54/58/63
+
+##
+nrow(ensGene[intersect(genes.rb1.q0.05, core.G1S),])   ## 10/41 = 23.4%
+nrow(ensGene[intersect(genes.rb1.q0.05, core.G2M),])   ##  4/54 = 7.4%
+nrow(ensGene[intersect(genes.rb1.q0.05, core.SC),])    ##  0/54 = 0%
+
+nrow(ensGene[intersect(genes.rb1.q0.05, genes.G1S),])   ## 15
+nrow(ensGene[intersect(genes.rb1.q0.05, genes.G2M),])   ##  9
+
+nrow(ensGene[intersect(genes.rb1.q0.05, unique(c(core.G1S, genes.G1S))),])   ## 19
+nrow(ensGene[intersect(genes.rb1.q0.05, unique(c(core.G2M, genes.G2M))),])   ## 11
+
+## Output
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54")
+
+output <- de.tpm.gene[intersect(genes.rb1.q0.05, unique(c(core.G1S, genes.G1S))), c(1,2,8,9,12)]
+output$Tirosh_2016 <- ""
+output$Dominguez_2016 <- ""
+output[intersect(genes.rb1.q0.05, core.G1S),]$Tirosh_2016 <- "yes"
+output[intersect(genes.rb1.q0.05, genes.G1S),]$Dominguez_2016 <- "yes"
+writeTable(output, file.path(wd.de.data, paste0(file.name, "_G1-S.txt")), colnames=T, rownames=F, sep="\t")
+
+output <- de.tpm.gene[intersect(genes.rb1.q0.05, unique(c(core.G2M, genes.G2M))), c(1,2,8,9,12)]
+output$Tirosh_2016 <- ""
+output$Dominguez_2016 <- ""
+output[intersect(genes.rb1.q0.05, core.G2M),]$Tirosh_2016 <- "yes"
+output[intersect(genes.rb1.q0.05, genes.G2M),]$Dominguez_2016 <- "yes"
+writeTable(output, file.path(wd.de.data, paste0(file.name, "_G2-M.txt")), colnames=T, rownames=F, sep="\t")
+
+
+# -----------------------------------------------------------------------------
+# GSEA
+# -----------------------------------------------------------------------------
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54")
+writeRNKformat(de.tpm.gene, wd.de.data, file.name)
+
+## GRP gene sets
+writeGRPformat(genes.rb1.q0.05, wd.de.data, "genes.rb1.q0.05")
+writeGRPformat(genes.rb1.q0.1, wd.de.data, "genes.rb1.q0.1")
+
+## Tirosh 2016
+writeGRPformat(core.G1S, wd.de.data, "core.G1-S")
+writeGRPformat(core.G2M, wd.de.data, "core.G2-M")
+writeGRPformat(core.SC, wd.de.data, "core.Stemness")
+
+## Dominguez 2016
+genes.G1S <- intersect(genes.G1S, rownames(tpm.gene.log2))
+genes.G2M <- intersect(genes.G2M, rownames(tpm.gene.log2))
+# > length(genes.G1S)
+# [1] 277   ## Original 279/304 from Dominguez et al.
+# > length(genes.G2M)
+# [1] 830   ## Original 838/876 from Dominguez et al.
+writeGRPformat(genes.G1S, wd.de.data, "genes.G1S")
+writeGRPformat(genes.G2M, wd.de.data, "genes.G2M")
+
+# -----------------------------------------------------------------------------
+# Gene length
+# Last Modified: 22/08/18
+# -----------------------------------------------------------------------------
+initLength <- function(genes, group) {
+   ens.genes <- ensGene[genes,]
+   ens.genes$Length <- mapply(x = 1:nrow(ens.genes), function(x) getLengthTx(genes[x]))
+   ens.genes$Group  <- group
+ 
+   return(ens.genes)
+}
+
+plotBox <- function(gene, wd.de, expr.pheno.log2, pheno.all) {
+   ensembl_gene_id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id[1]   ## To avoid ENSG00000269846 (one of RBL1)
+   gene.tpms <- cbind(t(expr.pheno.log2)[rownames(pheno.all), ensembl_gene_id], pheno.all)
+   colnames(gene.tpms)[1] <- "LOG2_TPM"
+ 
+   pdf(paste0(wd.de, "plots/boxplot/boxplot_tpm.gene.log2_", gene, ".pdf"), height=6, width=4)
+   ymin <- min(gene.tpms$LOG2_TPM)
+   ymax <- max(gene.tpms$LOG2_TPM)
+   boxplot(LOG2_TPM ~ Cancer_Type, data=gene.tpms, outline=T, names=c("LUAD", "LCNEC", "SCLC"), ylim=c(ymin, ymax), ylab="log2(TPM + 0.01)", main=paste0(gene, " (", ensembl_gene_id, ")"))
+ 
+   dev.off()
+}
+
+ens.genes.rb1.q0.1  <- initLength(genes.rb1.q0.1, 0)
+ens.genes.rb1.q0.05 <- initLength(genes.rb1.q0.05, 1)
+ens.core.G1S <- initLength(core.G1S, 2)
+ens.core.G2M <- initLength(core.G2M, 3)
+ens.core.SC  <- initLength(core.SC, 4)
+ens.genes <- rbind(ens.genes.rb1.q0.1, ens.genes.rb1.q0.05, ens.core.G1S, ens.core.G2M, ens.core.SC)
+ens.genes$Group <- as.factor(ens.genes$Group)
+ens.genes$Length <- log10(ens.genes$Length)
+
+file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_RB1-G1S-G2M-SC_length.pdf"))
+pdf(file.name, height=6, width=4.5)
+ymin <- min(ens.genes$Length)
+ymax <- max(ens.genes$Length)
+boxplot(Length ~ Group, data=ens.genes, outline=T, names=c("RB1", "RB1", "G1-S", "G2-M", "SC"), col=c("white", "white", "lightgray", "lightgray", "lightgray"), ylim=c(ymin, ymax), ylab="Gene length (log10)", main=c("LCNEC RB1 D.E. and Tirosh 2016", "gene lists"))
+dev.off()
+
+## G1-S vs G2-M
+testW(ens.core.G1S$Length, ens.core.SC$Length)
+# [1] 0.7494677
+testW(ens.core.G2M$Length, ens.core.SC$Length)
+# [1] 0.8034764
+testW(ens.core.G1S$Length, ens.core.G2M$Length)
+# [1] 0.9490751
+
+## RB1 (q<0.1) vs G1-S and G2-M
+testW(ens.genes.rb1.q0.1$Length, ens.core.SC$Length)
+# [1] 0.8274065
+testW(ens.genes.rb1.q0.1$Length, ens.core.G1S$Length)
+# [1] 0.8365886
+testW(ens.genes.rb1.q0.1$Length, ens.core.G2M$Length)
+# [1] 0.4585982
+
+## RB1 (q<0.05) vs G1-S and G2-M
+testW(ens.genes.rb1.q0.05$Length, ens.core.SC$Length)
+# [1] 0.8064687
+testW(ens.genes.rb1.q0.05$Length, ens.core.G1S$Length)
+# [1] 0.7674659
+testW(ens.genes.rb1.q0.05$Length, ens.core.G2M$Length)
+# [1] 0.9107349
+
+# -----------------------------------------------------------------------------
 # Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
 # -----------------------------------------------------------------------------
-wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_up")
-#wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_down")
+wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.05_up")
+#wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.1_down")
 
 list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
 
-reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
+reactome <- read.csv(file.path(wd.de.path.reactome, "result.csv"))
 colnames(reactome) <- gsub("X.", "", colnames(reactome))
 reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
 for (r in 1:nrow(reactome)) {

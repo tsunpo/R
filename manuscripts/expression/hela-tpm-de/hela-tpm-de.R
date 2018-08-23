@@ -31,6 +31,7 @@ wd.meta  <- file.path(wd, BASE, "metadata/Dominguez 2016")
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
+wd.de.path  <- file.path(wd.de, "pathway")
 
 samples <- readTable(file.path(wd.rna, "hela_rna_n14.txt"), header=T, rownames=T, sep="\t")
 rownames(samples) <- gsub("D", "T", rownames(samples))
@@ -122,30 +123,39 @@ plotBox <- function(gene, wd.de, expr.pheno.log2, pheno.all) {
 
 ens.genes.rb1.q0.1  <- initLength(genes.rb1.q0.1, 0)
 ens.genes.rb1.q0.05 <- initLength(genes.rb1.q0.05, 1)
-ens.genes.G1S <- initLength(genes.G1S, 2)
-ens.genes.G2M <- initLength(genes.G2M, 3)
-ens.genes <- rbind(ens.genes.rb1.q0.1, ens.genes.rb1.q0.05, ens.genes.G1S, ens.genes.G2M)
+ens.genes.ALL <- initLength(rownames(tpm.gene), 2)   ## ADD 17/08/18
+ens.genes.G1S <- initLength(genes.G1S, 3)
+ens.genes.G2M <- initLength(genes.G2M, 4)
+ens.genes <- rbind(ens.genes.rb1.q0.1, ens.genes.rb1.q0.05, ens.genes.ALL, ens.genes.G1S, ens.genes.G2M)
 ens.genes$Group <- as.factor(ens.genes$Group)
 ens.genes$Length <- log10(ens.genes$Length)
 
-file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_RB1-G1S-G2M_length.pdf"))
-pdf(file.name, height=6, width=4)
+file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_RB1-G1S-G2M-ALL_length.pdf"))
+pdf(file.name, height=6, width=4.5)
 ymin <- min(ens.genes$Length)
 ymax <- max(ens.genes$Length)
-boxplot(Length ~ Group, data=ens.genes, outline=T, names=c("RB1", "RB1", "G1-S", "G2-M"), col=c("white", "white", "gray", "gray"), ylim=c(ymin, ymax), ylab="Gene length (log10)", main=c("LCNEC RB1 D.E. and HeLa cell-cycle", "gene lists"))
+boxplot(Length ~ Group, data=ens.genes, outline=T, names=c("RB1", "RB1", "All", "G1-S", "G2-M"), col=c("white", "white", "gray", "gray", "gray"), ylim=c(ymin, ymax), ylab="Gene length (log10)", main=c("LCNEC RB1 D.E. and HeLa cell-cycle", "gene lists"))
 dev.off()
 
 ## G1-S vs G2-M
+testW(ens.genes.G1S$Length, ens.genes.ALL$Length)
+# [1] 0.831461
+testW(ens.genes.G2M$Length, ens.genes.ALL$Length)
+# [1] 9.266777e-32
 testW(ens.genes.G1S$Length, ens.genes.G2M$Length)
 # [1] 1.012973e-11
 
 ## RB1 (q<0.1) vs G1-S and G2-M
+testW(ens.genes.rb1.q0.1$Length, ens.genes.ALL$Length)
+# [1] 9.892606e-05
 testW(ens.genes.rb1.q0.1$Length, ens.genes.G1S$Length)
 # [1] 3.853642e-03
 testW(ens.genes.rb1.q0.1$Length, ens.genes.G2M$Length)
 # [1] 5.253057e-08
 
 ## RB1 (q<0.05) vs G1-S and G2-M
+testW(ens.genes.rb1.q0.05$Length, ens.genes.ALL$Length)
+# [1] 0.53314
 testW(ens.genes.rb1.q0.05$Length, ens.genes.G1S$Length)
 # [1] 0.3546051
 testW(ens.genes.rb1.q0.05$Length, ens.genes.G2M$Length)
@@ -173,12 +183,12 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # -----------------------------------------------------------------------------
 # Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
 # -----------------------------------------------------------------------------
-wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_q0.14_up")
-#wd.de.data.reactome <- file.path(wd.de.data, "pathway_q0.05_q0.14_down")
+wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.05_q0.14_up")
+#wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.05_q0.14_down")
 
 list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
 
-reactome <- read.csv(file.path(wd.de.data.reactome, "result.csv"))
+reactome <- read.csv(file.path(wd.de.path.reactome, "result.csv"))
 colnames(reactome) <- gsub("X.", "", colnames(reactome))
 reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
 for (r in 1:nrow(reactome)) {
