@@ -27,7 +27,7 @@ BASE <- "SCLC"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.rt    <- file.path(wd.anlys, "replication", paste0("blood", "-wgs-rt-blood"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt_T-N"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
@@ -36,10 +36,11 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-bloods <- readTable(file.path(wd.ngs, "sclc_wgs_blood.list"), header=T, rownames=T, sep="\t")
+normals <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
+#normals <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/lcl_wgs_n7.list", header=F, rownames=F, sep="")
 
 writeTable(samples[grep("FF", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
-writeTable(samples[grep("blood", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n9_B.list"), colnames=F, rownames=F, sep="")
+writeTable(samples[grep("blood", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
 
 load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
@@ -94,10 +95,10 @@ getEnsGeneBED <- function(pos, bed.gc.chr) {
 
 BASE  <- "SCLC"
 PAIR1 <- "SCLC"
-PAIR0 <- "NBL"
+PAIR0 <- "SCLC"
 PAIR  <- paste0(PAIR1, "-", PAIR0)
 #CHR   <- 2
-CUTOFF <- 0.3
+CUTOFF <- 0.2
 
 ###
 ##
@@ -114,7 +115,7 @@ for (c in 2:2) {
    bed.gc.chr <- subset(bed.gc, CHR == chr)
 
    ## Replication timing
-   rpkms.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.lcl_", chr, "_", PAIR, "_n", length(samples), "-56.txt.gz")), header=T, rownames=T, sep="\t") 
+   rpkms.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.lcl_", chr, "_", PAIR, "_n", length(samples), "-", length(normals), ".txt.gz")), header=T, rownames=T, sep="\t") 
    rpkms.chr$MEDIAN <- rpkms.chr$RT
    
    ##
@@ -123,7 +124,7 @@ for (c in 2:2) {
    overlaps <- intersect(rownames(rpkms.chr.rt), rownames(bed.gc.chr))
    bed.gc.chr.rt <- bed.gc.chr[overlaps,]
    
-   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR1, PAIR0, "png")
+   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR0, PAIR1, "png")
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 140813453, 153118090, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## CNTNAP2
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 43877887, 54056122, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## RB1
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 147504475, 149581413, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## EZH2
@@ -131,20 +132,20 @@ for (c in 2:2) {
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 114521235, 118716095, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## LSAMP
    
    ## Determin replication direction for each expressed gene
-   slopes <- diff(smooth.spline(rpkms.chr.rt$MEDIAN)$y)/diff((bed.gc.chr$START)/1E7)   ## WHY?
+   #slopes <- diff(smooth.spline(rpkms.chr.rt$MEDIAN)$y)/diff((bed.gc.chr$START)/1E7)   ## WHY?
  
-   ensGene.tx.chr <- subset(ensGene.tx, chromosome_name == chr)
-   ensGene.tx.chr$SLOPE_START <- NA
-   ensGene.tx.chr$SLOPE_START <- NA
-   for (g in 1:nrow(ensGene.tx.chr)) {
-      gene <- ensGene.tx.chr[g,]
-      bed.s <- getEnsGeneBED(gene$start_position, bed.gc.chr)
-      bed.e <- getEnsGeneBED(gene$end_position, bed.gc.chr)
-      
-      if (length(bed.s) != 0) ensGene.tx.chr$SLOPE_START[g] <- slopes[which(rownames(bed.gc.chr) == bed.s[1])]
-      if (length(bed.e) != 0) ensGene.tx.chr$SLOPE_END[g] <- slopes[which(rownames(bed.gc.chr) == bed.e[1])]
-   }
-   ensGene.tx.rt <- rbind(ensGene.tx.rt, ensGene.tx.chr)
+   #ensGene.tx.chr <- subset(ensGene.tx, chromosome_name == chr)
+   #ensGene.tx.chr$SLOPE_START <- NA
+   #ensGene.tx.chr$SLOPE_START <- NA
+   #for (g in 1:nrow(ensGene.tx.chr)) {
+   #   gene <- ensGene.tx.chr[g,]
+   #   bed.s <- getEnsGeneBED(gene$start_position, bed.gc.chr)
+   #   bed.e <- getEnsGeneBED(gene$end_position, bed.gc.chr)
+   #   
+   #   if (length(bed.s) != 0) ensGene.tx.chr$SLOPE_START[g] <- slopes[which(rownames(bed.gc.chr) == bed.s[1])]
+   #   if (length(bed.e) != 0) ensGene.tx.chr$SLOPE_END[g] <- slopes[which(rownames(bed.gc.chr) == bed.e[1])]
+   #}
+   #ensGene.tx.rt <- rbind(ensGene.tx.rt, ensGene.tx.chr)
 }
 save(ensGene.tx.rt, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
 # > nrow(ensGene.tx.rt)

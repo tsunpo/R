@@ -104,6 +104,7 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 #tpm.gene <- tpm.gene[setdiff(rownames(tpm.gene), outliers1.5),]   ## ADD 26/06/18
 tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
 #tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)   ## TEST 29/06/18
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## CHANGE 12/04/18
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 ens.tx.snv.input <- intersect(rownames(tpm.gene.input), unique(tx.snv$ensembl_gene_id))   ## Needed in Step 5; ADD 02/02/18
@@ -128,6 +129,63 @@ save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "
 # [1] 2587
 # [1] 2586
 # [1] 2587
+
+tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
+for (q in 1:4)
+   print(length(tx.q4[[q]]))
+# [1] 2651
+# [1] 2651
+# [1] 2651
+# [1] 2651
+
+# -----------------------------------------------------------------------------
+# Distribution of G2-M in 4 quantiles amongst SCLC
+# Last Modified: 24/08/18
+# -----------------------------------------------------------------------------
+tx.q4.length <- initLength(tx.q4[[1]], 1)[0,]
+tx.q4.cycle <- list(list(), list(), list(), list())
+
+for (q in 1:4) {
+  #genes <- intersect(ens.tx.snv.input, tx.q4[[q]])
+   genes <- tx.q4[[q]]
+   
+   tx.q4.length <- rbind(tx.q4.length, initLength(genes, q))
+   
+   genes.g1s <- intersect(genes, unique(c(core.G1S, genes.G1S)))
+   genes.g2m <- intersect(genes, unique(c(core.G2M, genes.G2M)))
+   tx.q4.cycle[[q]][[1]] <- length(genes.g1s)
+   tx.q4.cycle[[q]][[2]] <- length(genes.g2m)
+   tx.q4.cycle[[q]][[3]] <- length(setdiff(genes, c(genes.g1s, genes.g2m)))
+}
+
+##
+tx.q4.length$Group <- as.factor(tx.q4.length$Group)
+tx.q4.length$Length <- log10(tx.q4.length$Length)
+colnames <- c("Q1", "Q2", "Q3", "Q4")
+rownames <- c("G1-S", "G2-M", "Others")
+
+file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_length_all.pdf"))
+pdf(file.name, height=6, width=4)
+ymin <- min(tx.q4.length$Length)
+ymax <- max(tx.q4.length$Length)
+boxplot(Length ~ Group, data=tx.q4.length, outline=T, names=colnames, ylim=c(ymin, ymax), ylab="Gene length (log10)", main="SCLC expression")
+dev.off()
+
+##
+data <- toTable(0, length(colnames), 3, colnames)
+rownames(data) <- rownames
+for (q in 1:4)
+   for (r in 1:3)
+      data[r, q] <- tx.q4.cycle[[q]][[r]]
+writeTable(data, file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_length_all.txt")), colnames=T, rownames=T, sep="\t")
+data <- as.matrix(data)
+
+file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_cycle_all.pdf"))
+cols <- c("lightgray", "gray", "white")
+pdf(file.name, height=6, width=4)
+barplot(data, ylab="Proportion of cell cycle genes", col=cols, main="SCLC expression")
+legend("topleft", legend=rownames, fill=cols)
+dev.off()
 
 # -----------------------------------------------------------------------------
 # Step 5.1: SNV asymetrey (Figure S1)

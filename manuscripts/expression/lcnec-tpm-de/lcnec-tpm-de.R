@@ -186,22 +186,26 @@ nrow(ensGene[intersect(genes.rb1.q0.05, unique(c(core.G1S, genes.G1S))),])   ## 
 nrow(ensGene[intersect(genes.rb1.q0.05, unique(c(core.G2M, genes.G2M))),])   ## 11
 
 ## Output
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54")
+genes.rb1.n.s   <- rownames(subset(de.tpm.gene, FDR > 0.5))
+genes.rb1.q0.5  <- rownames(subset(de.tpm.gene, FDR <= 0.5))
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54_n.s.0.5")
+#genes.rb1 <- genes.rb1.n.s
+#genes.rb1 <- genes.rb1.q0.5
+genes.rb1 <- genes.rb1.q0.1
 
-output <- de.tpm.gene[intersect(genes.rb1.q0.05, unique(c(core.G1S, genes.G1S))), c(1,2,8,9,12)]
+output <- de.tpm.gene[intersect(genes.rb1, unique(c(core.G1S, genes.G1S))), c(1,2,8,9,12)]
 output$Tirosh_2016 <- ""
 output$Dominguez_2016 <- ""
-output[intersect(genes.rb1.q0.05, core.G1S),]$Tirosh_2016 <- "yes"
-output[intersect(genes.rb1.q0.05, genes.G1S),]$Dominguez_2016 <- "yes"
+output[intersect(genes.rb1, core.G1S),]$Tirosh_2016 <- "yes"
+output[intersect(genes.rb1, genes.G1S),]$Dominguez_2016 <- "yes"
 writeTable(output, file.path(wd.de.data, paste0(file.name, "_G1-S.txt")), colnames=T, rownames=F, sep="\t")
 
-output <- de.tpm.gene[intersect(genes.rb1.q0.05, unique(c(core.G2M, genes.G2M))), c(1,2,8,9,12)]
+output <- de.tpm.gene[intersect(genes.rb1, unique(c(core.G2M, genes.G2M))), c(1,2,8,9,12)]
 output$Tirosh_2016 <- ""
 output$Dominguez_2016 <- ""
-output[intersect(genes.rb1.q0.05, core.G2M),]$Tirosh_2016 <- "yes"
-output[intersect(genes.rb1.q0.05, genes.G2M),]$Dominguez_2016 <- "yes"
+output[intersect(genes.rb1, core.G2M),]$Tirosh_2016 <- "yes"
+output[intersect(genes.rb1, genes.G2M),]$Dominguez_2016 <- "yes"
 writeTable(output, file.path(wd.de.data, paste0(file.name, "_G2-M.txt")), colnames=T, rownames=F, sep="\t")
-
 
 # -----------------------------------------------------------------------------
 # GSEA

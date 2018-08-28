@@ -253,7 +253,7 @@ plotQ4S <- function(q4s, file.name, file.main, mtext, ylim, ylab, isLog10) {
    }
  
    pdf(file.name, height=6, width=4)
-   names <- c("25%", "50%", "75%", "100%")
+   names <- c("Q1", "Q2", "Q3", "Q4")
    if (isLog10)
       boxplot(log10(as.numeric(counts))~quantiles, ylab=ylab, xlab="Expression", names=names, main=file.main, ylim=log10(ylim))
    else
@@ -268,12 +268,12 @@ plotQ4SPlus <- function(q4s, file.name, file.main, mtext, ylim, ylab, isLog10, i
    for (q in 1:4) {
       for (p in 1:length(q4s[[q]])) {  
          if (isPlus) {
-            if (as.numeric(q4s[[q]][[p]]) >= 0) {
+            if (as.numeric(q4s[[q]][[p]]) > 0) {
                counts    <- c(counts, as.numeric(q4s[[q]][[p]]))
                quantiles <- c(quantiles, paste0("q", q))
             }
          } else {
-            if (as.numeric(q4s[[q]][[p]]) <= 0) {
+            if (as.numeric(q4s[[q]][[p]]) < 0) {
                counts    <- c(counts, as.numeric(q4s[[q]][[p]]))
                quantiles <- c(quantiles, paste0("q", q))
             }
@@ -282,7 +282,7 @@ plotQ4SPlus <- function(q4s, file.name, file.main, mtext, ylim, ylab, isLog10, i
    }
  
    pdf(file.name, height=6, width=4)
-   names <- c("25%", "50%", "75%", "100%")
+   names <- c("Q1", "Q2", "Q3", "Q4")
    if (isLog10)
       boxplot(log10(as.numeric(counts))~quantiles, ylab=ylab, xlab="Expression", names=names, main=file.main, ylim=log10(ylim))
    else
@@ -570,8 +570,8 @@ for (i in 1:1) {
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_rate_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
          #plotQ4S(q4s.s6.rt.st.rat[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.rat, 1, 1), "Mutation rate (log10)", isLog10=T)
          
-         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
-         #plotQ4S(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F)
+         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
+         plotQ4S(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F)
 
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCR-plus.pdf"))
          #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=T)
@@ -579,11 +579,88 @@ for (i in 1:1) {
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCP-minus.pdf"))
          #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=F)
         
-         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_g2g_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
-         plotQ4S(q4s.s6.rt.st.g2g[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.g2g, 1, 1), "G2G min distance (log10)", isLog10=T)
+         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_g2g_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
+         #plotQ4S(q4s.s6.rt.st.g2g[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.g2g, 1, 1), "G2G min distance (log10)", isLog10=T)
       }
    }
 }
+
+###
+## TCR + TCD
+testW(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]])
+# [1] 0.8377938
+testW(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]])
+# [1] 0.4610965
+testW(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]])
+# [1] 0.0003187649
+testW(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]])
+# [1] 0.6978624
+
+## 
+testW(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[2]])
+# [1] 2.843444e-10
+testW(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[2]])
+# [1] 4.999115e-14
+testW(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[2]])
+# [1] 1.128388e-13
+testW(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[2]])
+# [1] 2.079477e-07
+
+###
+## TCR and TCD
+testWPlus <- function(a, b, isPlus) {
+   if (isPlus)
+      return(testW(a[which(a > 0)], b[which(b >= 0)]))
+   else
+      return(testW(a[which(a < 0)], b[which(b <= 0)]))
+}
+
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]], isPlus=T)
+# [1] 1.528399e-09
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]], isPlus=T)
+# [1] 0.0001064173
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]], isPlus=T)
+# [1] 0.01066552
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]], isPlus=T)
+# [1] 2.092475e-05
+
+##
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]], isPlus=F)
+# [1] 0.001232726
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]], isPlus=F)
+# [1] 0.02986251
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]], isPlus=F)
+# [1] 1.230412e-05
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]], isPlus=F)
+# [1] 0.02928739
+
+###
+##
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]], isPlus=T)
+# [1] 0.5267008
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]], isPlus=T)
+# [1] 0.08196797
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]], isPlus=T)
+# [1] 0.377691
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]], isPlus=T)
+# [1] 0.4985916
+
+##
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]], isPlus=F)
+# [1] 0.1955011
+testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]], isPlus=F)
+# [1] 0.5707632
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]], isPlus=F)
+# [1] 0.003357378
+testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]], isPlus=F)
+# [1] 0.7491214
+
+
+testW(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]])
+
+testW(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]])
+
+
 
 for (i in 1:1) {
    idx <- idxs[i] 
