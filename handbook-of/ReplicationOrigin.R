@@ -22,12 +22,11 @@ getTSS <- function(ensGene.genes) {
    return(ensGene.genes)
 }
 
-getG2GQ4 <- function(txs.q4, isHeadon) {
-   g2g.q4 <- list()
-   #onlygenes <- list()
- 
+getTxQ4G2G <- function(tx.q4) {
+   tx.q4.g2g <- list()
+
    for (q in 1:4) {
-      genes <- ensGene[txs.q4[[q]],]
+      genes <- ensGene[tx.q4[[q]],]
       genes <- getTSS(genes)
   
       g2g <- list()
@@ -36,58 +35,28 @@ getG2GQ4 <- function(txs.q4, isHeadon) {
          
          genes.chr <- subset(genes, chromosome_name == gene$chromosome_name)
          genes.chr <- subset(genes.chr, ensembl_gene_id != gene$ensembl_gene_id)
-         if (!is.null(isHeadon))
-            if (isHeadon == T)
-               genes.chr <- subset(genes.chr, strand != gene$strand)  
-            else if (isHeadon == F)
-               genes.chr <- subset(genes.chr, strand == gene$strand)  
 
          g2g[[g]] <- min(abs(gene$TSS - genes.chr$TSS))
       }
-      g2g.q4[[q]] <- g2g
+      tx.q4.g2g[[q]] <- g2g
    }
    
-   return(g2g.q4)
+   return(tx.q4.g2g)
 }
 
-getQ <- function(gene, tx.q4.all) {
-   for (q in 1:4) {
-      genes.all <- ensGene[tx.q4.all[[q]],]
-      if (!is.na(genes.all[gene,]$ensembl_gene_id))
-         return(q)
-   }
-}
-
-getG2GQ4fromAll <- function(txs.q4, tx.q4.all, g2g.q4.all) {
-   g2g.q4 <- list()
- 
-   for (q in 1:4) {
-      genes <- txs.q4[[q]]
-  
-      g2g <- list()
-      for (g in 1:length(genes)) {
-         q.all <- getQ(genes[g], tx.q4.all)
-         idx.all <- which(tx.q4.all[[q.all]] == genes[g])
-        
-         g2g[[g]] <- as.numeric(g2g.q4.all[[q.all]][idx.all])
-      }
-      g2g.q4[[q]] <- g2g
-   }
- 
-   return(g2g.q4)
-}
-
-plotG2GQ4 <- function(g2g.q4, file.name, file.main, ylim) {
+boxplotTxQ4G2G <- function(wd.de.plots, base, BASE, tx.q4.g2g) {
    distances <- c()
    quantiles <- c()
    for (q in 1:4) {
-      distances <- c(distances, as.numeric(g2g.q4[[q]]))
-      quantiles <- c(quantiles, mapply(x = 1:length(g2g.q4[[q]]), function(x) paste0("q", q)))
+      distances <- c(distances, as.numeric(tx.q4.g2g[[q]]))
+      quantiles <- c(quantiles, mapply(x = 1:length(tx.q4.g2g[[q]]), function(x) paste0("q", q)))
    }
  
+   file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_g2g.pdf"))
+   file.main <- paste0(BASE, " (n=", nrow(samples), ")")
    pdf(file.name, height=6, width=4)
-   names <- c("25%", "50%", "75%", "100%")
-   boxplot(log10(distances)~quantiles, ylab="Gene-to-gene min dist. (log10)", xlab="Expression", names=names, main=file.main, ylim=ylim)
+   names <- c("Q1", "Q2", "Q3", "Q4")
+   boxplot(log10(distances)~quantiles, ylab="Gene-to-gene min dist. (log10)", xlab="Expression", names=names, main=file.main)
    dev.off()
 }
 
@@ -121,7 +90,7 @@ testOnewayANOVA <- function(g2g.q4) {
 # http://www.sthda.com/english/articles/32-r-graphics-essentials/133-plot-one-variable-frequency-graph-density-distribution-and-more/
 # Last Modified: 26/05/18
 # -----------------------------------------------------------------------------
-getDensity <- function(distances, count) {
+getG2GDensity <- function(distances, count) {
    d <- density(log10(as.numeric(distances)))
    if (count)
       d$y <- d$y * d$n
@@ -129,26 +98,26 @@ getDensity <- function(distances, count) {
    return(d)
 }
 
-plotDensity <- function(g2g.q4, file.name, file.main, count, ymax) {
+plotG2GDensity <- function(g2g.q4, file.name, file.main, count, ymax) {
    if (is.null(ymax)) {
-      ymax <- max(getDensity(g2g.q4[[1]], count)$y)
+      ymax <- max(getG2GDensity(g2g.q4[[1]], count)$y)
       for (q in 2:4)
          if (max(getDensity(g2g.q4[[q]], count)$y) > ymax)
-            ymax <- max(getDensity(g2g.q4[[q]], count)$y)
+            ymax <- max(getG2GDensity(g2g.q4[[q]], count)$y)
    }
 
-   xmax <- max(getDensity(g2g.q4[[1]], count)$x)
+   xmax <- max(getG2GDensity(g2g.q4[[1]], count)$x)
    for (q in 2:4)
       if (max(getDensity(g2g.q4[[q]], count)$x) > xmax)
-         xmax <- max(getDensity(g2g.q4[[q]], count)$x)   
+         xmax <- max(getG2GDensity(g2g.q4[[q]], count)$x)   
       
    cols <- c("blue", "deepskyblue", "salmon", "red")
    pdf(file.name, height=6, width=6)
-   plot(getDensity(g2g.q4[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
+   plot(getG2GDensity(g2g.q4[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
    for (q in 2:4)
-      lines(getDensity(g2g.q4[[q]], count), col=cols[q])
+      lines(getG2GDensity(g2g.q4[[q]], count), col=cols[q])
 
-   legend("topleft", legend=c("25%", "50%", "75%", "100%"), levels(cols), fill=cols) 
+   legend("topleft", legend=c("Q1", "Q2", "Q3", "Q4"), levels(cols), fill=cols) 
    dev.off()
 }
 
