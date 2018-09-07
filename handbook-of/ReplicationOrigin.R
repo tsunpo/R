@@ -44,7 +44,7 @@ getTxQ4G2G <- function(tx.q4) {
    return(tx.q4.g2g)
 }
 
-boxplotTxQ4G2G <- function(wd.de.plots, base, BASE, tx.q4.g2g) {
+boxplotTxQ4G2G <- function(wd.de.plots, base, BASE, tx.q4.g2g, samples) {
    distances <- c()
    quantiles <- c()
    for (q in 1:4) {
@@ -98,21 +98,21 @@ getTxQ4G2GDensity <- function(distances, count) {
    return(d)
 }
 
-plotTxQ4G2GDensity <- function(wd.de.plots, base, BASE, g2g.q4, count, ymax) {
+plotTxQ4G2GDensity <- function(wd.de.plots, base, BASE, tx.q4.g2g, samples, count, ymax) {
    if (is.null(ymax)) {
-      ymax <- max(getTxQ4G2GDensity(g2g.q4[[1]], count)$y)
+      ymax <- max(getTxQ4G2GDensity(tx.q4.g2g[[1]], count)$y)
       for (q in 2:4)
-         if (max(getTxQ4G2GDensity(g2g.q4[[q]], count)$y) > ymax)
-            ymax <- max(getTxQ4G2GDensity(g2g.q4[[q]], count)$y)
+         if (max(getTxQ4G2GDensity(tx.q4.g2g[[q]], count)$y) > ymax)
+            ymax <- max(getTxQ4G2GDensity(tx.q4.g2g[[q]], count)$y)
    }
 
-   xmax <- max(getTxQ4G2GDensity(g2g.q4[[1]], count)$x)
+   xmax <- max(getTxQ4G2GDensity(tx.q4.g2g[[1]], count)$x)
    for (q in 2:4)
-      if (max(getTxQ4G2GDensity(g2g.q4[[q]], count)$x) > xmax)
-         xmax <- max(getTxQ4G2GDensity(g2g.q4[[q]], count)$x)   
+      if (max(getTxQ4G2GDensity(tx.q4.g2g[[q]], count)$x) > xmax)
+         xmax <- max(getTxQ4G2GDensity(tx.q4.g2g[[q]], count)$x)   
    
    file.name <- file.path(wd.de.plots, paste0("plot_", base, "_genes_tx_q4_g2g_density.pdf"))
-   file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")   
+   file.main <- paste0(BASE, " (n=", nrow(samples), ")")   
    cols <- c("blue", "deepskyblue", "salmon", "red")
    pdf(file.name, height=6, width=6)
    plot(getTxQ4G2GDensity(g2g.q4[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
@@ -136,19 +136,19 @@ pipeTPM <- function(wd, BASE) {
    return(tpm.gene.input)
 }
 
-pipeG2G <- function(wd, BASE, genes.list) {
+pipeTxQ4G2G <- function(wd, BASE, genes.list) {
    tpm.gene.input <- pipeTPM(wd, BASE)
    tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input[genes.list,])
    tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
-   g2g.q4 <- getG2GQ4(tx.q4)
+   tx.q4.g2g <- getTxQ4G2G(tx.q4)
 
-   p3 <- testW(g2g.q4[[3]], g2g.q4[[4]])
-   p2 <- testW(g2g.q4[[2]], g2g.q4[[4]])
-   p1 <- testW(g2g.q4[[1]], g2g.q4[[4]])
+   p3 <- testW(tx.q4.g2g[[3]], tx.q4.g2g[[4]])
+   p2 <- testW(tx.q4.g2g[[2]], tx.q4.g2g[[4]])
+   p1 <- testW(tx.q4.g2g[[1]], tx.q4.g2g[[4]])
    c(p1, p2, p3)
    p.adjust(c(p1, p2, p3), method="bonferroni")
    
-   return(g2g.q4)
+   return(tx.q4.g2g)
 }
 
 # =============================================================================
