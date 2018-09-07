@@ -48,6 +48,7 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 # -----------------------------------------------------------------------------
 genes.G1S <- readTable(file.path(wd.meta, "genes_G1-S.list"), header=F, rownames=F, sep="")
 genes.G2M <- readTable(file.path(wd.meta, "genes_G2-M.list"), header=F, rownames=F, sep="")
+
 genes.G1S <- intersect(genes.G1S, rownames(tpm.gene.log2))
 genes.G2M <- intersect(genes.G2M, rownames(tpm.gene.log2))
 # > length(genes.G1S)
@@ -179,26 +180,3 @@ de.tpm.gene <- pipeDE(tpm.gene.log2[genes.rb1.q0.05, rownames(samples)], samples
 
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
-# -----------------------------------------------------------------------------
-wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.05_q0.14_up")
-#wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.05_q0.14_down")
-
-list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
-
-reactome <- read.csv(file.path(wd.de.path.reactome, "result.csv"))
-colnames(reactome) <- gsub("X.", "", colnames(reactome))
-reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
-for (r in 1:nrow(reactome)) {
-   ids <- as.vector(reactome$Submitted.entities.found[r])
-   ids <- unlist(strsplit(ids, ";"))
- 
-   for (i in 1:length(ids))
-      if (nrow(list[ids[i],]) != 0)
-         ids[i] <- list[ids[i],]$external_gene_name
- 
-   reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
-}
-writeTable(reactome, file.path(wd.de.data.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")

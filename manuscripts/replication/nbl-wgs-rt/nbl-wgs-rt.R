@@ -169,19 +169,41 @@ for (c in 1:22) {
 
 
 # -----------------------------------------------------------------------------
-# Replication timing in SCLC
+# Replication timing in NBL
 # Name: 
-# Last Modified: 14/06/17
+# Last Modified: 30/08/18; 14/06/17
 # -----------------------------------------------------------------------------
-# [1] 236464
-# > 238222 - 236464
-# [1] 1758
-
-for (c in 1:22) {
+for (c in 2:2) {
    chr <- chrs[c]
 
-   rpkms.T.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.rt.data, "nbl_rpkm.corr.gc.d_", chr, "_T_n", length(samples), ".txt.gz"))[,samples]
-   rpkms.N.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.rt.data, "nbl_rpkm.corr.gc.d_", chr, "_N_n", length(samples), ".txt.gz"))[,samples]
+   ## RT (no overlapping)
+   rpkms.T.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.rt.data, "/nbl_rpkm.corr.gc.d_", chr, "_T_n", length(samples), ".txt.gz"))[,samples]
+   rpkms.N.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.rt.data, "/nbl_rpkm.corr.gc.d_", chr, "_N_n", length(samples), ".txt.gz"))[,samples]
+
+   rpkms.T.chr$MEDIAN_FC <- mapply(x = 1:nrow(rpkms.T.chr), function(x) median(as.numeric(rpkms.T.chr[x,])))
+   rpkms.N.chr$MEDIAN_FC <- mapply(x = 1:nrow(rpkms.N.chr), function(x) median(as.numeric(rpkms.N.chr[x,])))
+   
+   rpkms.T.chr$MEDIAN_FC_LOG2 <- log2(rpkms.T.chr$MEDIAN_FC + 0.01)
+   rpkms.N.chr$MEDIAN_FC_LOG2 <- log2(rpkms.N.chr$MEDIAN_FC + 0.01)
+   rpkms.T.chr.cut <- rpkms.T.chr[which(rpkms.T.chr$MEDIAN_FC_LOG2 < 9.5),]
+   rpkms.T.chr     <- rpkms.T.chr.cut[which(rpkms.T.chr.cut$MEDIAN_FC_LOG2 > 7.5),]
+   rpkms.N.chr.cut <- rpkms.N.chr[which(rpkms.N.chr$MEDIAN_FC_LOG2 < 9.5),]
+   rpkms.N.chr     <- rpkms.N.chr.cut[which(rpkms.N.chr.cut$MEDIAN_FC_LOG2 > 7.5),]
+   
+   bed.gc$BED <- rownames(bed.gc)             ## ADD 07/07/17
+   bed.gc.chr <- subset(bed.gc, CHR == chr)   ## ADD 07/07/17
+
+   bed.gc.chr.rd  <- bed.gc.chr[rownames(rpkms.T.chr),]
+   plotRD(wd.rt.plots, "NBL tumour", "_rpkm.corr.gc.d.rd_", chr, "T", rpkms.T.chr$MEDIAN_FC_LOG2, bed.gc.chr.rd, "png")
+   
+   bed.gc.chr.rd  <- bed.gc.chr[rownames(rpkms.N.chr),]
+   plotRD(wd.rt.plots, "NBL normal", "_rpkm.corr.gc.d.rd_", chr, "N", rpkms.N.chr$MEDIAN_FC_LOG2, bed.gc.chr.rd, "png")
+   
+   
+   
+   ## RT (overlaps; 29/08/18)
+   rpkms.T.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.rt.data, "/nbl_rpkm.corr.gc.d_", chr, "_T_n", length(samples), ".txt.gz"))[,samples]
+   rpkms.N.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.rt.data, "/nbl_rpkm.corr.gc.d_", chr, "_N_n", length(samples), ".txt.gz"))[,samples]
    overlaps <- intersect(rownames(rpkms.T.chr), rownames(rpkms.N.chr))
    rpkms.T.chr <- rpkms.T.chr[overlaps,]
    rpkms.N.chr <- rpkms.N.chr[overlaps,]
@@ -201,15 +223,15 @@ for (c in 1:22) {
    plotRT(paste0(wd.rt.plots, "NBL_RT"), "NBL", chr, length(samples), NA, NA, rpkms.chr.rt$MEDIAN_FC, bed.gc.chr.rt, "T", "N", "png")
    
    ###
-   ##
+   ## RE-VISIT 29/08/18
    rpkms.T.chr$MEDIAN_FC <- mapply(x = 1:nrow(rpkms.T.chr), function(x) median(as.numeric(rpkms.T.chr[x,])))
    rpkms.N.chr$MEDIAN_FC <- mapply(x = 1:nrow(rpkms.N.chr), function(x) median(as.numeric(rpkms.N.chr[x,])))
    bed.gc$BED <- rownames(bed.gc)             ## ADD 07/07/17
    bed.gc.chr <- subset(bed.gc, CHR == chr)   ## ADD 07/07/17
-   #bed.gc.chr.rd <- bed.gc.chr[overlaps,]     ## ADD 07/07/17
+   bed.gc.chr.rd <- bed.gc.chr[overlaps,]     ## ADD 07/07/17
    
-   #plotRD(wd.rt.plots, "NBL tumour", "_rpkm.corr.gc.d_", chr, "T", log2(rpkms.T.chr$MEDIAN_FC + 0.01), bed.gc.chr.rd, "png")
-   #plotRD(wd.rt.plots, "NBL normal", "_rpkm.corr.gc.d_", chr, "N", log2(rpkms.N.chr$MEDIAN_FC + 0.01), bed.gc.chr.rd, "png")
+   plotRD(wd.rt.plots, "NBL tumour", "_rpkm.corr.gc.d_", chr, "T", log2(rpkms.T.chr$MEDIAN_FC + 0.01), bed.gc.chr.rd, "png")
+   plotRD(wd.rt.plots, "NBL normal", "_rpkm.corr.gc.d_", chr, "N", log2(rpkms.N.chr$MEDIAN_FC + 0.01), bed.gc.chr.rd, "png")
    
    ##
    rpkms.T.chr$MEDIAN_FC <- mapply(x = 1:nrow(rpkms.T.chr), function(x) median(as.numeric(rpkms.T.chr[x,])))

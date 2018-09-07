@@ -1,15 +1,10 @@
 # =============================================================================
-# Library      : Mutational Strand Asymmetry
+# Library      : Transcritional Strand Asymmetry
 # Name         : handbook-of/Asymmetry.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 29/01/18
 # =============================================================================
 
-# =============================================================================
-# Inner Class  : Transcritional Strand Asymmetry
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 29/01/18
-# =============================================================================
 # -----------------------------------------------------------------------------
 # Method: Finding mutations locate within Ensembl genes (Step 1)
 # Last Modified: 29/01/18
@@ -210,6 +205,7 @@ getMutPerMbTxs <- function(s1, txs) {
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 29/01/18
 # =============================================================================
+
 # -----------------------------------------------------------------------------
 # Method: Divide genes into two groups (hand-on and co-directional; Step 6.2)
 # Last Modified: 20/02/18

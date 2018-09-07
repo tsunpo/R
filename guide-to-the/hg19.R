@@ -4,10 +4,10 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 15/03/18
 # =============================================================================
+source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
+
 wd.reference <- "/Users/tpyang/Work/local/reference/hg19/"
 wd.src.ref   <- "/Users/tpyang/Work/dev/R/guide-to-the/"
-
-source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 
 # =============================================================================
 # Reference    : Ensembl BioMart

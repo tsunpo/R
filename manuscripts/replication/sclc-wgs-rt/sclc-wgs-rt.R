@@ -27,7 +27,7 @@ BASE <- "SCLC"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt_T-N"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
@@ -36,8 +36,11 @@ wd.asym.plots <- file.path(wd.asym,  "plots")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-normals <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
-#normals <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/lcl_wgs_n7.list", header=F, rownames=F, sep="")
+#samples <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1.list", header=F, rownames=F, sep="")
+
+#normals <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
+#normals <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/CLL/ngs/WGS/cll_wgs_n96.list", header=F, rownames=F, sep="")
+normals <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/lcl_wgs_n7.list", header=F, rownames=F, sep="")
 
 writeTable(samples[grep("FF", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
 writeTable(samples[grep("blood", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
@@ -95,10 +98,10 @@ getEnsGeneBED <- function(pos, bed.gc.chr) {
 
 BASE  <- "SCLC"
 PAIR1 <- "SCLC"
-PAIR0 <- "SCLC"
+PAIR0 <- "LCL"
 PAIR  <- paste0(PAIR1, "-", PAIR0)
 #CHR   <- 2
-CUTOFF <- 0.2
+CUTOFF <- 1.25
 
 ###
 ##
@@ -115,7 +118,7 @@ for (c in 2:2) {
    bed.gc.chr <- subset(bed.gc, CHR == chr)
 
    ## Replication timing
-   rpkms.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.lcl_", chr, "_", PAIR, "_n", length(samples), "-", length(normals), ".txt.gz")), header=T, rownames=T, sep="\t") 
+   rpkms.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR, "_n", length(samples), "-", length(normals), ".txt.gz")), header=T, rownames=T, sep="\t") 
    rpkms.chr$MEDIAN <- rpkms.chr$RT
    
    ##
@@ -124,7 +127,7 @@ for (c in 2:2) {
    overlaps <- intersect(rownames(rpkms.chr.rt), rownames(bed.gc.chr))
    bed.gc.chr.rt <- bed.gc.chr[overlaps,]
    
-   plotRT0(wd.rt.plots, BASE, chr, length(samples), NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR0, PAIR1, "png")
+   plotRT0(wd.rt.plots, BASE, chr, length(samples), length(normals), NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR1, PAIR0, "png", CUTOFF)
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 140813453, 153118090, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## CNTNAP2
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 43877887, 54056122, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## RB1
    #plotRT0(wd.rt.plots, BASE, chr, length(samples), 147504475, 149581413, rpkms.chr.rt, bed.gc.chr, PAIR1, PAIR0, "png")   ## EZH2

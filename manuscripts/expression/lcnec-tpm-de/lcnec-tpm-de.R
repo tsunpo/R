@@ -99,11 +99,11 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
  
    pdf(file.de, height=7, width=7)
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2FC RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
-   
+
    abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
-   text(xmax*-1 + 2*xmax/40, -log10(fdrToP(fdr, de)) + ymax/42, "FDR=0.05", cex=0.85)
+   text(xmax*-1 + 2*xmax/36, -log10(fdrToP(fdr, de)) + ymax/42, "FDR=0.05", cex=0.85)
    abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/60, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
+   text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
@@ -139,42 +139,45 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
 plot.main <- "RB1-loss differential expression in LCNEC"
 plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05")
 
-## Figure 1 (Cell cycle pathway)
+## Figure 1 (Cell cycle)
 genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Cycle.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "", "Cell cycle pathway", "")
 file.de <- paste0(plot.de, "_Cycle.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
-## Figure 2 (Hintone modifications)
+## Figure 2 (Hintone)
 genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Histone.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "", "Histone modifications", "")
 file.de <- paste0(plot.de, "_Histone.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
+## Figure 3 (DDR)
+genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Repair.tab"), header=T, rownames=F, sep="\t")
+file.main <- c(plot.main, "", "DNA repair pathway", "")
+file.de <- paste0(plot.de, "_Repair.pdf")
+plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+
 # -----------------------------------------------------------------------------
-# Duplication in Tirosh et al 2016
+# Gene sets (please refer to guide-to-the/cycle.R) that are expressed in the dataset
 # -----------------------------------------------------------------------------
-core.G1S <- readTable(file.path(wd.meta, "Tirosh_G1-S.list"), header=F, rownames=F, sep="")
-core.G2M <- readTable(file.path(wd.meta, "Tirosh_G2-M.list"), header=F, rownames=F, sep="")
-core.SC  <- readTable(file.path(wd.meta, "Tirosh_Stemness.list"), header=F, rownames=F, sep="")
+load(file.path(wd.src.ref, "cycle.RData"))
 
-## Core G1-S genes
-core.G1S <- gsub("MLF1IP", "CENPU", core.G1S)
-core.G1S <- subset(ensGene, external_gene_name %in% core.G1S)$ensembl_gene_id   ## 43/43
-
-## Core G2-M genes
-core.G2M <- unique(core.G2M)   ## HJURP is duplicates due to it has two ensembl gene IDs
-core.G2M <- subset(ensGene, external_gene_name %in% core.G2M)$ensembl_gene_id   ## 54/55
-
-## Stemness genes
-core.SC <- subset(ensGene, external_gene_name %in% core.SC)$ensembl_gene_id   ## 58/63
-
-##
+## Tirosh et al 2016 
 core.G1S <- intersect(core.G1S, rownames(tpm.gene.log2))   ## 41/43/43
 core.G2M <- intersect(core.G2M, rownames(tpm.gene.log2))   ## 54/54/55
-core.SC  <- intersect(core.SC, rownames(tpm.gene.log2))    ## 54/58/63
+core.Stemness  <- intersect(core.Stemness, rownames(tpm.gene.log2))    ## 54/58/63
 
-##
+## Dominguez et al 2016
+periodic.G1S <- intersect(periodic.G1S, rownames(tpm.gene.log2))   ## 262/304
+periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# -----------------------------------------------------------------------------
 nrow(ensGene[intersect(genes.rb1.q0.05, core.G1S),])   ## 10/41 = 23.4%
 nrow(ensGene[intersect(genes.rb1.q0.05, core.G2M),])   ##  4/54 = 7.4%
 nrow(ensGene[intersect(genes.rb1.q0.05, core.SC),])    ##  0/54 = 0%
@@ -236,14 +239,6 @@ writeGRPformat(genes.G2M, wd.de.data, "genes.G2M")
 # Gene length
 # Last Modified: 22/08/18
 # -----------------------------------------------------------------------------
-initLength <- function(genes, group) {
-   ens.genes <- ensGene[genes,]
-   ens.genes$Length <- mapply(x = 1:nrow(ens.genes), function(x) getLengthTx(genes[x]))
-   ens.genes$Group  <- group
- 
-   return(ens.genes)
-}
-
 plotBox <- function(gene, wd.de, expr.pheno.log2, pheno.all) {
    ensembl_gene_id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id[1]   ## To avoid ENSG00000269846 (one of RBL1)
    gene.tpms <- cbind(t(expr.pheno.log2)[rownames(pheno.all), ensembl_gene_id], pheno.all)
@@ -296,26 +291,3 @@ testW(ens.genes.rb1.q0.05$Length, ens.core.G1S$Length)
 # [1] 0.7674659
 testW(ens.genes.rb1.q0.05$Length, ens.core.G2M$Length)
 # [1] 0.9107349
-
-# -----------------------------------------------------------------------------
-# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
-# -----------------------------------------------------------------------------
-wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.05_up")
-#wd.de.path.reactome <- file.path(wd.de.path, "reactome_q0.1_down")
-
-list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
-
-reactome <- read.csv(file.path(wd.de.path.reactome, "result.csv"))
-colnames(reactome) <- gsub("X.", "", colnames(reactome))
-reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
-for (r in 1:nrow(reactome)) {
-   ids <- as.vector(reactome$Submitted.entities.found[r])
-   ids <- unlist(strsplit(ids, ";"))
- 
-   for (i in 1:length(ids))
-      if (nrow(list[ids[i],]) != 0)
-         ids[i] <- list[ids[i],]$external_gene_name
- 
-   reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
-}
-writeTable(reactome, file.path(wd.de.data.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")

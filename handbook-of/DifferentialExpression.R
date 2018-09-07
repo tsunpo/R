@@ -4,6 +4,7 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/08/18
 # =============================================================================
+
 # -----------------------------------------------------------------------------
 # Methods: Density plot
 # Last Modified: 11/06/18
@@ -319,6 +320,7 @@ writeGRPformat <- function(list, wd.de.data, file.name) {
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 10/06/18
 # =============================================================================
+
 # -----------------------------------------------------------------------------
 # Methods: Custom filters for using kallisto
 # Last Modified: 10/06/18
@@ -384,6 +386,7 @@ getLog2andMedian <- function(tpm.gene) {
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 10/04/18
 # =============================================================================
+
 # -----------------------------------------------------------------------------
 # Method: Get non-redundant gene list (ensGene)
 # Last Modified: 10/04/18
@@ -448,6 +451,7 @@ getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of th
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/02/18
 # =============================================================================
+
 # -----------------------------------------------------------------------------
 # Method: Fisher's combined probability test
 # Last Modified: 06/11/17

@@ -122,9 +122,9 @@ plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, e
    ymax <- max(rpkm.chr)
    
    if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
+      pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
    else if (ext == "png")
-      png(paste0(wd.rt.plots, chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+      png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
  
    plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
    points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
@@ -139,6 +139,35 @@ plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, e
 # -----------------------------------------------------------------------------
 getLog2RDRatio <- function(rpkms.T.chr, rpkms.N.chr) {
    return(log2(as.numeric(rpkms.T.chr) + 0.01) - log2(as.numeric(rpkms.N.chr) + 0.01))
+}
+
+plotRT0 <- function(wd.rt.plots, BASE, chr, n1, n0, xmin, xmax, rpkms.chr.rt, bed.gc.chr.rt, pair1, pair0, ext, cutoff) {
+   file.name  <- file.path(wd.rt.plots, paste0(tolower(BASE), "_wgs_rt_", chr, "_", pair1, "-", pair0, "_n", n1, "-", n0, "_", cutoff))
+   main.text <- paste0("Read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ") in ", BASE)
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   ylab.text <- "Replication time (log2 FC)"
+ 
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
+   ymin <- min(rpkms.chr.rt$MEDIAN)
+   ymax <- max(rpkms.chr.rt$MEDIAN)
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (is.na(xmin)) xmin <- 0
+   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+ 
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=4, width=10)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr.rt$START/1E6, rpkms.chr.rt$MEDIAN, col="red", cex=0.3)
+   abline(h=0, lwd=0.5, col="grey")
+   lines(bed.gc.chr.rt$START/1E6, smooth.spline(rpkms.chr.rt$MEDIAN)$y)
+
+   for (c in 1:nrow(cytoBand.chr))
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
+ 
+   dev.off()
 }
 
 plotRT <- function(filename, title, chr, samples, xmin, xmax, rpkms.chr, bed.gc.chr, pair1, pair0, ext) {
