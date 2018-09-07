@@ -90,7 +90,7 @@ testOnewayANOVA <- function(g2g.q4) {
 # http://www.sthda.com/english/articles/32-r-graphics-essentials/133-plot-one-variable-frequency-graph-density-distribution-and-more/
 # Last Modified: 26/05/18
 # -----------------------------------------------------------------------------
-getG2GDensity <- function(distances, count) {
+getTxQ4G2GDensity <- function(distances, count) {
    d <- density(log10(as.numeric(distances)))
    if (count)
       d$y <- d$y * d$n
@@ -98,24 +98,26 @@ getG2GDensity <- function(distances, count) {
    return(d)
 }
 
-plotG2GDensity <- function(g2g.q4, file.name, file.main, count, ymax) {
+plotTxQ4G2GDensity <- function(wd.de.plots, base, BASE, g2g.q4, count, ymax) {
    if (is.null(ymax)) {
-      ymax <- max(getG2GDensity(g2g.q4[[1]], count)$y)
+      ymax <- max(getTxQ4G2GDensity(g2g.q4[[1]], count)$y)
       for (q in 2:4)
-         if (max(getDensity(g2g.q4[[q]], count)$y) > ymax)
-            ymax <- max(getG2GDensity(g2g.q4[[q]], count)$y)
+         if (max(getTxQ4G2GDensity(g2g.q4[[q]], count)$y) > ymax)
+            ymax <- max(getTxQ4G2GDensity(g2g.q4[[q]], count)$y)
    }
 
-   xmax <- max(getG2GDensity(g2g.q4[[1]], count)$x)
+   xmax <- max(getTxQ4G2GDensity(g2g.q4[[1]], count)$x)
    for (q in 2:4)
-      if (max(getDensity(g2g.q4[[q]], count)$x) > xmax)
-         xmax <- max(getG2GDensity(g2g.q4[[q]], count)$x)   
-      
+      if (max(getTxQ4G2GDensity(g2g.q4[[q]], count)$x) > xmax)
+         xmax <- max(getTxQ4G2GDensity(g2g.q4[[q]], count)$x)   
+   
+   file.name <- file.path(wd.de.plots, paste0("plot_", base, "_genes_tx_q4_g2g_density.pdf"))
+   file.main <- paste0(BASE, " (n=", ncol(tpm.gene.input), ")")   
    cols <- c("blue", "deepskyblue", "salmon", "red")
    pdf(file.name, height=6, width=6)
-   plot(getG2GDensity(g2g.q4[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
+   plot(getTxQ4G2GDensity(g2g.q4[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
    for (q in 2:4)
-      lines(getG2GDensity(g2g.q4[[q]], count), col=cols[q])
+      lines(getTxQ4G2GDensity(g2g.q4[[q]], count), col=cols[q])
 
    legend("topleft", legend=c("Q1", "Q2", "Q3", "Q4"), levels(cols), fill=cols) 
    dev.off()

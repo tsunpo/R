@@ -80,4 +80,5 @@ boxplotTxQ4Length(wd.de.plots, base, BASE, tx.q4.length)
 tx.q4.g2g <- getTxQ4G2G(tx.q4)
 save(tx.q4.g2g, file=file.path(wd.de.plots, paste0(base, "_genes_tx_q4_g2g.RData")))
 
-boxplotTxQ4G2G(wd.de.plots, base, BASE, tx.q4.g2g)
+boxplotTxQ4G2G(wd.de.plots, base, BASE, tx.q4.g2g, samples)
+plotTxQ4G2GDensity(wd.de.plots, base, BASE, tx.q4.g2g, samples, count=T, ymax=NULL)
