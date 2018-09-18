@@ -24,7 +24,7 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 
 BASE <- "LUSC"
 base <- tolower(BASE)
-wd.rna   <- file.path(wd, BASE, "ngs/RNA")
+wd.rna   <- file.path(wd, BASE, "ngs/RNA/LUSC")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
@@ -53,7 +53,7 @@ periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 842/876
 # -----------------------------------------------------------------------------
 # Distribution of cell cycle genes in four quantiles
 # -----------------------------------------------------------------------------
-tx.q4 <- getTxQ4(NA, tpm.gene.log2)
+tx.q4 <- getTxQ4(tpm.gene.log2, NA)
 for (q in 1:4)
    print(length(tx.q4[[q]]))
 # [1] 4939
@@ -66,66 +66,22 @@ save(tx.q4.cycle, file=file.path(wd.de.plots, paste0(base, "_genes_tx_q4_cycle.R
 
 barplotTxQ4Cycle(wd.de.plots, base, BASE, tx.q4.cycle, beside=T)
 
+# -----------------------------------------------------------------------------
+# Gene length in quantiles
+# -----------------------------------------------------------------------------
+tx.q4.length <- getTxQ4Length(tx.q4)
+save(tx.q4.length, file=file.path(wd.de.plots, paste0(base, "_genes_tx_q4_length.RData")))
 
-
-
-
+boxplotTxQ4Length(wd.de.plots, base, BASE, tx.q4.length)
 
 # -----------------------------------------------------------------------------
-# Gene length in four quantiles
+# Gene-to-gene minimum distance in quantiles
 # -----------------------------------------------------------------------------
-tx.q4.length <- initLength(tx.q4[[1]], 1)[0,]
-for (q in 1:4) {
-   #genes <- intersect(ens.tx.snv.input, tx.q4[[q]])
-   genes <- tx.q4[[q]]
- 
-   tx.q4.length <- rbind(tx.q4.length, initLength(genes, q))
- 
-   genes.g1s <- intersect(genes, unique(c(core.G1S, genes.G1S)))
-   genes.g2m <- intersect(genes, unique(c(core.G2M, genes.G2M)))
-   tx.q4.cycle[[q]][[1]] <- length(genes.g1s)
-   tx.q4.cycle[[q]][[2]] <- length(genes.g2m)
-   tx.q4.cycle[[q]][[3]] <- length(setdiff(genes, c(genes.g1s, genes.g2m)))
-}
+tx.q4.g2g <- getTxQ4G2G(tx.q4)
+save(tx.q4.g2g, file=file.path(wd.de.plots, paste0(base, "_genes_tx_q4_g2g.RData")))
 
-##
-tx.q4.length$Group <- as.factor(tx.q4.length$Group)
-tx.q4.length$Length <- log10(tx.q4.length$Length)
-colnames <- c("Q1", "Q2", "Q3", "Q4")
-rownames <- c("G1-S", "G2-M", "Others")
+boxplotTxQ4G2G(wd.de.plots, base, BASE, tx.q4.g2g, samples)
+plotTxQ4G2GDensity(wd.de.plots, base, BASE, tx.q4.g2g, samples, count=T, ymax=NULL)
 
-file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_length.pdf"))
-pdf(file.name, height=6, width=4)
-ymin <- min(tx.q4.length$Length)
-ymax <- max(tx.q4.length$Length)
-boxplot(Length ~ Group, data=tx.q4.length, outline=T, names=colnames, ylim=c(ymin, ymax), ylab="Gene length (log10)", xlab="Expression", main="SCLC")
-dev.off()
-
-##
-data <- toTable(0, length(colnames), 3, colnames)
-rownames(data) <- rownames
-for (q in 1:4)
-   for (r in 1:3)
-      data[r, q] <- tx.q4.cycle[[q]][[r]]
-writeTable(data, file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_length.txt")), colnames=T, rownames=T, sep="\t")
-data <- as.matrix(data)
-
-##
-data <- toTable(0, length(colnames), 3, colnames)
-for (q in 1:4) {
-   sum <- tx.q4.cycle[[q]][[1]]
-   for (r in 2:3)
-      sum <- sum + tx.q4.cycle[[q]][[r]]
-   
-   for (r in 1:3)
-      data[r, q] <- tx.q4.cycle[[q]][[r]] / sum * 100
-}
-writeTable(data, file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_percent.txt")), colnames=T, rownames=T, sep="\t")
-data <- as.matrix(data)
-
-file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_tx_q4_percent.pdf"))
-cols <- c("white", "darkgray")
-pdf(file.name, height=6, width=4)
-barplot(data[-3,], ylab="Cell cycle genes (%)", xlab="Expression", col=cols, main="SCLC", beside=T)
-legend("topleft", legend=rownames[-3], fill=cols)
-dev.off()
+testW(c(tx.q4.g2g[[1]], tx.q4.g2g[[2]], tx.q4.g2g[[3]]), tx.q4.g2g[[4]])
+# [1] 3.179163e-71

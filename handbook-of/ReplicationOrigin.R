@@ -22,24 +22,29 @@ getTSS <- function(ensGene.genes) {
    return(ensGene.genes)
 }
 
+getG2G <- function(genes) {
+   genes <- ensGene[genes,]  
+   genes <- getTSS(genes)
+   
+   g2g <- list()
+   for (g in 1:nrow(genes)) {
+      gene <- genes[g,]
+    
+      genes.chr <- subset(genes, chromosome_name == gene$chromosome_name)
+      if (nrow(genes.chr) != 1)   ## ADD 09/09/18
+         genes.chr <- subset(genes.chr, ensembl_gene_id != gene$ensembl_gene_id)
+    
+      g2g[[g]] <- min(abs(gene$TSS - genes.chr$TSS))
+   }
+   
+   return(g2g)
+}
+
 getTxQ4G2G <- function(tx.q4) {
    tx.q4.g2g <- list()
 
-   for (q in 1:4) {
-      genes <- ensGene[tx.q4[[q]],]
-      genes <- getTSS(genes)
-  
-      g2g <- list()
-      for (g in 1:nrow(genes)) {
-         gene <- genes[g,]
-         
-         genes.chr <- subset(genes, chromosome_name == gene$chromosome_name)
-         genes.chr <- subset(genes.chr, ensembl_gene_id != gene$ensembl_gene_id)
-
-         g2g[[g]] <- min(abs(gene$TSS - genes.chr$TSS))
-      }
-      tx.q4.g2g[[q]] <- g2g
-   }
+   for (q in 1:4)
+      tx.q4.g2g[[q]] <- getG2G(tx.q4[[q]])
    
    return(tx.q4.g2g)
 }
@@ -115,9 +120,9 @@ plotTxQ4G2GDensity <- function(wd.de.plots, base, BASE, tx.q4.g2g, samples, coun
    file.main <- paste0(BASE, " (n=", nrow(samples), ")")   
    cols <- c("blue", "deepskyblue", "salmon", "red")
    pdf(file.name, height=6, width=6)
-   plot(getTxQ4G2GDensity(g2g.q4[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
+   plot(getTxQ4G2GDensity(tx.q4.g2g[[1]], count), col=cols[1], ylab="Frequency", xlab="Gene-to-gene min dist. (log10)", ylim=c(0, ymax), xlim=c(0, xmax), main=file.main)
    for (q in 2:4)
-      lines(getTxQ4G2GDensity(g2g.q4[[q]], count), col=cols[q])
+      lines(getTxQ4G2GDensity(tx.q4.g2g[[q]], count), col=cols[q])
 
    legend("topleft", legend=c("Q1", "Q2", "Q3", "Q4"), levels(cols), fill=cols) 
    dev.off()

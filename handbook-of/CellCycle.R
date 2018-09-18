@@ -27,7 +27,7 @@ getTxQ4Cycle <- function(tx.q4, core.G1S, core.G2M, periodic.G1S, periodic.G2M) 
 
 barplotTxQ4Cycle <- function(wd.de.plots, base, BASE, tx.q4.cycle, beside) {
    colnames <- c("Q1", "Q2", "Q3", "Q4")
-   rownames <- c("G1-S", "G2-M", "Others")
+   rownames <- c("G1/S", "G2/M", "Others")
    
    percent <- toTable(0, length(colnames), 3, colnames)
    counts  <- toTable(0, length(colnames), 3, colnames)
@@ -47,7 +47,7 @@ barplotTxQ4Cycle <- function(wd.de.plots, base, BASE, tx.q4.cycle, beside) {
    
    ##
    file.name <- file.path(wd.de.plots, paste0("barplot_", base, "_genes_tx_q4_cycle_percent.pdf"))
-   cols <- c("white", "darkgray")
+   cols <- c("cornsilk", "darkgray")
    pdf(file.name, height=6, width=4)
    barplot(percent[-3,], ylab="Cell cycle genes (%)", xlab="Expression", col=cols, main=BASE, beside=beside)
    legend("topleft", legend=rownames[-3], fill=cols)

@@ -217,6 +217,14 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
 }
 
 # -----------------------------------------------------------------------------
+# Method: Fisher's combined probability test
+# Last Modified: 06/11/17
+# -----------------------------------------------------------------------------
+fishers <- function(x, y) {
+   return(pchisq(-2*log(x)-2*log(y), 4, low=F))
+}
+
+# -----------------------------------------------------------------------------
 # Pipeline: Differential expression analysis
 # Last Modified: 28/03/17
 # -----------------------------------------------------------------------------
@@ -451,14 +459,6 @@ getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of th
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/02/18
 # =============================================================================
-
-# -----------------------------------------------------------------------------
-# Method: Fisher's combined probability test
-# Last Modified: 06/11/17
-# -----------------------------------------------------------------------------
-# fishers <- function(x, y) {
-#    return(pchisq(-2*log(x)-2*log(y), 4, low=F))
-# }
 
 # -----------------------------------------------------------------------------
 # Method: Residuals of expression

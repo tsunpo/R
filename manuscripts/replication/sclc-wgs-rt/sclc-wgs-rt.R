@@ -6,8 +6,8 @@
 # Last Modified: 30/01/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
-wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
 handbooks  <- c("Common.R", "ReplicationTiming.R", "DifferentialExpression.R")
@@ -47,6 +47,41 @@ writeTable(samples[grep("blood", bloods[samples, 2])], file.path(wd.ngs, "sclc_w
 
 load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+
+# -----------------------------------------------------------------------------
+# Insert size
+# Last Modified: 10/09/18
+# -----------------------------------------------------------------------------
+wd.meta <- file.path(wd, BASE, "metadata/George 2015")
+table <- readTable(file.path(wd.meta, "nature14664-s1_ST2.txt"), header=T, rownames=T, sep="\t")
+table <- table[samples,]
+
+table1 <- table[,c("Insert.Size", "Mean.Coverage")]
+table1$Group <- 1
+table0 <- table[,c("Insert.Size.1", "Mean.Coverage.1")]
+colnames(table0) <- c("Insert.Size", "Mean.Coverage")
+table0$Group <- 0
+table <- rbind(table1, table0)
+table$Group <- as.factor(table$Group)
+
+file.name <- file.path(wd.rt.plots, paste0("boxplot_", base, "_wgs_insert-size.pdf"))
+pdf(file.name, height=6, width=3)
+boxplot(Insert.Size ~ Group, data=table, outline=F, names=c("Normal", "Tumour"), col=c("dodgerblue", "red"), ylab="Insert size", main=BASE)
+dev.off()
+
+median(table1$Insert.Size)
+# [1] 312.312
+median(table0$Insert.Size)
+# [1] 308.56
+sd(table1$Insert.Size)
+# [1] 16.19834
+sd(table0$Insert.Size)
+# [1] 13.34431
+
+## Tumour vs. Normal
+testW(table1$Insert.Size, table0$Insert.Size)
+# [1] 0.5489026
+
 
 # -----------------------------------------------------------------------------
 # Step 6.1: Define replicaiton timing direction for expressed genes (Following Step 4 in "asym-sclc-tx.R" and Step 5 from rt-sclc-wgs.R)

@@ -42,6 +42,44 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 
 # -----------------------------------------------------------------------------
+# Insert size
+# Last Modified: 10/09/18
+# -----------------------------------------------------------------------------
+wd.meta <- file.path(wd, BASE, "metadata/Peifer 2015")
+table <- readTable(file.path(wd.meta, "nature14980-s1_Table1.txt"), header=T, rownames=T, sep="\t")
+
+table1 <- table[,c("Insert.Size", "Mean.Coverage")]
+table1$Group <- 1
+table0 <- table[,c("Insert.Size.1", "Mean.Coverage.1")]
+colnames(table0) <- c("Insert.Size", "Mean.Coverage")
+table0$Group <- 0
+table <- rbind(table1, table0)
+table$Group <- as.factor(table$Group)
+
+file.name <- file.path(wd.rt.plots, paste0("boxplot_", base, "_wgs_insert-size.pdf"))
+pdf(file.name, height=6, width=3)
+boxplot(Insert.Size ~ Group, data=table, outline=F, names=c("Normal", "Tumour"), col=c("dodgerblue", "red"), ylab="Insert size", main=BASE)
+dev.off()
+
+median(table1$Insert.Size)
+# [1] 323.245
+median(table0$Insert.Size)
+# [1] 318.325
+sd(table1$Insert.Size)
+# [1] 58.56802
+sd(table0$Insert.Size)
+# [1] 58.36447
+
+## Tumour vs. Normal
+testW(table1$Insert.Size, table0$Insert.Size)
+# [1] 0.5744207
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # Step 6.1: Define replicaiton timing direction for expressed genes (Following Step 4 in "asym-sclc-tx.R" and Step 5 from rt-sclc-wgs.R)
 # Link(s):  http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
 #           https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r

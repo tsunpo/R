@@ -75,7 +75,7 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 tpm.gene <- tpm.gene[getExpressed(tpm.gene),]
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_tpm0.RData")))
 # > nrow(tpm.gene)
-# [1] 16413
+# [1] 19060
 
 ###
 ## Gene-level TPMs with default filters

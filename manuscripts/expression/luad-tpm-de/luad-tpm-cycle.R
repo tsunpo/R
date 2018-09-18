@@ -82,3 +82,6 @@ save(tx.q4.g2g, file=file.path(wd.de.plots, paste0(base, "_genes_tx_q4_g2g.RData
 
 boxplotTxQ4G2G(wd.de.plots, base, BASE, tx.q4.g2g, samples)
 plotTxQ4G2GDensity(wd.de.plots, base, BASE, tx.q4.g2g, samples, count=T, ymax=NULL)
+
+testW(c(tx.q4.g2g[[1]], tx.q4.g2g[[2]], tx.q4.g2g[[3]]), tx.q4.g2g[[4]])
+# [1] 6.283722e-50
