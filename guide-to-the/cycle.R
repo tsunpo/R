@@ -6,7 +6,7 @@
 # =============================================================================
 source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 
-wd.src.ref <- "/Users/tpyang/Work/dev/R/guide-to-the/"
+wd.src.ref <- "/Users/tpyang/Work/dev/R/guide-to-the"
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"
 
 # -----------------------------------------------------------------------------
@@ -35,4 +35,4 @@ wd.meta  <- file.path(wd, "HeLa", "metadata/Dominguez 2016")
 periodic.G1S <- readTable(file.path(wd.meta, "Dominguez_G1-S.list"), header=F, rownames=F, sep="")   ## 304
 periodic.G2M <- readTable(file.path(wd.meta, "Dominguez_G2-M.list"), header=F, rownames=F, sep="")   ## 876
 
-save(core.G1S, core.G2M, core.Stemness, periodic.G1S, periodic.G2M, file=paste0(wd.src.ref, "cycle.RData"))
+save(core.G1S, core.G2M, core.Stemness, periodic.G1S, periodic.G2M, file=file.path(wd.src.ref, "cycle.RData"))

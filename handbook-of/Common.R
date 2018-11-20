@@ -79,3 +79,7 @@ subset0 <- function(df, filter, value) {
       return(subsets)
    }
 }
+
+separator <- function(number) {
+   return(formatC(number, format="f", big.mark=",", digits=0))
+}

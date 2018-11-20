@@ -2,76 +2,72 @@
 # Library      : DNA Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 13/06/17
+# Last Modified: 15/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Methods: Calculate ratio of raw sequencing reads between tumour and matched normal
-# Last Modified: 17/05/17
+# Methods: Calculate ratio of raw sequencing reads between tumour and matched normal (in 1a_cmd-rt_bam.rpkm.R)
+# Last Modified: 15/11/18
 # -----------------------------------------------------------------------------
 initRPKM <- function(bam, bed, pair) {
-   bam.bed <- bam[intersect(rownames(bam), rownames(bed)),]   ## ADD 23/06/17: Autosomal-only RPKMs
- 
-   colnames <- c("BED", "BAM", "RPKM")
-   rpkm <- toTable(NA, length(colnames), nrow(bam.bed), colnames)
-   rpkm[,c("BED", "BAM")] <- bam.bed[,c("BED", paste0("BAM_", pair))]
- 
+   overlaps <- intersect(rownames(bam), rownames(bed))
+   bam.o <- bam[overlaps,]   ## ADD 23/06/17: Autosomal-only RPKMs
+   bed.o <- bed[overlaps,]
+   bed.o$LENGTH <- bed.o$END - bed.o$START + 1   ## ADD 18/11/18: E.g. P2 chr1 10001 11000 0.646000
+   
+   rpkm <- bam.o[,c("BED", paste0("BAM_", pair))]
    TOTAL <- sum(as.numeric(rpkm$BAM))   ## BUG FIX 17/05/17: Warning message: In sum(rpkm$BAM) : integer overflow - use sum(as.numeric(.))
-   rpkm$RPKM <- rpkm$BAM / TOTAL * 1E6 * 1000
+   rpkm$RPKM <- rpkm$BAM / TOTAL * 1E6 * bed.o$LENGTH   ## ADD 15/11/18: Replace to "bed.o$LENGTH" from "1000"
  
    return(rpkm)
 }
 
 # -----------------------------------------------------------------------------
-# Methods: Calculate copy number-, GC-corrected read counts
+# Methods: Calculate copy number-, GC-corrected read counts (in 1b_cmd-rt_bam.rpkm.corr.gc.R)
 # Last Modified: 15/05/17
 # -----------------------------------------------------------------------------
-## cmd-rt_bam.rpkm.corr.gc.R (command line version)
-getBEDFromSegment <- function(bed.gc, seg) {
-   #bed.gc.chr <- subset(bed.gc, CHR == seg$CHR)                      ## Using subset() takes ~15 MINS on 1,040 segments over 2,861,558 entries (S00022)
-   #bed.gc.chr.end <- subset(bed.gc.chr, END > seg$START)             ## Important! Not >= seg$START)
-   #bed.gc.chr.end.start <- subset(bed.gc.chr.end, START <= seg$END)
-   bed.gc.chr <- bed.gc[which(bed.gc$CHR == seg$CHR),]                ## Using which() takes ~5 MINS on 1,040 segments over 2,861,558 entries (S00022)
-   bed.gc.chr.end <- bed.gc.chr[which(bed.gc.chr$END > seg$START),]   ## Important! Not >= seg$START)
-   bed.gc.chr.end.start <- bed.gc.chr.end[which(bed.gc.chr.end$START <= seg$END),]
- 
-   return(bed.gc.chr.end.start)
-}
-
 initRPKMCORRGC <- function(rpkm) {
    colnames <- c("BED", "BAM", "RPKM", "Ratio", "RPKM_CORR", "RPKM_CORR_GC")
    rpkm.corr.gc <- toTable(NA, length(colnames), nrow(rpkm), colnames)
    rpkm.corr.gc[,1:3] <- rpkm
-   
+ 
    return(rpkm.corr.gc)
 }
 
-setRPKMCORR <- function(rpkm.corr.gc, segs, bed.gc) {
-   #rpkm.corr.gc$Ratio <- mapply(r = 1:nrow(rpkm.corr.gc), function(r) getRatioFromSegment(bed.gc[r,], segs))
-   #rpkm.corr.gc.ratio <- rpkm.corr.gc[!is.na(rpkm.corr.gc$Ratio),]    ## ~29 MINS on 2,861,558 entries; see deprecated method getRatioFromSegment()
-   #bed.gc.ratio <- bed.gc[rownames(rpkm.corr.gc.ratio),]
-   for (s in 1:nrow(segs)) {                                           ## ~5 MINS on 1,040 segments over 2,861,558 entries; see getBEDFromSegment()
-      seg <- segs[s,]
-      bed.gc.seg <- getBEDFromSegment(bed.gc, seg)
+getBEDFromSegment <- function(bed.gc, seg.gc) {
+   #bed.gc.chr <- subset(bed.gc, CHR == seg.gc$CHR)                       ## Using subset() takes ~15 MINS on 1,040 segments over 2,861,558 entries (S00022)
+   #bed.gc.chr.end <- subset(bed.gc.chr, END > seg.gc$START)              ## Important! Not >= seg$START if e.g. P2 chr1 10000 11000 0.646000
+   #bed.gc.chr.end.start <- subset(bed.gc.chr.end, START <= seg.gc$END)
+   bed.gc.chr <- bed.gc[which(bed.gc$CHR == seg.gc$CHR),]                 ## Using which() takes ~5 MINS on 1,040 segments over 2,861,558 entries (S00022)
+   bed.gc.chr.end <- bed.gc.chr[which(bed.gc.chr$END >= seg.gc$START),]   ## Important! Not >= seg$START if e.g. P2 chr1 10000 11000 0.646000
+   bed.gc.chr.end.start <- bed.gc.chr.end[which(bed.gc.chr.end$START <= seg.gc$END),]
+ 
+   return(bed.gc.chr.end.start)
+}
+
+setRPKMCORR <- function(rpkm.corr.gc, segs.gc, bed.gc) {
+   for (s in 1:nrow(segs.gc)) {
+      seg.gc <- segs.gc[s,]
+      bed.gc.seg <- getBEDFromSegment(bed.gc, seg.gc)
       bed.gc.seg.idx <- which(rpkm.corr.gc$BED %in% bed.gc.seg$BED)
   
-      rpkm.corr.gc$Ratio[bed.gc.seg.idx] <- seg$Ratio
+      rpkm.corr.gc$Ratio[bed.gc.seg.idx] <- seg.gc$Ratio
    }
 
    return(rpkm.corr.gc[which(rpkm.corr.gc$Ratio != 0),])   ## ADD 15/05/17: No information from chrY in female (e.g. S00035)
 }                                                          ## 2852532 P2868190    0    0.0000000     0       NaN          NaN
                                                            ## 2852533 P2868191    1    0.9901062     0       Inf          Inf
+## Main function (in 1b_cmd-rt_bam.rpkm.corr.gc.R)
 getRPKMCORRGC <- function(rpkm, segs, bed, PAIR, CORR) {
-   bed$BED <- rownames(bed)   ## To seed up line 56 and line 66
-   overlaps <- intersect(rownames(rpkm), bed$BED)           ## ADD 24/06/17: Double-check if they have the same rows
+   bed$BED  <- rownames(bed)                        ## To seed up?
+   overlaps <- intersect(rownames(rpkm), bed$BED)   ## ADD 24/06/17: Double-check if they have the same rows
    rpkm.gc <- rpkm[overlaps,]
-   bed.gc <- bed[overlaps,]
+   bed.gc  <- bed[overlaps,]
    
    gc.mean <- mean(bed.gc$GC)
    rpkm.corr.gc <- initRPKMCORRGC(rpkm.gc)
- 
-   if (CORR) {   ## ADD 02/07/17: For LCL normals
-      segs.gc <- subset(segs, CHR %in% unique(bed.gc$CHR))  ## ADD 24/06/17: If bed.gc.au, remove chrXY from segs accordingly
+   if (CORR) {   ## ADD 02/07/17: No need to correct for copy numbers in the normals (e.g. LCLs)
+      segs.gc <- subset(segs, CHR %in% unique(bed.gc$CHR))   ## ADD 24/06/17: If bed.gc.au, remove chrXY from segs accordingly
     
       rpkm.corr.gc <- setRPKMCORR(rpkm.corr.gc, segs.gc, bed.gc)
       rpkm.corr.gc$RPKM_CORR    <- rpkm.corr.gc$RPKM / (rpkm.corr.gc$Ratio / 2)  
@@ -83,7 +79,10 @@ getRPKMCORRGC <- function(rpkm, segs, bed, PAIR, CORR) {
    return(rpkm.corr.gc)
 }
 
-## For cmd-rt_rpkm.corr.gc_chr.R (command line version)
+# -----------------------------------------------------------------------------
+# Methods: Gather coverages (per chromsome) from all samples (in 1c_cmd-rt_bam.rpkm.corr.gc_chr.R)
+# Last Modified: 15/05/17
+# -----------------------------------------------------------------------------
 initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
    colnames <- samples
    rt.chr <- toTable(NA, length(colnames), nrow(bed.gc.chr), colnames)
@@ -92,16 +91,24 @@ initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
    return(rt.chr)
 }
 
-getDetectedRD <- function(rpkm) {   ## Not dected (RPKM_CORR_GC = 0) windows in any of the samples 
+# -----------------------------------------------------------------------------
+# Methods: Bootstraps (in 2a_cmd-rt_rpkm.corr.gc.d_bstrp.R)
+# Last Modified: 15/05/17
+# -----------------------------------------------------------------------------
+getDetectedRD <- function(rpkm) {   ## Find not dected (RPKM_CORR_GC = 0) windows in any of the samples 
    return(mapply(x = 1:nrow(rpkm), function(x) !any(as.numeric(rpkm[x,]) == 0)))
 }
 
-## pipeline read.rpkm.corr.gc.txt.gz() and getDetectedRD()
-pipeGetDetectedRD <- function(BASE, chr, PAIR, samples) {
-   rpkms.chr <- read.rpkm.corr.gc.txt.gz(paste0(wd.ngs.data, tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz"))[,samples]   ## ADD samples 14/06/17
+## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
+pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, samples) {
+   rpkms.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")[, samples]   ## ADD samples 14/06/17
    rpkms.chr.d <- rpkms.chr[getDetectedRD(rpkms.chr),]   ## ADD getDetected() 13/06/17
  
    return(rpkms.chr.d)
+}
+
+getLog2RDRatio <- function(rpkms.T.chr, rpkms.N.chr, pseudocount) {
+   return(log2(as.numeric(rpkms.T.chr) + pseudocount) - log2(as.numeric(rpkms.N.chr) + pseudocount))
 }
 
 outputRT <- function(rpkms.chr) {
@@ -111,193 +118,206 @@ outputRT <- function(rpkms.chr) {
    return(rpkms.chr[,c("BED", samples)])
 }
 
-plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, ext) {
-   main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Read depth"
-   
-   xmin <- 0
-   xmax <- subset(chromInfo, chrom == chr)$size
-   ymin <- min(rpkm.chr)
-   ymax <- max(rpkm.chr)
-   
-   if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+# -----------------------------------------------------------------------------
+# Read in bootstrapped data (in 2b)
+# -----------------------------------------------------------------------------
+getEnsGeneBED <- function(pos, bed.gc.chr) {
+   bed.gc.chr.start <- subset(bed.gc.chr, pos >= START)
+   bed.gc.chr.start.end <- subset(bed.gc.chr.start, pos <= END)    ## ADD "=" 19/11/18
  
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+   return(rownames(bed.gc.chr.start.end))
+}
+
+# -----------------------------------------------------------------------------
+# Read in bootstrapped data (in 2c and 2d)
+# Last Modified: 31/10/18
+# -----------------------------------------------------------------------------
+loadEnsGeneRT <- function(wd1.rt.data, b, type) {
+   load(file.path(wd1.rt.data, b, paste0(type, "_ensGene.rt.RData")))
+   ensGene.rt <- ensGene.rt[!is.na(ensGene.rt$SLOPE_START),]
+   ensGene.rt <- ensGene.rt[!is.na(ensGene.rt$SLOPE_END),]
  
+   return(ensGene.rt)
+}
+
+getEnsGeneRT <- function(ensGene.rt, colname, b) {
+   ensGene.rt$ensembl_gene_id <- rownames(ensGene.rt)
+   ensGene.rt.position <- ensGene.rt[, c("ensembl_gene_id", colname)]
+   colnames(ensGene.rt.position)[1+b] <- paste0(colname, "_", b)
+ 
+   return(ensGene.rt.position)
+}
+
+loadBEDGCRT <- function(wd1.rt.data, b, type) {
+   load(file.path(wd1.rt.data, b, paste0(type, "_ensGene.rt_bstrp.RData")))
+   bed.gc.rt <- bed.gc.rt[!is.na(bed.gc.rt$SLOPE),]
+ 
+   return(bed.gc.rt)
+}
+
+getBEDGCRT <- function(bed.gc.rt, colname, b) {
+   bed.gc.rt$BED <- rownames(bed.gc.rt)
+   bed.gc.rt <- bed.gc.rt[, c("BED", colname)]
+   colnames(bed.gc.rt)[1+b] <- paste0(colname, "_", b)
+ 
+   return(bed.gc.rt)
+}
+
+# -----------------------------------------------------------------------------
+# Determine replication timing from bootstrapped data (in 2c and 2d)
+# Last Modified: 31/10/18
+# -----------------------------------------------------------------------------
+getRightLeading <- function(ensGene.rt.bstrp) {
+   return(as.numeric(length(which(ensGene.rt.bstrp < 0))))
+}
+
+getLeftLeading <- function(ensGene.rt.bstrp) {
+   return(as.numeric(length(which(ensGene.rt.bstrp > 0))))
+}
+
+getLeading <- function(ensGene.rt.bstrp) {
+   right <- ensGene.rt.bstrp$RIGHT_LEADING
+   left  <- ensGene.rt.bstrp$LEFT_LEADING
+ 
+   if (right > left) return(1)
+   else if (right < left) return(-1)
+   else return(0)
+}
+
+pipeLeading <- function(ensGene.rt.bstrp, bstrps) {
+   ensGene.rt.bstrp$RIGHT_LEADING <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getRightLeading(ensGene.rt.bstrp[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+   ensGene.rt.bstrp$LEFT_LEADING  <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getLeftLeading(ensGene.rt.bstrp[x, 1:bstrps])))    ## BUG FIX: 01/11/18
+   ensGene.rt.bstrp$RT            <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getLeading(ensGene.rt.bstrp[x, ])))
+ 
+   return(ensGene.rt.bstrp)
+}
+
+# -----------------------------------------------------------------------------
+# Add BED information for the bootstrapped data (in 2c)
+# Last Modified: 09/11/18
+# -----------------------------------------------------------------------------
+setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
+   ensGene.rt <- cbind(ensGene[rownames(ensGene.rt), ], ensGene.rt[, c("RIGHT_LEADING", "LEFT_LEADING", "RT")])
+   ensGene.rt.chrs <- ensGene.rt[1,]
+   ensGene.rt.chrs$BED <- 0
+   ensGene.rt.chrs <- ensGene.rt.chrs[-1,]
+   for (c in 1:length(chrs)) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+      ensGene.rt.chr <- subset(ensGene.rt, chromosome_name == chr)
+  
+      if (isStartPosition)
+         ensGene.rt.chr$BED <- mapply(x = 1:nrow(ensGene.rt.chr), function(x) getEnsGeneBED(ensGene.rt.chr$start_position[x], bed.gc.chr))
+      else
+         ensGene.rt.chr$BED <- mapply(x = 1:nrow(ensGene.rt.chr), function(x) getEnsGeneBED(ensGene.rt.chr$end_position[x],   bed.gc.chr))   ## BUG FIXED: 19/11/18
+      ensGene.rt.chrs <- rbind(ensGene.rt.chrs, ensGene.rt.chr)
+   }
+ 
+   return(ensGene.rt.chrs[, c("BED", "RIGHT_LEADING", "LEFT_LEADING", "RT")])
+}
+
+# -----------------------------------------------------------------------------
+# Visualisation of bootstrapping data
+# Last Modified: 13/11/18
+# -----------------------------------------------------------------------------
+getLeadingRatio <- function(bed.gc.rt) {
+   if (bed.gc.rt$RT == 1) return(log2(bed.gc.rt$RIGHT_LEADING/500))
+   else if (bed.gc.rt$RT == -1) return(log2(bed.gc.rt$LEFT_LEADING/500) * -1)
+   else return(0)
+}
+
+plotHistBootstraps <- function(bed.gc.rt, file.name, main, BASE, breaks, breaks.origin) {
+   main <- paste0(main, " (", BASE, ")")
+   cols <- rep("steelblue1", breaks)
+   cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
+   cols[(breaks/2 - origin.break):(breaks/2 + breaks.origin)] <- "red"
+ 
+   pdf(file.name, height=6, width=6)
+   hist(bed.gc.rt$RIGHT_LEADING, xlab=c("Number of right-leading counts", "(out of 1,000 bootstraps)"), main=main, breaks=breaks, col=cols)
+   mtext(paste0("Distribution of counts per 1kb windows (n=", separator(nrow(bed.gc.rt)), ")"), cex=1, line=0.5)
    dev.off()
 }
 
-# -----------------------------------------------------------------------------
-# Methods: RT
-# Last Modified: 13/06/17
-# -----------------------------------------------------------------------------
-getLog2RDRatio <- function(rpkms.T.chr, rpkms.N.chr) {
-   return(log2(as.numeric(rpkms.T.chr) + 0.01) - log2(as.numeric(rpkms.N.chr) + 0.01))
-}
-
-plotRT0 <- function(wd.rt.plots, BASE, chr, n1, n0, xmin, xmax, rpkms.chr.rt, bed.gc.chr.rt, pair1, pair0, ext, cutoff) {
-   file.name  <- file.path(wd.rt.plots, paste0(tolower(BASE), "_wgs_rt_", chr, "_", pair1, "-", pair0, "_n", n1, "-", n0, "_", cutoff))
-   main.text <- paste0("Read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ") in ", BASE)
+plotRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
+   main.text <- paste0("Bootstrapped right-leading ratio in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication time (log2 FC)"
- 
-   cytoBand.chr <- subset(cytoBand, chrom == chr)
-   ymin <- min(rpkms.chr.rt$MEDIAN)
-   ymax <- max(rpkms.chr.rt$MEDIAN)
+   ylab.text <- "Right-leading ratio (log2)"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+   ymin <- -2
+   ymax <- 1.5
  
+   ## Initiation plot
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=3.5, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   abline(h=0, lwd=0.5, col="grey")
+ 
+   ## Plot right-/left-leading positions
+   points(bed.gc.chr$START[left.idx]/1E6,   bed.gc.rt.chr$RATIO[left.idx],   col="steelblue1", cex=0.2)
+   points(bed.gc.chr$START[right.idx]/1E6,  bed.gc.rt.chr$RATIO[right.idx],  col="sandybrown", cex=0.2)
+   points(bed.gc.chr$START[origin.idx]/1E6, bed.gc.rt.chr$RATIO[origin.idx], col="red", cex=0.5)
+ 
+   spline <- smooth.spline(x=bed.gc.chr$START, y=bed.gc.rt.chr$RATIO)
+   lines(spline$x/1E6, spline$y)
+ 
+   ## Plot cytobands and legend
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
+   for (c in 1:nrow(cytoBand.chr))
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
+ 
+   legend("bottomright", c("Left-leading", "Left / Right", "Right-leading"), col=c("steelblue1", "red", "sandybrown"), pch=16, cex=0.8, horiz=T)
+   dev.off()
+}
+
+plotRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
+   main.text <- paste0("Read depth (CN-, GC-corrected) ratio (T/N) in ", BASE)
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   ylab.text <- "Replication time (log2)"
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (is.na(xmin)) xmin <- 0
+   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+   ymin <- -ymax
+ 
+   ## Initiation plot
    if (ext == "pdf") {
       pdf(paste0(file.name, ".pdf"), height=4, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
    plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr.rt$START/1E6, rpkms.chr.rt$MEDIAN, col="red", cex=0.3)
+   points(bed.gc.chr$START/1E6, rt.chr$RT, col="grey", cex=0.3)
    abline(h=0, lwd=0.5, col="grey")
-   lines(bed.gc.chr.rt$START/1E6, smooth.spline(rpkms.chr.rt$MEDIAN)$y)
-
-   for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
  
-   dev.off()
-}
-
-plotRT <- function(filename, title, chr, samples, xmin, xmax, rpkms.chr, bed.gc.chr, pair1, pair0, ext) {
-   main.text <- paste0(title, " read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ")")
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication time (log2 FC)"
-   
+   ## Plot right-/left-leading positions
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rt.chr$RT)
+   points(spline$x[left.idx]/1E6,   spline$y[left.idx], col="steelblue1", pch=16, cex=0.4)
+   points(spline$x[right.idx]/1E6,  spline$y[right.idx], col="sandybrown", pch=16, cex=0.4)
+   points(spline$x[origin.idx]/1E6, spline$y[origin.idx], col="red", pch=16, cex=0.4)
+ 
+   ## Plot cytobands and legend
    cytoBand.chr <- subset(cytoBand, chrom == chr)
-   ymin <- min(rpkms.chr)
-   ymax <- max(rpkms.chr)
-   if (is.na(xmin)) xmin <- 0
-   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
- 
-   filename <- paste0(filename, "_", chr, "_n", samples)
-   if (ext == "pdf")
-      pdf(paste0(filename, ".pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(filename, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rpkms.chr, col="red", cex=0.3)
-   abline(h=0, lwd=0.5, col="grey")
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr)$y)
-   
    for (c in 1:nrow(cytoBand.chr))
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
  
+   legend("bottomright", c("Left-leading", "Left / Right", "Right-leading"), col=c("steelblue1", "red", "sandybrown"), pch=16, cex=0.8, horiz=T)
    dev.off()
 }
 
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# Methods: File manipulation and plotting
-# Last Modified: 13/06/17
-# -----------------------------------------------------------------------------
-## This method is for plotRT()
-getBEDFromPosition <- function(bed.gc, chr, start, end) {
-   bed.gc.chr <- bed.gc[which(bed.gc$CHR == chr),]
-   bed.gc.chr.end <- bed.gc.chr[which(bed.gc.chr$END >= start),]
-   bed.gc.chr.end.start <- bed.gc.chr.end[which(bed.gc.chr.end$START <= end),]
+getEnsGeneRTTx <- function(ensGene.rt.start, ensGene.rt.end, ensGene, tpm.gene.log2) {
+   ensGene.rt.start <- ensGene.rt.start[intersect(rownames(ensGene.rt.start), rownames(tpm.gene.log2)),]
+   ensGene.rt.start <- cbind(ensGene[rownames(ensGene.rt.start), 1:7], ensGene.rt.start)
+   ensGene.rt.start$LENGTH <- abs(ensGene.rt.start$start_position - ensGene.rt.start$end_position)
  
-   return(bed.gc.chr.end.start)
-}
-
-plotRTPerChromPerSample <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
-   main.text <- " read depth (copy number-, GC-corrected RPKM"
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication timing"
+   ensGene.rt.start$RATIO  <- mapply(x = 1:nrow(ensGene.rt.start), function(x) as.numeric(getLeadingRatio(ensGene.rt.start[x,])))
+   ensGene.rt.start$MEDIAN <- tpm.gene.log2[rownames(ensGene.rt.start),]$MEDIAN   ## Gene start (NOT TSS!) information
  
-   if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, "pdf/", chr, "/", sample, "_rpkm.corr.gc.q_", chr, ".pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(wd.rt.plots, "png/", chr, "/", sample, "_rpkm.corr.gc.q_", chr, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-
-   plot(NULL, ylim=c(dao$ymin, dao$ymax), xlim=c(dao$xmin/1E6, dao$xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0(sample, main.text, ")"))
-   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+   ensGene.rt.end <- ensGene.rt.end[rownames(ensGene.rt.start),]                  ## Gene end (NOT TES!) information
+   ensGene.rt.start$SIGN <- ensGene.rt.start$RT * ensGene.rt.end$RT               ## SIGN == -1 if inconsistent
    
-   dev.off()
-}
-
-removeNAinAnyRows <- function(rpkms.chr) {   ## Remove windows if FPKM = NA in any of the samples 
-   rpkms.chr$KEEP <- mapply(x = 1:nrow(rpkms.chr), function(x) !any(is.na(rpkms.chr[x,])))
-   rpkms.chr <- subset(rpkms.chr, KEEP == T)[,-ncol(rpkms.chr)]
-   
-   return(rpkms.chr)
-}
-
-plotRT_old <- function(wd.rt.plots, chr, sample, rpkms.chr, bed.gc, cytoBand.chr, xmin, xmax, ext) {
-   main.text <- " read depth (copy number-, GC-corrected RPKM"
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Read depth"
- 
-   rpkm.chr <- log2(rpkms.chr$MEDIAN_RPKM + 0.01)
-   ymin <- min(as.numeric(rpkm.chr))
-   ymax <- max(as.numeric(rpkm.chr))
-   bed.gc.chr <- bed.gc[rownames(rpkms.chr),]
-   
-   if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, "pdf/sclc_rpkm.corr.gc.q_", chr, "_N.pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(wd.rt.plots, "png/sclc_rpkm.corr.gc.q_", chr, "-", xmin, ":", xmax, "_N.png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0("Normal SCLC median", main.text, ")"))
-   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
-   for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey")
-   
-   dev.off()
-}
-
-plotRT2 <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
-   main.text <- " read depth (copy number-, GC-corrected RPKM"
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication timing"
- 
-   if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, "pdf/sclc_rpkm.corr.gc.q.sd_", chr, "_N.pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(wd.rt.plots, "png/sclc_rpkm.corr.gc.q.sd_", chr, "_N.png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
-   plot(NULL, ylim=c(dao$ymin, dao$ymax), xlim=c(dao$xmin/1E6, dao$xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0("Normal SCLC median", main.text, ")"))
-   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
-   dev.off()
-}
-
-
-
-
-
-# =============================================================================
-# Inner Class  : In-house File Reader
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 08/05/17
-# =============================================================================
-read.bam.rpkm.txt.gz <- function(rpkm.file) {
-   return(readTable(rpkm.file, header=T, rownames=T, sep=""))
-}
-
-read.rpkm.corr.gc.txt.gz <- function(rpkm.file) {
-   return(readTable(rpkm.file, header=T, rownames=T, sep="")[,-1])
+   return(ensGene.rt.start)
 }
 
 # =============================================================================
@@ -333,25 +353,119 @@ read.bedtools.multicov.cov <- function(cov.file) {
    return(cov)
 }
 
+
+
+
+
+
+
+
+plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, ext) {
+ main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
+ xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+ ylab.text <- "Read depth"
+ 
+ xmin <- 0
+ xmax <- subset(chromInfo, chrom == chr)$size
+ ymin <- min(rpkm.chr)
+ ymax <- max(rpkm.chr)
+ 
+ if (ext == "pdf")
+  pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
+ else if (ext == "png")
+  png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+ plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+ points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
+ lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+ 
+ dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Methods: File manipulation and plotting
+# Last Modified: 13/06/17
+# -----------------------------------------------------------------------------
+## This method is for plotRT()
+getBEDFromPosition <- function(bed.gc, chr, start, end) {
+ bed.gc.chr <- bed.gc[which(bed.gc$CHR == chr),]
+ bed.gc.chr.end <- bed.gc.chr[which(bed.gc.chr$END >= start),]
+ bed.gc.chr.end.start <- bed.gc.chr.end[which(bed.gc.chr.end$START <= end),]
+ 
+ return(bed.gc.chr.end.start)
+}
+
+plotRTPerChromPerSample <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
+ main.text <- " read depth (copy number-, GC-corrected RPKM"
+ xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+ ylab.text <- "Replication timing"
+ 
+ if (ext == "pdf")
+  pdf(paste0(wd.rt.plots, "pdf/", chr, "/", sample, "_rpkm.corr.gc.q_", chr, ".pdf"), height=4, width=10)
+ else if (ext == "png")
+  png(paste0(wd.rt.plots, "png/", chr, "/", sample, "_rpkm.corr.gc.q_", chr, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+ plot(NULL, ylim=c(dao$ymin, dao$ymax), xlim=c(dao$xmin/1E6, dao$xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0(sample, main.text, ")"))
+ points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
+ lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+ 
+ dev.off()
+}
+
+removeNAinAnyRows <- function(rpkms.chr) {   ## Remove windows if FPKM = NA in any of the samples 
+ rpkms.chr$KEEP <- mapply(x = 1:nrow(rpkms.chr), function(x) !any(is.na(rpkms.chr[x,])))
+ rpkms.chr <- subset(rpkms.chr, KEEP == T)[,-ncol(rpkms.chr)]
+ 
+ return(rpkms.chr)
+}
+
+plotRT_old <- function(wd.rt.plots, chr, sample, rpkms.chr, bed.gc, cytoBand.chr, xmin, xmax, ext) {
+ main.text <- " read depth (copy number-, GC-corrected RPKM"
+ xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+ ylab.text <- "Read depth"
+ 
+ rpkm.chr <- log2(rpkms.chr$MEDIAN_RPKM + 0.01)
+ ymin <- min(as.numeric(rpkm.chr))
+ ymax <- max(as.numeric(rpkm.chr))
+ bed.gc.chr <- bed.gc[rownames(rpkms.chr),]
+ 
+ if (ext == "pdf")
+  pdf(paste0(wd.rt.plots, "pdf/sclc_rpkm.corr.gc.q_", chr, "_N.pdf"), height=4, width=10)
+ else if (ext == "png")
+  png(paste0(wd.rt.plots, "png/sclc_rpkm.corr.gc.q_", chr, "-", xmin, ":", xmax, "_N.png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+ plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0("Normal SCLC median", main.text, ")"))
+ points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
+ lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+ 
+ for (c in 1:nrow(cytoBand.chr))
+  abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey")
+ 
+ dev.off()
+}
+
+plotRT2 <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
+ main.text <- " read depth (copy number-, GC-corrected RPKM"
+ xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+ ylab.text <- "Replication timing"
+ 
+ if (ext == "pdf")
+  pdf(paste0(wd.rt.plots, "pdf/sclc_rpkm.corr.gc.q.sd_", chr, "_N.pdf"), height=4, width=10)
+ else if (ext == "png")
+  png(paste0(wd.rt.plots, "png/sclc_rpkm.corr.gc.q.sd_", chr, "_N.png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+ plot(NULL, ylim=c(dao$ymin, dao$ymax), xlim=c(dao$xmin/1E6, dao$xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0("Normal SCLC median", main.text, ")"))
+ points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
+ lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+ 
+ dev.off()
+}
+
 # =============================================================================
 # Inner Class  : Collections of test/obsolete/deprecated methods
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified:
 # =============================================================================
-getRatioFromSegment <- function(bed, segs) {
-   #segs.chr <- subset(segs, CHR == bed$CHR)                          ## Using subset() takes ~48 MINS on 2,861,558 entries (S00022)
-   #segs.chr.start <- subset(segs.chr, START <= bed$START)
-   #segs.chr.start.end <- subset(segs.chr.start, END >= bed$END)
-   segs.chr <- segs[which(segs$CHR == bed$CHR),]                    ## Using which() takes ~41 MINS on 2,861,558 entries (S00022)
-   segs.chr.start <- segs.chr[which(segs.chr$START <= bed$START),]
-   segs.chr.start.end <- segs.chr.start[which(segs.chr.start$END >= bed$END),]
- 
-   if (nrow(segs.chr.start.end) == 1)
-      return(segs.chr.start.end$Ratio)
-   else
-      return(NA)
-}
-
 initRPKMRatio <- function(cn) {
    colnames <- c("RPKM_T", "RPKM_N", "RPKM_RATIO", "RPKM_LOG2")
    rr <- toTable(NA, length(colnames), nrow(cn), colnames)

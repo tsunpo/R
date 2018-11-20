@@ -9,8 +9,8 @@
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
-wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Common.R", "Asymmetry.R", "Mutation.R", "DifferentialExpression.R", "Mutation.R")
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
+handbooks  <- c("Common.R", "Asymmetry.R", "DifferentialExpression.R", "Mutation.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -51,7 +51,7 @@ for (s in 1:length(samples)) {
 # Step 2: Keep only genes that are transcribed in this cancer type 
 # Last Modified: 24/01/18
 # -----------------------------------------------------------------------------   
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## CHANGE 02/04/18
 
 for (s in 1:length(samples)) {
@@ -98,30 +98,34 @@ save(tx.snv.s6, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_s6.RData
 
 # -----------------------------------------------------------------------------
 # Step 4.1: Keep only SNVs on expressed, "non-redundant" protein coding genes
-# Last Modified: 25/01/18
+# Last Modified: 06/10/18
 # -----------------------------------------------------------------------------
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 #tpm.gene <- tpm.gene[setdiff(rownames(tpm.gene), outliers1.5),]   ## ADD 26/06/18
-tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## CHANGE 12/04/18
-#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)   ## TEST 29/06/18
-tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## CHANGE 12/04/18
+#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## n=19131
+tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)   ## n=18440
+#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)   ## n=16410
+#tpm.gene.input      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)   ## n=10604
+
 tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 ens.tx.snv.input <- intersect(rownames(tpm.gene.input), unique(tx.snv$ensembl_gene_id))   ## Needed in Step 5; ADD 02/02/18
 tx.snv.input <- subset(tx.snv, ensembl_gene_id %in% ens.tx.snv.input)
 save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "_asym_tx_snv_input.RData")))
+# > nrow(tx.snv.input)   ## All SNVs on expressed
+# [1] 1441303
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "all" protein coding genes
 # [1] 1414777
 # > nrow(tx.snv.input)   ## All SNVs on expressed, "non-redundant" protein coding genes
 # [1] 1021827
-# > nrow(tx.snv.input)   ## After removing CNTNAP2, PTPRD, LSAMP
+# > nrow(tx.snv.input)   ## After removing CNTNAP2, PTPRD, LSAMP              ## ADD 26/06/18
 # [1] 992324
-# > nrow(tx.snv.input)   ## After removing CNTNAP2, PTPRD, LSAMP and RBFOX1
+# > nrow(tx.snv.input)   ## After removing CNTNAP2, PTPRD, LSAMP and RBFOX1   ## ADD 26/06/18
 # [1] 988794
 
 ###
 ## Keep only genes with at least one SNV                   ## REMOVED 20/06/18
-#tx.q4 <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divide Q4 based on genes with at least one SNV (not all expressed genes)
+#tx.q4.fix <- getTxQ4(ens.tx.snv.input, tpm.gene.input.log2)   ## ADD 02/04/18; Divide Q4 based on genes with at least one SNV (not all expressed genes)
 #save(tx.q4, file=file.path(wd.asym.data, paste0(base, "_asym_tx_q4.RData")))
 # for (q in 1:4)
 #    print(length(intersect(ens.tx.snv.input, tx.q4[[q]])))
@@ -129,14 +133,21 @@ save(ens.tx.snv.input, tx.snv.input, file=file.path(wd.asym.data, paste0(base, "
 # [1] 2587
 # [1] 2586
 # [1] 2587
+tx.q4.fix <- getTxQ4(tpm.gene.input.log2, NA)
+# for (q in 1:4)
+#    print(length(tx.q4.fix[[q]]))
+# [1] 4610
+# [1] 4610
+# [1] 4610
+# [1] 4610
 
 tx.q4 <- getTxQ4(NA, tpm.gene.input.log2)
 for (q in 1:4)
    print(length(tx.q4[[q]]))
-# [1] 2651
-# [1] 2651
-# [1] 2651
-# [1] 2651
+# [1] 4939
+# [1] 4939
+# [1] 4939
+# [1] 4939
 
 # -----------------------------------------------------------------------------
 # Distribution of G2-M in 4 quantiles amongst SCLC
@@ -225,17 +236,18 @@ save(tx.snv.s6, ens.asyms, asyms, file=file.path(wd.asym.data, paste0(base, "_as
 ###
 ## Refining the plot
 max(asyms[[1]])
+# [1] 306.3362   ## After removing genes with only SNVs on one strand (ALL genes) 06/10/18
 # [1] 313.1942
 # [1] 326.1996   ## After removing genes with only SNVs on one strand
 # [1] 318.4453   ## After removing genes with only SNVs on one strand, and genes longer than 1.5MB (CNTNAP2, PTPRD, LSAMP and RBFOX1)
 # [1] 305.9242   ## After removing genes longer than 2MB (CNTNAP2, PTPRD and LSAMP)
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim318.pdf")), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_ylim306.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    asym <- asyms[[i]]
    idx <- idxs[i]
    
-   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 318.4453))
+   barplot(asym, ylab="SNVs/Mb", main=getMain(rownames(asym)), beside=TRUE, width=.3, col=c("lightskyblue", "sandybrown", "sandybrown", "lightskyblue"), ylim=c(0, 306.3362))
    mtext(paste(c(paste0(REFS[idx], ":", REFS[idx+1]), paste0(REFS[idx+1], ":", REFS[idx])), collapse=" vs "), cex=0.55, font=3, line=0.5)
 }
 dev.off()
@@ -255,7 +267,7 @@ for (i in 1:length(idxs)) {
    GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
    
    ens.asym <- ens.asyms[[i]]   ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
-   ens.asym.q4 <- getTxQ4(ens.asym, tpm.gene.input.log2) 
+   ens.asym.q4 <- getTxQ4(tpm.gene.input.log2, ens.asym) 
    
    q4 <- as.matrix(toTable(0, 4, 2, c("n=", "n=", "n=", "n=")))
    rownames(q4) <- c(paste0(REFS[idx], "ntx:", REFS[idx+1], "tx"), paste0(REFS[idx+1], "ntx:", REFS[idx], "tx"))
@@ -302,16 +314,21 @@ dev.off()
 # Step 5.3: Log2 transcription-associated SNV asymmetry (Figure S3)
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_log2_ylim1.5.pdf")), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_log2_ylim1.75.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
    colnames(q4) <- c("", "           Tx", "", "")
    
-   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))   ## ADD 08/03/18
-   mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
+   barplot(-log2(q4[1,]/q4[2,]), ylab="TCR efficiency", ylim=c(-0.5, 1.75), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))   ## ADD 08/03/18
+   mtext(paste0("-log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
+
+
+
+
+
 
 
 

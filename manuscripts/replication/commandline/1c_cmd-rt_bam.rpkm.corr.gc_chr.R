@@ -1,0 +1,56 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(TRUE)
+BASE <- args[1]   ## Cancer type
+LIST <- args[2]   ## Samples
+CHR  <- as.numeric(args[3]) 
+PAIR <- args[4]   ## T(umour) or N(ormal) pair
+base <- tolower(BASE)
+
+# =============================================================================
+# Name: 1c_cmd-rt_bam.rpkm.corr.gc_chr.R (Commandline mode)
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 11/06/17
+# =============================================================================
+wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
+#wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
+
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
+handbooks  <- c("Common.R", "DifferentialExpression.R", "ReplicationTiming.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
+
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+
+# -----------------------------------------------------------------------------
+# Calculate absolute RPKM
+# Last Modified: 14/05/17
+# -----------------------------------------------------------------------------
+wd <- file.path("/projects/cangen/tyang2", BASE)   ## tyang2@cheops
+wd.ngs      <- file.path(wd, "ngs/WGS")
+wd.ngs.data <- file.path(wd.ngs, "data")
+wd.anlys    <- file.path(wd, "analysis")
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data")
+
+samples <- readTable(file.path(wd.ngs, LIST), header=F, rownames=F, sep="")
+
+##
+#for (c in 1:length(chrs)) {
+   chr <- chrs[CHR]
+   bed.gc.chr <- rownames(subset(bed.gc, CHR == chr))
+
+   rpkms.chr <- initReadDepthPerChromosome(samples, bed.gc.chr)   ## See ReplicationTiming.R
+   for (s in 1:length(samples)) {
+      sample <- samples[s]
+    
+      rpkm <- readTable(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR, ".bam.rpkm.corr.gc.txt.gz")), header=T, rownames=T, sep="")[, c("BED", "RPKM_CORR_GC")]
+      rpkm.chr <- rpkm[bed.gc.chr,]
+    
+      rpkms.chr[rpkm.chr$BED, s] <- rpkm.chr$RPKM_CORR_GC
+   }
+
+   rpkms.chr$BED <- rownames(rpkms.chr)
+   writeTable(rpkms.chr[,c("BED", samples)], gzfile(paste0(wd.ngs.data, tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz")), colnames=T, rownames=F, sep="\t")
+#}

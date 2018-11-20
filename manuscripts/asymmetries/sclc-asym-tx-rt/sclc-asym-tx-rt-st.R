@@ -27,8 +27,8 @@ base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-tx-rt"))
-wd.asym.data  <- file.path(wd.asym,  "data")
-wd.asym.plots <- file.path(wd.asym,  "plots")
+wd.asym.data  <- file.path(wd.asym,  "data/bstrp")
+wd.asym.plots <- file.path(wd.asym,  "plots/cut3/bstrp")
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
@@ -44,7 +44,7 @@ q4s.rt.ho <- list()   ## ADD 31/05/18
 q4s.rt.ho[[1]] <- q4s.rt[[3]]
 
 ## Followed Step 6.2
-headon <- "ho"   ## Replication–transcription Head-on (ho) / Co-directional (cd) collisions
+headon <- "cd"   ## Replication–transcription Head-on (ho) / Co-directional (cd) collisions
 strand <- "fw"   ## Forward transcription (fw) / Reverse transcription (re) strands
 
 q4s <- list()
@@ -82,7 +82,7 @@ for (i in 1:length(idxs)) {
  
    q4s[[i]] <- q4
 }
-q4s.rt.ho[[2]] <- q4s
+q4s.rt.cd[[2]] <- q4s
 
 ##
 save(q4s.rt.cd, q4s.rt.ho, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt_snv_q4s_rt_st.RData")))
@@ -142,7 +142,7 @@ getLog2RatioQ4 <- function(cg.q4, gc.q4) {
       cgs <- as.numeric(cg.q4[[q]])
       gcs <- as.numeric(gc.q4[[q]])
 
-      ratio.q4[[q]] <- log2(cgs / gcs)
+      ratio.q4[[q]] <- -log2(cgs / gcs)
    }
  
    return(ratio.q4)
@@ -292,17 +292,17 @@ plotQ4SPlus <- function(q4s, file.name, file.main, mtext, ylim, ylab, isLog10, i
 }
 
 ##
-headons <- c("ho", "cd")
+headons <- c("cd", "ho")
 strands <- c("fw", "re")
 q4s.s6.rt.st.gen <- initTableS6RTSt()
 q4s.s6.rt.st.len <- initTableS6RTSt()
 #q4s.s6.rt.st.strand <- initTableS6RTSt()
-#q4s.s6.rt.st.mut <- initTableS6RTSt()
+q4s.s6.rt.st.mut <- initTableS6RTSt()
 q4s.s6.rt.st.mut.cg <- initTableS6RTSt()
 q4s.s6.rt.st.mut.gc <- initTableS6RTSt()
 q4s.s6.rt.st.ratio  <- initTableS6RTSt()
-q4s.s6.rt.st.ratio.permb <- initTableS6RTSt()
-#q4s.s6.rt.st.rate <- initTableS6RTSt()
+#q4s.s6.rt.st.ratio.permb <- initTableS6RTSt()
+q4s.s6.rt.st.rate <- initTableS6RTSt()
 #q4s.s6.rt.st.g2g <- initTableS6RTSt()
 for (i in 1:length(idxs)) {
    ens.asym <- ens.asyms[[i]]   ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
@@ -336,24 +336,24 @@ for (i in 1:length(idxs)) {
          
          CntxGtx <- subset(CntxGtx, ensembl_gene_id %in% txs)
          GntxCtx <- subset(GntxCtx, ensembl_gene_id %in% txs)
-         #s1.all <- rbind(CntxGtx, GntxCtx)
+         s1.all <- rbind(CntxGtx, GntxCtx)
 
-         #q4s.s6.rt.st.gen[[i]][[rt]][[st]] <- txs.q4
-         #q4s.s6.rt.st.len[[i]][[rt]][[st]] <- getLengthQ4(txs.q4)
+         q4s.s6.rt.st.gen[[i]][[rt]][[st]] <- txs.q4
+         q4s.s6.rt.st.len[[i]][[rt]][[st]] <- getLengthQ4(txs.q4)
          #q4s.s6.rt.st.strand[[i]][[rt]][[st]] <- getStrandQ4(txs.q4)
-         #q4s.s6.rt.st.mut[[i]][[rt]][[st]] <- getMutationQ4(s1.all, txs.q4)
-         #q4s.s6.rt.st.mut.cg[[i]][[rt]][[st]] <- getMutationQ4(CntxGtx, txs.q4)
-         #q4s.s6.rt.st.mut.gc[[i]][[rt]][[st]] <- getMutationQ4(GntxCtx, txs.q4)
+         q4s.s6.rt.st.mut[[i]][[rt]][[st]] <- getMutationQ4(s1.all, txs.q4)
+         q4s.s6.rt.st.mut.cg[[i]][[rt]][[st]] <- getMutationQ4(CntxGtx, txs.q4)
+         q4s.s6.rt.st.mut.gc[[i]][[rt]][[st]] <- getMutationQ4(GntxCtx, txs.q4)
          
          #tx.q4.all <- getTxQ4(NA, tpm.gene.input.log2)
          #g2g.q4.all <- getG2GQ4(tx.q4.all, NULL)
          
-         q4s.s6.rt.st.g2g[[i]][[rt]][[st]] <- getG2GQ4fromAll(txs.q4, tx.q4.all, g2g.q4.all)
+         #q4s.s6.rt.st.g2g[[i]][[rt]][[st]] <- getG2GQ4fromAll(txs.q4, tx.q4.all, g2g.q4.all)
          #q4s.s6.rt.st.g2g[[i]][[rt]][[st]] <- getG2GQ4(txs.q4, NULL)
       }
    }
 }
-save(q4s.s6.rt.st.gen, q4s.s6.rt.st.len, q4s.s6.rt.st.mut, q4s.s6.rt.st.mut.cg, q4s.s6.rt.st.mut.gc, q4s.s6.rt.st.ratio, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt_snv_q4s_s6_rt_st_ratio.RData")))
+save(q4s.s6.rt.st.gen, q4s.s6.rt.st.len, q4s.s6.rt.st.mut, q4s.s6.rt.st.mut.cg, q4s.s6.rt.st.mut.gc, q4s.s6.rt.st.ratio, q4s.s6.rt.st.rate, file=file.path(wd.asym.data, paste0(base, "_asym_tx_rt_snv_q4s_rt_st_ratio.RData")))
 
 getAll<- function(i, q4s.mut, as.numeric) {
    if (!is.null(i))  
@@ -370,79 +370,6 @@ getAll<- function(i, q4s.mut, as.numeric) {
                   muts <- c(muts, q4s.mut[[i]][[rt]][[st]][[q]])
    return(muts)
 }
-
-
-
-
-
-
-###
-## Individual TCR ratio
-i <- 1
-CntxGtx <- rbind(tx.snv.s6[[i]][[1]][[1]],               tx.snv.s6[[i]][[2]][[2]])
-CntxGtx.gene <- subset(CntxGtx, ensembl_gene_id == "ENSG00000174469")
-GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
-GntxCtx.gene <- subset(GntxCtx, ensembl_gene_id == "ENSG00000174469")
-
-CntxGtx.gene.samples <- subset(CntxGtx.gene, SAMPLE %in% overlaps)
-GntxCtx.gene.samples <- subset(GntxCtx.gene, SAMPLE %in% overlaps)
-# log2(nrow(CntxGtx.gene.samples)/nrow(GntxCtx.gene.samples))
-# [1] -0.04377957
-
-CNTNAP2.ratios <- c()
-for (s in 1:length(overlaps)) {
-   CntxGtx.gene.sample <- subset(CntxGtx.gene, SAMPLE == overlaps[s])
-   GntxCtx.gene.sample <- subset(GntxCtx.gene, SAMPLE == overlaps[s])
- 
-   CNTNAP2.ratios <- c(CNTNAP2.ratios, log2(nrow(CntxGtx.gene.sample)/nrow(GntxCtx.gene.sample)))
-}
-
-
-
-nrow(subset(tx.snv.s6[[i]][[2]][[2]], ensembl_gene_id == "ENSG00000174469"))
-
-CntxGtx      <- tx.snv.s6[[i]][[1]][[1]]      ## ADD 23/06/18
-CntxGtx.gene <- subset(CntxGtx, ensembl_gene_id == "ENSG00000174469")
-GntxCtx      <- tx.snv.s6[[i]][[2]][[1]]
-GntxCtx.gene <- subset(GntxCtx, ensembl_gene_id == "ENSG00000174469")
-# > log2(nrow(CntxGtx.gene)/nrow(GntxCtx.gene))
-# [1] -0.04065789
-# > nrow(CntxGtx.gene)
-# [1] 2519
-# > nrow(GntxCtx.gene)
-# [1] 2591
-
-## RB1
-i <- 1
-CntxGtx      <- tx.snv.s6[[i]][[1]][[1]]      ## ADD 23/06/18
-CntxGtx.gene <- subset(CntxGtx, ensembl_gene_id == "ENSG00000139687")
-GntxCtx      <- tx.snv.s6[[i]][[2]][[1]]
-GntxCtx.gene <- subset(GntxCtx, ensembl_gene_id == "ENSG00000139687")
-for (i in 2:length(idxs)) {
-   CntxGtx      <- tx.snv.s6[[i]][[1]][[1]]      ## ADD 23/06/18
-   CntxGtx.gene <- rbind(CntxGtx.gene, subset(CntxGtx, ensembl_gene_id == "ENSG00000139687"))
-   GntxCtx      <- tx.snv.s6[[i]][[2]][[1]]
-   GntxCtx.gene <- rbind(GntxCtx.gene, subset(GntxCtx, ensembl_gene_id == "ENSG00000139687"))
-}
-
-log2(nrow(CntxGtx.gene)/nrow(GntxCtx.gene))
-# [1] -2.643856   ## C>T/G>A
-# [1] -1.263034   ## All
-
-RB1.ratios <- c()
-for (s in 1:length(overlaps)) {
-   CntxGtx.gene.sample <- subset(CntxGtx.gene, SAMPLE == overlaps[s])
-   GntxCtx.gene.sample <- subset(GntxCtx.gene, SAMPLE == overlaps[s])
-   
-   RB1.ratios <- c(RB1.ratios, log2(nrow(GntxCtx.gene.sample)/nrow(CntxGtx.gene.sample)))
-}
-# > length(unique(CntxGtx.gene$SAMPLE))
-# [1] 24
-# > length(unique(GntxCtx.gene$SAMPLE))
-# [1] 53
-# > intersect(unique(CntxGtx.gene$SAMPLE), unique(GntxCtx.gene$SAMPLE))
-# [1] "S00501" "S02344" "S02385" "S02209" "S01861"
-
 
 ###
 ##
@@ -473,26 +400,674 @@ plot(log10(muts)~lens, ylab="Mutation (log10)", xlab="Gene length", main="SCLC")
 mtext(mtext, cex=0.8, font=3, line=0.5)
 dev.off()
 
+file.name <- file.path(wd.asym.plots, paste0(base, "_tx_rt_muts-lens_log10_log10.png"))
+png(file.name, height=400, width=400)
+plot(log10(muts)~log10(lens), ylab="Mutation (log10)", xlab="Gene length", main="SCLC")
+mtext(mtext, cex=0.8, font=3, line=0.5)
+dev.off()
+
 lens <- lens/1000000
 rates <- muts/lens
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_tx_rt_rates-lens_log10_log10.png"))
 png(file.name, height=400, width=400)
-plot(log10(muts/lens)~log10(lens), ylab="Mutation rate log10(SNV/Mb)", xlab="Gene length log10(Mb)", main="SCLC")
+plot(log10(rates)~log10(lens), ylab="Mutation rate log10(SNV/Mb)", xlab="Gene length log10(Mb)", main="SCLC")
 mtext(mtext, cex=0.8, font=3, line=0.5)
 dev.off()
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_tx_rt_rates-lens_log10.png"))
 png(file.name, height=400, width=400)
-plot(log10(muts/lens)~lens, ylab="Mutation rate log10(SNV/Mb)", xlab="Gene length (Mb)", main="SCLC")
+plot(log10(rates)~lens, ylab="Mutation rate log10(SNV/Mb)", xlab="Gene length (Mb)", main="SCLC")
 mtext(mtext, cex=0.8, font=3, line=0.5)
 dev.off()
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_tx_rt_rates-lens.png"))
 png(file.name, height=400, width=400)
-plot((muts/lens)~lens, ylab="Mutation rate (SNV/Mb)", xlab="Gene length (Mb)", main="SCLC")
+plot(rates~lens, ylab="Mutation rate (SNV/Mb)", xlab="Gene length (Mb)", main="SCLC")
 mtext(mtext, cex=0.8, font=3, line=0.5)
 dev.off()
+
+###
+## 09/10/18
+#ensGene.tx.rt.nona.sign.lcl.ca <- ensGene.tx.rt.nona.sign[gens,]
+ensGene.tx.rt.nona.sign.bstrp.ca <- ensGene.tx.rt.nona.sign.bstrp[gens,]   ## ADD 24/10/18
+ensGene.tx.rt.nona.sign.bstrp.ca$MUT <- muts
+ensGene.tx.rt.nona.sign.bstrp.ca$MUT_CG <- muts.cg
+ensGene.tx.rt.nona.sign.bstrp.ca$MUT_GC <- muts.gc
+ensGene.tx.rt.nona.sign.bstrp.ca$RATIO_LOG2 <- -log2(muts.cg / muts.gc)
+ensGene.tx.rt.nona.sign.bstrp.ca$MEDIAN <- exps
+ensGene.tx.rt.nona.sign.bstrp.ca$CD <- ensGene.tx.rt.nona.sign.bstrp.ca$strand * ensGene.tx.rt.nona.sign.bstrp.ca$RT
+
+save(ensGene.tx.rt.nona.sign.bstrp, ensGene.tx.rt.nona.sign.bstrp.ca, file=file.path(file.path(wd.asym,  "data/bstrp"), paste0(base, "_ensGene.tx.rt.nona.sign.bstrp.ca.RData")))
+
+
+ratios <- -log2(muts.cg / muts.gc)
+file.name <- file.path(wd.asym.plots, paste0(base, "_tx_rt_ratios-lens_log10.png"))
+png(file.name, height=400, width=400)
+plot(ratios~log10(lens), ylab="TCR efficiency", xlab="Gene length log10(Mb)", main="SCLC")
+mtext(mtext, cex=0.8, font=3, line=0.5)
+dev.off()
+
+## Whats the distribution of mutation numbers? 10/10/18
+file.name <- "/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/asymmetries/sclc-asym-tx-rt/plots/cut3/lcl/sclc_tx_rt_freq_muts_cg_log10.pdf"
+d <- getDensityCount(log10(ensGene.input$MUT_CG))
+ymax <- max(d$y)
+pdf(file.name, height=6, width=6)
+plot(d, ylab="Frequency", xlab="Mutation (log10)", main="C>A", ylim=c(0, ymax))
+dev.off()
+
+file.name <- "/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/asymmetries/sclc-asym-tx-rt/plots/cut3/lcl/sclc_tx_rt_freq_muts_gc_log10.pdf"
+d <- getDensityCount(log10(ensGene.input$MUT_GC))
+ymax <- max(d$y)
+pdf(file.name, height=6, width=6)
+plot(d, ylab="Frequency", xlab="Mutation (log10)", main="G>T", ylim=c(0, ymax))
+dev.off()
+
+file.name <- "/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/asymmetries/sclc-asym-tx-rt/plots/cut3/lcl/sclc_tx_rt_freq_ratios.pdf"
+d <- getDensityCount(ensGene.input$RATIO_LOG2)
+ymax <- max(d$y)
+pdf(file.name, height=6, width=6)
+plot(d, ylab="Frequency", xlab="TCR efficiency", main="C>A / G>T", ylim=c(0, ymax))
+dev.off()
+
+
+
+## CUT2, TCR
+ensGene.input <- ensGene.tx.rt.nona.sign.ca
+ensGene.input <- subset(ensGene.input, MUT_CG >= 2)
+ensGene.input <- subset(ensGene.input, MUT_GC >= 2)
+#ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
+txs.q4 <- getTxQ4(ensGene.input, NA)
+q4ss <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+## 13/10/18 TEST LCL
+overlaps <- intersect(rownames(ensGene.tx.rt.nona.sign.ca), rownames(ensGene.tx.rt.nona.sign))
+overlaps4 <- setdiff(rownames(ensGene.tx.rt.nona.sign.ca), overlaps)
+> length(overlaps)
+[1] 8480     8480/9278=0.9139901
+> length(overlaps4)
+[1] 798
+> 8480 + 798
+[1] 9278
+
+nrow(ensGene.tx.rt.nona.sign.ca)
+# [1] 9278
+# [1] 723   ## TCD; 798/9278 = 0.08600992
+length(overlaps)
+# [1] 8480
+# [1] 659     ## TCD (LCL) 0.9114799
+# 7821/8555   ## 0.9142022
+
+tx.q4.fix <- getTxQ4(tpm.gene.input.log2[overlaps,], NA)
+for (q in 1:4)
+   print(length(tx.q4.fix[[q]]))
+
+overlaps <- rownames(ensGene.tx.rt.nona.sign.bstrp.ca)
+# > nrow(ensGene.tx.rt.nona.sign.bstrp.ca)
+# [1] 9252
+wd.asym.plots <- file.path(wd.asym,  "plots/cut3/bstrp/rb1")
+overlaps2 <- intersect(overlaps, rownames(subset(de.tpm.gene, LOG2_FC > 0)))
+overlaps3 <- intersect(overlaps, rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+## TEST (TCR, no 0; 09/10/18); PCG 11/10/18
+#ensGene.input <- ensGene.tx.rt.nona.sign.ca
+ensGene.input <- ensGene.tx.rt.nona.sign.bstrp.ca[overlaps2,]   ## TEST LCL, DIFF, RB1
+#ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
+#ensGene.input <- subset(ensGene.input, protein_coding_non_redundant == T)
+ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+ensGene.input <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.cd.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.cd.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+#ensGene.input <- ensGene.tx.rt.nona.sign.ca
+ensGene.input <- ensGene.tx.rt.nona.sign.bstrp.ca[overlaps2,]   ## TEST LCL
+#ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
+#ensGene.input <- subset(ensGene.input, protein_coding_non_redundant == T)
+ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+q4ss.tcr.rb1 <- q4ss.tcr
+q4ss.tcr.wt  <- q4ss.tcr
+
+RB1
+[1] 304
+[1] 485
+[1] 537
+[1] 312
+
+WT
+[1] 573
+[1] 537
+[1] 352
+[1] 214
+
+wd.asym.plots <- file.path(wd.asym,  "plots/cut3/bstrp/wt")
+## TEST (TCD; 09/10/18)
+#ensGene.input <- ensGene.tx.rt.nona.sign.ca
+ensGene.input <- ensGene.tx.rt.nona.sign.bstrp.ca[overlaps,]   ## TEST LCL
+#ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
+#ensGene.input <- subset(ensGene.input, protein_coding_non_redundant == T)
+ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+ensGene.input <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.cd.tcd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.cd.tcd[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+#ensGene.input <- ensGene.tx.rt.nona.sign.ca
+ensGene.input <- ensGene.tx.rt.nona.sign.bstrp.ca[overlaps,]   ## TEST LCL
+#ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
+#ensGene.input <- subset(ensGene.input, protein_coding_non_redundant == T)
+ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+
+## TEST TO-DO (with same Q4 genes; 10/10/18)
+ensGene.input <- ensGene.tx.rt.nona.sign.ca
+txs.q4 <- getTxQ4(ensGene.input, NA)
+#...
+
+##
+ensGene.input <- subset(ensGene.tx.rt.nona.sign.ca, CD > 0)
+txs.q4 <- getTxQ4(ensGene.input, NA)
+q4ss.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.ho[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input <- subset(ensGene.tx.rt.nona.sign.ca, CD < 0)
+ensGene.input <- subset(ensGene.input, strand < 0)
+txs.q4 <- getTxQ4(ensGene.input, NA)
+q4ss.ho.re <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.ho.re[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input <- subset(ensGene.tx.rt.nona.sign.ca, CD < 0)
+ensGene.input <- subset(ensGene.input, strand < 0)
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+txs.q4 <- getTxQ4(ensGene.input, NA)
+q4ss.ho.re.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.ho.re.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+
+###
+##
+plotQ4SS <- function(q4ss, file.name, file.main, mtext, ylim, ylab, isLog10) {
+   counts <- c()
+   quantiles <- c()
+   names <- c()
+   for (q in 1:4) {
+      counts    <- c(counts, q4ss[[q]])
+      quantiles <- c(quantiles, mapply(x = 1:length(q4ss[[q]]), function(x) paste0("q", q)))
+      names <- c(names, paste0("Q", q, "\nn=", length(q4ss[[q]])))
+   }
+ 
+   pdf(file.name, height=6, width=4)
+   #par(mgp=c(3,2,0))
+   if (isLog10)
+      boxplot(log10(as.numeric(counts))~quantiles, ylab=ylab, xlab=c("", "Expression"), names=c("", "", "", ""), main=file.main, ylim=log10(ylim))
+   else
+      boxplot(as.numeric(counts)~quantiles, ylab=ylab, xlab=c("", "Expression"), names=c("", "", "", ""), main=file.main, ylim=ylim)
+   mtext(mtext, cex=0.8, font=3, line=0.5)
+   axis(1, at=1:4, names, line=1, lwd=0)
+   dev.off()
+}
+
+file.main <- getMain(rownames(asyms[[i]]))
+q4 <- q4s[[i]]
+mtext <- paste0("-log2(", paste(rownames(q4), collapse="/"), ")")
+
+ylim <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_CD.pdf"))
+plotQ4SS(q4ss.cd, file.name, file.main, mtext, ylim=ylim, "TCR efficiency", isLog10=F)
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_HO_FW.pdf"))
+plotQ4SS(q4ss.ho.fw, file.name, file.main, mtext, ylim=ylim, "TCR efficiency", isLog10=F)
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_HO_FW_TCR.pdf"))
+plotQ4SS(q4ss.ho.fw.tcr, file.name, file.main, mtext, ylim=ylim, "TCR efficiency", isLog10=F)
+
+## TEST (remove TCD AND 0; 09/10/18)
+file.main <- getMain(rownames(asyms[[i]]))
+
+ylim.tcr <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCR_HO.pdf"))
+plotQ4SS(q4ss.ho.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "Transcription-coupled repair (TCR)", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCR_CD.pdf"))
+plotQ4SS(q4ss.cd.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "Transcription-coupled repair (TCR)", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCR.pdf"))
+plotQ4SS(q4ss.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "Transcription-coupled repair (TCR)", isLog10=F)
+
+## TEST (remove TCD AND 0; 09/10/18)
+ylim.tcd <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCD.pdf"))
+plotQ4SS(q4ss.tcd, file.name, file.main, mtext, ylim=ylim.tcd, "Transcription-coupled damage (TCD)", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCD_CD.pdf"))
+plotQ4SS(q4ss.cd.tcd, file.name, file.main, mtext, ylim=ylim.tcd, "Transcription-coupled damage (TCD)", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCD_HO.pdf"))
+plotQ4SS(q4ss.ho.tcd, file.name, file.main, mtext, ylim=ylim.tcd, "Transcription-coupled damage (TCD)", isLog10=F)
+
+test1 <- subset(tx.snv.input, ensembl_gene_id == "ENSG00000101773")
+nrow(test1)
+w <- subset(subset(test1, REF == REFS[idx]), ALT == ALTS[idx])
+nrow(w)
+c <- subset(subset(test1, REF == REFS[idx+1]), ALT == ALTS[idx+1])
+nrow(c)
+
+### 
+## BSTRPS, TCR (with 0), CUT3 (24/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.05502433
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.6724291
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.7672837
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.6461344
+
+## BSTRPS, TCR (with 0), CUT3, RB1 vs WT
+testW(q4ss.tcr.wt[[1]], q4ss.tcr.rb1[[1]])
+# [1] 0.8338736
+testW(q4ss.tcr.wt[[2]], q4ss.tcr.rb1[[2]])
+# [1] 4.350301e-07
+testW(q4ss.tcr.wt[[3]], q4ss.tcr.rb1[[3]])
+# [1] 0.02650528
+testW(q4ss.tcr.wt[[4]], q4ss.tcr.rb1[[4]])
+# [1] 0.2990151
+
+## BSTRPS, TCR (with 0), CUT3, RB1 (24/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.5784186
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.4203474
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.5076167
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.5459712
+
+## BSTRPS, TCR (with 0), CUT3, WT (24/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.110032
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.1973446
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.1348178
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.9972009
+
+###
+## BSTRPS, TCD, CUT3 (24/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+# [1] 0.308382
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+# [1] 0.03064599
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+# [1] 0.9950905
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+# [1] 0.006032773
+
+## BSTRPS, TCD, CUT3, RB1 (24/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+# [1] 0.2528753
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+# [1] 0.01566944
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+# [1] 0.2195191
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+# [1] 0.008715093
+
+## BSTRPS, TCD, CUT3, WT (24/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+# [1] 0.3312693
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+# [1] 0.2960924
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+# [1] 0.2820041
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+# [1] 0.2573536
+
+
+
+
+
+
+
+
+### RBBP8 LOG2FC
+## BSTRPS, TCR (with 0), CUT3 (24/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.05502433
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.6724291
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.7672837
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.6461344
+
+## BSTRPS, TCR (with 0), CUT3, RB1 (24/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.7315229
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.9028323
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.5148238
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.01995117
+
+## BSTRPS, TCR (with 0), CUT3, WT (24/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.03048054
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.5232688
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.4585283
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.1626347
+
+###
+## BSTRPS, TCD, CUT3 (24/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+# [1] 0.308382
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+# [1] 0.03064599
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+# [1] 0.9950905
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+# [1] 0.006032773
+
+## BSTRPS, TCD, CUT3, RB1 (24/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+# [1] 0.2149555
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+# [1] 0.01337984
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+# [1] 0.7126456
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+# [1] 0.03574748
+
+## BSTRPS, TCD, CUT3, WT (24/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+# [1] 0.6484958
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+# [1] 0.5221352
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+# [1] 0.8966658
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+# [1] 0.1446292
+
+
+
+
+
+
+
+
+
+## LCL, TCR (with 0), CUT 3, RB1 (15/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.5748316
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.7136629
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.4300532
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.5186372
+ 
+testW(q4ss.cd.tcr[[1]], q4ss.cd.tcr[[2]])
+# [1] 8.723108e-10
+testW(q4ss.cd.tcr[[2]], q4ss.cd.tcr[[3]])
+# [1] 0.1144443
+testW(q4ss.cd.tcr[[3]], q4ss.cd.tcr[[4]])
+# [1] 0.3392386
+
+testW(q4ss.ho.tcr[[1]], q4ss.ho.tcr[[2]])
+# [1] 1.304904e-11
+testW(q4ss.ho.tcr[[2]], q4ss.ho.tcr[[3]])
+# [1] 0.002632109
+testW(q4ss.ho.tcr[[3]], q4ss.ho.tcr[[4]])
+# [1] 0.01416655
+
+median(q4ss.cd.tcr[[3]])
+# [1] 1.874469
+median(q4ss.ho.tcr[[3]])
+# [1] 1.883777
+median(q4ss.cd.tcr[[4]])
+# [1] 1.678072
+median(q4ss.ho.tcr[[4]])
+# [1] 1.584963
+
+nrow(ensGene.input)
+# [1] 1638
+
+
+testW(q4ss.tcr.wt[[1]], q4ss.tcr.rb[[1]])
+# [1] 0.5205019
+testW(q4ss.tcr.wt[[2]], q4ss.tcr.rb[[2]])
+# [1] 2.650335e-07
+testW(q4ss.tcr.wt[[3]], q4ss.tcr.rb[[3]])
+# [1] 0.09743082
+testW(q4ss.tcr.wt[[4]], q4ss.tcr.rb[[4]])
+# [1] 0.5361507
+
+
+
+## TCR (with 0), CUT 3, RB1 (15/10/18)
+testW(q4ss.tcr[[1]], q4ss.tcr[[2]])
+testW(q4ss.tcr[[2]], q4ss.tcr[[3]])
+testW(q4ss.tcr[[3]], q4ss.tcr[[4]])
+
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+
+testW(q4ss.cd.tcr[[1]], q4ss.cd.tcr[[2]])
+testW(q4ss.cd.tcr[[2]], q4ss.cd.tcr[[3]])
+testW(q4ss.cd.tcr[[3]], q4ss.cd.tcr[[4]])
+
+testW(q4ss.ho.tcr[[1]], q4ss.ho.tcr[[2]])
+testW(q4ss.ho.tcr[[2]], q4ss.ho.tcr[[3]])
+testW(q4ss.ho.tcr[[3]], q4ss.ho.tcr[[4]])
+
+median(q4ss.cd.tcr[[3]])
+median(q4ss.ho.tcr[[3]])
+median(q4ss.cd.tcr[[4]])
+median(q4ss.ho.tcr[[4]])
+
+nrow(ensGene.input)
+
+## TCD, LCL, CUT 3 (12/10/18)
+testW(q4ss.cd.tcd[[1]], q4ss.ho.tcd[[1]])
+testW(q4ss.cd.tcd[[2]], q4ss.ho.tcd[[2]])
+testW(q4ss.cd.tcd[[3]], q4ss.ho.tcd[[3]])
+testW(q4ss.cd.tcd[[4]], q4ss.ho.tcd[[4]])
+
+testW(q4ss.tcd[[1]], q4ss.tcd[[2]])
+testW(q4ss.tcd[[2]], q4ss.tcd[[3]])
+testW(q4ss.tcd[[3]], q4ss.tcd[[4]])
+
+testW(q4ss.cd.tcd[[3]], q4ss.cd.tcd[[4]])
+testW(q4ss.ho.tcd[[3]], q4ss.ho.tcd[[4]])
+
+nrow(ensGene.input)
+
+
+
+## Remove TCD (with 0), CUT 3 (12/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+[1] 0.07644623
+> testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+[1] 0.0824414
+> testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+[1] 0.8498209
+> testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+[1] 0.9416512
+>  
+ > testW(q4ss.tcr[[3]], q4ss.tcr[[4]])
+[1] 0.6827462
+> testW(q4ss.cd.tcr[[3]], q4ss.cd.tcr[[4]])
+[1] 0.5119256
+> testW(q4ss.ho.tcr[[3]], q4ss.ho.tcr[[4]])
+[1] 0.7173703
+>  
+ > median(q4ss.cd.tcr[[3]])
+[1] 1.736966
+> median(q4ss.ho.tcr[[3]])
+[1] 1.807355
+> median(q4ss.cd.tcr[[4]])
+[1] 1.736966
+> median(q4ss.ho.tcr[[4]])
+[1] 1.736966
+> 
+ > nrow(ensGene.input)
+[1] 3660
+> length(which(ensGene.input$RATIO_LOG2 == 0))
+[1] 0
+
+## Remove TCD (with 0), CUT 3 (11/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+
+testW(q4ss.cd.tcr[[3]], q4ss.cd.tcr[[4]])
+testW(q4ss.ho.tcr[[3]], q4ss.ho.tcr[[4]])
+
+median(q4ss.cd.tcr[[3]])
+median(q4ss.ho.tcr[[3]])
+median(q4ss.cd.tcr[[4]])
+median(q4ss.ho.tcr[[4]])
+
+nrow(ensGene.input)
+length(which(ensGene.input$RATIO_LOG2 == 0))
+
+## Remove TCD AND 0 (10/10/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.5699394
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.2834457
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.1916649
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.9355701
+
+testW(q4ss.cd.tcr[[3]], q4ss.cd.tcr[[4]])
+# [1] 0.004553327
+testW(q4ss.ho.tcr[[3]], q4ss.ho.tcr[[4]])
+# [1] 0.1420061
+
+median(q4ss.cd.tcr[[3]])
+# [1] 2.263034
+median(q4ss.ho.tcr[[3]])
+# [1] 2.169925
+median(q4ss.cd.tcr[[4]])
+# [1] 2
+median(q4ss.ho.tcr[[4]])
+# [1] 2
+
+## Remove TCD but with 0
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.05076076
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.2485787
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.1223452
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.3311788
+
+testW(q4ss.cd.tcr[[3]], q4ss.cd.tcr[[4]])
+# [1] 0.0003360581
+testW(q4ss.ho.tcr[[3]], q4ss.ho.tcr[[4]])
+# [1] 0.003844611
+
+median(q4ss.cd.tcr[[3]])
+# [1] 2
+median(q4ss.ho.tcr[[3]])
+# [1] 2
+median(q4ss.cd.tcr[[4]])
+# [1] 1.925999
+median(q4ss.ho.tcr[[4]])
+# [1] 1.847997
+
+## TCR + TCD
+testW(q4ss.cd[[1]], q4ss.ho[[1]])
+# [1] 0.2046874
+testW(q4ss.cd[[2]], q4ss.ho[[2]])
+# [1] 0.8209866
+testW(q4ss.cd[[3]], q4ss.ho[[3]])
+# [1] 0.2956054
+testW(q4ss.cd[[4]], q4ss.ho[[4]])
+# [1] 0.07701628
+
+median(q4ss.cd[[4]])
+# [1] 1.736966
+median(q4ss.ho[[4]])
+# [1] 1.678072
+
+testW(q4ss.cd[[3]], q4ss.cd[[4]])
+# [1] 0.01156121
+testW(q4ss.ho[[3]], q4ss.ho[[4]])
+# [1] 0.001568392
+
+
+
+
+
+testW(q4ss.cd.fw[[1]], q4ss.cd.re[[1]])
+# [1] 0.525491
+testW(q4ss.cd.fw[[2]], q4ss.cd.re[[2]])
+# [1] 0.003414948
+testW(q4ss.cd.fw[[3]], q4ss.cd.re[[3]])
+# [1] 0.8975287
+testW(q4ss.cd.fw[[4]], q4ss.cd.re[[4]])
+# [1] 0.4087991
+
+testW(q4ss.ho.fw[[1]], q4ss.ho.re[[1]])
+# [1] 0.7474507
+testW(q4ss.ho.fw[[2]], q4ss.ho.re[[2]])
+# [1] 0.1961129
+testW(q4ss.ho.fw[[3]], q4ss.ho.re[[3]])
+# [1] 0.1298423
+testW(q4ss.ho.fw[[4]], q4ss.ho.re[[4]])
+# [1] 0.2926868
+
+testW(q4ss.cd.fw.tcd[[1]], q4ss.cd.re.tcd[[1]])
+testW(q4ss.cd.fw.tcd[[2]], q4ss.cd.re.tcd[[2]])
+testW(q4ss.cd.fw.tcd[[3]], q4ss.cd.re.tcd[[3]])
+testW(q4ss.cd.fw.tcd[[4]], q4ss.cd.re.tcd[[4]])
+
+testW(q4ss.ho.fw.tcd[[1]], q4ss.ho.re.tcd[[1]])
+testW(q4ss.ho.fw.tcd[[2]], q4ss.ho.re.tcd[[2]])
+testW(q4ss.ho.fw.tcd[[3]], q4ss.ho.re.tcd[[3]])
+testW(q4ss.ho.fw.tcd[[4]], q4ss.ho.re.tcd[[4]])
+
+testW(q4ss.ho.re.tcd[[1]], q4ss.cd.re.tcd[[1]])
+testW(q4ss.ho.re.tcd[[2]], q4ss.cd.re.tcd[[2]])
+testW(q4ss.ho.re.tcd[[3]], q4ss.cd.re.tcd[[3]])
+testW(q4ss.ho.re.tcd[[4]], q4ss.cd.re.tcd[[4]])
+
+
+
+
+
+
 
 ###
 ##
@@ -561,8 +1136,8 @@ for (i in 1:1) {
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_g2g_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
          #plotQ4S(q4s.s6.rt.st.g2g[[s]][[rt]][[st]], file.name, file.main, getYlim(q4s.s6.rt.st.g2g), "Gene-to-gene min dist. (log10)")
        
-         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_len_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
-         #plotQ4S(q4s.s6.rt.st.len[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.len, 1, 1), "Gene length (log10)", isLog10=T)
+         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_len_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
+         plotQ4S(q4s.s6.rt.st.len[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.len, 1, 1), "Gene length (log10)", isLog10=T)
          
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_mut_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
          #plotQ4S(q4s.s6.rt.st.mut[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.mut, 1, 1), "Mutation (log10)", isLog10=T)
@@ -570,14 +1145,14 @@ for (i in 1:1) {
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_rate_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
          #plotQ4S(q4s.s6.rt.st.rat[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.rat, 1, 1), "Mutation rate (log10)", isLog10=T)
          
-         file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
-         plotQ4S(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F)
+         #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
+         #plotQ4S(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR efficiency (-log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F)
 
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCR-plus.pdf"))
-         #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=T)
+         #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR (-log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=T)
 
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_ratio_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], "_TCP-minus.pdf"))
-         #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCR ratio (log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=F)
+         #plotQ4SPlus(q4s.s6.rt.st.ratio[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.ratio, 1, 1), "TCD (-log2 Cntx:Gtx/Gntx:Ctx)", isLog10=F, isPlus=F)
         
          #file.name <- file.path(wd.asym.plots, paste0(base, "_s6_tx_rt_g2g_", REFS[idx], ">", ALTS[idx], "_", headons[rt], "_", strands[st], ".pdf"))
          #plotQ4S(q4s.s6.rt.st.g2g[[i]][[rt]][[st]], file.name, file.main, mtext, ylim=getYlim(q4s.s6.rt.st.g2g, 1, 1), "G2G min distance (log10)", isLog10=T)
@@ -588,51 +1163,63 @@ for (i in 1:1) {
 ###
 ## TCR + TCD
 testW(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]])
-# [1] 0.8377938
+# [1] 0.04540133
 testW(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]])
-# [1] 0.4610965
+# [1] 0.0839085
 testW(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]])
-# [1] 0.0003187649
+# [1] 0.07596404
 testW(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]])
-# [1] 0.6978624
-
-## 
-testW(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[2]])
-# [1] 2.843444e-10
-testW(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[2]])
-# [1] 4.999115e-14
-testW(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[2]])
-# [1] 1.128388e-13
-testW(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[2]])
-# [1] 2.079477e-07
+# [1] 0.05387942
 
 ###
 ## TCR and TCD
 testWPlus <- function(a, b, isPlus) {
    if (isPlus)
-      return(testW(a[which(a > 0)], b[which(b >= 0)]))
+      return(testW(a[which(a > 0)], b[which(b > 0)]))
    else
-      return(testW(a[which(a < 0)], b[which(b <= 0)]))
+      return(testW(a[which(a < 0)], b[which(b < 0)]))
 }
 
+###
+## Without ratio=0
 testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]], isPlus=T)
-# [1] 1.528399e-09
+# [1] 0.004155493
 testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]], isPlus=T)
-# [1] 0.0001064173
+# [1] 0.5974946
 testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]], isPlus=T)
-# [1] 0.01066552
+# [1] 0.2342088
 testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]], isPlus=T)
-# [1] 2.092475e-05
+# [1] 0.7891488
 
 ##
 testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[1]][[4]], isPlus=F)
-# [1] 0.001232726
+# [1] 0.6681504
 testWPlus(q4s.s6.rt.st.ratio[[1]][[1]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[1]][[2]][[4]], isPlus=F)
-# [1] 0.02986251
+# [1] 0.087542
 testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[1]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[1]][[4]], isPlus=F)
-# [1] 1.230412e-05
+# [1] 0.960271
 testWPlus(q4s.s6.rt.st.ratio[[1]][[2]][[2]][[3]], q4s.s6.rt.st.ratio[[1]][[2]][[2]][[4]], isPlus=F)
-# [1] 0.02928739
+# [1] 0.001752346
+
+# -----------------------------------------------------------------------------
+# Step ?: Verify 
+# Last Modified: 09/10/18
+# -----------------------------------------------------------------------------
+for (i in 1:length(idxs))
+   for (rt in 1:length(headons))
+      for (st in 1:length(strands))
+         q4s.s6.rt.st.ratio[[i]][[rt]][[st]] <- getLog2RatioQ4(q4s.s6.rt.st.mut.cg[[i]][[rt]][[st]], q4s.s6.rt.st.mut.gc[[i]][[rt]][[st]])
+
+
+
+
+
+
+
+
+
+
+
 
 ###
 ##

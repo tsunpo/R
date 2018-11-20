@@ -2,8 +2,66 @@
 # Library      : Differential Gene Expression
 # Name         : handbook-of/DifferentialExpression.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 07/08/18
+# Last Modified: 16/11/18
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# Methods: Transcript-level TPM estimates using sleuth (for manuscripts/expression/*-tpm.R)
+# Last Modified: 28/03/17
+# -----------------------------------------------------------------------------
+tx2gene <- function(t2g) {
+   colnames(t2g) <- c("target_id", "ens_gene", "ext_gene")
+   #rownames(t2g) <- t2g$target_id
+ 
+   return(t2g)
+}
+
+tx2Ens <- function(ensGene) {
+   return(tx2gene(ensGene[,c("ensembl_transcript_id", "ensembl_gene_id", "external_gene_name")]))
+}
+
+## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## See line 30 in guide-to-the/hg19.R
+## https://www.ncbi.nlm.nih.gov/grc/help/patches
+list2Matrix <- function(list, kallisto.table) {
+   genes <- unique(kallisto.table$target_id)
+   samples <- unique(kallisto.table$sample)  
+ 
+   list.matrix <- data.frame(matrix(list, nrow=length(genes), byrow=T))
+   rownames(list.matrix) <- genes
+   colnames(list.matrix) <- samples
+ 
+   return(list.matrix)
+}
+
+# -----------------------------------------------------------------------------
+# Method: tpm.gene file manipulations
+# Last Modified: 10/04/18
+# -----------------------------------------------------------------------------
+## Remove patches (*_PATCH)
+getGeneTPM <- function(tpm.gene.patch, ensGene) {
+   overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
+   tpm.gene <- tpm.gene.patch[overlaps,]
+ 
+   return(tpm.gene)
+}
+
+## https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5143225/
+## https://www.nature.com/articles/nmeth.3580/figures/7
+getLog2andMedian <- function(tpm.gene, pseudocount) {
+   tpm.gene.log2 <- log2(tpm.gene + pseudocount)
+   tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
+ 
+   return(tpm.gene.log2)
+}
+
+getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly) {   ## ADD 11/04/18; ADD 01/02/18
+   if (autosomeOnly)
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, chromosome_name %in% paste0("chr", 1:22)))),]
+   if (proteinCodingOnly)
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+ 
+   return(tpm.gene)
+}
 
 # -----------------------------------------------------------------------------
 # Methods: Density plot
@@ -16,23 +74,20 @@ getDensityCount <- function(median) {
    return(d)
 }
 
-getMaxDensityCount <- function(median) {
-   return(max(getDensityCount(median)$y))
-}
-
-plotDensityCount <- function(median, file.main, file.name, ymax) {
-   d <- getDensityCount(median)
+plotDensityCount <- function(medians, file.main, number, ymax, pseudocount) {
+   d <- getDensityCount(medians)
+   number <- formatC(number, format="f", big.mark=",", digits=0)
  
    if (is.null(ymax))
       ymax <- max(d$y)
-   
+ 
    pdf(file.name, height=6, width=6)
-   plot(d, ylab="Frequency", xlab="log2(TPM + 0.01)", main=paste0("Genes (n=", file.main, ")"), ylim=c(0, ymax))
+   plot(d, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0("Genes (n=", number, ")"), ylim=c(0, ymax))
    dev.off()
 }
 
 # -----------------------------------------------------------------------------
-# Methods: Principal component analysis (PCA)
+# Methods: Principal component analysis (for manuscripts/expression/*-tpm-de.R)
 # Last Modified: 05/02/17
 # -----------------------------------------------------------------------------
 getPCA <- function(expr) {
@@ -321,137 +376,6 @@ writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
 ## http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GRP
 writeGRPformat <- function(list, wd.de.data, file.name) {
    writeTable(list, file.path(wd.de.data, paste0(file.name, ".grp")), colnames=F, rownames=F, sep="\t")
-}
-
-# =============================================================================
-# Inner Class  : kallisto/sleuth File Reader (for manuscripts/expression/*-tpm.R)
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 10/06/18
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Methods: Custom filters for using kallisto
-# Last Modified: 10/06/18
-# -----------------------------------------------------------------------------
-getFiltered <- function(reads, min_reads, min_prop) { 
-   numbers <- mapply(x = 1:nrow(reads), function(x) length(which(reads[x,] >= min_reads)))
- 
-  return(which(numbers/ncol(reads) >= min_prop))
-}
-
-kallisto_table_to_matrix <- function(kallisto.table, min_reads, min_prop) {
-   reads <- list2Matrix(kallisto.table$scaled_reads_per_base, kallisto.table)
-   tpm <- list2Matrix(kallisto.table$tpm, kallisto.table)
- 
-   return(tpm[getFiltered(reads, min_reads, min_prop),])
-}
-
-# -----------------------------------------------------------------------------
-# Methods: Transcript-level TPM estimates using sleuth
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-tx2gene <- function(t2g) {
-   colnames(t2g) <- c("target_id", "ens_gene", "ext_gene")
-   #rownames(t2g) <- t2g$target_id
-   
-   return(t2g)
-}
-
-tx2Ens <- function(ensGene) {
-   return(tx2gene(ensGene[,c("ensembl_transcript_id", "ensembl_gene_id", "external_gene_name")]))
-}
-
-## Gene-level TPMs with patches/scaffold sequences (*_PATCH)   ## Please refer to line 64 (in guide-to-the/hg19.R)
-## https://www.ncbi.nlm.nih.gov/grc/help/patches
-list2Matrix <- function(list, kallisto.table) {
-   genes <- unique(kallisto.table$target_id)
-   samples <- unique(kallisto.table$sample)  
- 
-   list.matrix <- data.frame(matrix(list, nrow=length(genes), byrow=T))
-   rownames(list.matrix) <- genes
-   colnames(list.matrix) <- samples
-   
-   return(list.matrix)
-}
-
-## Remove patches (*_PATCH)
-getTPMGene <- function(tpm.gene.patch) {
-   overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
-   tpm.gene <- tpm.gene.patch[overlaps,]
-   
-   return(tpm.gene)
-}
-
-getLog2andMedian <- function(tpm.gene) {
-   tpm.gene.log2 <- log2(tpm.gene + 0.01)
-   tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
- 
-   return(tpm.gene.log2)
-}
-
-# =============================================================================
-# Inner Class  : Extentions of guide-to-the/hg19.R
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 10/04/18
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Method: Get non-redundant gene list (ensGene)
-# Last Modified: 10/04/18
-# -----------------------------------------------------------------------------
-getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly, proteinCodingNonRedundantOnly) {   ## ADD 11/04/18; ADD 01/02/18
-   if (autosomeOnly)
-      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, chromosome_name %in% paste0("chr", 1:22)))),]
-   if (proteinCodingOnly)
-      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
-   if (proteinCodingNonRedundantOnly) {
-      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, protein_coding_non_redundant == T))),]
-   }
- 
-   return(tpm.gene)
-}
-
-# -----------------------------------------------------------------------------
-# Methods: Add ensGene$protein_coding_non_redundant (in guide-to-the/hg19.R)
-# Last Modified: 24/04/17
-# -----------------------------------------------------------------------------
-isNonRedundant <- function(ensembl_gene_id, ensGene) {
-   gene <- ensGene[ensembl_gene_id,]
- 
-   ensGene.chr <- subset(ensGene, chromosome_name == gene$chromosome_name)
-   ensGene.chr.start <- subset(ensGene.chr, end_position >= gene$start_position)
-   ensGene.chr.start.end <- subset(ensGene.chr.start, start_position <= gene$end_position)
- 
-   if (nrow(ensGene.chr.start.end) == 1)
-      return(T)
-   return(F)
-}
-#ensGene.pcg <- subset(ensGene, gene_biotype == "protein_coding")
-#ensGene.pcg$non_redundant <- F
-#ensGene.pcg$non_redundant <- mapply(x = 1:nrow(ensGene.pcg), function(x) isNonRedundant(ensGene.pcg$ensembl_gene_id[x], ensGene.pcg))
-## > nrow(ensGene.pcg)
-## [1] 20327
-## > nrow(subset(ensGene.pcg, non_redundant == T))
-## [1] 13487
-## > nrow(subset(ensGene.pcg, non_redundant == F))
-## [1] 6840
-
-#ensGene$protein_coding_non_redundant <- NA
-#ensGene[rownames(ensGene.pcg),]$protein_coding_non_redundant <- ensGene.pcg$non_redundant
-
-# -----------------------------------------------------------------------------
-# Methods: GTEx threshold to determine a detected/expressed gene
-# Link: https://www.ncbi.nlm.nih.gov/pubmed/25954002
-# Last Modified: 03/02/17
-# -----------------------------------------------------------------------------
-# getDetected <- function(expr, value) {   ## Genes being expressed at TPM > 0.1 in at least one sample
-#    detected <- mapply(x = 1:nrow(expr), function(x) length(which(as.numeric(expr[x,]) > value)))
-#  
-#    return(which(detected >= 1))
-# }
-
-getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
 }
 
 # =============================================================================

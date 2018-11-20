@@ -66,7 +66,7 @@ boxplotTxQ4G2G <- function(wd.de.plots, base, BASE, tx.q4.g2g, samples) {
 }
 
 testT <- function(q3, q4) {
-   return(t.test(log10(as.numeric(q3)), as.numeric(q4))$p.value)
+   return(t.test(as.numeric(q3), as.numeric(q4))$p.value)
 }
 
 testW <- function(q3, q4) {

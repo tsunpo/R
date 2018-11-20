@@ -1,0 +1,89 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(TRUE)
+BASE1 <- args[1]   ## Cancer type
+PAIR1 <- args[2]   ## T(umour) or S (phase)
+LIST1 <- args[3]
+BASE0 <- args[4]   ## Normal type
+PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
+LIST0 <- args[6]
+BSTRP <- as.numeric(args[7])
+base0 <- tolower(BASE1)
+base1 <- tolower(BASE0)
+
+# =============================================================================
+# Name: 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (Commandline mode)
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 22/10/18
+# =============================================================================
+wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
+#wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
+
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
+handbooks  <- c("Common.R", "DifferentialExpression.R", "ReplicationTiming.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
+
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+
+# -----------------------------------------------------------------------------
+# Replication timing
+# Last Modified: 31/08/18; 13/06/17
+# -----------------------------------------------------------------------------
+wd1          <- file.path("/projects/cangen/tyang2", BASE1)   ## tyang2@cheops
+wd1.ngs      <- file.path(wd1, "ngs/WGS")
+wd1.ngs.data <- file.path(wd1.ngs, "data") 
+wd0          <- file.path("/projects/cangen/tyang2", BASE0)   ## tyang2@cheops
+wd0.ngs      <- file.path(wd0, "ngs/WGS")
+wd0.ngs.data <- file.path(wd0.ngs, "data")
+wd1.anlys   <- file.path(wd1, "analysis")
+wd1.rt      <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd1.rt.data <- file.path(wd1.rt, "data")
+if (BSTRP != 0)
+   wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
+#wd1.rt.plots <- file.path(wd1.rt, "plots")
+bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
+
+samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
+samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
+samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
+samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
+n1 <- length(samples1)
+n0 <- length(samples0)
+if (BSTRP != 0) {
+   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
+   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
+}
+
+for (c in 1:22) {
+   chr <- chrs[c]
+
+   ## Read depth
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1, samples1)
+   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0, samples0)   
+   rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, ])))
+   rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, ])))
+   rpkms.T.chr.d$BED <- rownames(rpkms.T.chr.d)   ## CHANGE 23/10/18: After mapply(median()) otherwise warnings due to $BED
+   rpkms.N.chr.d$BED <- rownames(rpkms.N.chr.d)
+   
+   writeTable(rpkms.T.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+
+   ## Replication timing
+   #rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
+   #rpkms.N.chr.d <- readTable(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   overlaps <- intersect(rownames(rpkms.T.chr.d), rownames(rpkms.N.chr.d))
+   rpkms.T.chr.d.rt <- rpkms.T.chr.d[overlaps,]
+   rpkms.N.chr.d.rt <- rpkms.N.chr.d[overlaps,]
+   
+   rpkms.chr <- toTable(NA, 3, length(overlaps), c("T", "N", "RT"))
+   rownames(rpkms.chr) <- overlaps
+   rpkms.chr$T  <- rpkms.T.chr.d.rt$MEDIAN
+   rpkms.chr$N  <- rpkms.N.chr.d.rt$MEDIAN
+   rpkms.chr$RT <- mapply(x = 1:nrow(rpkms.chr), function(x) getLog2RDRatio(rpkms.chr[x,]$T, rpkms.chr[x,]$N, pseudocount=0.01))
+   
+   #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
+   writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+}
+

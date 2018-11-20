@@ -19,16 +19,15 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-
 BASE <- "LCNEC"
 base <- tolower(BASE)
+
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.meta  <- file.path(wd, BASE, "metadata/Tirosh 2016")
-
-wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
+wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 wd.de.gsea  <- file.path(wd.de, "gsea")
@@ -38,7 +37,7 @@ samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames
 colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "AVG_FRAGMENT_LENGTH", "MAX_INSERT_SIZE", "RB1_MUT")
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)
+tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
 
 # -----------------------------------------------------------------------------
 # D.E. using non-parametric test (20 RB1 vs 34 WT; n=69-15NA)
@@ -60,7 +59,7 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Principal component analysis (PCA)
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base.lcnec, "-tpm-de/data/", "de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
+#load(file.path("/Users/tpyang/Work/uni-koeln/tyang2", "LCNEC", "analysis/expression/kallisto", paste0("lcnec", "-tpm-de/data/", "de_", "lcnec", "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
 genes.rb1.q0.1  <- rownames(subset(de.tpm.gene, FDR <= 0.1))
 genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
 ## > length(genes.rb1.q0.1)
@@ -98,7 +97,7 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    p <- max(de.sig$P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2FC RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="RB1/WT fold change (log2)", ylab="P-value (-log10)", col="darkgray", main=file.main)
 
    abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
    text(xmax*-1 + 2*xmax/36, -log10(fdrToP(fdr, de)) + ymax/42, "FDR=0.05", cex=0.85)
@@ -131,7 +130,7 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
          print(genes[g])
    }
    
-   legend("topleft", legend=c("Up-regulation", "Down-regulation"), col=c("red", "dodgerblue"), pch=19)
+   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
@@ -156,6 +155,23 @@ genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Repair.ta
 file.main <- c(plot.main, "", "DNA repair pathway", "")
 file.de <- paste0(plot.de, "_Repair.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+
+## Figure ? (UP/TCD/HO/Q4)
+genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_UP_TCD_HO_Q4.tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(wd.de.plots, "/volcanoplot_lcnec_RB1_Q0.05_UP_TCD_HO_Q4.pdf")
+plotVolcano(de.tpm.gene, 0.05, genes, file.de, c(plot.main, "", "TCD / Head-on / Q4 (in SCLC)", ""))
+
+genes <- readTable(file.path(wd.de.plots, "volcanoplot_sclc_TCD_HO_Q4.tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(wd.de.plots, "/volcanoplot_sclc_TCD_HO_Q4.pdf")
+plotVolcano(de.tpm.gene, 0.05, genes, file.de, c(plot.main, "", "TCD / Head-on / Q4 (in SCLC)", ""))
+
+genes <- readTable(file.path(wd.de.plots, "volcanoplot_sclc_TCD_CD_Q2.tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(wd.de.plots, "/volcanoplot_sclc_TCD_CD_Q2.pdf")
+plotVolcano(de.tpm.gene, 0.05, subset(genes, GENE %in% o), file.de, c(plot.main, "", "TCD / Co-directional / Q2 (in SCLC)", ""))
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Gene sets (please refer to guide-to-the/cycle.R) that are expressed in the dataset

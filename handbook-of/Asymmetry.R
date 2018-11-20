@@ -128,13 +128,21 @@ getTxQ4 <- function(tpm.gene.log2, gene.list) {
       tpm.gene.log2 <- tpm.gene.log2[gene.list,]
    tpm.gene.log2 <- tpm.gene.log2[order(tpm.gene.log2$MEDIAN),]
    
-   q <- quantile(tpm.gene.log2$MEDIAN)
+   q <- quantile(tpm.gene.input.log2$MEDIAN)
    tx.q4 <- list()
    tx.q4[[4]] <- rownames(subset(tpm.gene.log2, MEDIAN > as.numeric(q[4])))
    tx.q4[[3]] <- rownames(subset(subset(tpm.gene.log2, MEDIAN > as.numeric(q[3])), MEDIAN <= as.numeric(q[4])))
    tx.q4[[2]] <- rownames(subset(subset(tpm.gene.log2, MEDIAN > as.numeric(q[2])), MEDIAN <= as.numeric(q[3])))
    tx.q4[[1]] <- rownames(subset(tpm.gene.log2, MEDIAN <= as.numeric(q[2])))
  
+   return(tx.q4)
+}
+
+getTxQ4Fixed <- function(tpm.gene.log2, tx.q4.fix) {
+   tx.q4 <- list()
+   for (q in 1:4)
+      tx.q4[[q]] <- intersect(tx.q4.fix[[q]], rownames(tpm.gene.log2))
+
    return(tx.q4)
 }
 
@@ -219,9 +227,9 @@ getHeadOnCollision <- function(ensGene.tx.rt, headon) {
 
 getTxQ4RT <- function(ensGene.tx.rt, headon, tpm.gene.log2) {
    gene.list <- rownames(getHeadOnCollision(ensGene.tx.rt, headon))
-   tpm.gene.log2 <- tpm.gene.log2[gene.list,]
+   #tpm.gene.log2 <- tpm.gene.log2[gene.list,]   ## REMOVED 07/10/18
    
-   return(getTxQ4(gene.list, tpm.gene.log2))
+   return(getTxQ4(tpm.gene.log2, gene.list))
 }
 
 getStrand <- function(genes.list, strand) {
@@ -234,9 +242,9 @@ getStrand <- function(genes.list, strand) {
 getTxQ4RTStrand <- function(ensGene.tx.rt.st, headon, strand, tpm.gene.log2) {
    gene.list <- rownames(getHeadOnCollision(ensGene.tx.rt.st, headon))
    gene.list <- getStrand(gene.list, strand)
-   tpm.gene.log2 <- tpm.gene.log2[gene.list,]
+   #tpm.gene.log2 <- tpm.gene.log2[gene.list,]
  
-   return(getTxQ4(gene.list, tpm.gene.log2))
+   return(getTxQ4(tpm.gene.log2, gene.list))
 }
 
 getTxRTStrand <- function(ensGene.tx.rt.st, headon, strand) {

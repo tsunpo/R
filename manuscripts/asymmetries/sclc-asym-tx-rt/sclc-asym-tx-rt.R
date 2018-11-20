@@ -37,13 +37,15 @@ samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames
 # Step 6.2: Divide genes into two groups (hand-on and co-directional)
 # Last Modified: 20/02/18
 # -----------------------------------------------------------------------------
-load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5_p47.RData")))
+#load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 #tpm.gene <- tpm.gene[setdiff(rownames(tpm.gene), outliers1.5),]   ## ADD 26/06/18
-tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
+#tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=T)
 #tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=T, proteinCodingNonRedundantOnly=F)
-tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
+#tpm.gene.input.log2 <- getLog2andMedian(tpm.gene.input)
 
 load(file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
+# > nrow(ensGene.tx.rt)   ## All genes
+# [1] 18440
 # > nrow(ensGene.tx.rt)   ## All protein coding
 # [1] 16410
 # > nrow(ensGene.tx.rt)   ## Nonredundant proten coding
@@ -51,14 +53,21 @@ load(file.path(wd.asym.data, paste0(base, "_asym_tx_rt.RData")))
 
 ensGene.tx.rt.nona <- subset(subset(ensGene.tx.rt, !is.na(SLOPE_START)), !is.na(SLOPE_END))
 ensGene.tx.rt.nona$SIGN <- sign(ensGene.tx.rt.nona$SLOPE_START / ensGene.tx.rt.nona$SLOPE_END)
-ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-10]
-# > nrow(ensGene.tx.rt.nona)
+ensGene.tx.rt.nona.sign <- subset(ensGene.tx.rt.nona, SIGN == 1)[,-11]   ## CHANGE from 10 to 11
+#ensGene.tx.rt.nona.sign <- ensGene.tx.rt.nona.sign[,-8]                  ## Get rid off protein_coding_non_redundant (if any)
+# > nrow(ensGene.tx.rt.nona)        ## All genes
+# [1] 18440
+# > nrow(ensGene.tx.rt.nona.sign)   # Original T/N
+# [1] 17288
+# > nrow(ensGene.tx.rt.nona.sign.b) # Bootstrapped 1000; 24/10/18
+# [1] 17259
+# > nrow(ensGene.tx.rt.nona)        ## All protein coding
 # [1] 16218
-# > nrow(ensGene.tx.rt.nona.sign)   ## All protein coding
+# > nrow(ensGene.tx.rt.nona.sign)
 # [1] 15053
-# > nrow(ensGene.tx.rt.nona)
+# > nrow(ensGene.tx.rt.nona)        ## Nonredundant proten coding
 # [1] 10468
-# > nrow(ensGene.tx.rt.nona.sign)   ## Nonredundant proten coding
+# > nrow(ensGene.tx.rt.nona.sign)
 # [1] 9694
 
 ## TRICK: Assign replication has a "-" slope, therefore change/flip it's RT slope to "+" to be consistant with e.g. Tx(+)
@@ -66,11 +75,46 @@ ensGene.tx.rt.nona.sign$RT <- -1
 ensGene.tx.rt.nona.sign[ensGene.tx.rt.nona.sign$SLOPE_START < 0,]$RT <- 1
 #ensGene.tx.rt.nona.sign <- ensGene.tx.rt.nona.sign[setdiff(rownames(ensGene.tx.rt.nona.sign), outliers1.5),]   ## ADD 26/06/18
 # > nrow(ensGene.tx.rt.nona.sign)
-# [1] 9690
+# [1] 17288
+# > nrow(ensGene.tx.rt.nona.sign.b)
+# [1] 17259
+# > nrow(ensGene.tx.rt.nona.sign.lcl)
+# [1] 17243
+
+###
+## Comparisions between SCLC (bootstrapped), SCLC and LCL; 24/10/18
+overlaps <- intersect(rownames(ensGene.tx.rt.nona.sign), rownames(ensGene.tx.rt.nona.sign.b))
+# > length(overlaps)
+# [1] 16637   ## 16637/17259 (96.4%)
+ensGene.tx.rt.nona.sign.o   <- ensGene.tx.rt.nona.sign[overlaps,]
+ensGene.tx.rt.nona.sign.o.b <- ensGene.tx.rt.nona.sign.b[overlaps,]
+ensGene.tx.rt.nona.sign.o.b$SIGN <- ensGene.tx.rt.nona.sign.o$RT * ensGene.tx.rt.nona.sign.o.b$RT
+# > nrow(subset(ensGene.tx.rt.nona.sign.o.b, SIGN == 1))
+# [1] 14843
+
+overlaps2 <- intersect(rownames(ensGene.tx.rt.nona.sign), rownames(ensGene.tx.rt.nona.sign.lcl))
+# > length(overlaps2)
+# [1] 16329   ## 16329/17288 (94.5%)
+ensGene.tx.rt.nona.sign.o2   <- ensGene.tx.rt.nona.sign[overlaps2,]
+ensGene.tx.rt.nona.sign.o.lcl <- ensGene.tx.rt.nona.sign.lcl[overlaps2,]
+ensGene.tx.rt.nona.sign.o.lcl$SIGN <- 0
+ensGene.tx.rt.nona.sign.o.lcl$SIGN <- ensGene.tx.rt.nona.sign.o2$RT * ensGene.tx.rt.nona.sign.o.lcl$RT
+nrow(subset(ensGene.tx.rt.nona.sign.o.lcl, SIGN == 1))
+# > nrow(subset(ensGene.tx.rt.nona.sign.o.lcl, SIGN == 1))
+# [1] 8404
+
+overlaps3 <- intersect(rownames(ensGene.tx.rt.nona.sign.b), rownames(ensGene.tx.rt.nona.sign.lcl))
+# > length(overlaps3)
+# [1] 16299   ## 16299/17259 (94.4%)
+ensGene.tx.rt.nona.sign.o3.b   <- ensGene.tx.rt.nona.sign.b[overlaps3,]
+ensGene.tx.rt.nona.sign.o3.lcl <- ensGene.tx.rt.nona.sign.lcl[overlaps3,]
+ensGene.tx.rt.nona.sign.o3.b$SIGN <- ensGene.tx.rt.nona.sign.o3.b$RT * ensGene.tx.rt.nona.sign.o3.lcl$RT
+# nrow(subset(ensGene.tx.rt.nona.sign.o3.b, SIGN == 1))
+# [1] 8291
 
 ###
 ##
-headon <- "ho"   ## Replication–transcription Head-on (ho) / Co-directional (cd) collisions
+headon <- "cd"   ## Replication–transcription Head-on (ho) / Co-directional (cd) collisions
 
 q4s <- list()
 pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_", headon, ".pdf")), height=4.5, width=7)
@@ -83,7 +127,8 @@ for (i in 1:length(idxs)) {
    GntxCtx <- rbind(tx.snv.s6[[i]][[2]][[1]],               tx.snv.s6[[i]][[1]][[2]])
    
    ens.asym <- ens.asyms[[i]]   ## ADD 20/06/18; Divide Q4 more precisely based on genes with specific base changes
-   ensGene.tx.rt.input <- ensGene.tx.rt.nona.sign[ens.asym,]
+   overlaps <-intersect(rownames(ensGene.tx.rt.nona.sign), ens.asym)
+   ensGene.tx.rt.input <- ensGene.tx.rt.nona.sign[overlaps,]
    ens.asym.rt.q4 <- getTxQ4RT(ensGene.tx.rt.input, headon=headon, tpm.gene.input.log2)
    
    q4 <- as.matrix(toTable(0, 4, 2, c("n=", "n=", "n=", "n=")))
@@ -138,7 +183,7 @@ dev.off()
 # Step 6.3: Log2 transcription-associated SNV asymmetry (Figure S5)
 # Last Modified: 26/01/18
 # -----------------------------------------------------------------------------
-pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_", headon, "_log2_ylim1.5.pdf")), height=4.5, width=7)
+pdf(file.path(wd.asym.plots, paste0(base, "_asym_tx_rt_snv_q4s_", headon, "_log2_ylim1.75.pdf")), height=4.5, width=7)
 par(mfrow=c(2, 3))
 for (i in 1:length(idxs)) {
    q4 <- q4s[[i]]
@@ -147,8 +192,8 @@ for (i in 1:length(idxs)) {
    else
       colnames(q4) <- c("                                    Leading strand (Co-directional)", "", "", "")
  
-   barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))
-   mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
+   barplot(-log2(q4[1,]/q4[2,]), ylab="TCR efficiency", ylim=c(-0.5, 1.75), main=getMain(rownames(asyms[[i]])), beside=TRUE, width=.3, col=getLog2Colours(q4))
+   mtext(paste0("-log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
 }
 dev.off()
 
@@ -175,8 +220,8 @@ for (i in 1:length(idxs)) {
    for (j in 1:3) {
       q4 <- getRTTxQ4(j, i)
   
-      barplot(log2(q4[1,]/q4[2,]), ylab="Asymmetry", ylim=c(-1.5, 1.5), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
-      mtext(paste0("log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
+      barplot(-log2(q4[1,]/q4[2,]), ylab="TCR efficiency", ylim=c(-0.5, 1.75), main=getRTTxMain(i, asyms), beside=TRUE, width=.3, col=getLog2Colours(q4))
+      mtext(paste0("-log2(", paste(rownames(q4), collapse="/"), ")"), cex=0.55, font=3, line=0.5)
    }
    dev.off()
 }
