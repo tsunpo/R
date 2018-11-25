@@ -27,12 +27,9 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Calculate absolute RPKM
 # Last Modified: 14/05/17
 # -----------------------------------------------------------------------------
-wd <- file.path("/projects/cangen/tyang2", BASE)   ## tyang2@cheops
-wd.ngs      <- file.path(wd, "ngs/WGS")
+wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd.ngs    <- file.path(wd, BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data")
-wd.anlys    <- file.path(wd, "analysis")
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
-wd.rt.data  <- file.path(wd.rt, "data")
 
 samples <- readTable(file.path(wd.ngs, LIST), header=F, rownames=F, sep="")
 

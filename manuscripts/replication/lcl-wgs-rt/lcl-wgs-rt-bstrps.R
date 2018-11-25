@@ -20,7 +20,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Variations in bootstrapped data (Ensembl genes)
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-BASE <- "SCLC"
+BASE <- "LCL"
 base <- tolower(BASE)
 bstrps       <- 1000
 origin.upper <- 510   ## 500-505, 505-510 breaks
@@ -74,144 +74,78 @@ for (c in 1:22) {
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
    file.name <- file.path(wd.rt.plots, paste0(base, "_RO_bstrps1000_", chr))
-   plotRO(file.name, BASE, chr, 37000000, 40000000, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
+   plotRO(file.name, BASE, chr, 37000000, 40000000, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## See ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
    rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
    
    file.name  <- file.path(wd.rt.plots, paste0(base, "_RT_bstrps1000_", chr))
-   plotRT(file.name, BASE, chr, 37000000, 40000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## see ReplicationTiming.R
+   plotRT(file.name, BASE, chr, 37000000, 40000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## See ReplicationTiming.R
 }
 
 # -----------------------------------------------------------------------------
 # Transcription vs. replication time
 # Last Modified: 08/11/18
 # -----------------------------------------------------------------------------
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-tpm-de/data/sclc_kallisto_0.43.1_tpm.gene_r5p47.RData")
+#load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F)
 tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=1)
 # > nrow(tpm.gene.log2)
 # [1] 18440
 
 load(file=file.path(wd.rt.data, paste0("ensGene.rt_", base, "_bstrps", bstrps, ".RData")))   ## Load objects ensGene.rt.start and ensGene.rt.end
-ensGene.rt.tx <- getEnsGeneRTTx(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2)
+ensGene.rt.tx.lcl <- getEnsGeneRTTx(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2)
 
 ##
-file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_TSS+TES"))
-plotEnsGeneRTTxRO(file.name, BASE, ensGene.rt.tx, origin.upper, "pdf")
+file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_TSS+TES_sclc"))
+plotEnsGeneRTTxRO(file.name, BASE, ensGene.rt.tx.lcl, origin.upper, "pdf")
 
 leading.ratio <- log2(origin.upper/500)
-sclc.tx.right  <- rownames(subset(ensGene.rt.tx, TSS >  leading.ratio))
-sclc.tx.left   <- rownames(subset(ensGene.rt.tx, TSS < -leading.ratio))
-sclc.tx.50.50 <- setdiff(rownames(ensGene.rt.tx), c(sclc.tx.right, sclc.tx.left))
-sclc.tx.inconsist <- rownames(subset(ensGene.rt.tx, CONSIST < 0))   ## This may include "50/50" if cutoff for leading-count ratio change
-# length(intersect(sclc.tx.50.50, sclc.tx.inconsist))
-# [1] 42
+sclc.tx.right.lcl  <- rownames(subset(ensGene.rt.tx.lcl, TSS >  leading.ratio))
+sclc.tx.left.lcl   <- rownames(subset(ensGene.rt.tx.lcl, TSS < -leading.ratio))
+sclc.tx.50.50.lcl <- setdiff(rownames(ensGene.rt.tx.lcl), c(sclc.tx.right.lcl, sclc.tx.left.lcl))
+sclc.tx.inconsist.lcl <- rownames(subset(ensGene.rt.tx.lcl, CONSIST < 0))   ## This may include "50/50" if cutoff for leading-count ratio change
+# length(intersect(sclc.tx.50.50.lcl, sclc.tx.inconsist.lcl))
+# [1] 61
 
 ## ADD 20/11/18: Remove inconsistent genes
-sclc.tx.right     <- setdiff(sclc.tx.right, sclc.tx.inconsist)
-sclc.tx.left      <- setdiff(sclc.tx.left,  sclc.tx.inconsist)
-sclc.tx.consist   <- c(sclc.tx.right, sclc.tx.left)
-testWbyEnsGeneRTTx(ensGene.rt.tx, sclc.tx.inconsist, sclc.tx.consist)
-# [1] 0.00726887
+sclc.tx.right.lcl     <- setdiff(sclc.tx.right.lcl, sclc.tx.inconsist.lcl)
+sclc.tx.left.lcl      <- setdiff(sclc.tx.left.lcl,  sclc.tx.inconsist.lcl)
+sclc.tx.consist.lcl   <- c(sclc.tx.right.lcl, sclc.tx.left.lcl)
+testWbyEnsGeneRTTx(ensGene.rt.tx.lcl, sclc.tx.inconsist.lcl, sclc.tx.consist.lcl)
+# [1] 0.03179156
 
-sclc.tx.inconsist <- setdiff(sclc.tx.inconsist, sclc.tx.50.50)
-testWbyEnsGeneRTTx(ensGene.rt.tx, sclc.tx.inconsist, sclc.tx.consist)
-# [1] 0.01322831
+sclc.tx.inconsist.lcl <- setdiff(sclc.tx.inconsist.lcl, sclc.tx.50.50.lcl)
+testWbyEnsGeneRTTx(ensGene.rt.tx.lcl, sclc.tx.inconsist.lcl, sclc.tx.consist.lcl)
+# [1] 0.05760913
 ## ADD 20/11/18: How many origins are inconsistent (which will be visulised in the boxplot later)
-# > 8494+8432+1056+96   ## Right + Left + Inconsistent + 50/50
-# [1] 18078
+# > 7558+7305+934+151   ## Right + Left + Inconsistent + 50/50
+# [1] 15948
+
+# > length(intersect(sclc.tx.inconsist, sclc.tx.inconsist.lcl))
+# [1] 223
 
 # -----------------------------------------------------------------------------
 # Inconsistent genes have lower expression levels
 # Last Modified: 12/11/18
 # -----------------------------------------------------------------------------
-testW(tx.inconsist, tx.consist)
-# [1] 0.01322831
-testW(tx.inconsist.right, tx.inconsist.left)
-# [1] 0.1486169
-testW(tx.inconsist, tx.50.50)
-# [1] 0.857977
-testW(tx.right, tx.left)
-# [1] 0.66278
-testW(tx.consist, tx.50.50)
-# [1] 0.5220981
-
-file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_inconsistent_boxplot.pdf"))
-main.text <- c("Inconsistent genes in SCLC", paste0("n=", separator(length(sclc.tx.inconsist))))
-xlab.text <- "Replication time"
-ylab.text <- "Expression (log2)"
-ymin <- min(ensGene.rt.start.sclc$MEDIAN)
-ymax <- max(ensGene.rt.start.sclc$MEDIAN)
-overlaps <- intersect(sclc.tx.inconsist, sclc.tx.origin)
-names <- c(paste0("Consistent (n=", separator(length(sclc.tx.consist)),")"), paste0("Inconsistent (n=", separator(length(sclc.tx.inconsist)),")"))
-
-pdf(file.name, height=6, width=3.5)   #, units="in", res=300)
-boxplot( MEDIAN ~ RT, data=ensGene.rt.start.sclc.inconsist, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, names=names, main=main.text, border="purple1", outline=T)
-beeswarm(MEDIAN ~ RT, data=ensGene.rt.start.sclc.inconsist[overlaps,], col="red", pch=1, add=T)
-legend("topleft", paste0("L/R (n=", separator(length(overlaps)), ")"), col="red", pch=1, cex=0.8)
-dev.off()
-
-# -----------------------------------------------------------------------------
-# Inconsistent genes have lower expression levels
-# Last Modified: 12/11/18
-# -----------------------------------------------------------------------------
-plotSRCTxLength <- function(file.name, main.text, ensGene.rt.tx, sclc.tx.right, col) {
-   xlab.text <- "Gene length (log10)"
-   ylab.text <- "log2(TPM+1)"
-   ymin <- min(ensGene.rt.tx$MEDIAN)
-   ymax <- max(ensGene.rt.tx$MEDIAN)
-   xmin <- min(log10(ensGene.rt.tx$LENGTH))
-   xmax <- max(log10(ensGene.rt.tx$LENGTH))
-   ensGene.rt.tx.right <- ensGene.rt.tx[sclc.tx.right,]
-   rho    <- cor.test(ensGene.rt.tx.right$MEDIAN, log10(ensGene.rt.tx.right$LENGTH), method="spearman", exact=F)[[4]]
-   pvalue <- cor.test(ensGene.rt.tx.right$MEDIAN, log10(ensGene.rt.tx.right$LENGTH), method="spearman", exact=F)[[3]]
-   lm.fit <- lm(MEDIAN ~ log10(LENGTH), data=ensGene.rt.tx.right)
-   intercept <- coef(lm.fit)[1]
-   slope <- summary(lm.fit)$coefficients[2,1]
-   p <- anova(lm.fit)$'Pr(>F)'[1]
-   r2 <- summary(lm.fit)$r.squared
-   
-   pdf(file.name, height=6, width=6)
-   plot(MEDIAN ~ log10(LENGTH), data=ensGene.rt.tx.right, ylim=c(ymin, ymax), xlim=c(xmin, xmax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col=col)
-   abline(lm.fit, col="gray55")
- 
-   ## Spearman's rank correlation
-   ## https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cor.test.html
-   if (rho > 0)
-      text(xmin + (xmax - xmin)/6.5, ymax, paste0("Spearman's rho = ", round(rho, digits=2)), cex=0.95)
-   else
-      text(xmin + (xmax - xmin)/6.1, ymax, paste0("Spearman's rho = ", round(rho, digits=2)), cex=0.95)
-   text(xmin + (xmax - xmin)/7.5, ymax - (ymax-ymin)/17, paste0("p-value = ", formatC(pvalue, format="E", digits=2)), cex=0.95) 
-
-   ## Linear regression
-   if (slope > 0)
-      text(xmin + (xmax - xmin)/8.6, intercept, paste0("LM's slope = ", sprintf("%.2f", round(slope, digits=2))), cex=0.95, col="gray55") 
-   else
-      text(xmin + (xmax - xmin)/8.1, intercept, paste0("LM's slope = ", sprintf("%.2f", round(slope, digits=2))), cex=0.95, col="gray55") 
-   text(xmin + (xmax - xmin)/7.5, intercept - (ymax-ymin)/17, paste0("p-value = ", formatC(p, format="E", digits=2)), cex=0.95, col="gray55")
-   text(xmin + (xmax - xmin)/13.2, intercept - (ymax-ymin)/17*2, paste0("R^2 = ", sprintf("%.2f", round(r2*100, digits=2)), "%"), cex=0.95, col="gray55")
-   
-   mtext(main.text[2], cex=1.1, line=0.5)
-   dev.off()
-}
-
 file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_length_inconsist.pdf"))
-main.text <- c("Inconsistent genes in SCLC", paste0("n=", separator(length(sclc.tx.inconsist))))
-plotSRCTxLength(file.name, main.text, ensGene.rt.tx, sclc.tx.inconsist, "purple1")
+main.text <- c("Inconsistent genes in SCLC", paste0("n=", separator(length(sclc.tx.inconsist.lcl))))
+plotSRCTxLength(file.name, main.text, ensGene.rt.tx.lcl, sclc.tx.inconsist.lcl, "purple1")
 
 file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_length_right.pdf"))
-main.text <- c("Right-leading genes in SCLC", paste0("n=", separator(length(sclc.tx.right))))
-plotSRCTxLength(file.name, main.text, ensGene.rt.tx, sclc.tx.right, "sandybrown")
+main.text <- c("Right-leading genes in SCLC", paste0("n=", separator(length(sclc.tx.right.lcl))))
+plotSRCTxLength(file.name, main.text, ensGene.rt.tx.lcl, sclc.tx.right.lcl, "sandybrown")
 
 file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_length_left.pdf"))
-main.text <- c("Left-leading genes in SCLC", paste0("n=", separator(length(sclc.tx.left))))
-plotSRCTxLength(file.name, main.text, ensGene.rt.tx, sclc.tx.left, "steelblue1")
+main.text <- c("Left-leading genes in SCLC", paste0("n=", separator(length(sclc.tx.left.lcl))))
+plotSRCTxLength(file.name, main.text, ensGene.rt.tx.lcl, sclc.tx.left.lcl, "steelblue1")
 
 file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_length_5050.pdf"))
-main.text <- c("Left-/Right-leading genes in SCLC", paste0("n=", separator(length(sclc.tx.50.50))))
-plotSRCTxLength(file.name, main.text, ensGene.rt.tx, sclc.tx.50.50, "red")
+main.text <- c("Left-/Right-leading genes in SCLC", paste0("n=", separator(length(sclc.tx.50.50.lcl))))
+plotSRCTxLength(file.name, main.text, ensGene.rt.tx.lcl, sclc.tx.50.50.lcl, "red")
 
 
 

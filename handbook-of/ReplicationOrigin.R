@@ -65,6 +65,7 @@ boxplotTxQ4G2G <- function(wd.de.plots, base, BASE, tx.q4.g2g, samples) {
    dev.off()
 }
 
+## TO-DO (in DE??)
 testT <- function(q3, q4) {
    return(t.test(as.numeric(q3), as.numeric(q4))$p.value)
 }
@@ -95,13 +96,13 @@ testOnewayANOVA <- function(g2g.q4) {
 # http://www.sthda.com/english/articles/32-r-graphics-essentials/133-plot-one-variable-frequency-graph-density-distribution-and-more/
 # Last Modified: 26/05/18
 # -----------------------------------------------------------------------------
-getTxQ4G2GDensity <- function(distances, count) {
-   d <- density(log10(as.numeric(distances)))
-   if (count)
-      d$y <- d$y * d$n
-    
-   return(d)
-}
+#getTxQ4G2GDensity <- function(distances, count) {
+#   d <- density(log10(as.numeric(distances)))
+#   if (count)
+#      d$y <- d$y * d$n
+#    
+#   return(d)
+#}
 
 plotTxQ4G2GDensity <- function(wd.de.plots, base, BASE, tx.q4.g2g, samples, count, ymax) {
    if (is.null(ymax)) {

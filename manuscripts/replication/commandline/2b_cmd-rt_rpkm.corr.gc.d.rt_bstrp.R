@@ -32,10 +32,10 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Replication timing
 # Last Modified: 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-wd1 <- file.path("/projects/cangen/tyang2", BASE1)   ## tyang2@cheops
-wd1.anlys   <- file.path(wd1, "analysis")
-wd1.rt      <- file.path(wd1.anlys, "replication", paste0(tolower(BASE1), "-wgs-rt"))
-wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
+wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd1.anlys <- file.path(wd, BASE1, "analysis")
+wd1.rt    <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd1.rt.data  <- file.path(wd1.rt, "data/bstrps", BSTRP)
 
 bed.gc.rt <- bed.gc[1,]
 bed.gc.rt$SPLINE <- 0

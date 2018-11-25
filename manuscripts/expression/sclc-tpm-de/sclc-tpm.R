@@ -26,6 +26,7 @@ base <- tolower(BASE)
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
 wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
+
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
@@ -81,13 +82,35 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # [1] 19131
 
 # =============================================================================
-# Density plots
-# Last Modified: 11/06/18
+# Density plot and histogram (See DifferentialExpression.R)
+# Last Modified: 25/11/18
 # =============================================================================
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+## Detected genes
+file.main <- "_kallisto_0.43.1_tpm.gene"
+load(file.path(wd.de.data, paste0(base, file.main, ".RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=1)
-plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.pdf")), NULL)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1.pdf")),    detected=T, pseudocount=1, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1.pdf")), detected=T, pseudocount=1, NULL)
 
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.1)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e1.pdf")),    detected=T, pseudocount=0.1, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e1.pdf")), detected=T, pseudocount=0.1, NULL)
+
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=T, pseudocount=0.01, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=T, pseudocount=0.01, NULL)
+
+## Expressed genes (with default filters)
+file.main <- "_kallisto_0.43.1_tpm.gene_r5p47"
+load(file.path(wd.de.data, paste0(base, file.main, ".RData")))
 tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=1)
-plotDensityCount(tpm.gene.log2$MEDIAN, nrow(tpm.gene.log2), file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.pdf")), NULL)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1.pdf")),    detected=F, pseudocount=1, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1.pdf")), detected=F, pseudocount=1, NULL)
+
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.1)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e1.pdf")),    detected=F, pseudocount=0.1, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e1.pdf")), detected=F, pseudocount=0.1, NULL)
+
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=F, pseudocount=0.01, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=F, pseudocount=0.01, NULL)

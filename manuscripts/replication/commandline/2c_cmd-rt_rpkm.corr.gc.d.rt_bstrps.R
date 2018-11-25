@@ -25,10 +25,10 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Read in bootstrapped data (in 2c and 2d)
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-wd <- file.path("/projects/cangen/tyang2", BASE)   ## tyang2@cheops
-wd.anlys   <- file.path(wd, "analysis")
-wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
-wd.rt.data <- file.path(wd.rt, "data/bstrps")
+wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 
 ensGene.rt       <- loadEnsGeneRT(wd.rt.data, 1, base)
 ensGene.rt.start <- getEnsGeneRT(ensGene.rt, "SLOPE_START", 1)

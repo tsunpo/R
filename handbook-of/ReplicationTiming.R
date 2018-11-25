@@ -217,15 +217,9 @@ setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
 }
 
 # -----------------------------------------------------------------------------
-# Visualisation of bootstrapping data
+# Visualisation of bootstrapping data (RO and RT)
 # Last Modified: 13/11/18
 # -----------------------------------------------------------------------------
-getLeadingRatio <- function(bed.gc.rt) {
-   if (bed.gc.rt$RT == 1) return(log2(bed.gc.rt$RIGHT_LEADING/500))
-   else if (bed.gc.rt$RT == -1) return(log2(bed.gc.rt$LEFT_LEADING/500) * -1)
-   else return(0)
-}
-
 plotHistBootstraps <- function(bed.gc.rt, file.name, main, BASE, breaks, breaks.origin) {
    main <- paste0(main, " (", BASE, ")")
    cols <- rep("steelblue1", breaks)
@@ -239,9 +233,9 @@ plotHistBootstraps <- function(bed.gc.rt, file.name, main, BASE, breaks, breaks.
 }
 
 plotRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
-   main.text <- paste0("Bootstrapped right-leading ratio in ", BASE)
+   main.text <- paste0("Bootstrapped leading-count ratio in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Right-leading ratio (log2)"
+   ylab.text <- "Leading-count ratio (log2)"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
@@ -306,18 +300,108 @@ plotRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.i
    dev.off()
 }
 
-getEnsGeneRTTx <- function(ensGene.rt.start, ensGene.rt.end, ensGene, tpm.gene.log2) {
-   ensGene.rt.start <- ensGene.rt.start[intersect(rownames(ensGene.rt.start), rownames(tpm.gene.log2)),]
-   ensGene.rt.start <- cbind(ensGene[rownames(ensGene.rt.start), 1:7], ensGene.rt.start)
-   ensGene.rt.start$LENGTH <- abs(ensGene.rt.start$start_position - ensGene.rt.start$end_position)
- 
-   ensGene.rt.start$RATIO  <- mapply(x = 1:nrow(ensGene.rt.start), function(x) as.numeric(getLeadingRatio(ensGene.rt.start[x,])))
-   ensGene.rt.start$MEDIAN <- tpm.gene.log2[rownames(ensGene.rt.start),]$MEDIAN   ## Gene start (NOT TSS!) information
- 
-   ensGene.rt.end <- ensGene.rt.end[rownames(ensGene.rt.start),]                  ## Gene end (NOT TES!) information
-   ensGene.rt.start$SIGN <- ensGene.rt.start$RT * ensGene.rt.end$RT               ## SIGN == -1 if inconsistent
+# -----------------------------------------------------------------------------
+# Visualisation of bootstrapping data (Leading-count ratio for expressed genes)
+# Last Modified: 13/11/18
+# -----------------------------------------------------------------------------
+getLeadingRatio <- function(bed.gc.rt) {
+   if (bed.gc.rt$RT == 1) return(log2(bed.gc.rt$RIGHT_LEADING/500))
+   else if (bed.gc.rt$RT == -1) return(log2(bed.gc.rt$LEFT_LEADING/500) * -1)
+   else return(0)
+}
+
+getEnsGeneRTTx <- function(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2) {
+   txs <- intersect(rownames(ensGene.rt.start), rownames(tpm.gene.log2))
+   ensGene.rt.tx <- cbind(ensGene[txs, -1], ensGene.rt.start[txs,], ensGene.rt.end[txs,])
+   ensGene.rt.tx$LENGTH <- abs(ensGene.rt.tx$start_position - ensGene.rt.tx$end_position)
+   ensGene.rt.tx$MEDIAN <- tpm.gene.log2[txs,]$MEDIAN
    
-   return(ensGene.rt.start)
+   txs.fw.idx <- which(ensGene.rt.tx$strand == 1)
+   txs.re.idx <- which(ensGene.rt.tx$strand == -1)   
+   ensGene.rt.tx$TSS <- NA
+   ensGene.rt.tx$TES <- NA
+   ensGene.rt.tx$TSS[txs.fw.idx] <- mapply(x = 1:length(txs.fw.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.fw.idx[x],  7:10])))   ## FW: TSS = start
+   ensGene.rt.tx$TES[txs.fw.idx] <- mapply(x = 1:length(txs.fw.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.fw.idx[x], 11:14])))   ##     TES = end
+   ensGene.rt.tx$TSS[txs.re.idx] <- mapply(x = 1:length(txs.re.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.re.idx[x], 11:14])))   ## RE: TSS = end
+   ensGene.rt.tx$TES[txs.re.idx] <- mapply(x = 1:length(txs.re.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.re.idx[x],  7:10])))   ##     TES = start
+   
+   colnames(ensGene.rt.tx)[ 7:10] <- paste0(colnames(ensGene.rt.tx)[ 7:10], "_1")
+   colnames(ensGene.rt.tx)[11:14] <- paste0(colnames(ensGene.rt.tx)[11:14], "_2")
+   ensGene.rt.tx$CONSIST <- ensGene.rt.tx$RT_1 * ensGene.rt.tx$RT_2   ## This may include "50/50" if cutoff for leading ratio change
+   
+   return(ensGene.rt.tx)
+}
+
+plotEnsGeneRTTxRO <- function(file.name, BASE, ensGene.rt.tx, origin.upper, ext) {
+   main.text  <- paste0("Expression level and replication time on TSS")
+   mtext.text <- paste0("Expressed genes (n=", separator(nrow(ensGene.rt.tx)), ")")
+   xlab.text <- "Leading-count ratio (log2)"
+   ylab.text <- "Expression (log2)"
+   leading.ratio <- log2(origin.upper/500)
+   ensGene.rt.tx.50.50 <- subset(subset(ensGene.rt.tx, TSS <= leading.ratio), TSS >= -leading.ratio)
+   
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=6, width=6, units="in", res=300)   ## ADD 16/05/17: res=300
+   cols <- rep("steelblue1", nrow(ensGene.rt.tx))
+   plot(  MEDIAN ~ TSS, data=ensGene.rt.tx, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols)
+   points(MEDIAN ~ TSS, data=subset(ensGene.rt.tx, TSS > leading.ratio), col="sandybrown")
+   points(MEDIAN ~ TSS, data=subset(ensGene.rt.tx, CONSIST < 0), col="purple1")
+   points(MEDIAN ~ TSS, data=ensGene.rt.tx.50.50, col="red")
+   
+   legend("top", c("Left-leading", paste0("L/R (n=", separator(nrow(ensGene.rt.tx.50.50)), ")"), "Right-leading", "Inconsistent"), col=c("steelblue1", "red", "sandybrown", "purple1"), pch=1, cex=0.75, horiz=T)
+   mtext(mtext.text, cex=1.1, line=0.5)
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Visualisation of bootstrapping data (Expression level and gene length)
+# Last Modified: 13/11/18
+# -----------------------------------------------------------------------------
+testWbyEnsGeneRTTx <- function(ensGene.rt.tx, sclc.tx.right, sclc.tx.left) {
+   tx.right <- ensGene.rt.tx[sclc.tx.right,]$MEDIAN
+   tx.left  <- ensGene.rt.tx[sclc.tx.left, ]$MEDIAN
+   
+   return(testW(tx.right, tx.left))
+}
+
+plotSRCTxLength <- function(file.name, main.text, ensGene.rt.tx, sclc.tx.right, col) {
+   xlab.text <- "Gene length (log10)"
+   ylab.text <- "Expression (log2)"
+   ymin <- min(ensGene.rt.tx$MEDIAN)
+   ymax <- max(ensGene.rt.tx$MEDIAN)
+   xmin <- min(log10(ensGene.rt.tx$LENGTH))
+   xmax <- max(log10(ensGene.rt.tx$LENGTH))
+   ensGene.rt.tx.right <- ensGene.rt.tx[sclc.tx.right,]
+   rho    <- cor.test(ensGene.rt.tx.right$MEDIAN, log10(ensGene.rt.tx.right$LENGTH), method="spearman", exact=F)[[4]]
+   pvalue <- cor.test(ensGene.rt.tx.right$MEDIAN, log10(ensGene.rt.tx.right$LENGTH), method="spearman", exact=F)[[3]]
+   lm.fit <- lm(MEDIAN ~ log10(LENGTH), data=ensGene.rt.tx.right)
+   intercept <- coef(lm.fit)[1]
+   slope <- summary(lm.fit)$coefficients[2,1]
+   p <- anova(lm.fit)$'Pr(>F)'[1]
+   r2 <- summary(lm.fit)$r.squared
+ 
+   pdf(file.name, height=6, width=6)
+   plot(MEDIAN ~ log10(LENGTH), data=ensGene.rt.tx.right, ylim=c(ymin, ymax), xlim=c(xmin, xmax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col)
+   abline(lm.fit, col="gray55")
+ 
+   ## Spearman's rank correlation
+   ## https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cor.test.html
+   if (rho > 0)
+      text(xmin + (xmax - xmin)/6.5, ymax, paste0("Spearman's rho = ", round(rho, digits=2)), cex=0.95)
+   else
+      text(xmin + (xmax - xmin)/6.1, ymax, paste0("Spearman's rho = ", round(rho, digits=2)), cex=0.95)
+   text(xmin + (xmax - xmin)/7.5, ymax - (ymax-ymin)/17, paste0("p-value = ", formatC(pvalue, format="E", digits=2)), cex=0.95) 
+ 
+   ## Linear regression
+   if (slope > 0)
+      text(xmin + (xmax - xmin)/8.6, intercept, paste0("LM's slope = ", sprintf("%.2f", round(slope, digits=2))), cex=0.95, col="gray55") 
+   else
+      text(xmin + (xmax - xmin)/8.1, intercept, paste0("LM's slope = ", sprintf("%.2f", round(slope, digits=2))), cex=0.95, col="gray55") 
+   text(xmin + (xmax - xmin)/7.5, intercept - (ymax-ymin)/17, paste0("p-value = ", formatC(p, format="E", digits=2)), cex=0.95, col="gray55")
+   text(xmin + (xmax - xmin)/13.2, intercept - (ymax-ymin)/17*2, paste0("R^2 = ", sprintf("%.2f", round(r2*100, digits=2)), "%"), cex=0.95, col="gray55")
+   dev.off()
 }
 
 # =============================================================================

@@ -2,7 +2,7 @@
 # Library      : Differential Gene Expression
 # Name         : handbook-of/DifferentialExpression.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 16/11/18
+# Last Modified: 25/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -63,26 +63,50 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
    return(tpm.gene)
 }
 
-# -----------------------------------------------------------------------------
-# Methods: Density plot
-# Last Modified: 11/06/18
-# -----------------------------------------------------------------------------
-getDensityCount <- function(median) {
-   d <- density(median)
-   d$y <- d$y * d$n
- 
-   return(d)
-}
-
-plotDensityCount <- function(medians, file.main, number, ymax, pseudocount) {
-   d <- getDensityCount(medians)
-   number <- formatC(number, format="f", big.mark=",", digits=0)
- 
+# =============================================================================
+# Methods: Density plot and histogram
+# Last Modified: 25/11/18
+# =============================================================================
+## http://www.sthda.com/english/wiki/abline-r-function-an-easy-way-to-add-straight-lines-to-a-plot-using-r-software
+## http://www.sthda.com/english/wiki/line-types-in-r-lty
+plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
+   d <- density(medians)
+   #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
+   q <- as.numeric(quantile(medians))
    if (is.null(ymax))
       ymax <- max(d$y)
- 
+   numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
+   conditioned <- "Expressed"
+   if (detected)
+      conditioned <- "Detected"
+   
    pdf(file.name, height=6, width=6)
-   plot(d, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0("Genes (n=", number, ")"), ylim=c(0, ymax))
+   plot(d, ylab="Density", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(conditioned, " genes in ", BASE), ylim=c(0, ymax), lwd=1.5)
+   abline(v=q, col=c("red", "blue", "blue", "blue", "blue"), lty=c(1, 2, 1, 2, 1), lwd=c(0.85, 0.85, 0.85, 0.85, 0.85))
+   for (x in 2:5)
+      text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
+   text(q[1], ymax, "TPM=0", cex=0.85, col="red") 
+   text(q[3], ymax, "Median", cex=0.85, col="blue") 
+   text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
+   
+   mtext(paste0("n=", numbers), cex=1.1, line=0.5)
+   rug(jitter(medians))
+   dev.off()
+}
+
+## https://www.statmethods.net/graphs/density.html
+plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax, breaks=15) {
+   h <- hist(medians, breaks=breaks) 
+   if (is.null(ymax))
+      ymax <- max(h$counts)
+   numbers <- formatC(length(median), format="f", big.mark=",", digits=0)  
+   conditioned <- "Expressed"
+   if (detected)
+      conditioned <- "Detected"
+   
+   pdf(file.name, height=6, width=6)
+   hist(medians, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(conditioned, " genes in ", BASE), breaks=breaks, ylim=c(0, ymax)) 
+   mtext(paste0("n=", numbers), cex=1.1, line=0.5)
    dev.off()
 }
 
@@ -169,6 +193,19 @@ median0 <- function(expr) {
 
 median00 <- function(expr, samples) {
    return(mapply(x = 1:nrow(expr), function(x) median(as.numeric(expr[x, samples])))) 
+}
+
+testT <- function(q3, q4) {
+   return(t.test(as.numeric(q3), as.numeric(q4))$p.value)
+}
+
+testW <- function(q3, q4) {
+   trait <- rep(0, length(q3))
+   trait <- c(trait, rep(1, length(q4)))
+   trait <- as.factor(trait)
+ 
+   expr <- as.numeric(c(q3, q4))
+   return(wilcox.test(expr ~ trait, exact=F)$p.value)
 }
 
 ## Student's t-test

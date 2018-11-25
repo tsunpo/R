@@ -31,19 +31,17 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Replication timing
 # Last Modified: 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-wd1          <- file.path("/projects/cangen/tyang2", BASE1)   ## tyang2@cheops
-wd1.ngs      <- file.path(wd1, "ngs/WGS")
+wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd1.ngs    <- file.path(wd, BASE1, "ngs/WGS")
 wd1.ngs.data <- file.path(wd1.ngs, "data") 
-wd0          <- file.path("/projects/cangen/tyang2", BASE0)   ## tyang2@cheops
-wd0.ngs      <- file.path(wd0, "ngs/WGS")
+wd0.ngs    <- file.path(wd, BASE0, "ngs/WGS")
 wd0.ngs.data <- file.path(wd0.ngs, "data")
-wd1.anlys   <- file.path(wd1, "analysis")
-wd1.rt      <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
-wd1.rt.data <- file.path(wd1.rt, "data")
+
+wd1.anlys  <- file.path(wd, BASE1, "analysis")
+wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd1.rt.data   <- file.path(wd1.rt, "data")
 if (BSTRP != 0)
    wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
-#wd1.rt.plots <- file.path(wd1.rt, "plots")
-bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
 samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
