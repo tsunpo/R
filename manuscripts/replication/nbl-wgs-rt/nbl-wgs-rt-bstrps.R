@@ -74,7 +74,7 @@ for (c in 1:22) {
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
    file.name <- file.path(wd.rt.plots, paste0(base, "_RO_bstrps1000_", chr))
-   plotRO(file.name, BASE, chr, 1, 50000000, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
+   plotRO(file.name, BASE, chr, 1, 50000000, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## See ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n56-56.txt.gz")), header=T, rownames=T, ymax=1.5, sep="\t") 
@@ -82,7 +82,7 @@ for (c in 1:22) {
    rt.chr$RT <- rt.chr$MEDIAN   ## Only for older version
    
    file.name  <- file.path(wd.rt.plots, paste0(base, "_RT_bstrps1000_", chr))
-   plotRT(file.name, BASE, chr, 1, 50000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## see ReplicationTiming.R
+   plotRT(file.name, BASE, chr, 1, 50000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## See ReplicationTiming.R
 }
 
 # -----------------------------------------------------------------------------

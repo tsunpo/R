@@ -500,19 +500,34 @@ tx.q4.fix <- getTxQ4(tpm.gene.input.log2[overlaps,], NA)
 for (q in 1:4)
    print(length(tx.q4.fix[[q]]))
 
-## 25/11/18
-load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/asymmetries/sclc-asym-tx-rt/data/sclc_asym_tx_rt_snv_q4s_rt_st_ratio.RData")
+## 26/11/18
+ensGene.input <- ensGene.tx.rt.nona.sign.ca
+ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+
+overlaps <- intersect(rownames(ensGene.rt.tx), rownames(ensGene.input))
+ensGene.rt.tx.ca <- cbind(ensGene.rt.tx[overlaps,], ensGene.input[overlaps, 13:16])
+
+overlaps <- intersect(sclc.tx.consist, overlaps)
+ensGene.rt.tx.ca.consist <- ensGene.rt.tx.ca[overlaps,]
+# > length(sclc.tx.consist.ca)
+# [1] 4125
+overlaps <- intersect(sclc.tx.inconsist, overlaps)
+ensGene.rt.tx.ca.inconsist <- ensGene.rt.tx.ca[overlaps,]
 
 wd.asym.plots <- file.path(wd.asym,  "plots/cut3/bstrps")
 overlaps2 <- intersect(overlaps, rownames(subset(de.tpm.gene, LOG2_FC > 0)))
 overlaps3 <- intersect(overlaps, rownames(subset(de.tpm.gene, LOG2_FC < 0)))
 ## TEST (TCR, no 0; 09/10/18); PCG 11/10/18
-#ensGene.input <- ensGene.tx.rt.nona.sign.ca
-ensGene.input <- ensGene.tx.rt.nona.sign.ca[overlaps2,]   ## TEST LCL, DIFF, RB1
+
+#ensGene.input <- ensGene.tx.rt.nona.sign.ca[overlaps2,]   ## TEST LCL, DIFF, RB1
 #ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
 #ensGene.input <- subset(ensGene.input, protein_coding_non_redundant == T)
-ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
-ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+#ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+#ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+#ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+ensGene.input <- ensGene.rt.tx.ca.consist
+#ensGene.input <- ensGene.rt.tx.ca.consist[overlaps2,]
 ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
 ensGene.input <- subset(ensGene.input, CD < 0)
 txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
@@ -521,16 +536,303 @@ for (q in 1:4)
    q4ss.ho.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
 
 #ensGene.input <- ensGene.tx.rt.nona.sign.ca
-ensGene.input <- ensGene.tx.rt.nona.sign.ca[overlaps33,]   ## TEST LCL
+#ensGene.input <- ensGene.tx.rt.nona.sign.ca[overlaps33,]   ## TEST LCL
 #ensGene.input <- subset(ensGene.input, gene_biotype == "protein_coding")
 #ensGene.input <- subset(ensGene.input, protein_coding_non_redundant == T)
-ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
-ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+#ensGene.input <- subset(ensGene.input, MUT_CG >= 3)
+#ensGene.input <- subset(ensGene.input, MUT_GC >= 3)
+#ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+ensGene.input <- ensGene.rt.tx.ca.consist
+#ensGene.input <- ensGene.rt.tx.ca.consist[overlaps2,]
 ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
 txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
 q4ss.tcr <- list(list(), list(), list(), list())
 for (q in 1:4)
    q4ss.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+####
+###
+## Consistent 26/11/18
+overlaps1 <- intersect(rownames(ensGene.rt.tx.ca), sclc.tx.consist)
+ensGene.rt.tx.ca.consist <- ensGene.rt.tx.ca[overlaps1,]
+# > length(overlaps1)
+# [1] 4125
+ensGene.input <- ensGene.rt.tx.ca.consist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+
+## Consistent > TCR
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input1 <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input1, tx.q4.fix)
+q4ss.tcr.cd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.cd[[q]] <- ensGene.input1[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input2 <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input2, tx.q4.fix)
+q4ss.tcr.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.ho[[q]] <- ensGene.input2[txs.q4[[q]],]$RATIO_LOG2
+
+## Consistent > TCD
+ensGene.input <- ensGene.rt.tx.ca.consist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input1 <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input1, tx.q4.fix)
+q4ss.tcd.cd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd.cd[[q]] <- ensGene.input1[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input2 <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input2, tx.q4.fix)
+q4ss.tcd.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd.ho[[q]] <- ensGene.input2[txs.q4[[q]],]$RATIO_LOG2
+
+## Consistent > TCR > RB1
+overlaps2 <- intersect(overlaps1, rownames(subset(de.tpm.gene, LOG2_FC > 0)))
+ensGene.input <- ensGene.rt.tx.ca.consist[overlaps2,]
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcr.rb <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.rb[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input1 <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input1, tx.q4.fix)
+q4ss.tcr.rb.cd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.rb.cd[[q]] <- ensGene.input1[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input2 <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input2, tx.q4.fix)
+q4ss.tcr.rb.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.rb.ho[[q]] <- ensGene.input2[txs.q4[[q]],]$RATIO_LOG2
+
+## Consistent > TCR > RB1
+overlaps3 <- intersect(overlaps1, rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+ensGene.input <- ensGene.rt.tx.ca.consist[overlaps3,]
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcr.wt <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.wt[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input1 <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input1, tx.q4.fix)
+q4ss.tcr.wt.cd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.wt.cd[[q]] <- ensGene.input1[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input2 <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input2, tx.q4.fix)
+q4ss.tcr.wt.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.wt.ho[[q]] <- ensGene.input2[txs.q4[[q]],]$RATIO_LOG2
+
+## Plots
+idx <- 1
+file.main <- getMain(rownames(asyms[[i]]))
+q4 <- q4s[[i]]
+mtext <- paste0("-log2(", paste(rownames(q4), collapse="/"), ")")
+
+ensGene.input <- ensGene.rt.tx.ca.consist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+ylim.tcr <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR.pdf"))
+plotQ4SS(q4ss.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_CD.pdf"))
+plotQ4SS(q4ss.tcr.cd, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_HO.pdf"))
+plotQ4SS(q4ss.tcr.ho, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+
+## BTRAPS, TCR (with 0), CUT 3 (26/11/18)
+testW(q4ss.tcr.cd[[1]], q4ss.tcr.ho[[1]])
+testW(q4ss.tcr.cd[[2]], q4ss.tcr.ho[[2]])
+# [1] 0.09873425
+testW(q4ss.tcr.cd[[3]], q4ss.tcr.ho[[3]])
+testW(q4ss.tcr.cd[[4]], q4ss.tcr.ho[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1
+testW(q4ss.tcr.rb.cd[[1]], q4ss.tcr.rb.ho[[1]])
+testW(q4ss.tcr.rb.cd[[2]], q4ss.tcr.rb.ho[[2]])
+# [1] 0.05421148
+testW(q4ss.tcr.rb.cd[[3]], q4ss.tcr.rb.ho[[3]])
+testW(q4ss.tcr.rb.cd[[4]], q4ss.tcr.rb.ho[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), WT
+testW(q4ss.tcr.wt.cd[[1]], q4ss.tcr.wt.ho[[1]])
+testW(q4ss.tcr.wt.cd[[2]], q4ss.tcr.wt.ho[[2]])
+testW(q4ss.tcr.wt.cd[[3]], q4ss.tcr.wt.ho[[3]])
+testW(q4ss.tcr.wt.cd[[4]], q4ss.tcr.wt.ho[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1 vs WT
+testW(q4ss.tcr.rb[[1]], q4ss.tcr.wt[[1]])
+testW(q4ss.tcr.rb[[2]], q4ss.tcr.wt[[2]])
+# [1] 1.2491e-06
+testW(q4ss.tcr.rb[[3]], q4ss.tcr.wt[[3]])
+testW(q4ss.tcr.rb[[4]], q4ss.tcr.wt[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1 vs WT (CD)
+testW(q4ss.tcr.rb.cd[[1]], q4ss.tcr.wt.cd[[1]])
+testW(q4ss.tcr.rb.cd[[2]], q4ss.tcr.wt.cd[[2]])
+# [1] 1.939253e-05
+testW(q4ss.tcr.rb.cd[[3]], q4ss.tcr.wt.cd[[3]])
+testW(q4ss.tcr.rb.cd[[4]], q4ss.tcr.wt.cd[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1 vs WT (HO)
+testW(q4ss.tcr.rb.ho[[1]], q4ss.tcr.wt.ho[[1]])
+testW(q4ss.tcr.rb.ho[[2]], q4ss.tcr.wt.ho[[2]])
+# [1] 0.009640875
+testW(q4ss.tcr.rb.ho[[3]], q4ss.tcr.wt.ho[[3]])
+testW(q4ss.tcr.rb.ho[[4]], q4ss.tcr.wt.ho[[4]])
+####
+###
+##
+
+####
+###
+## Inconsistent 26/11/18
+overlaps1 <- intersect(rownames(ensGene.rt.tx.ca), sclc.tx.inconsist)
+ensGene.rt.tx.ca.inconsist <- ensGene.rt.tx.ca[overlaps1,]
+# > length(overlaps1)
+# [1] 440
+
+## Inconsistent > TCR
+ensGene.input <- ensGene.rt.tx.ca.inconsist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input1 <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input1, tx.q4.fix)
+q4ss.tcr.cd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.cd[[q]] <- ensGene.input1[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input2 <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input2, tx.q4.fix)
+q4ss.tcr.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr.ho[[q]] <- ensGene.input2[txs.q4[[q]],]$RATIO_LOG2
+
+## Inconsistent > TCD
+ensGene.input <- ensGene.rt.tx.ca.inconsist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+  
+ensGene.input1 <- subset(ensGene.input, CD > 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input1, tx.q4.fix)
+q4ss.tcd.cd <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd.cd[[q]] <- ensGene.input1[txs.q4[[q]],]$RATIO_LOG2
+
+ensGene.input2 <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input2, tx.q4.fix)
+q4ss.tcd.ho <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcd.ho[[q]] <- ensGene.input2[txs.q4[[q]],]$RATIO_LOG2
+
+## Plots
+idx <- 1
+file.main <- getMain(rownames(asyms[[i]]))
+q4 <- q4s[[i]]
+mtext <- paste0("-log2(", paste(rownames(q4), collapse="/"), ")")
+
+ensGene.input <- ensGene.rt.tx.ca.inconsist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+ylim.tcr <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_inconsist_TCD.pdf"))
+plotQ4SS(q4ss.tcd, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_inconsist_TCD_CD.pdf"))
+plotQ4SS(q4ss.tcd.cd, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_inconsist_TCD_HO.pdf"))
+plotQ4SS(q4ss.tcd.ho, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+
+## BTRAPS, TCR (with 0), CUT 3 (26/11/18)
+testW(q4ss.tcr.cd[[1]], q4ss.tcr.ho[[1]])
+testW(q4ss.tcr.cd[[2]], q4ss.tcr.ho[[2]])
+# [1] 0.09873425
+testW(q4ss.tcr.cd[[3]], q4ss.tcr.ho[[3]])
+testW(q4ss.tcr.cd[[4]], q4ss.tcr.ho[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1
+testW(q4ss.tcr.rb.cd[[1]], q4ss.tcr.rb.ho[[1]])
+testW(q4ss.tcr.rb.cd[[2]], q4ss.tcr.rb.ho[[2]])
+# [1] 0.05421148
+testW(q4ss.tcr.rb.cd[[3]], q4ss.tcr.rb.ho[[3]])
+testW(q4ss.tcr.rb.cd[[4]], q4ss.tcr.rb.ho[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), WT
+testW(q4ss.tcr.wt.cd[[1]], q4ss.tcr.wt.ho[[1]])
+testW(q4ss.tcr.wt.cd[[2]], q4ss.tcr.wt.ho[[2]])
+testW(q4ss.tcr.wt.cd[[3]], q4ss.tcr.wt.ho[[3]])
+testW(q4ss.tcr.wt.cd[[4]], q4ss.tcr.wt.ho[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1 vs WT
+testW(q4ss.tcr.rb[[1]], q4ss.tcr.wt[[1]])
+testW(q4ss.tcr.rb[[2]], q4ss.tcr.wt[[2]])
+# [1] 
+testW(q4ss.tcr.rb[[3]], q4ss.tcr.wt[[3]])
+testW(q4ss.tcr.rb[[4]], q4ss.tcr.wt[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1 vs WT (CD)
+testW(q4ss.tcr.rb.cd[[1]], q4ss.tcr.wt.cd[[1]])
+testW(q4ss.tcr.rb.cd[[2]], q4ss.tcr.wt.cd[[2]])
+# [1] 
+testW(q4ss.tcr.rb.cd[[3]], q4ss.tcr.wt.cd[[3]])
+testW(q4ss.tcr.rb.cd[[4]], q4ss.tcr.wt.cd[[4]])
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1 vs WT (HO)
+testW(q4ss.tcr.rb.ho[[1]], q4ss.tcr.wt.ho[[1]])
+testW(q4ss.tcr.rb.ho[[2]], q4ss.tcr.wt.ho[[2]])
+# [1] 
+testW(q4ss.tcr.rb.ho[[3]], q4ss.tcr.wt.ho[[3]])
+testW(q4ss.tcr.rb.ho[[4]], q4ss.tcr.wt.ho[[4]])
+####
+###
+##
+
+
+
+
+
+
+
+
+
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+   q4ss.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
+#ensGene.input <- ensGene.rt.tx.ca.consist[overlaps2,]
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
+ensGene.input <- subset(ensGene.input, CD < 0)
+txs.q4 <- getTxQ4Fixed(ensGene.input, tx.q4.fix)
+q4ss.ho.tcr <- list(list(), list(), list(), list())
+for (q in 1:4)
+ q4ss.ho.tcr[[q]] <- ensGene.input[txs.q4[[q]],]$RATIO_LOG2
+
 
 RB1
 [1] 304
@@ -637,22 +939,60 @@ plotQ4SS(q4ss.ho.fw, file.name, file.main, mtext, ylim=ylim, "TCR efficiency", i
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_HO_FW_TCR.pdf"))
 plotQ4SS(q4ss.ho.fw.tcr, file.name, file.main, mtext, ylim=ylim, "TCR efficiency", isLog10=F)
 
+
 ## TEST (remove TCD AND 0; 09/10/18)
+idx <- 1
+file.main <- getMain(rownames(asyms[[i]]))
+q4 <- q4s[[i]]
+mtext <- paste0("-log2(", paste(rownames(q4), collapse="/"), ")")
+
+ensGene.input <- ensGene.rt.tx.ca.consist
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
 ylim.tcr <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCR_HO.pdf"))
+
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_HO.pdf"))
 plotQ4SS(q4ss.ho.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCR_CD.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_CD.pdf"))
 plotQ4SS(q4ss.cd.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCR.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR.pdf"))
 plotQ4SS(q4ss.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+
+## BTRAPS, TCR (with 0), CUT 3 (26/11/18)
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.2084318
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.09873425
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.4202235
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.3041756
+
+## BTRAPS, TCR (with 0), CUT 3 (15/10/18), RB1
+testW(q4ss.cd.tcr[[1]], q4ss.ho.tcr[[1]])
+# [1] 0.2084318
+testW(q4ss.cd.tcr[[2]], q4ss.ho.tcr[[2]])
+# [1] 0.09873425
+testW(q4ss.cd.tcr[[3]], q4ss.ho.tcr[[3]])
+# [1] 0.4202235
+testW(q4ss.cd.tcr[[4]], q4ss.ho.tcr[[4]])
+# [1] 0.3041756
+
+
+
+
+
+
+
+
+
 
 ## TEST (remove TCD AND 0; 09/10/18)
 ylim.tcd <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCD.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCD.pdf"))
 plotQ4SS(q4ss.tcd, file.name, file.main, mtext, ylim=ylim.tcd, "TCD", isLog10=F)
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCD_CD.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCD_CD.pdf"))
 plotQ4SS(q4ss.cd.tcd, file.name, file.main, mtext, ylim=ylim.tcd, "TCD", isLog10=F)
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_TCD_HO.pdf"))
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCD_HO.pdf"))
 plotQ4SS(q4ss.ho.tcd, file.name, file.main, mtext, ylim=ylim.tcd, "TCD", isLog10=F)
 
 test1 <- subset(tx.snv.input, ensembl_gene_id == "ENSG00000101773")

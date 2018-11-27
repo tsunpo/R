@@ -89,11 +89,13 @@ plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
    text(q[3], ymax, "Median", cex=0.85, col="blue") 
    text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
    
-   mtext(paste0("n=", numbers), cex=1.1, line=0.5)
+   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.5)
    rug(jitter(medians))
    dev.off()
 }
 
+## https://homepage.divms.uiowa.edu/~luke/classes/STAT4580/histdens.html
+## https://www.r-graph-gallery.com/190-mirrored-histogram/
 ## https://www.statmethods.net/graphs/density.html
 plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax, breaks=15) {
    h <- hist(medians, breaks=breaks) 
@@ -106,7 +108,7 @@ plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax,
    
    pdf(file.name, height=6, width=6)
    hist(medians, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(conditioned, " genes in ", BASE), breaks=breaks, ylim=c(0, ymax)) 
-   mtext(paste0("n=", numbers), cex=1.1, line=0.5)
+   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.5)
    dev.off()
 }
 
