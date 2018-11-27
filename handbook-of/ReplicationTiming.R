@@ -220,15 +220,51 @@ setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
 # Visualisation of bootstrapping data (RO and RT)
 # Last Modified: 13/11/18
 # -----------------------------------------------------------------------------
-plotHistBootstraps <- function(bed.gc.rt, file.name, main, BASE, breaks, breaks.origin) {
-   main <- paste0(main, " (", BASE, ")")
+plotHistBootstraps <- function(bed.gc.rt.chr, file.name, main, BASE, breaks, breaks.origin) {
+   main.text <- paste0(main.text, " (", BASE, ")")
+   xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
    cols <- rep("steelblue1", breaks)
    cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
    cols[(breaks/2 - origin.break):(breaks/2 + breaks.origin)] <- "red"
  
    pdf(file.name, height=6, width=6)
-   hist(bed.gc.rt$RIGHT_LEADING, xlab=c("Number of right-leading counts", "(out of 1,000 bootstraps)"), main=main, breaks=breaks, col=cols)
-   mtext(paste0("Distribution of counts per 1kb windows (n=", separator(nrow(bed.gc.rt)), ")"), cex=1, line=0.5)
+   hist(bed.gc.rt.chr$RIGHT_LEADING, xlab=xlab.text, main=main.text, breaks=breaks, col=cols)
+   mtext(paste0("Distribution of counts per 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1, line=0.5)
+   dev.off()
+}
+
+## https://www.r-graph-gallery.com/190-mirrored-histogram/
+## http://www.r-graph-gallery.com/72-set-margin-size-with-par-mar-function/
+## https://www.statmethods.net/advgraphs/layout.html
+plotBrokenHistBootstraps <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks, breaks.origin) {
+   main.text <- paste0(main.text, " (", BASE, ")")
+   xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
+   cols <- rep("steelblue1", breaks)
+   cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
+   cols[(breaks/2 - origin.break):(breaks/2 + breaks.origin)] <- "red"
+   h <- hist(bed.gc.rt.chr$RIGHT_LEADING, breaks=breaks) 
+   ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))
+   h$counts <- h$counts/1000
+   
+   pdf(file.name, height=6, width=6)
+   #par(mfrow=c(2,1))
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))
+   ylim <- sort(c(h$counts[1], h$counts[breaks]), decreasing=F)
+   par(mar=c(1,4,3,1))
+   plot(h, main=main.text, ylab="Frequency (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n")
+   
+   par(mar=c(5,4,0,1))
+   hist(bed.gc.rt.chr$RIGHT_LEADING, main="" , ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
+   if (ymax < 1000)
+      axis(side=2, at=seq(0, ymax, by=250))
+   else if (ymax > 50000)
+      axis(side=2, at=seq(0, ymax, by=10000))
+   else if (ymax > 5000)
+      axis(side=2, at=seq(0, ymax, by=1000))
+   else
+      axis(side=2, at=seq(0, ymax, by=500))
+   axis(side=1, at=seq(0, 1000, by=250))
+   mtext(paste0("Distribution of 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1.2, line=7)
    dev.off()
 }
 

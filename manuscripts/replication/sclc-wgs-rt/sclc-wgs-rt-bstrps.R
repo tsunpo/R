@@ -42,7 +42,7 @@ wd.de.plots <- file.path(wd.de, "plots")
 # Last Modified: 02/11/18
 # -----------------------------------------------------------------------------
 bed.gc.rt <- NULL
-for (c in 8:8) {
+for (c in 1:22) {
    chr <- chrs[c]
  
    load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
@@ -50,13 +50,12 @@ for (c in 8:8) {
       bed.gc.rt <- bed.gc.rt.chr
    bed.gc.rt <- rbind(bed.gc.rt, bed.gc.rt.chr)
 
-   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_", chr, ".pdf"))
-   plotHistBootstraps(bed.gc.rt.chr, file.name, paste0("Chr", c), BASE, 200, origin.break)   ## See ReplicationTiming.R
+   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_broken_", chr, ".pdf"))
+   plotBrokenHistBootstraps(bed.gc.rt.chr, file.name, paste0("Chr", c), BASE, 200, origin.break)   ## See ReplicationTiming.R
 }
 #save(bed.gc.rt, file=file.path(wd.rt.data, paste0("bed.gc.rt_", base,"_bstrps", bstrps, ".RData")))
-
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, ".pdf"))
-plotHistBootstraps(bed.gc.rt, file.name, "Chr1-22", BASE, 200, origin.break)                 ## See ReplicationTiming.R
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_broken", ".pdf"))
+plotBrokenHistBootstraps(bed.gc.rt, file.name, "Chr1-22", BASE, 200, origin.break)                 ## See ReplicationTiming.R
 
 # -----------------------------------------------------------------------------
 # Plot RO and RT from bootstrapped data
