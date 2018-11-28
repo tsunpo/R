@@ -63,6 +63,11 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
    return(tpm.gene)
 }
 
+## Shortcut
+getGene <- function(gene) {
+   return(subset(ensGene, external_gene_name == gene))
+}
+
 # =============================================================================
 # Methods: Density plot and histogram
 # Last Modified: 25/11/18

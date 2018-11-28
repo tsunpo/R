@@ -50,19 +50,19 @@ for (c in 1:22) {
       bed.gc.rt <- bed.gc.rt.chr
    bed.gc.rt <- rbind(bed.gc.rt, bed.gc.rt.chr)
 
-   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_broken_", chr, ".pdf"))
-   plotBrokenHistBootstraps(bed.gc.rt.chr, file.name, paste0("Chr", c), BASE, 200, origin.break)   ## See ReplicationTiming.R
+   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_", chr, ".pdf"))
+   plotBootstrapsHist(bed.gc.rt.chr, file.name, paste0("Chr", c), BASE, 200, origin.break)   ## See ReplicationTiming.R
 }
 #save(bed.gc.rt, file=file.path(wd.rt.data, paste0("bed.gc.rt_", base,"_bstrps", bstrps, ".RData")))
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_broken", ".pdf"))
-plotBrokenHistBootstraps(bed.gc.rt, file.name, "Chr1-22", BASE, 200, origin.break)                 ## See ReplicationTiming.R
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, ".pdf"))
+plotBootstrapsHist(bed.gc.rt, file.name, "Chr1-22", BASE, 200, origin.break)                 ## See ReplicationTiming.R
 
 # -----------------------------------------------------------------------------
 # Plot RO and RT from bootstrapped data
 # Last Modified: 04/11/18
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
-   c <- 17
+   #c <- 2
    chr <- chrs[c]
 
    ## Replication origins   
@@ -73,14 +73,14 @@ for (c in 1:22) {
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
    file.name <- file.path(wd.rt.plots, paste0(base, "_RO_bstrps1000_", chr))
-   plotRO(file.name, BASE, chr, 37000000, 40000000, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
+   plotBootstrapsRO(file.name, BASE, chr, NA, NA, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
    rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
    
    file.name  <- file.path(wd.rt.plots, paste0(base, "_RT_bstrps1000_", chr))
-   plotRT(file.name, BASE, chr, 37000000, 40000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## see ReplicationTiming.R
+   plotBootstrapsRT(file.name, BASE, chr, 37000000, 40000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## see ReplicationTiming.R
 }
 
 # -----------------------------------------------------------------------------

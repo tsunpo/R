@@ -217,58 +217,53 @@ setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
 }
 
 # -----------------------------------------------------------------------------
-# Visualisation of bootstrapping data (RO and RT)
+# Visualisation of bootstrapping data (Histogram, RO, and RT)
 # Last Modified: 13/11/18
 # -----------------------------------------------------------------------------
-plotHistBootstraps <- function(bed.gc.rt.chr, file.name, main, BASE, breaks, breaks.origin) {
-   main.text <- paste0(main.text, " (", BASE, ")")
-   xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
-   cols <- rep("steelblue1", breaks)
-   cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
-   cols[(breaks/2 - origin.break):(breaks/2 + breaks.origin)] <- "red"
- 
-   pdf(file.name, height=6, width=6)
-   hist(bed.gc.rt.chr$RIGHT_LEADING, xlab=xlab.text, main=main.text, breaks=breaks, col=cols)
-   mtext(paste0("Distribution of counts per 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1, line=0.5)
-   dev.off()
-}
-
 ## https://www.r-graph-gallery.com/190-mirrored-histogram/
 ## http://www.r-graph-gallery.com/72-set-margin-size-with-par-mar-function/
 ## https://www.statmethods.net/advgraphs/layout.html
-plotBrokenHistBootstraps <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks, breaks.origin) {
+## https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
+## https://stackoverflow.com/questions/15717545/set-the-intervals-of-x-axis-using-r
+plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks, breaks.origin) {
    main.text <- paste0(main.text, " (", BASE, ")")
    xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
    cols <- rep("steelblue1", breaks)
    cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
    cols[(breaks/2 - origin.break):(breaks/2 + breaks.origin)] <- "red"
    h <- hist(bed.gc.rt.chr$RIGHT_LEADING, breaks=breaks) 
-   ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))
-   h$counts <- h$counts/1000
+   ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
+   h$counts <- h$counts/1000                                        ## Change frequency scale to x1000 in row 1
    
    pdf(file.name, height=6, width=6)
    #par(mfrow=c(2,1))
-   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))
-   ylim <- sort(c(h$counts[1], h$counts[breaks]), decreasing=F)
-   par(mar=c(1,4,3,1))
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))   ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   ylim <- sort(c(h$counts[1], h$counts[breaks]), decreasing=F)     ## Min and max frequencies in row 1 (in x1000 scale)
+   if (ylim[1] > 500)                                               ## Round up to the nearest power of 10 (in x1000 scale)
+      ylim[1] <- floor(ylim[1]/100)*100
+   else if (ylim[1] > 10)
+      ylim[1] <- floor(ylim[1]/10)*10
+   else
+      ylim[1] <- floor(ylim[1])
+   par(mar=c(1,4,4,1))
    plot(h, main=main.text, ylab="Frequency (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n")
    
-   par(mar=c(5,4,0,1))
+   par(mar=c(5.5,4,0,1))
    hist(bed.gc.rt.chr$RIGHT_LEADING, main="" , ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
    if (ymax < 1000)
       axis(side=2, at=seq(0, ymax, by=250))
+   else if (ymax < 3000)
+      axis(side=2, at=seq(0, ymax, by=500))
    else if (ymax > 50000)
       axis(side=2, at=seq(0, ymax, by=10000))
-   else if (ymax > 5000)
-      axis(side=2, at=seq(0, ymax, by=1000))
    else
-      axis(side=2, at=seq(0, ymax, by=500))
+      axis(side=2, at=seq(0, ymax, by=1000))
    axis(side=1, at=seq(0, 1000, by=250))
-   mtext(paste0("Distribution of 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1.2, line=7)
+   mtext(paste0("Distribution of 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1.2, line=6.3)
    dev.off()
 }
 
-plotRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
+plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
    main.text <- paste0("Bootstrapped leading-count ratio in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    ylab.text <- "Leading-count ratio (log2)"
@@ -291,8 +286,8 @@ plotRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, 
    points(bed.gc.chr$START[right.idx]/1E6,  bed.gc.rt.chr$RATIO[right.idx],  col="sandybrown", cex=0.2)
    points(bed.gc.chr$START[origin.idx]/1E6, bed.gc.rt.chr$RATIO[origin.idx], col="red", cex=0.5)
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=bed.gc.rt.chr$RATIO)
-   lines(spline$x/1E6, spline$y)
+   #spline <- smooth.spline(x=bed.gc.chr$START, y=bed.gc.rt.chr$RATIO)   ## The smooth line is a bit confusing
+   #lines(spline$x/1E6, spline$y)
  
    ## Plot cytobands and legend
    cytoBand.chr <- subset(cytoBand, chrom == chr)
@@ -303,7 +298,7 @@ plotRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, 
    dev.off()
 }
 
-plotRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
+plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
    main.text <- paste0("Read depth (CN-, GC-corrected) ratio (T/N) in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    ylab.text <- "Replication time (log2)"
