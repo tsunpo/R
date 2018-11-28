@@ -649,15 +649,15 @@ q4 <- q4s[[i]]
 mtext <- paste0("-log2(", paste(rownames(q4), collapse="/"), ")")
 
 ensGene.input <- ensGene.rt.tx.ca.consist
-ensGene.input <- subset(ensGene.input, RATIO_LOG2 < 0)
+ensGene.input <- subset(ensGene.input, RATIO_LOG2 >= 0)
 ylim.tcr <- c(min(ensGene.input$RATIO_LOG2), max(ensGene.input$RATIO_LOG2))
 
 file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR.pdf"))
 plotQ4SS(q4ss.tcr, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_CD.pdf"))
-plotQ4SS(q4ss.tcr.cd, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
-file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_HO.pdf"))
-plotQ4SS(q4ss.tcr.ho, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_RB.pdf"))
+plotQ4SS(q4ss.tcr.rb, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
+file.name <- file.path(wd.asym.plots, paste0(base, "_asym_tx_snv_s6_q4s_", REFS[idx], ">", ALTS[idx], "_consist_TCR_WT.pdf"))
+plotQ4SS(q4ss.tcr.wt, file.name, file.main, mtext, ylim=ylim.tcr, "TCR efficiency", isLog10=F)
 
 ## BTRAPS, TCR (with 0), CUT 3 (26/11/18)
 testW(q4ss.tcr.cd[[1]], q4ss.tcr.ho[[1]])

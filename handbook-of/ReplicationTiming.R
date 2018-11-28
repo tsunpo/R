@@ -278,9 +278,9 @@ plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.g
       pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=3.5, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   abline(h=0, lwd=0.5, col="grey")
- 
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n")
+   axis(side=2, at=seq(-1, 1, by=1))
+   
    ## Plot right-/left-leading positions
    points(bed.gc.chr$START[left.idx]/1E6,   bed.gc.rt.chr$RATIO[left.idx],   col="steelblue1", cex=0.2)
    points(bed.gc.chr$START[right.idx]/1E6,  bed.gc.rt.chr$RATIO[right.idx],  col="sandybrown", cex=0.2)

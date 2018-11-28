@@ -65,7 +65,14 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
 
 ## Shortcut
 getGene <- function(gene) {
-   return(subset(ensGene, external_gene_name == gene))
+   if (grepl("\\bENSG", gene))
+      return(ensGene[gene,])
+   else
+      if (nrow(subset(ensGene, external_gene_name == gene)) == 0) {                  ## If there is no direct match of the input gene name,
+         genes <- ensGene[grepl(paste0("\\b", gene), ensGene$external_gene_name),]   ## report all gene names begin with the searched gene.
+         return(genes[order(genes$external_gene_name),])
+      } else
+         return(subset(ensGene, external_gene_name == gene))
 }
 
 # =============================================================================
