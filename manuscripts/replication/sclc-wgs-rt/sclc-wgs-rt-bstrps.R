@@ -80,7 +80,7 @@ for (c in 1:22) {
    rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
    
    file.name  <- file.path(wd.rt.plots, paste0(base, "_RT_bstrps1000_", chr))
-   plotBootstrapsRT(file.name, BASE, chr, 37000000, 40000000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=1.5, "png")   ## see ReplicationTiming.R
+   plotBootstrapsRT(file.name, BASE, chr, NA, NA, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
 }
 
 # -----------------------------------------------------------------------------

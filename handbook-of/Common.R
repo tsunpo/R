@@ -68,12 +68,22 @@ toTable <- function(value, ncol, nrow, colnames) {
 #         subset0(ensGene, "external_gene_name", c("MYC", "MYCL", "MYCN"))
 # Last Modified: 29/11/18
 # -----------------------------------------------------------------------------
-subset0 <- function(df, colname, values) {
-   return(df[which(df[, colname] %in% values),])   ## NEW VERSION: 29/11/18
+subset0 <- function(table, colname, values) {
+   return(table[which(table[, colname] %in% values),])   ## NEW VERSION: 29/11/18
 }
 
 separator <- function(number) {
    return(formatC(number, format="f", big.mark=",", digits=0))
+}
+
+## Convert string "log[2]FC" to "log FC"
+getLogText <- function(text) {
+   total <- nchar(text) - 2
+   beforelog <- strsplit(text, "\\[")[[1]][1]
+   afterlog  <- strsplit(text, "\\]")[[1]][2]
+   log <- total - nchar(beforelog) - nchar(afterlog)
+ 
+   return(paste0(beforelog, rep(" ", log), afterlog))
 }
 
 # -----------------------------------------------------------------------------

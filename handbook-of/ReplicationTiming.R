@@ -266,7 +266,7 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks
 plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
    main.text <- paste0("Bootstrapped leading-count ratio in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Leading-count ratio (log2)"
+   ylab.text <- "Leading-count ratio (log[2])"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
@@ -278,7 +278,8 @@ plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.g
       pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=3.5, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n")
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=getLogText(ylab.text), main=main.text, yaxt="n")
+   mtext(side=2, "                                                    2", cex=0.7, line=2.7)
    axis(side=2, at=seq(-1, 1, by=1))
    
    ## Plot right-/left-leading positions
@@ -301,7 +302,7 @@ plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.g
 plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
    main.text <- paste0("Read depth (CN-, GC-corrected) ratio (T/N) in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication time (log2)"
+   ylab.text <- "Replication time (log[2]FC)"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
@@ -312,7 +313,8 @@ plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.ch
       pdf(paste0(file.name, ".pdf"), height=4, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=getLogText(ylab.text), main=main.text)
+   mtext(side=2, "                                      2", cex=0.7, line=2.7)
    points(bed.gc.chr$START/1E6, rt.chr$RT, col="grey", cex=0.3)
    abline(h=0, lwd=0.5, col="grey")
  
