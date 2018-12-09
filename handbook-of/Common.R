@@ -76,14 +76,8 @@ separator <- function(number) {
    return(formatC(number, format="f", big.mark=",", digits=0))
 }
 
-## Convert string "log[2]FC" to "log FC"
-getLogText <- function(text) {
-   total <- nchar(text) - 2
-   beforelog <- strsplit(text, "\\[")[[1]][1]
-   afterlog  <- strsplit(text, "\\]")[[1]][2]
-   log <- total - nchar(beforelog) - nchar(afterlog)
- 
-   return(paste0(beforelog, rep(" ", log), afterlog))
+round0 <- function(number, digits) {
+   return(sprintf(paste0("%.", digits, "f"), round(intercept, digits=digits)))
 }
 
 # -----------------------------------------------------------------------------

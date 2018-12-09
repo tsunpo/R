@@ -70,6 +70,8 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
 ## http://www.sthda.com/english/wiki/abline-r-function-an-easy-way-to-add-straight-lines-to-a-plot-using-r-software
 ## http://www.sthda.com/english/wiki/line-types-in-r-lty
 plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
+   xlab.text <- paste0("log[2](TPM+", pseudocount, ")")
+   ylab.text <- "Density"
    d <- density(medians)
    #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
    q <- as.numeric(quantile(medians))
@@ -81,8 +83,8 @@ plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
       conditioned <- "Detected"
    
    pdf(file.name, height=6, width=6)
-   plot(d, ylab="Density", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(conditioned, " genes in ", BASE), ylim=c(0, ymax), lwd=1.5)
-   abline(v=q, col=c("red", "blue", "blue", "blue", "blue"), lty=c(1, 2, 1, 2, 1), lwd=c(0.85, 0.85, 0.85, 0.85, 0.85))
+   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(conditioned, " genes in ", BASE), ylim=c(0, ymax), lwd=1.5)
+   abline(v=q, col=c("red", "blue", "blue", "blue", "blue"), lty=c(1, 5, 1, 5, 1), lwd=c(0.85, 0.85, 0.85, 0.85, 0.85))
    for (x in 2:5)
       text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
    text(q[1], ymax, "TPM=0", cex=0.85, col="red") 

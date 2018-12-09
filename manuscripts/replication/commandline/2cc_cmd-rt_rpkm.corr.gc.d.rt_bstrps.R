@@ -32,6 +32,10 @@ wd.rt.data <- file.path(wd.rt, "data/bstrps")
 
 load(file.path(wd.rt.data, paste0("ensGene.rt_", base, "_bstrps", BSTRPS, "_full.RData")))
 
+ensGene.rt.start$RFD <- mapply(x = 1:nrow(ensGene.rt.start), function(x) as.numeric(getRFD(ensGene.rt.start[x, ])))
+ensGene.rt.end$RFD   <- mapply(x = 1:nrow(ensGene.rt.end),   function(x) as.numeric(getRFD(ensGene.rt.end[x, ])))
+save(ensGene.rt.start, ensGene.rt.end, file=file.path(wd.rt.data, paste0("ensGene.rt_", base, "_bstrps", BSTRPS, "_full.RData")))
+
 # -----------------------------------------------------------------------------
 # Add BED information for the bootstrapped data (in 2c)
 # Last Modified: 09/11/18

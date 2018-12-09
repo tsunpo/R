@@ -175,19 +175,23 @@ getLeftLeading <- function(ensGene.rt.bstrp) {
    return(as.numeric(length(which(ensGene.rt.bstrp > 0))))
 }
 
-getLeading <- function(ensGene.rt.bstrp) {
-   right <- ensGene.rt.bstrp$RIGHT_LEADING
-   left  <- ensGene.rt.bstrp$LEFT_LEADING
- 
-   if (right > left) return(1)
-   else if (right < left) return(-1)
-   else return(0)
+#getLeading <- function(ensGene.rt.bstrp) {
+#   right <- ensGene.rt.bstrp$RIGHT_LEADING
+#   left  <- ensGene.rt.bstrp$LEFT_LEADING
+# 
+#   if (right > left) return(1)
+#   else if (right < left) return(-1)
+#   else return(0)
+#}
+
+getRFD <- function(bed.gc.rt) {
+   return((bed.gc.rt$RIGHT_LEADING - bed.gc.rt$LEFT_LEADING)/(bed.gc.rt$RIGHT_LEADING + bed.gc.rt$LEFT_LEADING))
 }
 
 pipeLeading <- function(ensGene.rt.bstrp, bstrps) {
    ensGene.rt.bstrp$RIGHT_LEADING <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getRightLeading(ensGene.rt.bstrp[x, 1:bstrps])))   ## BUG FIX: 01/11/18
    ensGene.rt.bstrp$LEFT_LEADING  <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getLeftLeading(ensGene.rt.bstrp[x, 1:bstrps])))    ## BUG FIX: 01/11/18
-   ensGene.rt.bstrp$RT            <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getLeading(ensGene.rt.bstrp[x, ])))
+   ensGene.rt.bstrp$RFD           <- mapply(x = 1:nrow(ensGene.rt.bstrp), function(x) as.numeric(getRFD(ensGene.rt.bstrp[x, ])))
  
    return(ensGene.rt.bstrp)
 }
@@ -197,7 +201,7 @@ pipeLeading <- function(ensGene.rt.bstrp, bstrps) {
 # Last Modified: 09/11/18
 # -----------------------------------------------------------------------------
 setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
-   ensGene.rt <- cbind(ensGene[rownames(ensGene.rt), ], ensGene.rt[, c("RIGHT_LEADING", "LEFT_LEADING", "RT")])
+   ensGene.rt <- cbind(ensGene[rownames(ensGene.rt), ], ensGene.rt[, c("RIGHT_LEADING", "LEFT_LEADING", "RFD")])
    ensGene.rt.chrs <- ensGene.rt[1,]
    ensGene.rt.chrs$BED <- 0
    ensGene.rt.chrs <- ensGene.rt.chrs[-1,]
@@ -213,7 +217,7 @@ setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
       ensGene.rt.chrs <- rbind(ensGene.rt.chrs, ensGene.rt.chr)
    }
  
-   return(ensGene.rt.chrs[, c("BED", "RIGHT_LEADING", "LEFT_LEADING", "RT")])
+   return(ensGene.rt.chrs[, c("BED", "RIGHT_LEADING", "LEFT_LEADING", "RFD")])
 }
 
 # -----------------------------------------------------------------------------
@@ -263,10 +267,10 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks
    dev.off()
 }
 
-plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
-   main.text <- paste0("Bootstrapped leading-count ratio in ", BASE)
+plotBootstrapsRFD <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, ext) {
+   main.text <- paste0("Bootstrapped replication fork directionality (RFD) in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Leading-count ratio (log[2])"
+   ylab.text <- "RFD = (R-L)/(R+L)"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
@@ -278,14 +282,13 @@ plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.g
       pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=3.5, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=getLogText(ylab.text), main=main.text, yaxt="n")
-   mtext(side=2, "                                                    2", cex=0.7, line=2.7)
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n")
    axis(side=2, at=seq(-1, 1, by=1))
    
    ## Plot right-/left-leading positions
-   points(bed.gc.chr$START[left.idx]/1E6,   bed.gc.rt.chr$RATIO[left.idx],   col="steelblue1", cex=0.2)
-   points(bed.gc.chr$START[right.idx]/1E6,  bed.gc.rt.chr$RATIO[right.idx],  col="sandybrown", cex=0.2)
-   points(bed.gc.chr$START[origin.idx]/1E6, bed.gc.rt.chr$RATIO[origin.idx], col="red", cex=0.5)
+   points(bed.gc.chr$START[left.idx]/1E6,   bed.gc.rt.chr$RFD[left.idx],   col="steelblue1", cex=0.2)
+   points(bed.gc.chr$START[right.idx]/1E6,  bed.gc.rt.chr$RFD[right.idx],  col="sandybrown", cex=0.2)
+   points(bed.gc.chr$START[origin.idx]/1E6, bed.gc.rt.chr$RFD[origin.idx], col="red", cex=0.5)
  
    #spline <- smooth.spline(x=bed.gc.chr$START, y=bed.gc.rt.chr$RATIO)   ## The smooth line is a bit confusing
    #lines(spline$x/1E6, spline$y)
@@ -299,10 +302,12 @@ plotBootstrapsRO <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.g
    dev.off()
 }
 
-plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
+plotBootstrapsRT <- function(file.name, gene="", BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
    main.text <- paste0("Read depth (CN-, GC-corrected) ratio (T/N) in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication time (log[2]FC)"
+   if (gene != "")
+      xlab.text <- paste0(xlab.text, " near ", gene)
+   ylab.text <- "Replication time (log2 FC)"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
@@ -313,8 +318,7 @@ plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.ch
       pdf(paste0(file.name, ".pdf"), height=4, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=getLogText(ylab.text), main=main.text)
-   mtext(side=2, "                                      2", cex=0.7, line=2.7)
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
    points(bed.gc.chr$START/1E6, rt.chr$RT, col="grey", cex=0.3)
    abline(h=0, lwd=0.5, col="grey")
  
@@ -337,13 +341,13 @@ plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.ch
 # Visualisation of bootstrapping data (Leading-count ratio for expressed genes)
 # Last Modified: 13/11/18
 # -----------------------------------------------------------------------------
-getLeadingRatio <- function(bed.gc.rt) {
-   if (bed.gc.rt$RT == 1) return(log2(bed.gc.rt$RIGHT_LEADING/500))
-   else if (bed.gc.rt$RT == -1) return(log2(bed.gc.rt$LEFT_LEADING/500) * -1)
-   else return(0)
-}
+#getLeadingRatio <- function(bed.gc.rt) {
+#   if (bed.gc.rt$RT == 1) return(log2(bed.gc.rt$RIGHT_LEADING/500))
+#   else if (bed.gc.rt$RT == -1) return(log2(bed.gc.rt$LEFT_LEADING/500) * -1)
+#   else return(0)
+#}
 
-getEnsGeneRTTx <- function(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2) {
+getEnsGeneTxRFD <- function(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2) {
    txs <- intersect(rownames(ensGene.rt.start), rownames(tpm.gene.log2))
    ensGene.rt.tx <- cbind(ensGene[txs, -1], ensGene.rt.start[txs,], ensGene.rt.end[txs,])
    ensGene.rt.tx$LENGTH <- abs(ensGene.rt.tx$start_position - ensGene.rt.tx$end_position)
@@ -351,12 +355,12 @@ getEnsGeneRTTx <- function(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.l
    
    txs.fw.idx <- which(ensGene.rt.tx$strand == 1)
    txs.re.idx <- which(ensGene.rt.tx$strand == -1)   
-   ensGene.rt.tx$TSS <- NA
-   ensGene.rt.tx$TES <- NA
-   ensGene.rt.tx$TSS[txs.fw.idx] <- mapply(x = 1:length(txs.fw.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.fw.idx[x],  7:10])))   ## FW: TSS = start_position
-   ensGene.rt.tx$TES[txs.fw.idx] <- mapply(x = 1:length(txs.fw.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.fw.idx[x], 11:14])))   ##     TES = end_position
-   ensGene.rt.tx$TSS[txs.re.idx] <- mapply(x = 1:length(txs.re.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.re.idx[x], 11:14])))   ## RE: TSS = end_position
-   ensGene.rt.tx$TES[txs.re.idx] <- mapply(x = 1:length(txs.re.idx), function(x) as.numeric(getLeadingRatio(ensGene.rt.tx[txs.re.idx[x],  7:10])))   ##     TES = start_position
+   ensGene.rt.tx$RFD_TSS <- NA
+   ensGene.rt.tx$RFD_TTS <- NA
+   ensGene.rt.tx$RFD_TSS[txs.fw.idx] <- mapply(x = 1:length(txs.fw.idx), function(x) as.numeric(getRFD(ensGene.rt.tx[txs.fw.idx[x],  7:10])))   ## FW: TSS = start_position
+   ensGene.rt.tx$RFD_TTS[txs.fw.idx] <- mapply(x = 1:length(txs.fw.idx), function(x) as.numeric(getRFD(ensGene.rt.tx[txs.fw.idx[x], 11:14])))   ##     TES = end_position
+   ensGene.rt.tx$RFD_TSS[txs.re.idx] <- mapply(x = 1:length(txs.re.idx), function(x) as.numeric(getRFD(ensGene.rt.tx[txs.re.idx[x], 11:14])))   ## RE: TSS = end_position
+   ensGene.rt.tx$RFD_TTS[txs.re.idx] <- mapply(x = 1:length(txs.re.idx), function(x) as.numeric(getRFD(ensGene.rt.tx[txs.re.idx[x],  7:10])))   ##     TES = start_position
    
    colnames(ensGene.rt.tx)[ 7:10] <- paste0(colnames(ensGene.rt.tx)[ 7:10], "_1")
    colnames(ensGene.rt.tx)[11:14] <- paste0(colnames(ensGene.rt.tx)[11:14], "_2")
@@ -370,26 +374,26 @@ getEnsGeneRTTx <- function(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.l
    return(ensGene.rt.tx)
 }
 
-plotEnsGeneRTTxRO <- function(file.name, BASE, ensGene.rt.tx, origin.upper, ext) {
-   main.text  <- paste0("Transcription level and TSS replication time")
+plotEnsGeneTxRFD <- function(file.name, BASE, ensGene.rt.tx, origin.upper, ext) {
+   main.text  <- paste0("Transcription level and RFD in ", BASE)
    mtext.text <- paste0("Expressed genes (n=", separator(nrow(ensGene.rt.tx)), ")")
-   xlab.text <- "Leading-count ratio (log2)"
+   xlab.text <- c("RFD = (R-L)/(R+L)", "TSS")
    ylab.text <- "log2(TPM+0.01)"
-   leading.ratio <- log2(origin.upper/500)
-   ensGene.rt.tx.50.50 <- subset(subset(ensGene.rt.tx, TSS <= leading.ratio), TSS >= -leading.ratio)
+   rfd <- (origin.upper - (1000 - origin.upper))/1000
+   ensGene.rt.tx.50.50 <- subset(subset(ensGene.rt.tx, RFD_TSS <= rfd), RFD_TSS >= -rfd)
    
    if (ext == "pdf") {
       pdf(paste0(file.name, ".pdf"), height=6, width=6)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=6, width=6, units="in", res=300)   ## ADD 16/05/17: res=300
    cols <- rep("steelblue1", nrow(ensGene.rt.tx))
-   plot(  MEDIAN ~ TSS, data=ensGene.rt.tx, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols)
-   points(MEDIAN ~ TSS, data=subset(ensGene.rt.tx, TSS > leading.ratio), col="sandybrown")
-   points(MEDIAN ~ TSS, data=subset(ensGene.rt.tx, CONSIST < 0), col="purple1")
-   points(MEDIAN ~ TSS, data=ensGene.rt.tx.50.50, col="red")
+   plot(  MEDIAN ~ RFD_TSS, data=ensGene.rt.tx, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols)
+   points(MEDIAN ~ RFD_TSS, data=subset(ensGene.rt.tx, RFD_TSS > leading.ratio), col="sandybrown")
+   points(MEDIAN ~ RFD_TSS, data=subset(ensGene.rt.tx, CONSIST < 0), col="purple1")
+   points(MEDIAN ~ RFD_TSS, data=ensGene.rt.tx.50.50, col="red")
    
    legend("top", c("Left-leading", paste0("L/R (n=", separator(nrow(ensGene.rt.tx.50.50)), ")"), "Right-leading", "Inconsistent"), col=c("steelblue1", "red", "sandybrown", "purple1"), pch=1, cex=0.75, horiz=T)
-   mtext(mtext.text, cex=1.2, line=0.5)
+   mtext(mtext.text, cex=1, line=0.4)
    dev.off()
 }
 
@@ -404,6 +408,30 @@ testWbyEnsGeneRTTx <- function(ensGene.rt.tx, sclc.tx.right, sclc.tx.left) {
    return(testW(tx.right, tx.left))
 }
 
+plotQ4SS <- function(q4ss, file.name, file.main, mtext, ylim, ylab, isLog10) {
+   counts <- c()
+   quantiles <- c()
+   names1 <- c()
+   names2 <- c()
+   for (q in 1:4) {
+      counts    <- c(counts, q4ss[[q]])
+      quantiles <- c(quantiles, mapply(x = 1:length(q4ss[[q]]), function(x) paste0("q", q)))
+      names1 <- c(names1, paste0("Q", q, "\n"))
+      names2 <- c(names2, paste0("", "\nn=", length(q4ss[[q]])))
+   }
+ 
+   pdf(file.name, height=6, width=4)
+   #par(mgp=c(3,2,0))
+   if (isLog10)
+      boxplot(log10(as.numeric(counts))~quantiles, ylab=ylab, xlab=c("", "Expression"), names=c("", "", "", ""), main=file.main, ylim=log10(ylim))
+   else
+      boxplot(as.numeric(counts)~quantiles, ylab=ylab, xlab=c("", "Expression"), names=c("", "", "", ""), main=file.main, ylim=ylim)
+   mtext(mtext, cex=0.8, line=0.5)
+   #mtext("2                                   ", cex=0.6, line=0.25)
+   axis(side=1, at=1:4, names1, cex.axis=1, line=1, lwd=0)
+   axis(side=1, at=1:4, names2, cex.axis=0.8, line=1, lwd=0)
+   dev.off()
+}
 
 # =============================================================================
 # Inner Class  : PeifLyne File Reader

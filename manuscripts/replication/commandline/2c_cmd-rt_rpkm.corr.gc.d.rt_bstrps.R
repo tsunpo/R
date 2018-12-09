@@ -53,14 +53,7 @@ ensGene.rt.end <- ensGene.rt.end[,-1]
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt, "ensGene.rt_sclc_bstrp1000.RData"))
 ensGene.rt.start <- pipeLeading(ensGene.rt.start, BSTRPS)
-length(which(ensGene.rt.start$RT == 1))
-length(which(ensGene.rt.start$RT == -1))
-length(which(ensGene.rt.start$RT == 0))
-
 ensGene.rt.end   <- pipeLeading(ensGene.rt.end, BSTRPS)
-length(which(ensGene.rt.end$RT == 1))
-length(which(ensGene.rt.end$RT == -1))
-length(which(ensGene.rt.end$RT == 0))
 
 save(ensGene.rt.start, ensGene.rt.end, file=file.path(wd.rt.data, paste0("ensGene.rt_", base, "_bstrps", BSTRPS, "_full.RData")))
 

@@ -58,13 +58,8 @@ bed.gc.rt <- bed.gc.rt[,-1]
    rm(bed.gc.rt)   ## ADD 01/11/18
    
    bed.gc.rt.chr <- pipeLeading(bed.gc.rt.chr, BSTRPS)
-   length(which(bed.gc.rt.chr$RT == 1))
-   length(which(bed.gc.rt.chr$RT == -1))
-   length(which(bed.gc.rt.chr$RT == 0))   
-   
-   bed.gc.rt.chr$RATIO <- mapply(x = 1:nrow(bed.gc.rt.chr), function(x) as.numeric(getLeadingRatio(bed.gc.rt.chr[x,])))
    save(bed.gc.rt.chr, file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", BSTRPS, "_", chr, "_full.RData")))
    
-   bed.gc.rt.chr <- bed.gc.rt.chr[,c("RIGHT_LEADING", "LEFT_LEADING", "RT", "RATIO")]
+   bed.gc.rt.chr <- bed.gc.rt.chr[,c("RIGHT_LEADING", "LEFT_LEADING", "RFD")]
    save(bed.gc.rt.chr, file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", BSTRPS, "_", chr, ".RData")))
 #}

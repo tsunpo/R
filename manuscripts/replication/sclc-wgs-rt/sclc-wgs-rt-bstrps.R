@@ -65,15 +65,16 @@ for (c in 1:22) {
    #c <- 2
    chr <- chrs[c]
 
-   ## Replication origins   
+   ## Replication fork directionality (RFD)  
    load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
+   bed.gc.rt.chr$RFD <- mapply(x = 1:nrow(bed.gc.rt.chr), function(x) as.numeric(getRFD(bed.gc.rt.chr[x, ])))   ## ADD 05/12/18
    right.idx  <- which(bed.gc.rt.chr$RIGHT_LEADING > origin.upper)
    left.idx   <- which(bed.gc.rt.chr$RIGHT_LEADING < origin.lower)
    origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
-   file.name <- file.path(wd.rt.plots, paste0(base, "_RO_bstrps1000_", chr))
-   plotBootstrapsRO(file.name, BASE, chr, NA, NA, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
+   file.name <- file.path(wd.rt.plots, paste0(base, "_RFD_bstrps1000_", chr))
+   plotBootstrapsRFD(file.name, BASE, chr, NA, NA, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
@@ -94,35 +95,448 @@ tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
 # [1] 18440
 
 load(file=file.path(wd.rt.data, paste0("ensGene.rt_", base, "_bstrps", bstrps, ".RData")))   ## Load objects ensGene.rt.start and ensGene.rt.end
-ensGene.rt.tx <- getEnsGeneRTTx(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2)
+ensGene.rt.tx <- getEnsGeneTxRFD(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2)
 
 ##
-file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_TSS+TES_pc1e2"))
-plotEnsGeneRTTxRO(file.name, BASE, ensGene.rt.tx, origin.upper, "pdf")
+file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_pc1e2"))
+plotEnsGeneTxRFD(file.name, BASE, ensGene.rt.tx, origin.upper, "png")
 
-leading.ratio <- log2(origin.upper/500)
-sclc.tx.right  <- rownames(subset(ensGene.rt.tx, TSS >  leading.ratio))
-sclc.tx.left   <- rownames(subset(ensGene.rt.tx, TSS < -leading.ratio))
-sclc.tx.50.50 <- setdiff(rownames(ensGene.rt.tx), c(sclc.tx.right, sclc.tx.left))
-sclc.tx.inconsist <- rownames(subset(ensGene.rt.tx, CONSIST < 0))   ## This may include "50/50" if cutoff for leading-count ratio change
-# length(intersect(sclc.tx.50.50, sclc.tx.inconsist))
+#leading.ratio <- log2(origin.upper/500)
+leading.ratio <- (origin.upper - (1000 - origin.upper))/1000
+sclc.tx.right.0 <- rownames(subset(ensGene.rt.tx, RFD_TSS >  leading.ratio))
+sclc.tx.left.0  <- rownames(subset(ensGene.rt.tx, RFD_TSS < -leading.ratio))
+sclc.tx.5050    <- setdiff(rownames(ensGene.rt.tx), c(sclc.tx.right.0, sclc.tx.left.0))
+sclc.tx.inconsist.0 <- rownames(subset(ensGene.rt.tx, CONSIST < 0))   ## This may include "50/50" if cutoff for leading-count ratio change
+# length(intersect(sclc.tx.5050, sclc.tx.inconsist.0))
 # [1] 42
 
-## ADD 20/11/18: Remove inconsistent genes
-sclc.tx.right     <- setdiff(sclc.tx.right, sclc.tx.inconsist)
-sclc.tx.left      <- setdiff(sclc.tx.left,  sclc.tx.inconsist)
-sclc.tx.consist   <- c(sclc.tx.right, sclc.tx.left)
-testWbyEnsGeneRTTx(ensGene.rt.tx, sclc.tx.inconsist, sclc.tx.consist)
-# [1] 0.00726887
+## ADD 20/11/18: 50/50
+sclc.tx.5050.right <- rownames(subset(ensGene.rt.tx[sclc.tx.5050,], RFD_TTS >  leading.ratio))
+sclc.tx.5050.left  <- rownames(subset(ensGene.rt.tx[sclc.tx.5050,], RFD_TTS < -leading.ratio))
+sclc.tx.5050.5050  <- setdiff(sclc.tx.5050, c(sclc.tx.5050.right, sclc.tx.5050.left))
+sclc.tx.5050.5050.right <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050,], RFD_TTS > 0))
+sclc.tx.5050.5050.left  <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050,], RFD_TTS < 0))
 
-sclc.tx.inconsist <- setdiff(sclc.tx.inconsist, sclc.tx.50.50)
-sclc.tx.inconsist.right <- rownames(subset(ensGene.rt.tx[sclc.tx.inconsist,], TSS > leading.ratio))
-sclc.tx.inconsist.left  <- rownames(subset(ensGene.rt.tx[sclc.tx.inconsist,], TSS < leading.ratio))
+## ADD 20/11/18: Remove inconsistent genes
+sclc.tx.consist.right <- setdiff(sclc.tx.right.0, sclc.tx.inconsist.0)
+sclc.tx.consist.left  <- setdiff(sclc.tx.left.0,  sclc.tx.inconsist.0)
+sclc.tx.consist <- c(sclc.tx.consist.right, sclc.tx.consist.left)
+
+sclc.tx.inconsist <- setdiff(sclc.tx.inconsist.0, sclc.tx.5050)
+sclc.tx.inconsist.right <- rownames(subset(ensGene.rt.tx[sclc.tx.inconsist,], RFD_TSS >  leading.ratio))
+sclc.tx.inconsist.left  <- rownames(subset(ensGene.rt.tx[sclc.tx.inconsist,], RFD_TSS < -leading.ratio))
 testWbyEnsGeneRTTx(ensGene.rt.tx, sclc.tx.inconsist, sclc.tx.consist)
 # [1] 0.01322831
 ## ADD 20/11/18: How many origins are inconsistent (which will be visulised in the boxplot later)
 # > 8494+8432+1056+96   ## Right + Left + Inconsistent + 50/50
 # [1] 18078
+
+###
+##
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050.png"))
+main.text <- "Replication fork directionality (RFD) in SCLC"
+xlab.text <- c("RFD = (R-L)/(R+L)", "TSS")
+ylab.text <- "TTS"
+sclc.tx <- c(sclc.tx.consist, sclc.tx.inconsist)
+cols <- rep("purple1", length(sclc.tx))
+
+png(file.name, height=6, width=6, units="in", res=300)
+plot(ensGene.rt.tx[sclc.tx,]$RFD_TTS ~ ensGene.rt.tx[sclc.tx,]$RFD_TSS, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols)
+
+points(ensGene.rt.tx[sclc.tx.consist.right,]$RFD_TTS ~ ensGene.rt.tx[sclc.tx.consist.right,]$RFD_TSS, col="sandybrown")
+points(ensGene.rt.tx[sclc.tx.consist.left,]$RFD_TTS  ~ ensGene.rt.tx[sclc.tx.consist.left,]$RFD_TSS,  col="steelblue1")
+abline(v=0, lty=5, lwd=0.85, col="black")
+text( 0.5,  0.5, paste0("94.04% (", separator(length(sclc.tx.consist.right)), ")"), cex=0.95, col="black")
+text(-0.5, -0.5, paste0("94.21% (", separator(length(sclc.tx.consist.left)), ")"), cex=0.95, col="black") 
+
+#legend("bottom", c("Left-leading in SCLC", paste0("L/R (n=", length(sclc.tx.origin.o.c), ") in SCLC"), "Right-leading in SCLC"), col=c("steelblue1", "red", "sandybrown"), pch=1, cex=0.8, horiz=T)
+mtext(paste0("Consist and inconsist genes (n=", separator(length(sclc.tx)), ")"), cex=1, line=0.4)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# LM for sclc.tx.consist.right and sclc.tx.consist.left
+# Last Modified: 07/12/18
+# -----------------------------------------------------------------------------
+plotRFD <- function(file.name, main.text, ensGene.rt.tx, tx.list1, col1, tx.list2=NULL, col2=NULL, ext) {
+   xlab.text <- c("RFD = (R-L)/(R+L)", "TSS")
+   ylab.text <- "TTS"
+   ensGene.rt.tx.plot <- ensGene.rt.tx[tx.list1,]
+   if (!is.null(tx.list2) && length(tx.list2) != 0)
+      ensGene.rt.tx.plot <- ensGene.rt.tx[c(tx.list1, tx.list2),]
+   
+   if (max(ensGene.rt.tx.plot[tx.list1,]$RFD_TSS) > 0) {
+      xlim <- c(0, 1)
+      ylim <- c(0, 1)
+   } else {
+      xlim <- c(-1, 0)
+      ylim <- c(-1, 0) 
+   }
+   xmin <- xlim[1]
+   xmax <- xlim[2]
+   ymin <- ylim[1]
+   ymax <- ylim[2]
+   
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=6, width=6, units="in", res=300)   ## ADD 16/05/17: res=300
+   plot(RFD_TTS ~ RFD_TSS, data=ensGene.rt.tx.plot, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col=col1)
+   if (!is.null(tx.list2))
+      points(RFD_TTS ~ RFD_TSS, data=ensGene.rt.tx.plot[tx.list2,], col=col2)
+   
+   ## Linear regression
+   ## https://www.statlect.com/fundamentals-of-statistics/R-squared-of-a-linear-regression
+   lm.fit <- lm(RFD_TTS ~ RFD_TSS, data=ensGene.rt.tx.plot)
+   intercept <- coef(lm.fit)[1]
+   r2 <- summary(lm.fit)$r.squared
+   
+   if (max(ensGene.rt.tx.plot[tx.list1,]$RFD_TSS) > 0) {   ## 0.98, 0.92, 0.80, 0.74
+      text(xmin + (xmax - xmin)/7, 0.98, paste0("LM's R^2 = ", round0(r2*100, digits=2), "%"), cex=0.95)
+      text(xmin + (xmax - xmin)/8.8, 0.92, paste0("Intercept = ", round0(intercept, digits=2)), cex=0.95)
+   } else {                                     ## -0.74, -0.80, -0.92, -0.98
+      text(xmax - (xmax - xmin)/7, -0.92, paste0("LM's R^2 = ", round0(r2*100, digits=2), "%"), cex=0.95)
+      text(xmax - (xmax - xmin)/6.2, -0.98, paste0("Intercept = ", round0(intercept, digits=2)), cex=0.95)
+   }
+   
+   abline(lm.fit)
+   mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+   
+   return(as.numeric(intercept))
+}
+
+## Consistent
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_right"))
+main.text <- c("Right-leading consistent genes in SCLC and LCL", paste0("(n=", separator(length(sclc.tx.consist.right)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right, "sandybrown", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_left"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(n=", separator(length(sclc.tx.consist.left)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left, "steelblue1", ext="pdf")
+
+## Right (CD and HO)
+sclc.tx.consist.right.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.right,], CD > 0))
+sclc.tx.consist.right.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.right,], CD < 0))
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_right_CD"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.right.cd)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.cd, "sandybrown", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_right_HO"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.right.ho)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.ho, "sandybrown", ext="pdf")
+
+## Left (CD and HO)
+sclc.tx.consist.left.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.left,], CD > 0))
+sclc.tx.consist.left.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.left,], CD < 0))
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_left_CD"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.left.cd)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.cd, "steelblue1", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_left_HO"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.left.ho)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.ho, "steelblue1", ext="pdf")
+
+###
+## Consistent genes in (Q1 to Q4); use ALL expressed genes
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=F)
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
+
+tx.q4.fix.all <- getTxQ4(tpm.gene.log2, NA)
+# for (q in 1:4)
+#    print(length(tx.q4.fix.all[[q]]))
+# [1] 4783
+# [1] 4783
+# [1] 4782
+# [1] 4783
+# for (q in 1:4)
+#    print(length(intersect(tx.q4.fix[[q]], tx.q4.fix.all[[q]])))
+# [1] 4561
+# [1] 4554
+# [1] 4580
+# [1] 4610
+
+intercepts <- list(list(list(list(), list(), list(), list()), list(list(), list(), list(), list())), list(list(list(), list(), list(), list()), list(list(), list(), list(), list())))
+
+tx.list1 <- sclc.tx.consist.right.cd
+tx.list2 <- sclc.tx.5050.5050.right.cd
+for (q in 1:4) {
+   tx.list1.input <- intersect(tx.list1, tx.q4.fix.all[[q]])
+   tx.list2.input <- intersect(tx.list2, tx.q4.fix.all[[q]])
+   if (length(which("ENSG00000087088" == tx.list2.input)) == 1)
+      print(paste0("BAX: Q", q))
+   
+   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right_CD_Q", q))
+   main.text <- c(paste0("Q", q, " right-leading consistent genes in SCLC"), paste0("(Co-directional; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
+   intercepts[[1]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "sandybrown", tx.list2=tx.list2.input, col2="red", ext="pdf")
+}
+
+tx.list1 <- sclc.tx.consist.left.cd
+tx.list2 <- sclc.tx.5050.5050.left.cd
+for (q in 1:4) {
+   tx.list1.input <- intersect(tx.list1, tx.q4.fix.all[[q]])
+   tx.list2.input <- intersect(tx.list2, tx.q4.fix.all[[q]])
+   if (length(which("ENSG00000166710" == tx.list2.input)) == 1)
+      print(paste0("B2M: Q", q))
+   if (length(which("ENSG00000167123" == tx.list2.input)) == 1)
+      print(paste0("CERCAM: Q", q))
+   
+   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left_CD_Q", q))
+   main.text <- c(paste0("Q", q, " left-leading consistent genes in SCLC"), paste0("(Co-directional; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
+   intercepts[[2]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "steelblue1", tx.list2=tx.list2.input, col2="red", ext="pdf")
+}
+
+###
+## Plot TTS intercept
+# http://blog.minitab.com/blog/adventures-in-statistics-2/regression-analysis-how-to-interpret-the-constant-y-intercept
+qs <- c(1, 2, 3, 4)
+is <- c()
+for (rt in 1:2)
+   for (st in 1:2)
+      for (q in 1:4) {
+         is <- c(is, intercepts[[rt]][[st]][[q]])
+      }
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_Intercepts"))
+main.text <- c("Relationship between TSS and TTS", "among consistent genes in SCLC")
+xlab.text <- "Expression"
+ylab.text <- "TTS intercept (when TSS=0)"
+xlim <- c(1, 4)
+max <- max(abs(min(is)), max(is))
+ylim <- c(-max, max)
+pdf(paste0(file.name, ".pdf"), height=6, width=6)
+plot(as.numeric(intercepts[[1]][[1]]) ~ qs, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], type="l", col="sandybrown", xaxt="n", lwd=2)
+points(as.numeric(intercepts[[1]][[1]]) ~ qs, col="limegreen", pch=19)
+lines(as.numeric(intercepts[[1]][[2]]) ~ qs, col="sandybrown", lwd=2)
+points(as.numeric(intercepts[[1]][[2]]) ~ qs, col="tomato", pch=19)
+
+lines(as.numeric(intercepts[[2]][[1]]) ~ qs, col="steelblue1", lwd=2)
+points(as.numeric(intercepts[[2]][[1]]) ~ qs, col="limegreen", pch=19)
+lines(as.numeric(intercepts[[2]][[2]]) ~ qs, col="steelblue1", lwd=2)
+points(as.numeric(intercepts[[2]][[2]]) ~ qs, col="tomato", pch=19)
+
+abline(h=0, lty=5, lwd=0.85)
+legend("topleft", legend=c("Co-directional", "Head-on"), col=c("limegreen", "tomato"), pch=19)
+legend("bottomleft", legend=c("Right-leading", "Left-leading"), col=c("sandybrown", "steelblue1"), lty=1, lwd=2, bty="n")
+axis(side=1, at=seq(1, 4, by=1), labels=paste0("Q", qs))
+mtext(main.text[2], cex=1.2, line=0.3)
+dev.off()
+
+
+plot(RFD_TTS ~ RFD_TSS, data=ensGene.rt.tx.plot, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col=col1)
+lines(x2,y2,col="green")
+
+
+
+###
+## Consistent + 50/50 (consistent)
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(n=", separator(length(sclc.tx.consist.right)), "+", length(sclc.tx.5050.5050.right), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right, "sandybrown", tx.list2=sclc.tx.5050.5050.right, col2="red", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(n=", separator(length(sclc.tx.consist.left)), "+", length(sclc.tx.5050.5050.left), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left, "steelblue1", tx.list2=sclc.tx.5050.5050.left, col2="red", ext="pdf")
+
+## Right (CD and HO)
+sclc.tx.5050.5050.right.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050.right,], CD > 0))
+sclc.tx.5050.5050.right.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050.right,], CD < 0))
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right_CD"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.right.cd)), "+", length(sclc.tx.5050.5050.right.cd), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.cd, "sandybrown", tx.list2=sclc.tx.5050.5050.right.cd, col2="red", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right_HO"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.right.ho)), "+", length(sclc.tx.5050.5050.right.ho), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.ho, "sandybrown", tx.list2=sclc.tx.5050.5050.right.ho, col2="red", ext="pdf")
+
+## Left (CD and HO)
+sclc.tx.5050.5050.left.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050.left,], CD > 0))
+sclc.tx.5050.5050.left.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050.left,], CD < 0))
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left_CD"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.left.cd)), "+", length(sclc.tx.5050.5050.left.cd), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.cd, "steelblue1", tx.list2=sclc.tx.5050.5050.left.cd, col2="red", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left_HO"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.left.ho)), "+", length(sclc.tx.5050.5050.left.ho), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.ho, "steelblue1", tx.list2=sclc.tx.5050.5050.left.ho, col2="red", ext="pdf")
+
+###
+## Consistent in SCLC and LCL
+## Right (CD and HO)
+getTSSTTSbetweenTissues <- function(tx.list, ensGene.rt.tx, ensGene.rt.tx.lcl) {
+   overlaps <- intersect(rownames(ensGene.rt.tx), rownames(ensGene.rt.tx.lcl))
+   overlaps <- intersect(tx.list, overlaps)
+    
+   tss <- which((ensGene.rt.tx[overlaps,]$RFD_TSS * ensGene.rt.tx.lcl[overlaps,]$RFD_TSS) > 0)
+   tts <- which((ensGene.rt.tx[overlaps,]$RFD_TTS * ensGene.rt.tx.lcl[overlaps,]$RFD_TTS) > 0)
+   
+   return(overlaps[intersect(tss, tts)])
+}
+
+###
+## Consistent + 50/50 (consistent) in SCLC and LCL
+sclc.tx.consist.right.lcl <- getTSSTTSbetweenTissues(sclc.tx.consist.right, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.consist.left.lcl  <- getTSSTTSbetweenTissues(sclc.tx.consist.left, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.right.lcl <- getTSSTTSbetweenTissues(sclc.tx.5050.5050.right, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.left.lcl  <- getTSSTTSbetweenTissues(sclc.tx.5050.5050.left, ensGene.rt.tx, ensGene.rt.tx.lcl)
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "+lcl_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right"))
+main.text <- c("Right-leading consistent genes in SCLC and LCL", paste0("(n=", separator(length(sclc.tx.consist.right.lcl)), "+", length(sclc.tx.5050.5050.right.lcl), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.lcl, "sandybrown", tx.list2=sclc.tx.5050.5050.right.lcl, col2="red", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "+lcl_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left"))
+main.text <- c("Left-leading consistent genes in SCLC and LCL", paste0("(n=", separator(length(sclc.tx.consist.left.lcl)), "+", length(sclc.tx.5050.5050.left.lcl), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.lcl, "steelblue1", tx.list2=sclc.tx.5050.5050.left.lcl, col2="red", ext="pdf")
+
+## Right (CD and HO)
+sclc.tx.consist.right.cd.lcl <- getTSSTTSbetweenTissues(sclc.tx.consist.right.cd, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.consist.right.ho.lcl <- getTSSTTSbetweenTissues(sclc.tx.consist.right.ho, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.right.cd.lcl <- getTSSTTSbetweenTissues(sclc.tx.5050.5050.right.cd, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.right.ho.lcl <- getTSSTTSbetweenTissues(sclc.tx.5050.5050.right.ho, ensGene.rt.tx, ensGene.rt.tx.lcl)
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "+lcl_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right_CD"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.right.cd.lcl)), "+", length(sclc.tx.5050.5050.right.cd.lcl), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.cd.lcl, "sandybrown", tx.list2=sclc.tx.5050.5050.right.cd.lcl, col2="red", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "+lcl_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_right_HO"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.right.ho.lcl)), "+", length(sclc.tx.5050.5050.right.ho.lcl), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.ho.lcl, "sandybrown", tx.list2=sclc.tx.5050.5050.right.ho.lcl, col2="red", ext="pdf")
+
+## Left (CD and HO)
+sclc.tx.consist.left.cd.lcl <- getTSSTTSbetweenTissues(sclc.tx.consist.left.cd, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.consist.left.ho.lcl <- getTSSTTSbetweenTissues(sclc.tx.consist.left.ho, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.left.cd.lcl <- getTSSTTSbetweenTissues(sclc.tx.5050.5050.left.cd, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.left.ho.lcl <- getTSSTTSbetweenTissues(sclc.tx.5050.5050.left.ho, ensGene.rt.tx, ensGene.rt.tx.lcl)
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "+lcl_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left_CD"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.left.cd.lcl)), "+", length(sclc.tx.5050.5050.left.cd.lcl), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.cd.lcl, "steelblue1", tx.list2=sclc.tx.5050.5050.left.cd.lcl, col2="red", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "+lcl_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist+5050_left_HO"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.left.ho.lcl)), "+", length(sclc.tx.5050.5050.left.ho.lcl), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.ho.lcl, "steelblue1", tx.list2=sclc.tx.5050.5050.left.ho.lcl, col2="red", ext="pdf")
+
+
+
+
+
+
+
+
+
+sclc.tx.5050.5050.lcl <- getTSSTTSbetweenTissues(sclc.tx.5050.5050, ensGene.rt.tx, ensGene.rt.tx.lcl)
+sclc.tx.5050.5050.lcl.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050.lcl,], CD > 0))
+sclc.tx.5050.5050.lcl.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.5050.5050.lcl,], CD < 0))
+
+sclc.tx.consist.right.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.right,], CD > 0))
+sclc.tx.consist.right.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.right,], CD < 0))
+
+
+
+
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_right_CD"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.right.cd)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.cd, "sandybrown", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_right_HO"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.right.ho)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.right.ho, "sandybrown", ext="pdf")
+
+## Left (CD and HO)
+sclc.tx.consist.left.cd <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.left,], CD > 0))
+sclc.tx.consist.left.ho <- rownames(subset(ensGene.rt.tx[sclc.tx.consist.left,], CD < 0))
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_left_CD"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Co-directional; n=", separator(length(sclc.tx.consist.left.cd)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.cd, "steelblue1", ext="pdf")
+
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_left_HO"))
+main.text <- c("Left-leading consistent genes in SCLC", paste0("(Head-on; n=", separator(length(sclc.tx.consist.left.ho)), ")"))
+plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.ho, "steelblue1", ext="pdf")
+
+
+
+
+
+
+
+ensGene.rt.tx[sclc.tx.consist.right,]$RFD_TTS ~ ensGene.rt.tx[sclc.tx.consist.right,]$RFD_TSS
+
+xlim <- 1
+ylim <- 1
+file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_consist_right.png"))
+main.text <- c("Right-leading consistent genes in SCLC", paste0("(n=", separator(length(sclc.tx.inconsist)), ")"))
+plotSRCTxLength(file.name, main.text, ensGene.rt.tx, sclc.tx.inconsist, "purple1", xlim, ylim)
+
+
+
+
+
+
+
+###
+##
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_5050.pdf"))
+main.text <- "Replication fork directionality (RFD) in SCLC"
+xlab.text <- c("RFD = (R-L)/(R+L)", "TSS")
+ylab.text <- "TTS"
+sclc.tx <- c(sclc.tx.5050)
+cols <- rep("red", length(sclc.tx.5050))
+
+pdf(file.name, height=6, width=6)
+plot(ensGene.rt.tx[sclc.tx,]$RFD_TTS ~ ensGene.rt.tx[sclc.tx,]$RFD_TSS, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols)
+
+points(ensGene.rt.tx[sclc.tx.5050.right,]$RFD_TTS ~ ensGene.rt.tx[sclc.tx.5050.right,]$RFD_TSS, col="sandybrown")
+points(ensGene.rt.tx[sclc.tx.5050.left,]$RFD_TTS  ~ ensGene.rt.tx[sclc.tx.5050.left,]$RFD_TSS,  col="steelblue1")
+points(ensGene.rt.tx[sclc.tx.5050.5050,]$RFD_TTS  ~ ensGene.rt.tx[sclc.tx.5050.5050,]$RFD_TSS,  col="red")
+abline(h=0, lty=5, lwd=0.85, col="black")
+text(0,  0.5, paste0("32.29% (", separator(length(sclc.tx.5050.right)), ")"), cex=0.85, col="black")
+text(0, -0.5, paste0("36.46% (", separator(length(sclc.tx.5050.left)), ")"), cex=0.85, col="black") 
+text(0,    0, paste0("31.25% (", separator(length(sclc.tx.5050.5050)), ")"), cex=0.85, col="black") 
+
+#legend("bottom", c("Left-leading in SCLC", paste0("L/R (n=", length(sclc.tx.origin.o.c), ") in SCLC"), "Right-leading in SCLC"), col=c("steelblue1", "red", "sandybrown"), pch=1, cex=0.8, horiz=T)
+mtext(paste0("R/L-leading genes (n=", separator(length(sclc.tx.5050)), ")"), cex=1, line=0.4)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Plot RO and RT for these 30 candidate genes (sclc.tx.5050.5050)
+# Last Modified: 05/12/18
+# -----------------------------------------------------------------------------
+wd.rt.plots.5050 <- file.path(wd.rt.plots, "5050")
+for (g in 1:length(sclc.tx.5050.5050)) {
+   g <- 19
+   gene <- ensGene[sclc.tx.5050.5050[g],]
+   chr <- gene$chromosome_name
+   length <- gene$end_position - gene$start_position
+   start <- gene$start_position - 10000
+   end <- gene$end_position + 10000
+   
+   ## Replication fork directionality (RFD)  
+   load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
+   bed.gc.rt.chr$RFD <- mapply(x = 1:nrow(bed.gc.rt.chr), function(x) as.numeric(getRFD(bed.gc.rt.chr[x, ])))   ## ADD 05/12/18
+   right.idx  <- which(bed.gc.rt.chr$RIGHT_LEADING > origin.upper)
+   left.idx   <- which(bed.gc.rt.chr$RIGHT_LEADING < origin.lower)
+   origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
+   bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
+ 
+   start <- gene$start_position - 500000
+   end <- gene$end_position + 500000
+   file.name <- file.path(wd.rt.plots.5050, paste0(base, "_RFD_bstrps1000_", chr))
+   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
+ 
+   ## Replication timing
+   rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
+   rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
+ 
+   file.name  <- file.path(wd.rt.plots.5050, paste0(base, "_RT_bstrps1000_", chr))
+   plotBootstrapsRT(file.name, gene=gene$external_gene_name, BASE, chr, start, end, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
+}
+
 
 # -----------------------------------------------------------------------------
 # Inconsistent genes have lower expression levels
