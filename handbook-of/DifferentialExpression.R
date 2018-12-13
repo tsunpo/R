@@ -70,7 +70,7 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
 ## http://www.sthda.com/english/wiki/abline-r-function-an-easy-way-to-add-straight-lines-to-a-plot-using-r-software
 ## http://www.sthda.com/english/wiki/line-types-in-r-lty
 plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
-   xlab.text <- paste0("log[2](TPM+", pseudocount, ")")
+   xlab.text <- paste0("log2(TPM+", pseudocount, ")")
    ylab.text <- "Density"
    d <- density(medians)
    #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts

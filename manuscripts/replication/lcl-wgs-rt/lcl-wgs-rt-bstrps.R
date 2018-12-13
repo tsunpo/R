@@ -88,10 +88,11 @@ for (c in 1:22) {
 # Plot RO and RT for these 30 candidate genes (sclc.tx.5050.5050)
 # Last Modified: 05/12/18
 # -----------------------------------------------------------------------------
-wd.rt.plots.5050 <- file.path(wd.rt.plots, "5050")
+wd.rt.plots.5050 <- file.path(wd.rt.plots, "inconsistent")
 for (g in 1:length(sclc.tx.5050.5050)) {
    g <- 19   #27
    gene <- ensGene[sclc.tx.5050.5050[g],]
+   gene <- ensGene["ENSG00000149311",]   ## ATM
    chr <- gene$chromosome_name
    length <- gene$end_position - gene$start_position
    start <- gene$start_position - 10000000
@@ -105,8 +106,8 @@ for (g in 1:length(sclc.tx.5050.5050)) {
    origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
  
-   start <- gene$start_position - 5000000
-   end   <- gene$end_position   + 5000000
+   start <- gene$start_position - 100000
+   end   <- gene$end_position   + 100000
    file.name <- file.path(wd.rt.plots.5050, paste0(base, "_RFD_bstrps1000_", chr))
    plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
  

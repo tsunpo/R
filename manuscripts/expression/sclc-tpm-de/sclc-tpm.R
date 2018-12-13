@@ -115,6 +115,10 @@ tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
 plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=F, pseudocount=0.01, NULL)
 plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=F, pseudocount=0.01, NULL)
 
-tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0)
-plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d.pdf")),    detected=F, pseudocount=0, NULL)
-plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist.pdf")), detected=F, pseudocount=0, NULL)
+## Q4
+file.main <- "_kallisto_0.43.1_tpm.gene_r5p47_autosome"
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F)
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
+plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=F, pseudocount=0.01, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=F, pseudocount=0.01, NULL)

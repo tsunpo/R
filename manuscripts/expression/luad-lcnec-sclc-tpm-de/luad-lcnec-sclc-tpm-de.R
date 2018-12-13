@@ -70,3 +70,31 @@ plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcenc-sclc_RB1_Q0.05_145DE", size
 
 file.main <- "NETs on 632/639 D.E. (LCNEC RB1; Q < 0.1) genes"
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcnec-sclc_RB1_Q0.1_632DE", size=6.5, file.main, "bottomright", c("red", "dodgerblue", "gray", "orange"), NULL, flip.x=1, flip.y=1)
+
+# -----------------------------------------------------------------------------
+# Comparising between SCLC, LUAD and LCNEC
+# Last Modified: 10/12/18
+# -----------------------------------------------------------------------------
+plotBox <- function(gene, wd.de.plots, tpm.gene.log2, pheno.all, ylim=NULL) {
+   ids <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id   ## E.g. RBL1 (ENSG00000080839 and ENSG00000269846)
+   
+   for (i in 1:length(ids)) {
+      id <- ids[i]
+      
+      gene.tpm <- cbind(t(tpm.gene.log2)[rownames(pheno.all), id], pheno.all)
+      colnames(gene.tpm)[1] <- "MEDIAN"  
+      file.name <- paste0("boxplot_tpm.gene.log2_", gene)
+      if (is.null(ylim))
+         ylim <- c(min(gene.tpm$MEDIAN), max(gene.tpm$MEDIAN))
+      if (length(ids) != 1)
+         file.name <- paste0(file.name, "_", id)
+      
+      pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=4)
+      boxplot(MEDIAN ~ Cancer_Type, data=gene.tpm, outline=T, names=c("LUAD", "LCNEC", "SCLC"), ylim=ylim, ylab="log2(TPM+0.01)", main=paste0(gene, " (", id, ")"))
+      dev.off()
+   }
+}
+
+genes <- c("B2M", "BAX", "NUCB1", "RBL1")
+for (g in 1:length(genes))
+   plotBox(genes[g], wd.de.plots, tpm.gene.log2, pheno.all)

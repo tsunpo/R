@@ -302,7 +302,7 @@ plotBootstrapsRFD <- function(file.name, BASE, chr, xmin, xmax, bed.gc.chr, bed.
    dev.off()
 }
 
-plotBootstrapsRT <- function(file.name, gene="", BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext) {
+plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax, ext, gene="") {
    main.text <- paste0("Read depth (CN-, GC-corrected) ratio (T/N) in ", BASE)
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (gene != "")
