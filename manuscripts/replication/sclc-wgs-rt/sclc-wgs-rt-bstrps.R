@@ -62,7 +62,7 @@ plotBootstrapsHist(bed.gc.rt, file.name, "Chr1-22", BASE, 200, origin.break)    
 # Last Modified: 04/11/18
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
-   #c <- 19
+   #c <- 8
    chr <- chrs[c]
 
    ## Replication fork directionality (RFD)  
@@ -73,17 +73,17 @@ for (c in 1:22) {
    origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
-   start <- 49458072 - 500000
-   end   <- 49465055 + 500000
+   start <- 128747680 - 500000
+   end   <- 128753674 + 500000
    file.name <- file.path(wd.rt.plots, paste0(base, "_RFD_bstrps1000_", chr))
-   plotBootstrapsRFD(file.name, BASE, chr, 100000000, 140050000, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
+   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
    rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
    
    file.name  <- file.path(wd.rt.plots, paste0(base, "_RT_bstrps1000_", chr))
-   plotBootstrapsRT(file.name, BASE, chr, 100000000, 140050000, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
+   plotBootstrapsRT(file.name, BASE, chr, start, end, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
 }
 
 # -----------------------------------------------------------------------------
@@ -188,7 +188,7 @@ plotRFD <- function(file.name, main.text, ensGene.rt.tx, tx.list1, col1, tx.list
    
    ## Linear regression
    ## https://www.statlect.com/fundamentals-of-statistics/R-squared-of-a-linear-regression
-   lm.fit <- lm(ensGene.rt.tx.plot$RFD_TTS ~ ensGene.rt.tx.plot$RFD_TSS + ensGene.rt.tx.plot$LENGTH)
+   lm.fit <- lm(ensGene.rt.tx.plot$RFD_TTS ~ ensGene.rt.tx.plot$RFD_TSS + ensGene.rt.tx.plot$MEDIAN + ensGene.rt.tx.plot$LENGTH)
    intercept <- coef(lm.fit)[1]
    r2 <- summary(lm.fit)$r.squared
    
@@ -262,17 +262,17 @@ tx.q4.fix.all <- getTxQ4(tpm.gene.log2, NA)
 
 intercepts <- list(list(list(list(), list(), list(), list()), list(list(), list(), list(), list())), list(list(list(), list(), list(), list()), list(list(), list(), list(), list())))
 
-tx.list1 <- sclc.tx.consist.right.ho
-tx.list2 <- sclc.tx.5050.5050.right.ho
+tx.list1 <- sclc.tx.consist.right.cd
+tx.list2 <- sclc.tx.5050.5050.right.cd
 for (q in 1:4) {
    tx.list1.input <- intersect(tx.list1, tx.q4.fix[[q]])
    tx.list2.input <- intersect(tx.list2, tx.q4.fix[[q]])
    if (length(which("ENSG00000087088" == tx.list2.input)) == 1)
       print(paste0("BAX: Q", q))
    
-   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+LENGTH_consist+5050_right_HO_Q", q))
-   main.text <- c(paste0("Q", q, " right-leading consistent genes in SCLC"), paste0("(Head-on; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
-   intercepts[[1]][[2]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "sandybrown", tx.list2=tx.list2.input, col2="red", ext="pdf")
+   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+MEDIAN+LENGTH_consist+5050_right_CD_Q", q))
+   main.text <- c(paste0("Q", q, " right-leading consistent genes in SCLC"), paste0("(Co-directional; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
+   intercepts[[1]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "sandybrown", tx.list2=tx.list2.input, col2="red", ext="pdf")
 }
 
 tx.list1 <- sclc.tx.consist.left.ho
@@ -285,7 +285,7 @@ for (q in 1:4) {
    if (length(which("ENSG00000167123" == tx.list2.input)) == 1)
       print(paste0("CERCAM: Q", q))
    
-   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+LENGTH_consist+5050_left_HO_Q", q))
+   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+MEDIAN+LENGTH_consist+5050_left_HO_Q", q))
    main.text <- c(paste0("Q", q, " left-leading consistent genes in SCLC"), paste0("(Co-directional; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
    intercepts[[2]][[2]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "steelblue1", tx.list2=tx.list2.input, col2="red", ext="pdf")
 }
@@ -302,7 +302,7 @@ for (rt in 1:2)
       for (q in 1:4)
          is <- c(is, intercepts[[rt]][[st]][[q]])
 
-file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+LENGTH_consist+5050_Intercepts"))
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+MEDIAN+LENGTH_consist+5050_Intercepts"))
 main.text <- c("Relationship between TSS and TTS", "among consistent genes in SCLC")
 xlab.text <- "Expression"
 ylab.text <- "TTS intercept (when TSS=0)"
@@ -311,17 +311,17 @@ max <- max(abs(min(is)), max(is))
 ylim <- c(-max, max)
 pdf(paste0(file.name, ".pdf"), height=6, width=6)
 plot(as.numeric(intercepts[[1]][[1]]) ~ qs, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], type="l", col="sandybrown", xaxt="n", lwd=2)
-points(as.numeric(intercepts[[1]][[1]]) ~ qs, col="limegreen", pch=19)
+points(as.numeric(intercepts[[1]][[1]]) ~ qs, col="blue", pch=19)
 lines(as.numeric(intercepts[[1]][[2]]) ~ qs, col="sandybrown", lwd=2)
-points(as.numeric(intercepts[[1]][[2]]) ~ qs, col="tomato", pch=19)
+points(as.numeric(intercepts[[1]][[2]]) ~ qs, col="red", pch=19)
 
 lines(as.numeric(intercepts[[2]][[1]]) ~ qs, col="steelblue1", lwd=2)
-points(as.numeric(intercepts[[2]][[1]]) ~ qs, col="limegreen", pch=19)
+points(as.numeric(intercepts[[2]][[1]]) ~ qs, col="blue", pch=19)
 lines(as.numeric(intercepts[[2]][[2]]) ~ qs, col="steelblue1", lwd=2)
-points(as.numeric(intercepts[[2]][[2]]) ~ qs, col="tomato", pch=19)
+points(as.numeric(intercepts[[2]][[2]]) ~ qs, col="red", pch=19)
 
 abline(h=0, lty=5, lwd=0.85)
-legend("topleft", legend=c("Co-directional", "Head-on"), col=c("limegreen", "tomato"), pch=19)
+legend("topleft", legend=c("Co-directional", "Head-on"), col=c("blue", "red"), pch=19)
 legend("bottomleft", legend=c("Right-leading", "Left-leading"), col=c("sandybrown", "steelblue1"), lty=1, lwd=2, bty="n")
 axis(side=1, at=seq(1, 4, by=1), labels=paste0("Q", qs))
 mtext(main.text[2], cex=1.2, line=0.3)

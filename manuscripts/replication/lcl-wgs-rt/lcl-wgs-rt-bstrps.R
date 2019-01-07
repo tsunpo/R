@@ -88,15 +88,15 @@ for (c in 1:22) {
 # Plot RO and RT for these 30 candidate genes (sclc.tx.5050.5050)
 # Last Modified: 05/12/18
 # -----------------------------------------------------------------------------
-wd.rt.plots.5050 <- file.path(wd.rt.plots, "inconsistent")
+wd.rt.plots.5050 <- file.path(wd.rt.plots, "5050")
 for (g in 1:length(sclc.tx.5050.5050)) {
-   g <- 19   #27
-   gene <- ensGene[sclc.tx.5050.5050[g],]
-   gene <- ensGene["ENSG00000149311",]   ## ATM
+   #g <- 19   #27
+   #gene <- ensGene[sclc.tx.5050.5050[g],]
+   gene <- ensGene["ENSG00000136997",]   ## MYC, ATM
    chr <- gene$chromosome_name
    length <- gene$end_position - gene$start_position
-   start <- gene$start_position - 10000000
-   end <- gene$end_position + 10000000
+   #start <- gene$start_position - 500000
+   #end <- gene$end_position + 500000
  
    ## Replication fork directionality (RFD)  
    load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
@@ -106,8 +106,8 @@ for (g in 1:length(sclc.tx.5050.5050)) {
    origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
  
-   start <- gene$start_position - 100000
-   end   <- gene$end_position   + 100000
+   start <- 125000000
+   end   <- 135000000
    file.name <- file.path(wd.rt.plots.5050, paste0(base, "_RFD_bstrps1000_", chr))
    plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
  

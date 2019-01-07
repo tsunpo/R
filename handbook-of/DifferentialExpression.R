@@ -2,7 +2,7 @@
 # Library      : Differential Gene Expression
 # Name         : handbook-of/DifferentialExpression.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 25/11/18
+# Last Modified: 07/01/19
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -91,7 +91,7 @@ plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
    text(q[3], ymax, "Median", cex=0.85, col="blue") 
    text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
    
-   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.5)
+   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.3)
    rug(jitter(medians))
    dev.off()
 }
@@ -110,7 +110,7 @@ plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax,
    
    pdf(file.name, height=6, width=6)
    hist(medians, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(conditioned, " genes in ", BASE), breaks=breaks, ylim=c(0, ymax)) 
-   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.5)
+   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.3)
    dev.off()
 }
 
@@ -152,7 +152,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    trait.v <- sort(unique(trait))
    
    if (isNA(cols))
-      cols <- c("red","deepskyblue","forestgreen","purple3","blue","gold","lightsalmon","turquoise1","limegreen")   #,"salmon","tomato","steelblue2","cyan")
+      cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
    if (length(trait.v) > length(cols))
       cols <- rainbow(length(trait.v))
    else
@@ -166,13 +166,14 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   plot(scores[,x]*flip.x, scores[,y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main, xlab=xlab, ylab=ylab)
+   plot(scores[,x]*flip.x, scores[,y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
    
    if (!is.null(samples)) {
       for (s in 1:length(samples))
          text(scores[s, x]*flip.x, scores[s, y]*flip.y, samples[s], col="black", adj=c(0, -0.75), cex=0.75)
    }
 
+   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
    legend(legend, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
    dev.off()
 }

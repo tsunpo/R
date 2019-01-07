@@ -433,6 +433,32 @@ plotQ4SS <- function(q4ss, file.name, file.main, mtext, ylim, ylab, isLog10) {
    dev.off()
 }
 
+# -----------------------------------------------------------------------------
+# Visualisation of bootstrapping data (Expression level and gene length)
+# Last Modified: 23/12/18
+# -----------------------------------------------------------------------------
+plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, isFlipped, ext) {
+   main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   ylab.text <- "Read depth"
+ 
+   xmin <- 0
+   xmax <- subset(chromInfo, chrom == chr)$size
+   ymin <- min(rpkm.chr)
+   ymax <- max(rpkm.chr)
+ 
+   if (ext == "pdf")
+      pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
+   else if (ext == "png")
+      png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+ 
+   dev.off()
+}
+
 # =============================================================================
 # Inner Class  : PeifLyne File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
@@ -473,27 +499,7 @@ read.bedtools.multicov.cov <- function(cov.file) {
 
 
 
-plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, ext) {
- main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
- xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
- ylab.text <- "Read depth"
- 
- xmin <- 0
- xmax <- subset(chromInfo, chrom == chr)$size
- ymin <- min(rpkm.chr)
- ymax <- max(rpkm.chr)
- 
- if (ext == "pdf")
-  pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
- else if (ext == "png")
-  png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
- plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
- points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
- lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
- dev.off()
-}
+
 
 # -----------------------------------------------------------------------------
 # Methods: File manipulation and plotting

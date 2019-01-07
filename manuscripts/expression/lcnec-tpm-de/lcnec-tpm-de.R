@@ -3,7 +3,7 @@
 # Chapter I    : RB1-loss differential gene expression in neuroendocrine tumours
 # Name         : manuscripts/expression/lcnec-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 08/08/18
+# Last Modified: 07/01/19
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
@@ -36,7 +36,7 @@ samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames
 colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "AVG_FRAGMENT_LENGTH", "MAX_INSERT_SIZE", "RB1_MUT")
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
+tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
 # -----------------------------------------------------------------------------
 # D.E. using non-parametric test (20 RB1 vs 34 WT; n=69-15NA)
@@ -59,16 +59,12 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
 #load(file.path("/Users/tpyang/Work/uni-koeln/tyang2", "LCNEC", "analysis/expression/kallisto", paste0("lcnec", "-tpm-de/data/", "de_", "lcnec", "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
-genes.rb1.q0.1  <- rownames(subset(de.tpm.gene, FDR <= 0.1))
 genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
-## > length(genes.rb1.q0.1)
-## [1] 639
 ## > length(genes.rb1.q0.05)
 ## [1] 145
 
 ## RB1 status on D.E genes
 test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-#test <- tpm.gene[genes.rb1.q0.1, rownames(samples)]
 pca.de <- getPCA(t(test))
 
 trait <- as.numeric(samples[,"RB1_MUT"])
@@ -76,15 +72,12 @@ trait[which(trait == 0)] <- "WT"
 trait[which(trait == 1)] <- "RB1"
 
 ##
-file.main <- "LCNEC RB1 status on 145 D.E. (Q < 0.05) genes"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_Q0.05_145DE", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
-
-file.main <- "LCNEC RB1 status on 639 D.E. (Q < 0.1) genes"
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_Q0.1_639DE", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
+file.main <- c("LCNEC samples on top 145 D.E. genes", "RB1-loss effect; FDR < 0.05")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_rb1_q0.05_145de", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
 # Volcano plots
-# Last Modified: 15/08/18
+# Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
 plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    de.sig <- subset(de, FDR <= fdr)
@@ -96,12 +89,12 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    p <- max(de.sig$P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="RB1/WT fold change (log2)", ylab="P-value (-log10)", col="darkgray", main=file.main)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="RB1/WT fold change [log2]", ylab="P-value [-log10]", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
    text(xmax*-1 + 2*xmax/36, -log10(fdrToP(fdr, de)) + ymax/42, "FDR=0.05", cex=0.85)
-   abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
+   #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
+   #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
@@ -129,48 +122,41 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
          print(genes[g])
    }
    
+   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
    legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
 plot.main <- "RB1-loss differential expression in LCNEC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05")
+plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05")
 
 ## Figure 1 (Cell cycle)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Cycle.tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "", "Cell cycle pathway", "")
-file.de <- paste0(plot.de, "_Cycle.pdf")
+genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05_cycle.tab"), header=T, rownames=F, sep="\t")
+file.main <- c(plot.main, "Cell cycle regulation")
+file.de <- paste0(plot.de, "_cycle.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
-## Figure 2 (Hintone)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Histone.tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "", "Histone modifications", "")
-file.de <- paste0(plot.de, "_Histone.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
-
-## Figure 3 (DDR)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Repair.tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "", "DNA repair pathway", "")
-file.de <- paste0(plot.de, "_Repair.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
-
-## Figure ? (UP/TCD/HO/Q4)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_UP_TCD_HO_Q4.tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(wd.de.plots, "/volcanoplot_lcnec_RB1_Q0.05_UP_TCD_HO_Q4.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, c(plot.main, "", "TCD / Head-on / Q4 (in SCLC)", ""))
-
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_sclc_TCD_HO_Q4.tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(wd.de.plots, "/volcanoplot_sclc_TCD_HO_Q4.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, c(plot.main, "", "TCD / Head-on / Q4 (in SCLC)", ""))
-
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_sclc_TCD_CD_Q2.tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(wd.de.plots, "/volcanoplot_sclc_TCD_CD_Q2.pdf")
-plotVolcano(de.tpm.gene, 0.05, subset(genes, GENE %in% o), file.de, c(plot.main, "", "TCD / Co-directional / Q2 (in SCLC)", ""))
 
 
 
 
+
+
+
+
+
+## Figure 1b (Hintone)
+#genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05_histone.tab"), header=T, rownames=F, sep="\t")
+#file.main <- c(plot.main, "Histone modifications")
+#file.de <- paste0(plot.de, "_histone.pdf")
+#plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+
+## Figure 1c (Repair)
+#genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05_repair.tab"), header=T, rownames=F, sep="\t")
+#file.main <- c(plot.main, "DNA repair pathway")
+#file.de <- paste0(plot.de, "_repair.pdf")
+#plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Gene sets (please refer to guide-to-the/cycle.R) that are expressed in the dataset
@@ -185,15 +171,6 @@ core.Stemness  <- intersect(core.Stemness, rownames(tpm.gene.log2))    ## 54/58/
 ## Dominguez et al 2016
 periodic.G1S <- intersect(periodic.G1S, rownames(tpm.gene.log2))   ## 262/304
 periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
-
-
-
-
-
-
-
-
-
 
 # -----------------------------------------------------------------------------
 # 
@@ -254,60 +231,3 @@ genes.G2M <- intersect(genes.G2M, rownames(tpm.gene.log2))
 # [1] 830   ## Original 838/876 from Dominguez et al.
 writeGRPformat(genes.G1S, wd.de.data, "genes.G1S")
 writeGRPformat(genes.G2M, wd.de.data, "genes.G2M")
-
-# -----------------------------------------------------------------------------
-# Gene length
-# Last Modified: 22/08/18
-# -----------------------------------------------------------------------------
-plotBox <- function(gene, wd.de, expr.pheno.log2, pheno.all) {
-   ensembl_gene_id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id[1]   ## To avoid ENSG00000269846 (one of RBL1)
-   gene.tpms <- cbind(t(expr.pheno.log2)[rownames(pheno.all), ensembl_gene_id], pheno.all)
-   colnames(gene.tpms)[1] <- "LOG2_TPM"
- 
-   pdf(paste0(wd.de, "plots/boxplot/boxplot_tpm.gene.log2_", gene, ".pdf"), height=6, width=4)
-   ymin <- min(gene.tpms$LOG2_TPM)
-   ymax <- max(gene.tpms$LOG2_TPM)
-   boxplot(LOG2_TPM ~ Cancer_Type, data=gene.tpms, outline=T, names=c("LUAD", "LCNEC", "SCLC"), ylim=c(ymin, ymax), ylab="log2(TPM + 0.01)", main=paste0(gene, " (", ensembl_gene_id, ")"))
- 
-   dev.off()
-}
-
-ens.genes.rb1.q0.1  <- initLength(genes.rb1.q0.1, 0)
-ens.genes.rb1.q0.05 <- initLength(genes.rb1.q0.05, 1)
-ens.core.G1S <- initLength(core.G1S, 2)
-ens.core.G2M <- initLength(core.G2M, 3)
-ens.core.SC  <- initLength(core.SC, 4)
-ens.genes <- rbind(ens.genes.rb1.q0.1, ens.genes.rb1.q0.05, ens.core.G1S, ens.core.G2M, ens.core.SC)
-ens.genes$Group <- as.factor(ens.genes$Group)
-ens.genes$Length <- log10(ens.genes$Length)
-
-file.name <- file.path(wd.de.plots, paste0("boxplot_", base, "_genes_RB1-G1S-G2M-SC_length.pdf"))
-pdf(file.name, height=6, width=4.5)
-ymin <- min(ens.genes$Length)
-ymax <- max(ens.genes$Length)
-boxplot(Length ~ Group, data=ens.genes, outline=T, names=c("RB1", "RB1", "G1-S", "G2-M", "SC"), col=c("white", "white", "lightgray", "lightgray", "lightgray"), ylim=c(ymin, ymax), ylab="Gene length (log10)", main=c("LCNEC RB1 D.E. and Tirosh 2016", "gene lists"))
-dev.off()
-
-## G1-S vs G2-M
-testW(ens.core.G1S$Length, ens.core.SC$Length)
-# [1] 0.7494677
-testW(ens.core.G2M$Length, ens.core.SC$Length)
-# [1] 0.8034764
-testW(ens.core.G1S$Length, ens.core.G2M$Length)
-# [1] 0.9490751
-
-## RB1 (q<0.1) vs G1-S and G2-M
-testW(ens.genes.rb1.q0.1$Length, ens.core.SC$Length)
-# [1] 0.8274065
-testW(ens.genes.rb1.q0.1$Length, ens.core.G1S$Length)
-# [1] 0.8365886
-testW(ens.genes.rb1.q0.1$Length, ens.core.G2M$Length)
-# [1] 0.4585982
-
-## RB1 (q<0.05) vs G1-S and G2-M
-testW(ens.genes.rb1.q0.05$Length, ens.core.SC$Length)
-# [1] 0.8064687
-testW(ens.genes.rb1.q0.05$Length, ens.core.G1S$Length)
-# [1] 0.7674659
-testW(ens.genes.rb1.q0.05$Length, ens.core.G2M$Length)
-# [1] 0.9107349
