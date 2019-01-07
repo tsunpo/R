@@ -103,7 +103,7 @@ plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax,
    h <- hist(medians, breaks=breaks) 
    if (is.null(ymax))
       ymax <- max(h$counts)
-   numbers <- formatC(length(median), format="f", big.mark=",", digits=0)  
+   numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
    conditioned <- "Expressed"
    if (detected)
       conditioned <- "Detected"

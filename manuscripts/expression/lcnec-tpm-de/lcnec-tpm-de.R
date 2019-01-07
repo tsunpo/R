@@ -5,7 +5,6 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
@@ -73,7 +72,7 @@ trait[which(trait == 1)] <- "RB1"
 
 ##
 file.main <- c("LCNEC samples on top 145 D.E. genes", "RB1-loss effect; FDR < 0.05")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_rb1_q0.05_145de", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcnec_rb1_q0.05_145de", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
 # Volcano plots
