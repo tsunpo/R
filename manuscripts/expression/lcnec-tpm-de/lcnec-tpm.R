@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   :
-# Chapter I    : RB1-loss differential gene expression in neuroendocrine tumours
+# Chapter I    : RB1-loss differential effect on gene expression in LCNEC
 # Name         : manuscripts/expression/lcnec-tpm.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19

@@ -159,8 +159,8 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
       cols <- cols[1:length(trait.v)]
    trait.col <- mapply(x = 1:length(trait), function(x) return(cols[which(trait[x] == trait.v)]))   ## Assign colours to each subtypes
    
-   cols[which(trait.v == "NA")] <- "lightgrey"
-   trait.col[which(trait == "NA")] <- "lightgrey"
+   cols[which(trait.v == "NA")] <- "lightgray"
+   trait.col[which(trait == "NA")] <- "lightgray"
    
    xlab <- paste0("Principal component ", x, " (", pcaProportionofVariance(pca, x), "%)")
    ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
@@ -340,65 +340,6 @@ pipeDE <- function(expr, pheno, argv, ensGene) {
 ## https://www.biostars.org/p/143458/#157303                            ## estimates vs. count-based methods; transcript level quantification tools
 ## https://liorpachter.wordpress.com/2015/08/17/a-sleuth-for-rna-seq/   ## estimates vs. count-based methods
 ## https://liorpachter.wordpress.com/2013/08/26/magnitude-of-effect-vs-statistical-significance/  ## Read counts accumulated across a gene cannot be used directly to estimate fold change 
- 
-# -----------------------------------------------------------------------------
-# Method: Volcano plots
-# Last Modified: 13/02/17
-# -----------------------------------------------------------------------------
-fdrToP <- function(fdr, de) {
-   de.sig <- subset(de, FDR <= fdr)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   return(max(de.sig$P))
-}
-
-plotVolcano <- function(de, fdr, genes, file.de, file.main) {
-   de.sig <- subset(de, FDR <= fdr)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   ymax <- max(de$log10P)
-   p <- max(de.sig$P)
- 
-   ##
-   pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="Median fold change (log2FC RB1/WT)", ylab="Significance (-log10 P-value)", col="darkgray", main=file.main)
- 
-   abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
-   text(xmax*-1 + 2*xmax/80, -log10(fdrToP(fdr, de)) + ymax/42, "Q<0.05", cex=0.85)
-   abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/200, -log10(fdrToP(0.1, de)) + ymax/42, "Q<0.1", col="darkgray", cex=0.85)
-   
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="dodgerblue")
- 
-   for (g in 1:nrow(genes)) {
-      gene <- subset(de, external_gene_name == genes[g,]$GENE)
-      gene <- cbind(gene, genes[g,])
-  
-      if (nrow(gene) > 0) {
-         points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
-   
-         if (!is.na(gene$ADJ_1))
-            if (is.na(gene$ADJ_2))
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=0.75)
-         else
-            if (gene$LOG2_FC > 0)
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=0.75)
-      } else
-         print(genes[g])
-   }
- 
-   legend("topleft", legend=c("Up-regulation", "Down-regulation"), col=c("red", "dodgerblue"), pch=19)
-   dev.off()
-}
 
 # -----------------------------------------------------------------------------
 # Method: Gene Set Enrichment Analysis (GSEA)

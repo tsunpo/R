@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter I    : RB1-loss differential gene expression in neuroendocrine tumours
+# Chapter I    : RB1-loss differential effect on gene expression in LCNEC
 # Name         : manuscripts/expression/lcnec-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19
@@ -27,9 +27,8 @@ wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
 wd.de.gsea  <- file.path(wd.de, "gsea")
-wd.de.path  <- file.path(wd.de, "pathway")
+wd.de.plots <- file.path(wd.de, "plots")
 
 samples <- readTable(file.path(wd.rna, "lcnec_rna_n69.list"), header=F, rownames=T, sep="")
 colnames(samples) <- c("SAMPLE_ID", "FILE_NAME", "AVG_FRAGMENT_LENGTH", "MAX_INSERT_SIZE", "RB1_MUT")
@@ -38,7 +37,7 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
 # -----------------------------------------------------------------------------
-# D.E. using non-parametric test (20 RB1 vs 34 WT; n=69-15NA)
+# RB1-loss differential effect on gene expression in LCNEC (Non-parametric test; n=69-15NA, 34 WT vs 20 RB1)
 # Last Modified: 22/05/18
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
@@ -59,10 +58,10 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # -----------------------------------------------------------------------------
 #load(file.path("/Users/tpyang/Work/uni-koeln/tyang2", "LCNEC", "analysis/expression/kallisto", paste0("lcnec", "-tpm-de/data/", "de_", "lcnec", "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
 genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
-## > length(genes.rb1.q0.05)
-## [1] 145
+# > length(genes.rb1.q0.05)
+# [1] 145
 
-## RB1 status on D.E genes
+## LCNEC samples on D.E genes
 test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
 
@@ -71,13 +70,20 @@ trait[which(trait == 0)] <- "WT"
 trait[which(trait == 1)] <- "RB1"
 
 ##
-file.main <- c("LCNEC samples on top 145 D.E. genes", "RB1-loss effect; FDR < 0.05")
+file.main <- c("LCNEC samples on top 145 D.E. genes", "RB1-loss differential effect; FDR < 0.05")
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcnec_rb1_q0.05_145de", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
 # Volcano plots
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
+fdrToP <- function(fdr, de) {
+   de.sig <- subset(de, FDR <= fdr)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   return(max(de.sig$P))
+}
+
 plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    de.sig <- subset(de, FDR <= fdr)
    de.sig$log10P <- -log10(de.sig$P)
@@ -136,15 +142,6 @@ file.main <- c(plot.main, "Cell cycle regulation")
 file.de <- paste0(plot.de, "_cycle.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
-
-
-
-
-
-
-
-
-
 ## Figure 1b (Hintone)
 #genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05_histone.tab"), header=T, rownames=F, sep="\t")
 #file.main <- c(plot.main, "Histone modifications")
@@ -158,18 +155,30 @@ plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 #plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
-# Gene sets (please refer to guide-to-the/cycle.R) that are expressed in the dataset
+# GSEA
 # -----------------------------------------------------------------------------
-load(file.path(wd.src.ref, "cycle.RData"))
+file.name <- paste0("de_lcnec_tpm-gene-r5p47_rb1_wilcox_q_n54")
+writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 
-core.G1S <- intersect(core.G1S, rownames(tpm.gene.log2))   ## 41/43/43
-core.G2M <- intersect(core.G2M, rownames(tpm.gene.log2))   ## 54/54/55
-core.Stemness  <- intersect(core.Stemness, rownames(tpm.gene.log2))    ## 54/58/63
+load(file.path(wd.src.ref, "cycle.RData"))                           ## See guide-to-the/cycle.R
+core.G1S <- intersect(core.G1S, rownames(tpm.gene.log2))             ## 41/43/43 are expressed in the dataset
+core.G2M <- intersect(core.G2M, rownames(tpm.gene.log2))             ## 54/54/55
+core.Stemness <- intersect(core.Stemness, rownames(tpm.gene.log2))   ## 54/58/63
+
+writeGRPformat(core.G1S, wd.de.gsea, "core.G1-S")
+writeGRPformat(core.G2M, wd.de.gsea, "core.G2-M")
+writeGRPformat(core.Stemness, wd.de.gsea, "core.Stemness")
 
 ## Dominguez et al 2016
 periodic.G1S <- intersect(periodic.G1S, rownames(tpm.gene.log2))   ## 262/304
 periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
+
+writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
+writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
+
+
+
 
 # -----------------------------------------------------------------------------
 # 
@@ -205,28 +214,3 @@ output$Dominguez_2016 <- ""
 output[intersect(genes.rb1, core.G2M),]$Tirosh_2016 <- "yes"
 output[intersect(genes.rb1, genes.G2M),]$Dominguez_2016 <- "yes"
 writeTable(output, file.path(wd.de.data, paste0(file.name, "_G2-M.txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# GSEA
-# -----------------------------------------------------------------------------
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54")
-writeRNKformat(de.tpm.gene, wd.de.data, file.name)
-
-## GRP gene sets
-writeGRPformat(genes.rb1.q0.05, wd.de.data, "genes.rb1.q0.05")
-writeGRPformat(genes.rb1.q0.1, wd.de.data, "genes.rb1.q0.1")
-
-## Tirosh 2016
-writeGRPformat(core.G1S, wd.de.data, "core.G1-S")
-writeGRPformat(core.G2M, wd.de.data, "core.G2-M")
-writeGRPformat(core.SC, wd.de.data, "core.Stemness")
-
-## Dominguez 2016
-genes.G1S <- intersect(genes.G1S, rownames(tpm.gene.log2))
-genes.G2M <- intersect(genes.G2M, rownames(tpm.gene.log2))
-# > length(genes.G1S)
-# [1] 277   ## Original 279/304 from Dominguez et al.
-# > length(genes.G2M)
-# [1] 830   ## Original 838/876 from Dominguez et al.
-writeGRPformat(genes.G1S, wd.de.data, "genes.G1S")
-writeGRPformat(genes.G2M, wd.de.data, "genes.G2M")
