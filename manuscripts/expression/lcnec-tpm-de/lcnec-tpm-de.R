@@ -1,6 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter I    : RB1-loss differential effect on gene expression in LCNEC
+# Figure(s)    : Figure 1 (A and B)
 # Name         : manuscripts/expression/lcnec-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19

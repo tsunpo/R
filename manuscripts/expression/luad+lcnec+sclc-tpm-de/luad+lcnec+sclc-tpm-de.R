@@ -1,9 +1,10 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter I    : RB1-loss additive effect on gene expression in lung cancers
-# Name         : manuscripts/expression/luad-lcnec-sclc-tpm-de-pca.R
+# Chapter I    : RB1-loss additive effect on gene expression in lung cancers (LUAD, LCNEC and SCLC)
+# Figure(s)    : Figure 1 (D and E), plus Figure 1 (C)
+# Name         : manuscripts/expression/luad+lcnec+sclc-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 08/08/18
+# Last Modified: 09/01/19
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
@@ -18,7 +19,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-BASE <- "LUAD-LCNEC-SCLC"
+BASE <- "LUAD+LCNEC+SCLC"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
@@ -38,7 +39,7 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
 # -----------------------------------------------------------------------------
-# Find genes with "additive" effects between SCLC, LUAD and LCNEC
+# Additive effect on gene expression in SCLC, LUAD and LCNEC
 # Last Modified: 08/01/19; 17/08/17
 # -----------------------------------------------------------------------------
 tpm.gene.log2 <- tpm.gene.log2[,rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
@@ -133,33 +134,6 @@ writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
 
 # -----------------------------------------------------------------------------
-# PCA (on RB1-loss differential effect genes; FDR < 0.05)
-# Last Modified: 07/01/19
-# -----------------------------------------------------------------------------
-base.lcnec <- "LCNEC"
-load(file.path(wd, base.lcnec, "analysis/expression/kallisto", paste0(base.lcnec, "-tpm-de/data/", "de_", base.lcnec, "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
-genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
-## > length(genes.rb1.q0.05)
-## [1] 145   ## Original 145 from lcnec-tpm-de-pca.R
-
-## LCNEC+SCLC on RB1 D.E genes
-samples <- subset(samples, Cancer_Type != 0)   ## MOVE HERE 08/01/19
-
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.de <- getPCA(t(test))
-
-trait <- samples$RB1
-trait[which(samples$Cancer_Type == 2)] <- "SCLC"
-trait[which(trait == "RB1")] <- "LCNEC (RB1)"
-trait[which(trait == "WT")]  <- "LCNEC (WT)"
-trait[which(trait == "NA")]  <- "LCNEC (NA)"
-
-##
-file.main <- c("LCNEC and SCLC on top 145 D.E. genes", "RB1-loss differential effect; FDR < 0.05")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcenc+sclc_rb1_q0.05_de145", size=6.5, file.main, "bottomright", c("lightgray", "red", "dodgerblue", "orange"), NULL, flip.x=1, flip.y=1)
-
-# -----------------------------------------------------------------------------
 # Expression levels between LUAD, LCNEC and SCLC
 # Last Modified: 10/12/18
 # -----------------------------------------------------------------------------
@@ -194,3 +168,30 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 genes <- c("PATL2", "RBL1")
 for (g in 1:length(genes))
    plotBox(genes[g], wd.de.plots, tpm.gene.log2, pheno.all)
+
+# -----------------------------------------------------------------------------
+# Figure 1C: PCA (on RB1-loss differential effect genes; FDR < 0.05)
+# Last Modified: 07/01/19
+# -----------------------------------------------------------------------------
+base.lcnec <- "LCNEC"
+load(file.path(wd, base.lcnec, "analysis/expression/kallisto", paste0(base.lcnec, "-tpm-de/data/", "de_", base.lcnec, "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
+genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
+## > length(genes.rb1.q0.05)
+## [1] 145   ## Original 145 from lcnec-tpm-de-pca.R
+
+## LCNEC+SCLC on RB1 D.E genes
+samples <- subset(samples, Cancer_Type != 0)   ## MOVE HERE 08/01/19
+
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+
+trait <- samples$RB1
+trait[which(samples$Cancer_Type == 2)] <- "SCLC"
+trait[which(trait == "RB1")] <- "LCNEC (RB1)"
+trait[which(trait == "WT")]  <- "LCNEC (WT)"
+trait[which(trait == "NA")]  <- "LCNEC (NA)"
+
+##
+file.main <- c("LCNEC and SCLC on top 145 D.E. genes", "RB1-loss differential effect; FDR < 0.05")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcenc+sclc_rb1_q0.05_de145", size=6.5, file.main, "bottomright", c("lightgray", "red", "dodgerblue", "orange"), NULL, flip.x=1, flip.y=1)

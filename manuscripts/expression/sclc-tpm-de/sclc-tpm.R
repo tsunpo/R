@@ -1,6 +1,7 @@
 # =============================================================================
 # Manuscript   :
 # Chapter      :
+# Figure(s)    : Figure S2 (A and B)
 # Name         : manuscripts/expression/sclc-tpm.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 19/06/18

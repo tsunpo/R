@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   :
-# Chapter I    : RB1-loss differential gene expression in lung cancers (LUAD, LCNEC and SCLC)
-# Name         : manuscripts/expression/luad-lcnec-sclc-tpm-de.R
+# Chapter I    : RB1-loss additive effect on gene expression amongst lung cancers (LUAD, LCNEC and SCLC)
+# Name         : manuscripts/expression/luad+lcnec+sclc-tpm.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19
 # =============================================================================
@@ -52,7 +52,7 @@ tsv.sclc <- getTSV(wd.rna, samples.sclc)
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-BASE <- "LUAD-LCNEC-SCLC"
+BASE <- "LUAD+LCNEC+SCLC"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
