@@ -67,14 +67,12 @@ tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covari
 save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
 save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5p47.RData")))
 
-###
 ## Gene-level TPMs without filtering
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 # > nrow(tpm.gene)
 # [1] 34908
 
-###
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
@@ -82,7 +80,8 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # [1] 19131
 
 # =============================================================================
-# Density plot and histogram (See DifferentialExpression.R)
+# Density plot and histograms (See DifferentialExpression.R)
+# Figure(s)    : Figure S2 (A and B)
 # Last Modified: 25/11/18
 # =============================================================================
 ## Detected genes
@@ -108,21 +107,3 @@ plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc0.1.pdf"), 
 tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=1)
 plotDensity(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc1.pdf"), detected=F, pseudocount=1, NULL)
 plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc1.pdf"), detected=F, pseudocount=1, NULL)
-
-
-
-
-
-
-
-
-
-
-## Q4
-file.main <- "_kallisto_0.43.1_tpm.gene_r5p47_autosome"
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F)
-
-tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
-plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=F, pseudocount=0.01, NULL)
-plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=F, pseudocount=0.01, NULL)

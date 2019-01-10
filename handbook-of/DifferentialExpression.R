@@ -291,8 +291,8 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    cat(paste0("Samples with MUT ", predictor, ": ", length(samples.expr.mut)), sep="\n")
    cat(paste0("Samples with  WT ", predictor, ": ", length(samples.expr.wt)), sep="\n")
    
-   ## DE
-   de <- toTable(0, 4, nrow(expr.pheno), c("P", "FDR", paste0(predictor, "_WT"), predictor))
+   ## D.E.
+   de <- toTable(0, 4, nrow(expr.pheno), c("P", "Q", paste0(predictor, "_WT"), predictor))
    rownames(de) <- rownames(expr.pheno)
    if (test == "Wilcoxon" || test == "Wilcox" || test == "U") {
       de$P <- testWilcoxon(expr.pheno, pheno.expr, predictor)
@@ -303,7 +303,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    ## FDR
    de$FDR <- testFDR(de$P, test.fdr)
    
-   ## Log fold change
+   ## Log2 fold change
    de[,3] <- median00(expr.pheno, samples.expr.wt)
    de[,4] <- median00(expr.pheno, samples.expr.mut)
    de$LOG2_FC <- de[,4] - de[,3]
@@ -313,6 +313,12 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    return(de)
 }
 
+## https://www.biostars.org/p/186368/
+## https://www.biostars.org/p/157240/
+## https://www.biostars.org/p/143458/#157303                            ## estimates vs. count-based methods; transcript level quantification tools
+## https://liorpachter.wordpress.com/2015/08/17/a-sleuth-for-rna-seq/   ## estimates vs. count-based methods
+## https://liorpachter.wordpress.com/2013/08/26/magnitude-of-effect-vs-statistical-significance/  ## Read counts accumulated across a gene cannot be used directly to estimate fold change 
+
 # -----------------------------------------------------------------------------
 # Method: Fisher's combined probability test
 # Last Modified: 06/11/17
@@ -320,26 +326,6 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
 fishers <- function(x, y) {
    return(pchisq(-2*log(x)-2*log(y), 4, low=F))
 }
-
-# -----------------------------------------------------------------------------
-# Pipeline: Differential expression analysis
-# Last Modified: 28/03/17
-# -----------------------------------------------------------------------------
-pipeDE <- function(expr, pheno, argv, ensGene) {
-   annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
- 
-   de <- differentialAnalysis(expr, pheno, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-   de <- cbind(annot[rownames(de),], de)
- 
-   return(de)
-}
-
-## https://www.biostars.org/p/186368/
-
-## https://www.biostars.org/p/157240/
-## https://www.biostars.org/p/143458/#157303                            ## estimates vs. count-based methods; transcript level quantification tools
-## https://liorpachter.wordpress.com/2015/08/17/a-sleuth-for-rna-seq/   ## estimates vs. count-based methods
-## https://liorpachter.wordpress.com/2013/08/26/magnitude-of-effect-vs-statistical-significance/  ## Read counts accumulated across a gene cannot be used directly to estimate fold change 
 
 # -----------------------------------------------------------------------------
 # Method: Gene Set Enrichment Analysis (GSEA)

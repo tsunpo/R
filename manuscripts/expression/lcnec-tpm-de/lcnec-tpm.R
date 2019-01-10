@@ -66,14 +66,12 @@ tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covari
 save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
 save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5p47.RData")))
 
-###
 ## Gene-level TPMs without filtering
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 # > nrow(tpm.gene)
 # [1] 34908
 
-###
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
@@ -81,7 +79,7 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # [1] 18913
 
 # =============================================================================
-# Density plot and histogram (See DifferentialExpression.R)
+# Density plot and histograms (See DifferentialExpression.R)
 # Last Modified: 25/11/18
 # =============================================================================
 ## Detected genes
