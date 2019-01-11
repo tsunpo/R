@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter I    : RB1-loss additive effect on gene expression in lung cancers (LUAD, LCNEC and SCLC)
+# Chapter I    : RB1-loss additive effect on gene expression amongst lung cancers (LUAD, LCNEC and SCLC)
 # Figure(s)    : Figure 1 (D and E), plus Figure 1 (C)
 # Name         : manuscripts/expression/luad+lcnec+sclc-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
@@ -39,7 +39,7 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
 # -----------------------------------------------------------------------------
-# RB1-loss additive effect on gene expression in LUAD, LCNEC and SCLC
+#  among LUAD, LCNEC and SCLC
 # Last Modified: 08/01/19; 17/08/17
 # -----------------------------------------------------------------------------
 tpm.gene.log2 <- tpm.gene.log2[,rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
@@ -76,7 +76,7 @@ save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-ge
 writeTable(de.tpm.gene, file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47_rb1_src_q_n198.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
-# Volcano plots of RB1-loss A.E genes in lung cancers (LUAD, LCNEC and SCLC)
+# Volcano plots of RB1-loss AE genes amongst lung cancers (LUAD, LCNEC and SCLC)
 # Figure(s)    : Figure 1 (D)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
@@ -144,7 +144,7 @@ file.de <- paste0(plot.de, "_cycle.pdf")
 plotVolcano(de.tpm.gene, 0.7, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
-# Principal component analysis (PCA) of lung cancers (LUAD, LCNEC and SCLC) on RB1-loss A.E genes
+# Principal component analysis (PCA) of LUAD, LCNEC and SCLC samples on RB1-loss AE genes
 # Figure(s)    : Figure 1 (E)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
@@ -174,7 +174,7 @@ file.main <- c("LUAD, LCNEC and SCLC samples on top 145 DE genes", "RB1-loss dif
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_luad+lcenc+sclc_rb1_q0.05_de145", size=6.5, file.main, "topright", c("lightgray", "red", "dodgerblue", "yellowgreen", "orange"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
-# PCA of lung cancers (LUAD, LCNEC and SCLC) on RB1-loss D.E. genes (FDR < 0.05)
+# PCA of LUAD, LCNEC and SCLC samples on RB1-loss DE genes (FDR < 0.05)
 # Figure(s)    : Figure 1 (C)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------

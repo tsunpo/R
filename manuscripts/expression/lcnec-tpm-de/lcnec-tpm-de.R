@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter I    : RB1-loss differential effect on gene expression in LCNEC
+# Chapter I    : RB1-loss differential effect on gene expression between LCNEC RB1 and WT
 # Figure(s)    : Figure 1 (A and B)
 # Name         : manuscripts/expression/lcnec-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
@@ -38,7 +38,7 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
 # -----------------------------------------------------------------------------
-# RB1-loss differential effect on gene expression in LCNEC (Non-parametric test; n=69-15NA, 34 WT vs 20 RB1)
+# Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
 # Last Modified: 22/05/18
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
@@ -58,7 +58,7 @@ save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
-# Volcano plots of RB1-loss D.E. genes in LCNEC
+# Volcano plots of RB1-loss DE genes in LCNEC
 # Figure(s)    : Figure 1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
@@ -118,7 +118,7 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
 }
 
 ##
-plot.main <- "RB1-loss differential expression in LCNEC"
+plot.main <- "RB1-loss differential expression between LCNEC RB1 and WT"
 plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05")
 
 ## Cell cycle regulation
@@ -140,7 +140,7 @@ plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 #plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
-# Principal component analysis (PCA) of LCNEC samples on RB1-loss D.E genes
+# Principal component analysis (PCA) of LCNEC samples on RB1-loss DE genes
 # Figure(s)    : Figure 1 (B)
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------

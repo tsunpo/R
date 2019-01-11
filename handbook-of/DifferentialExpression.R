@@ -281,7 +281,7 @@ getFinalExpression <- function(expr, pheno.expr) {
    return(expr[,rownames(pheno.expr)])
 }
 
-## Main D.E. method
+## Main DE method
 differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, test.fdr) {
    pheno.expr <- getFinalPhenotype(expr, pheno, predictor)
    expr.pheno <- getFinalExpression(expr, pheno.expr)
@@ -291,7 +291,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    cat(paste0("Samples with MUT ", predictor, ": ", length(samples.expr.mut)), sep="\n")
    cat(paste0("Samples with  WT ", predictor, ": ", length(samples.expr.wt)), sep="\n")
    
-   ## D.E.
+   ## DE
    de <- toTable(0, 4, nrow(expr.pheno), c("P", "Q", paste0(predictor, "_WT"), predictor))
    rownames(de) <- rownames(expr.pheno)
    if (test == "Wilcoxon" || test == "Wilcox" || test == "U") {
