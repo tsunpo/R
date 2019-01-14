@@ -41,12 +41,13 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
 # Last Modified: 22/05/18
 # -----------------------------------------------------------------------------
-## Test: Wilcoxon/Wilcox/U/Students/ttest
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
 ## FDR : Q/BH
-## D.E.: RB1_MUT (1) vs RB1_WT(0) as factor
-argv      <- data.frame(predictor="RB1_MUT", predictor.wt=0, test="Wilcox", test.fdr="Q", stringsAsFactors=F)
+## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
+argv      <- data.frame(predictor="RB1_MUT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
 file.name <- paste0("de_", base, "_tpm-gene-r5p47_rb1_wilcox_q_n54")
-file.main <- paste0("RB1 MUT (n=20) vs WT (n=34) in ", BASE)
+file.main <- paste0("RB1 (n=20) vs WT (n=34) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 

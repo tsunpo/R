@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   :
-# Chapter I    : RB1-loss additive effect on gene expression amongst lung cancers (LUAD, LCNEC and SCLC)
+# Chapter I    : RB1-loss additive effect on gene expression among LUAD, LCNEC and SCLC
 # Name         : manuscripts/expression/luad+lcnec+sclc-tpm.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19

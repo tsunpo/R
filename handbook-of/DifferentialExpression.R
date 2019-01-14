@@ -6,7 +6,7 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Methods: Transcript-level TPM estimates using sleuth (for manuscripts/expression/*-tpm.R)
+# Methods: Transcript-level TPM estimates using sleuth
 # Last Modified: 28/03/17
 # -----------------------------------------------------------------------------
 tx2gene <- function(t2g) {
@@ -114,8 +114,67 @@ plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax,
    dev.off()
 }
 
+plotTxDensityHistogram <- function(gene, BASE, tpm.gene.log2, ensGene.rt.tx, tx.q4.fix.all, pseudocount) {
+   ensembl_gene_id <- rownames(subset(ensGene.rt.tx, external_gene_name == gene))
+   ensGene.rt.tx.gene <- ensGene.rt.tx[ensembl_gene_id,]
+   main.text <- paste0(gene, " (", ensembl_gene_id, ") in ", BASE, " (n=", ncol(tpm.gene.log2) - 1, ")")
+   xlab.text <- paste0("log2(TPM+", pseudocount, ")")
+   for (q in 1:4)
+      if (length(intersect(ensembl_gene_id, tx.q4.fix.all[[q]])) == 1)
+         q.text <- paste0("Q", q)
+   if (ensGene.rt.tx.gene$CONSIST == 1) {
+      if (ensGene.rt.tx.gene$CD == 1) {
+         mtext <- paste0("Co-directional (", q.text, "); RT(")
+         if (ensGene.rt.tx.gene$RT == 1)
+            mtext <- paste0(mtext, "R), Tx(+)")
+         else
+            mtext <- paste0(mtext, "L), Tx(-)")
+      } else {
+         mtext <- paste0("Head-on (", q.text, "); RT(")  
+         if (ensGene.rt.tx.gene$RT == 1)
+            mtext <- paste0(mtext, "R), Tx(-)")
+         else
+            mtext <- paste0(mtext, "L), Tx(+)")
+      }
+   } else {
+      mtext <- paste0("Inconsistent RT (", q.text, "); ")
+      if (ensGene.rt.tx.gene$strand == 1) {
+         mtext <- paste0(mtext, "Tx(+), TSS(")
+         if (ensGene.rt.tx.gene$RT_1 == 1)
+            mtext <- paste0(mtext, "R), TES(L)")
+         else
+            mtext <- paste0(mtext, "L), TES(R)")
+      } else {
+         if (ensGene.rt.tx.gene$RT_1 == 1)
+            mtext <- paste0(mtext, "TSS(R), TES(L)")
+         else
+            mtext <- paste0(mtext, "TSS(L), TES(R)")
+         mtext <- paste0(mtext, ", Tx(-)")
+      }
+   }
+   
+   medians <- as.numeric(tpm.gene.log2[ensembl_gene_id, -ncol(tpm.gene.log2)])
+   d <- density(medians)
+   #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
+ 
+   ## Density plots
+   file.name  <- file.path(wd.rt.plots, paste0("density_", base, "_tx_", gene, ".pdf"))
+   pdf(file.name, height=6, width=6)
+   plot(d, xlab=xlab.text, ylab="Density", main=main.text, lwd=1.5)
+   mtext(mtext, cex=1.2, line=0.3)
+   rug(jitter(medians))
+   dev.off()
+ 
+   ## Histogram
+   file.name  <- file.path(wd.rt.plots, paste0("hist_", base, "_tx_", gene, ".pdf"))
+   pdf(file.name, height=6, width=6)
+   hist(medians, xlab=xlab.text, ylab="Frequency", main=main.text) 
+   mtext(mtext, cex=1.2, line=0.3)
+   dev.off()
+}
+
 # -----------------------------------------------------------------------------
-# Methods: Principal component analysis (for manuscripts/expression/*-tpm-de.R)
+# Methods: Principal component analysis
 # Last Modified: 05/02/17
 # -----------------------------------------------------------------------------
 getPCA <- function(expr) {
@@ -204,7 +263,7 @@ testT <- function(q3, q4) {
    return(t.test(as.numeric(q3), as.numeric(q4))$p.value)
 }
 
-testW <- function(q3, q4) {
+testU <- function(q3, q4) {
    trait <- rep(0, length(q3))
    trait <- c(trait, rep(1, length(q4)))
    trait <- as.factor(trait)
@@ -281,7 +340,7 @@ getFinalExpression <- function(expr, pheno.expr) {
    return(expr[,rownames(pheno.expr)])
 }
 
-## Main DE method
+## Differential expression analysis methods
 differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, test.fdr) {
    pheno.expr <- getFinalPhenotype(expr, pheno, predictor)
    expr.pheno <- getFinalExpression(expr, pheno.expr)
@@ -294,9 +353,9 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    ## DE
    de <- toTable(0, 4, nrow(expr.pheno), c("P", "Q", paste0(predictor, "_WT"), predictor))
    rownames(de) <- rownames(expr.pheno)
-   if (test == "Wilcoxon" || test == "Wilcox" || test == "U") {
+   if (test == "Wilcoxon" || test == "Mann–Whitney" || test == "U" || test == "wilcox.test") {
       de$P <- testWilcoxon(expr.pheno, pheno.expr, predictor)
-   } else if (test == "Students" || test == "ttest") {
+   } else if (test == "Student's" || test == "t.test") {
       de$P <- testStudents(expr, samples.expr.mut, samples.expr.wt)
    }
    
@@ -308,7 +367,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    de[,4] <- median00(expr.pheno, samples.expr.mut)
    de$LOG2_FC <- de[,4] - de[,3]
  
-   ## NOTE: Must sort AFTER fold change and BEFORE annotation!!
+   ## NOTE: Sort AFTER fold change and BEFORE annotation!!
    de <- de[order(de$P),]
    return(de)
 }

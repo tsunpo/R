@@ -128,7 +128,7 @@ getTxQ4 <- function(tpm.gene.log2, gene.list) {
       tpm.gene.log2 <- tpm.gene.log2[gene.list,]
    tpm.gene.log2 <- tpm.gene.log2[order(tpm.gene.log2$MEDIAN),]
    
-   q <- quantile(tpm.gene.input.log2$MEDIAN)
+   q <- quantile(tpm.gene.log2$MEDIAN)
    tx.q4 <- list()
    tx.q4[[4]] <- rownames(subset(tpm.gene.log2, MEDIAN > as.numeric(q[4])))
    tx.q4[[3]] <- rownames(subset(subset(tpm.gene.log2, MEDIAN > as.numeric(q[3])), MEDIAN <= as.numeric(q[4])))
@@ -137,6 +137,24 @@ getTxQ4 <- function(tpm.gene.log2, gene.list) {
  
    return(tx.q4)
 }
+
+getLengthQ4 <- function(ensGene, gene.list) {
+   ensGene$LENGTH <- abs(ensGene$start_position - ensGene$end_position)
+ 
+   if (!is.na(gene.list)[1])
+      ensGene <- ensGene[gene.list,]
+   ensGene <- ensGene[order(ensGene$LENGTH),]
+ 
+   q <- quantile(ensGene$LENGTH)
+   tx.q4 <- list()
+   tx.q4[[4]] <- rownames(subset(ensGene, LENGTH > as.numeric(q[4])))
+   tx.q4[[3]] <- rownames(subset(subset(ensGene, LENGTH > as.numeric(q[3])), LENGTH <= as.numeric(q[4])))
+   tx.q4[[2]] <- rownames(subset(subset(ensGene, LENGTH > as.numeric(q[2])), LENGTH <= as.numeric(q[3])))
+   tx.q4[[1]] <- rownames(subset(ensGene, LENGTH <= as.numeric(q[2])))
+ 
+   return(tx.q4)
+}
+
 
 getTxQ4Fixed <- function(tpm.gene.log2, tx.q4.fix) {
    tx.q4 <- list()

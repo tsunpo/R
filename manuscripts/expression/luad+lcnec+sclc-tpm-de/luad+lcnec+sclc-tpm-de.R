@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter I    : RB1-loss additive effect on gene expression amongst lung cancers (LUAD, LCNEC and SCLC)
+# Chapter I    : RB1-loss additive effect on gene expression among LUAD, LCNEC and SCLC
 # Figure(s)    : Figure 1 (D and E), plus Figure 1 (C)
 # Name         : manuscripts/expression/luad+lcnec+sclc-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
@@ -259,6 +259,8 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
 #genes <- c("B2M", "BAX", "NUCB1", "RBL1")
-genes <- c("PATL2", "RBL1")
+#genes <- c("PATL2", "RBL1")
+#genes <- c("MCM2", "CDKN2A", "BARD1")
+genes <- c("SPG11", "TRIM69", "DHDH", "NUCB1")
 for (g in 1:length(genes))
-   plotBox(genes[g], wd.de.plots, tpm.gene.log2, pheno.all)
+   plotBox(genes[g], wd.de.plots, tpm.gene.log2, samples)
