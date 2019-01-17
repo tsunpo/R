@@ -77,7 +77,7 @@ separator <- function(number) {
 }
 
 round0 <- function(number, digits) {
-   return(sprintf(paste0("%.", digits, "f"), round(intercept, digits=digits)))
+   return(sprintf(paste0("%.", digits, "f"), round(number, digits=digits)))
 }
 
 # -----------------------------------------------------------------------------
@@ -121,4 +121,13 @@ getGene <- function(gene, start=NA, end=NA, beginWith=F, endWith=F, protein_codi
          genes <- subset(genes, gene_biotype == "protein_coding")
       return(genes[order(genes$external_gene_name),])                 ## and sort by gene names
    }
+}
+
+getGenes <- function(genes) {
+   out <- getGene(genes[1])
+   if (length(genes) >= 2)
+      for (g in 2:length(genes))
+         out <- rbind(out, getGene(genes[g]))
+   
+   return(out)
 }

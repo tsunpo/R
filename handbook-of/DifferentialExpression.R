@@ -114,7 +114,7 @@ plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax,
    dev.off()
 }
 
-plotTxDensityHistogram <- function(gene, BASE, tpm.gene.log2, ensGene.rt.tx, tx.q4.fix.all, pseudocount) {
+plotTxDensityHistogram <- function(gene, BASE, wd.rt.plots, tpm.gene.log2, ensGene.rt.tx, tx.q4.fix.all, pseudocount) {
    ensembl_gene_id <- rownames(subset(ensGene.rt.tx, external_gene_name == gene))
    ensGene.rt.tx.gene <- ensGene.rt.tx[ensembl_gene_id,]
    main.text <- paste0(gene, " (", ensembl_gene_id, ") in ", BASE, " (n=", ncol(tpm.gene.log2) - 1, ")")
@@ -122,6 +122,7 @@ plotTxDensityHistogram <- function(gene, BASE, tpm.gene.log2, ensGene.rt.tx, tx.
    for (q in 1:4)
       if (length(intersect(ensembl_gene_id, tx.q4.fix.all[[q]])) == 1)
          q.text <- paste0("Q", q)
+   
    if (ensGene.rt.tx.gene$CONSIST == 1) {
       if (ensGene.rt.tx.gene$CD == 1) {
          mtext <- paste0("Co-directional (", q.text, "); RT(")

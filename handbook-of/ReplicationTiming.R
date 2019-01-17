@@ -229,12 +229,12 @@ setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
 ## https://www.statmethods.net/advgraphs/layout.html
 ## https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
 ## https://stackoverflow.com/questions/15717545/set-the-intervals-of-x-axis-using-r
-plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks, breaks.origin) {
+plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, BASE, breaks, origin.break) {
    main.text <- paste0(main.text, " (", BASE, ")")
    xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
    cols <- rep("steelblue1", breaks)
    cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
-   cols[(breaks/2 - origin.break):(breaks/2 + breaks.origin)] <- "red"
+   cols[(breaks/2 - origin.break + 1):(breaks/2 + origin.break)] <- "red"
    h <- hist(bed.gc.rt.chr$RIGHT_LEADING, breaks=breaks) 
    ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
    h$counts <- h$counts/1000                                        ## Change frequency scale to x1000 in row 1
