@@ -32,7 +32,7 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@local
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps/SLOPE+TPM")
+wd.rt.plots <- file.path(wd.rt, "plots/bstrps/LENGTH+TPM+AS")
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
@@ -159,14 +159,14 @@ dev.off()
 # LM for sclc.tx.consist.right and sclc.tx.consist.left
 # Last Modified: 07/12/18
 # -----------------------------------------------------------------------------
-plotRFD <- function(file.name, main.text, ensGene.rt.tx.no0, tx.list1, col1, tx.list2=NULL, col2=NULL, ext) {
+plotRFD <- function(file.name, main.text, ensGene.rt.tx, tx.list1, col1, tx.list2=NULL, col2=NULL, ext) {
    xlab.text <- c("RFD = (R-L)/(R+L)", "TSS")
    ylab.text <- "TTS"
-   tx.list1 <- intersect(tx.list1, rownames(ensGene.rt.tx.no0))
-   ensGene.rt.tx.plot <- ensGene.rt.tx.no0[tx.list1,]
+   tx.list1 <- intersect(tx.list1, rownames(ensGene.rt.tx))
+   ensGene.rt.tx.plot <- ensGene.rt.tx[tx.list1,]
    if (!is.null(tx.list2) && length(tx.list2) != 0) {
-      tx.list2 <- intersect(tx.list2, rownames(ensGene.rt.tx.no0))
-      ensGene.rt.tx.plot <- ensGene.rt.tx.no0[c(tx.list1, tx.list2),]
+      tx.list2 <- intersect(tx.list2, rownames(ensGene.rt.tx))
+      ensGene.rt.tx.plot <- ensGene.rt.tx[c(tx.list1, tx.list2),]
    }
    
    if (max(ensGene.rt.tx.plot[tx.list1,]$RFD_TSS) > 0) {
@@ -191,7 +191,7 @@ plotRFD <- function(file.name, main.text, ensGene.rt.tx.no0, tx.list1, col1, tx.
    
    ## Linear regression
    ## https://www.statlect.com/fundamentals-of-statistics/R-squared-of-a-linear-regression
-   lm.fit <- lm(ensGene.rt.tx.plot$RFD_TTS ~ ensGene.rt.tx.plot$RFD_TSS + ensGene.rt.tx.plot$LENGTH + ensGene.rt.tx.plot$TPM)##   ensGene.rt.tx.plot$LENGTH
+   lm.fit <- lm(ensGene.rt.tx.plot$RFD_TTS ~ ensGene.rt.tx.plot$RFD_TSS + ensGene.rt.tx.plot$LENGTH + ensGene.rt.tx.plot$TPM)# + ensGene.rt.tx.plot$AS)
    intercept <- coef(lm.fit)[1]
    r2 <- summary(lm.fit)$r.squared
    
@@ -252,12 +252,12 @@ plotRFD(file.name, main.text, ensGene.rt.tx, sclc.tx.consist.left.ho, "steelblue
 ###
 ## Consistent genes in (Q1 to Q4); use ALL expressed genes
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=F)
+#tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=F, proteinCodingOnly=F)
 tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
 
-tx.q4.fix.all <- getTxQ4(tpm.gene.log2, NA)
+tx.q4 <- getTxQ4(tpm.gene.log2, NA)
 for (q in 1:4)
-   print(length(tx.q4.fix[[q]]))
+   print(length(tx.q4[[q]]))
 # [1] 4783
 # [1] 4783
 # [1] 4782
@@ -276,15 +276,50 @@ for (q in 1:4)
 #genes.rb1.up   <- rownames(subset(de.tpm.gene, LOG2_FC > 0))   ## ADD 13/01/19
 #genes.rb1.down <- rownames(subset(de.tpm.gene, LOG2_FC < 0))   ## ADD 13/01/19
 
-## Test slope/speed; (TSS - TTS)/LENGTH
+## AS: (TSS - TTS)/2
+textP <- function(p, at, sth) {
+   text <- paste0("P-value=", sprintf("%4.2e", p))
+   text <- paste0(text, " at ", at, "=", sth)
+   if (p <= 1e-4)
+      text <- paste0("***", text, "    ")
+   else if (p <= 1e-3)
+      text <- paste0("**", text, "   ")
+   else if (p <= 1e-2)
+      text <- paste0("*", text, "  ")
+   
+   return(text)
+}
+
+#rho <- 0.62333
+#textP(0.001, "rho", round0(rho, digits=2))
+
+plotLengthAS <- function(shifts, lengths, file.name, main.text, xlab.text) {
+   ylab.text <- "RFD shift (initiation efficiency)"
+   lm.fit <- lm(shifts ~ lengths)
+   r2 <- summary(lm.fit)$r.squared
+   
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(shifts ~ lengths, ylab=ylab.text, xlab=xlab.text, main=main.text[1])
+   abline(lm.fit)
+   mtext(paste0("R^2=", paste0(round0(r2*100, digits=2), "%")), cex=1.2, line=0.3)
+   dev.off()
+}
+
 tpm.gene$MEDIAN <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
 ensGene.rt.tx$TPM <- tpm.gene[rownames(ensGene.rt.tx),]$MEDIAN
-
+ensGene.rt.tx$AS <- (ensGene.rt.tx$RFD_TTS - ensGene.rt.tx$RFD_TSS) / 2
 ensGene.rt.tx.con <- subset(ensGene.rt.tx, CONSIST == 1)
-ensGene.rt.tx.con$SLOPE <- (ensGene.rt.tx.con$RFD_TTS - ensGene.rt.tx.con$RFD_TSS) / (ensGene.rt.tx.con$LENGTH / 1000)
-left.idx <- which(ensGene.rt.tx.con$RT < 0)
-ensGene.rt.tx.con$SLOPE[left.idx] <- (ensGene.rt.tx.con$RFD_TSS[left.idx] - ensGene.rt.tx.con$RFD_TTS[left.idx]) / (ensGene.rt.tx.con$LENGTH[left.idx] / 1000)
-ensGene.rt.tx.con.no0 <- subset(ensGene.rt.tx.con, SLOPE != 0)
+
+ensGene.rt.tx.input <- subset(ensGene.rt.tx.con, AS < 0)
+#ensGene.rt.tx.input <- subset(ensGene.rt.tx.input, CD > 0)
+file.name <- file.path(wd.rt.plots, paste0("plot_", base, "_ensGene.rt.tx_bstrps1000_RFD_shift-length_DS.pdf"))
+main.text <- paste0("Decending genes (All)")
+xlab.text <- "Gene length [log10]"
+plotLengthAS(ensGene.rt.tx.input$AS, log10(ensGene.rt.tx.input$LENGTH), file.name, main.text, xlab.text)
+
+#left.idx <- which(ensGene.rt.tx.con$RT < 0)
+#ensGene.rt.tx.con$SLOPE[left.idx] <- (ensGene.rt.tx.con$RFD_TSS[left.idx] - ensGene.rt.tx.con$RFD_TTS[left.idx]) / (ensGene.rt.tx.con$LENGTH[left.idx] / 1000)
+#ensGene.rt.tx.con.no0 <- subset(ensGene.rt.tx.con, SLOPE != 0)
 
 ##
 intercepts <- list(list(list(list(), list(), list(), list()), list(list(), list(), list(), list())), list(list(list(), list(), list(), list()), list(list(), list(), list(), list())))
@@ -292,27 +327,27 @@ intercepts <- list(list(list(list(), list(), list(), list()), list(list(), list(
 tx.list1 <- sclc.tx.consist.right.cd
 tx.list2 <- sclc.tx.5050.5050.right.cd
 for (q in 1:4) {
-   tx.list1.input <- intersect(tx.list1, tx.q4.fix.all[[q]])
-   tx.list2.input <- intersect(tx.list2, tx.q4.fix.all[[q]])
+   tx.list1.input <- intersect(tx.list1, tx.q4[[q]])
+   tx.list2.input <- intersect(tx.list2, tx.q4[[q]])
    #tx.list1.input <- intersect(tx.list1.input, genes.rb1.down)   ## ADD 13/01/19
    #tx.list2.input <- intersect(tx.list2.input, genes.rb1.down)   ## ADD 13/01/19
    
-   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx.con_bstrps1000_RFD_TTS~TSS+LENGTH+TPM_consist+5050_right_CD_Q", q))
+   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+LENGTH+TPM_consist+5050_right_CD_Q", q))
    main.text <- c(paste0("Q", q, " right-moving consistent genes in SCLC"), paste0("Co-directional; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
-   intercepts[[1]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx.con, tx.list1.input, "sandybrown", tx.list2=tx.list2.input, col2="red", ext="pdf")
+   intercepts[[1]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "sandybrown", tx.list2=tx.list2.input, col2="red", ext="pdf")
 }
 
 tx.list1 <- sclc.tx.consist.left.cd
 tx.list2 <- sclc.tx.5050.5050.left.cd
 for (q in 1:4) {
-   tx.list1.input <- intersect(tx.list1, tx.q4.fix.all[[q]])
-   tx.list2.input <- intersect(tx.list2, tx.q4.fix.all[[q]])
+   tx.list1.input <- intersect(tx.list1, tx.q4[[q]])
+   tx.list2.input <- intersect(tx.list2, tx.q4[[q]])
    #tx.list1.input <- intersect(tx.list1.input, genes.rb1.down)   ## ADD 13/01/19
    #tx.list2.input <- intersect(tx.list2.input, genes.rb1.down)   ## ADD 13/01/19
    
-   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx.con_bstrps1000_RFD_TTS~TSS+LENGTH+TPM_consist+5050_left_CD_Q", q))
+   file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+LENGTH+TPM_consist+5050_left_CD_Q", q))
    main.text <- c(paste0("Q", q, " left-moving consistent genes in SCLC"), paste0("(Co-directional; n=", separator(length(tx.list1.input)), "+", length(tx.list2.input), ")"))
-   intercepts[[2]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx.con, tx.list1.input, "steelblue1", tx.list2=tx.list2.input, col2="red", ext="pdf")
+   intercepts[[2]][[1]][[q]] <- plotRFD(file.name, main.text, ensGene.rt.tx, tx.list1.input, "steelblue1", tx.list2=tx.list2.input, col2="red", ext="pdf")
 }
 
 ###
@@ -327,8 +362,8 @@ for (rt in 1:2)
       for (q in 1:4)
          is <- c(is, intercepts[[rt]][[st]][[q]])
 
-file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx.con_bstrps1000_RFD_TTS~TSS+LENGTH+TPM_consist+5050_Intercepts"))
-main.text <- c("lm(TTS~TSS+LENGTH+TPM+Constant)", "among consistent genes in SCLC")
+file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TTS~TSS+LENGTH+TPM_consist+5050_Intercepts"))
+main.text <- c("lm(TTS~TSS+LENGTH+TPM+AS+Constant)", "among consistent genes in SCLC")
 xlab.text <- "Expression"
 ylab.text <- "TTS constant (when TSS=0)"
 xlim <- c(1, 4)
@@ -419,6 +454,7 @@ plotTxCN <- function(cns, txs, file.name, main.text, xlab.text, ylab.text) {
 
 #samples.loh <- samples
 genes <- c("SPG11", "B2M", "PATL2", "TRIM69", "BAX", "DHDH", "NUCB1")
+genes <- c("CTDSPL2", "EIF3J")
 for (g in 1:length(genes)) {
    gene <- genes[g]
    ensGene.gene <- subset(ensGene, external_gene_name == gene)
