@@ -6,7 +6,7 @@ CHR    <- as.numeric(args[3])
 base   <- tolower(BASE)
 
 # =============================================================================
-# Name: 2d_cmd-rt_rpkm.corr.gc.d.rt_bstrp1000_bed.R (Commandline mode)
+# Name: 2d_cmd-rt_rpkm.corr.gc.d.rt_bstrp1000_bed.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 01/11/18
 # =============================================================================
@@ -30,7 +30,6 @@ wd <- file.path("/projects/cangen/tyang2", BASE)   ## tyang2@cheops
 wd.anlys   <- file.path(wd, "analysis")
 wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data/bstrps")
-bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
 
 bed.gc.rt <- loadBEDGCRT(wd.rt.data, 1, tolower(base))
 bed.gc.rt <- getBEDGCRT(bed.gc.rt, "SLOPE", 1)

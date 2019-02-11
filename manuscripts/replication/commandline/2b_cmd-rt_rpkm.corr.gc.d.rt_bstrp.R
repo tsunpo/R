@@ -12,7 +12,7 @@ base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
 # =============================================================================
-# Name: 2b_cmd-rt_rpkm.corr.gc.d.rt_bstrap.R (Commandline mode)
+# Name: 2b_cmd-rt_rpkm.corr.gc.d.rt_bstrap.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 22/10/18
 # =============================================================================

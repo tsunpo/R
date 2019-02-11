@@ -5,7 +5,7 @@ BSTRPS <- as.numeric(args[2])
 base   <- tolower(BASE)
 
 # =============================================================================
-# Name: 2c_cmd-rt_rpkm.corr.gc.d.rt_bstrp1000.R (Commandline mode)
+# Name: 2c_cmd-rt_rpkm.corr.gc.d.rt_bstrp1000.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 31/10/18
 # =============================================================================

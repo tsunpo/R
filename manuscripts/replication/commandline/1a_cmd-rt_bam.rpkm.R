@@ -5,7 +5,7 @@ LIST <- args[2]   ## Sample list
 base <- tolower(BASE)
 
 # =============================================================================
-# Name: 1a_cmd-rt_bam.rpkm.R (Commandline mode)
+# Name: 1a_cmd-rt_bam.rpkm.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 13/06/17
 # =============================================================================
@@ -40,6 +40,6 @@ for (s in 1:length(samples)) {
    rpkm.T <- initRPKM(bam, bed.gc, pair="T")   ## See ReplicationTiming.R
    rpkm.N <- initRPKM(bam, bed.gc, pair="N")
  
-   writeTable(rpkm.T, gzfile(paste0(wd.ngs.data, sample, "/", sample, "_T.bam.rpkm.txt.gz")), colnames=T, rownames=F, sep="\t")
-   writeTable(rpkm.N, gzfile(paste0(wd.ngs.data, sample, "/", sample, "_N.bam.rpkm.txt.gz")), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkm.T, gzfile(file.path(wd.ngs.data, sample, paste0(sample, "_T.bam.rpkm.txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkm.N, gzfile(file.path(wd.ngs.data, sample, paste0(sample, "_N.bam.rpkm.txt.gz"))), colnames=T, rownames=F, sep="\t")
 }

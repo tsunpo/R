@@ -2,7 +2,7 @@
 # Library      : DNA Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 15/11/18
+# Last Modified: 15/11/1
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -85,8 +85,8 @@ getRPKMCORRGC <- function(rpkm, segs, bed, PAIR, CORR) {
 # -----------------------------------------------------------------------------
 initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
    colnames <- samples
-   rt.chr <- toTable(NA, length(colnames), nrow(bed.gc.chr), colnames)
-   rownames(rt.chr) <- rownames(bed.gc.chr)
+   rt.chr <- toTable(NA, length(colnames), length(bed.gc.chr), colnames)
+   rownames(rt.chr) <- bed.gc.chr
  
    return(rt.chr)
 }
@@ -114,8 +114,82 @@ getLog2RDRatio <- function(rpkms.T.chr, rpkms.N.chr, pseudocount) {
 outputRT <- function(rpkms.chr) {
    samples <- colnames(rpkms.chr)
    rpkms.chr$BED <- rownames(rpkms.chr)
-   
+ 
    return(rpkms.chr[,c("BED", samples)])
+}
+
+# -----------------------------------------------------------------------------
+# Plot read depth (see sclc-wgs-rt.R) or 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
+# Last Modified: 10/02/19
+# -----------------------------------------------------------------------------
+plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, isFlipped, ext) {
+   main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   ylab.text <- "Read depth"
+ 
+   xmin <- 0
+   xmax <- subset(chromInfo, chrom == chr)$size
+   ymin <- min(rpkm.chr)
+   ymax <- max(rpkm.chr)
+ 
+   if (ext == "pdf")
+      pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
+   else if (ext == "png")
+      png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
+ 
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Plot replication timing (See sclc-wgs-rt.R)
+# Link(s): http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
+#          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
+# Last Modified: 10/02/19; 29/01/18
+# -----------------------------------------------------------------------------
+plotRT <- function(wd.rt.plots, title, chr, n, xmin, xmax, rpkms.chr.rt, bed.gc.chr, pair1, pair0, ext) {
+   filename  <- paste0(wd.rt.plots, tolower(title), "_wgs_rt_", chr, "_", pair1, "-", pair0, "_n", n)
+   main.text <- paste0("Read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ") in ", title)
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   ylab.text <- "Replication time (log2 FC)"
+ 
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
+   ymin <- min(rpkms.chr.rt$MEDIAN)
+   ymax <- max(rpkms.chr.rt$MEDIAN)
+   if (!is.na(xmin) && !is.na(xmax)) filename <- paste0(filename, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (is.na(xmin)) xmin <- 0
+   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+ 
+   if (ext == "pdf") {
+      pdf(paste0(filename, ".pdf"), height=4, width=10)
+   } else if (ext == "png")
+      png(paste0(filename, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr$START/1E6, rpkms.chr.rt$MEDIAN, col="red", cex=0.3)
+   abline(h=0, lwd=0.5, col="grey")
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt$MEDIAN)$y)
+ 
+   #slopes <- diff(smooth.spline(rpkms.chr)$y)/diff((bed.gc.chr$START)/1E6)
+   #slopes2 <- diff(smooth.spline(rpkms.chr)$y)/diff(smooth.spline(rpkms.chr)$x)
+ 
+   #temp <- loess.smooth(bed.gc.chr$START, rpkms.chr)
+   #slopes3 <- diff(temp$y)/diff(temp$x)
+ 
+   for (c in 1:nrow(cytoBand.chr))
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
+ 
+   dev.off()
+}
+
+getEnsGeneBED <- function(pos, bed.gc.chr) {
+   bed.gc.chr.start <- subset(bed.gc.chr, pos >= START)
+   bed.gc.chr.start.end <- subset(bed.gc.chr.start, pos <= END)
+ 
+   return(rownames(bed.gc.chr.start.end))
 }
 
 # -----------------------------------------------------------------------------
@@ -149,7 +223,7 @@ getEnsGeneRT <- function(ensGene.rt, colname, b) {
 }
 
 loadBEDGCRT <- function(wd1.rt.data, b, type) {
-   load(file.path(wd1.rt.data, b, paste0(type, "_ensGene.rt_bstrp.RData")))
+   load(file.path(wd1.rt.data, b, paste0(type, "_ensGene.rt.RData")))
    bed.gc.rt <- bed.gc.rt[!is.na(bed.gc.rt$SLOPE),]
  
    return(bed.gc.rt)
@@ -430,32 +504,6 @@ plotQ4SS <- function(q4ss, file.name, file.main, mtext, ylim, ylab, isLog10) {
    #mtext("2                                   ", cex=0.6, line=0.25)
    axis(side=1, at=1:4, names1, cex.axis=1, line=1, lwd=0)
    axis(side=1, at=1:4, names2, cex.axis=0.8, line=1, lwd=0)
-   dev.off()
-}
-
-# -----------------------------------------------------------------------------
-# Visualisation of bootstrapping data (Expression level and gene length)
-# Last Modified: 23/12/18
-# -----------------------------------------------------------------------------
-plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, isFlipped, ext) {
-   main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Read depth"
- 
-   xmin <- 0
-   xmax <- subset(chromInfo, chrom == chr)$size
-   ymin <- min(rpkm.chr)
-   ymax <- max(rpkm.chr)
- 
-   if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
    dev.off()
 }
 

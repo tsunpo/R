@@ -7,7 +7,7 @@ CORR   <- as.logical(args[4])   ## T(rue) or F(alse) to correct CN
 base <- tolower(BASE)
 
 # =============================================================================
-# Name: 1b_cmd-rt_bam.rpkm.corr.gc.R (Commandline mode)
+# Name: 1b_cmd-rt_bam.rpkm.corr.gc.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/06/17
 # =============================================================================

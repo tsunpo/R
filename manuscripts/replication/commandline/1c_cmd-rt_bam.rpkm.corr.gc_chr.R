@@ -7,7 +7,7 @@ PAIR <- args[4]   ## T(umour) or N(ormal) pair
 base <- tolower(BASE)
 
 # =============================================================================
-# Name: 1c_cmd-rt_bam.rpkm.corr.gc_chr.R (Commandline mode)
+# Name: 1c_cmd-rt_bam.rpkm.corr.gc_chr.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/06/17
 # =============================================================================
@@ -49,5 +49,5 @@ samples <- readTable(file.path(wd.ngs, LIST), header=F, rownames=F, sep="")
    }
 
    rpkms.chr$BED <- rownames(rpkms.chr)
-   writeTable(rpkms.chr[,c("BED", samples)], gzfile(paste0(wd.ngs.data, tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz")), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkms.chr[,c("BED", samples)], gzfile(file.path(wd.ngs.data, paste0(tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 #}
