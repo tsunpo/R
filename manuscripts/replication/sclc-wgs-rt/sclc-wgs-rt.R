@@ -27,15 +27,15 @@ BASE1 <- "SCLC"
 PAIR1 <- "T"
 BASE0 <- "SCLC"
 PAIR0 <- "N"
-base0 <- tolower(BASE1)
-base1 <- tolower(BASE0)
+base1 <- tolower(BASE1)
+base0 <- tolower(BASE0)
 
-wd.anlys <- file.path(wd, BASE, "analysis")
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.anlys <- file.path(wd, BASE1, "analysis")
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs <- file.path(wd, BASE, "ngs/WGS")
+wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
 samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
 #samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_B.list"), header=F, rownames=F, sep="")
@@ -43,43 +43,35 @@ n1 <- length(samples1)
 n0 <- length(samples0)
 
 # -----------------------------------------------------------------------------
-# Plot RD; Adapted from 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
-# Last Modified: 10/01/19; 31/08/18; 13/06/17
+# Plot RD and RT (see ReplicationTiming.R)
+# Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
    chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   ###
-   ## Read depth
-   rpkms.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.N.chr.d <- readTable(file.path(wd.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   overlaps <- intersect(rownames(rpkms.T.chr.d), rownames(rpkms.N.chr.d))
-   rpkms.T.chr.d.rt <- rpkms.T.chr.d[overlaps,]
-   rpkms.N.chr.d.rt <- rpkms.N.chr.d[overlaps,]
-   
-   plotRD(wd.rt.plots, "_rpkm.corr.gc.d_", chr, bed.gc.chr, rpkms.T.chr.d, rpkms.N.chr.d, PAIR1, PAIR0, "pdf")
 
-   ###
-   ## Replicaiton timing
-   rpkms.chr.rt <-readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", NUM1, "-", NUM0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <-readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+
+   ## RD   
+   ylab.text <- "Read depth"
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "_n", n1))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE1, " tumour cells (n=", n1, ")")
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$T + 0.01), bed.gc.chr, c("pink", "red"), "png", 7.75, 9.25)   #(7.75, 9.25) for chr2
    
-   overlaps <- intersect(rownames(rpkms.chr.rt), rownames(bed.gc.chr))
-   bed.gc.chr.rt <- bed.gc.chr[overlaps,]
-   bed.gc.chr.rt$SPLINE <- 0
-   bed.gc.chr.rt$SLOPE  <- NA
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR0, "_n", n0))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE0, " normal cells (n=", n0, ")")
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$N + 0.01), bed.gc.chr, c("lightskyblue1", "blue"), "png", 7.75, 9.25)
    
-   ## Determine replication direction for each expressed gene
-   ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
-   #slopes <- diff(smooth.spline(rpkms.chr.rt$MEDIAN)$y)/diff((bed.gc.chr.rt$START)/1E7)   ## BIG BUG FIX!!! 31/10/18: Warning message for using bed.gc.chr
-   spline <- smooth.spline(x=bed.gc.chr.rt$START, y=rpkms.chr.rt$RT)
-   slopes <- diff(spline$y)/diff(bed.gc.chr.rt$START/1E6)   ## ADD 31/10/18
-   
-   bed.gc.chr.rt$SPLINE <- spline$y
-   bed.gc.chr.rt$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.rt), as no slope for the last 1KB window 
-   #plotRT0(wd.rt.plots, BASE, chr, 101, 92, NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR1, PAIR0, "png", spline)
-   
-   
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "+", PAIR0, "_n", n1, "-", n0))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")
+   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour cells", "Normal cells"), "png", 7.75, 9)
+
+   ## RT
+   ylab.text <- "Replication timing"
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
+   main.text <- paste0("Read depth ratio between ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")
+   plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, "png", 0.15)
 }
 
 

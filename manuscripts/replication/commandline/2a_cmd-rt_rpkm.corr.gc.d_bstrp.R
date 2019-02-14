@@ -79,7 +79,7 @@ for (c in 1:22) {
    rownames(rpkms.chr) <- overlaps
    rpkms.chr$T  <- rpkms.T.chr.d.rt$MEDIAN
    rpkms.chr$N  <- rpkms.N.chr.d.rt$MEDIAN
-   rpkms.chr$RT <- mapply(x = 1:nrow(rpkms.chr), function(x) getLog2RDRatio(rpkms.chr[x,]$T, rpkms.chr[x,]$N, pseudocount=0))   ## CHANGED 11/02/19: Was pseudocount=0.01
+   rpkms.chr$RT <- mapply(x = 1:nrow(rpkms.chr), function(x) getLog2RDRatio(rpkms.chr[x,]$T, rpkms.chr[x,]$N, pseudocount=0.01))   ## CHANGED 11/02/19: Was pseudocount=0.01
    
    #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
    writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")

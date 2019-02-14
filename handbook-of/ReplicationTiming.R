@@ -2,7 +2,7 @@
 # Library      : DNA Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 15/11/1
+# Last Modified: 15/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -119,78 +119,108 @@ outputRT <- function(rpkms.chr) {
 }
 
 # -----------------------------------------------------------------------------
-# Plot read depth (see sclc-wgs-rt.R) or 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
-# Last Modified: 10/02/19
-# -----------------------------------------------------------------------------
-plotRD <- function(wd.rt.plots, sample, file, chr, PAIR, rpkm.chr, bed.gc.chr, isFlipped, ext) {
-   main.text <- paste0(sample, " read depth (copy number-, GC-corrected RPKM)")
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Read depth"
- 
-   xmin <- 0
-   xmax <- subset(chromInfo, chrom == chr)$size
-   ymin <- min(rpkm.chr)
-   ymax <- max(rpkm.chr)
- 
-   if (ext == "pdf")
-      pdf(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".pdf"), height=4, width=10)
-   else if (ext == "png")
-      png(paste0(wd.rt.plots, "/", chr, "/", sample, file, chr, "_", PAIR, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
-   dev.off()
-}
-
-# -----------------------------------------------------------------------------
-# Plot replication timing (See sclc-wgs-rt.R)
+# Plot RD and RT in sclc-wgs-rt.R (also refer to plotBootstrapsRT)
 # Link(s): http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
-# Last Modified: 10/02/19; 29/01/18
+# Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-plotRT <- function(wd.rt.plots, title, chr, n, xmin, xmax, rpkms.chr.rt, bed.gc.chr, pair1, pair0, ext) {
-   filename  <- paste0(wd.rt.plots, tolower(title), "_wgs_rt_", chr, "_", pair1, "-", pair0, "_n", n)
-   main.text <- paste0("Read depth (CN-, GC-corrected RPKM) ratio (", pair1, "/", pair0, ") in ", title)
+plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, ext, ymin=NA, ymax=NA) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication time (log2 FC)"
- 
-   cytoBand.chr <- subset(cytoBand, chrom == chr)
-   ymin <- min(rpkms.chr.rt$MEDIAN)
-   ymax <- max(rpkms.chr.rt$MEDIAN)
-   if (!is.na(xmin) && !is.na(xmax)) filename <- paste0(filename, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
  
+   ## Initiate plot
    if (ext == "pdf") {
-      pdf(paste0(filename, ".pdf"), height=4, width=10)
+      pdf(paste0(file.name, ".pdf"), height=4, width=10)
    } else if (ext == "png")
-      png(paste0(filename, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
  
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt$MEDIAN, col="red", cex=0.3)
-   abline(h=0, lwd=0.5, col="grey")
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt$MEDIAN)$y)
+   if (is.na(ymin) || is.na(ymax))
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt), max(rpkms.chr.rt)), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   else
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colors[1], cex=0.3)
+   abline(h=0, lwd=0.5, col="lightgrey")
  
-   #slopes <- diff(smooth.spline(rpkms.chr)$y)/diff((bed.gc.chr$START)/1E6)
-   #slopes2 <- diff(smooth.spline(rpkms.chr)$y)/diff(smooth.spline(rpkms.chr)$x)
+   ## Plot smoothing spline
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt)
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt)$y, col=colors[2])
  
-   #temp <- loess.smooth(bed.gc.chr$START, rpkms.chr)
-   #slopes3 <- diff(temp$y)/diff(temp$x)
- 
+   ## Plot cytobands and legend
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
  
    dev.off()
 }
 
-getEnsGeneBED <- function(pos, bed.gc.chr) {
-   bed.gc.chr.start <- subset(bed.gc.chr, pos >= START)
-   bed.gc.chr.start.end <- subset(bed.gc.chr.start, pos <= END)
+plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, legends, ext, ymin=NA, ymax=NA) {
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (is.na(xmin)) xmin <- 0
+   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
  
-   return(rownames(bed.gc.chr.start.end))
+   rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + 0.01)
+   rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + 0.01)
+ 
+   ## Initiate plot
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=4, width=10)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   if (is.na(ymin) || is.na(ymax))
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt$T), max(rpkms.chr.rt$T)), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   else
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colors[1], cex=0.3)
+   abline(h=0, lwd=0.5, col="lightgrey")
+ 
+   ## Plot smoothing spline
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt$T)$y, col=colors[1])
+ 
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt$N)$y, col=colors[2])
+ 
+   ## Plot cytobands and legend
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
+   for (c in 1:nrow(cytoBand.chr))
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
+ 
+   legend("bottomright", legends, col=colors, lty=1, lwd=2, bty="n", horiz=T)
+   dev.off()
 }
+
+plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, ext, cutoff) {
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (is.na(xmin)) xmin <- 0
+   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+ 
+   ## Initiate plot
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=4, width=10)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col="grey", cex=0.3)
+   abline(h=0, lwd=0.5, col="lightgrey")
+ 
+   ## Plot smoothing spline
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
+   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt$RT)$y, col="black")
+ 
+   ## Plot cytobands and legend
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
+   for (c in 1:nrow(cytoBand.chr))
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
+ 
+   dev.off()
+}
+
 
 # -----------------------------------------------------------------------------
 # Read in bootstrapped data (in 2b)
@@ -295,7 +325,7 @@ setEnsGeneBED <- function(ensGene.rt, bed.gc, chrs, isStartPosition) {
 }
 
 # -----------------------------------------------------------------------------
-# Visualisation of bootstrapping data (Histogram, RO, and RT)
+# Visualisation of bootstrapping data (Histogram, RFD, and RT)
 # Last Modified: 13/11/18
 # -----------------------------------------------------------------------------
 ## https://www.r-graph-gallery.com/190-mirrored-histogram/
@@ -381,20 +411,19 @@ plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.ch
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (gene != "")
       xlab.text <- paste0(xlab.text, " near ", gene)
-   ylab.text <- "Replication time (log2 FC)"
+   ylab.text <- "Replication timing (log2)"
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
-   ymin <- -ymax
- 
-   ## Initiation plot
+
+   ## Initiate plot
    if (ext == "pdf") {
       pdf(paste0(file.name, ".pdf"), height=4, width=10)
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rt.chr$RT, col="grey", cex=0.3)
-   abline(h=0, lwd=0.5, col="grey")
+   plot(NULL, ylim=c(-ymax, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   points(bed.gc.chr$START/1E6, rt.chr$RT, col="gray", cex=0.3)
+   abline(h=0, lwd=0.5, col="lightgrey")
  
    ## Plot right-/left-leading positions
    spline <- smooth.spline(x=bed.gc.chr$START, y=rt.chr$RT)

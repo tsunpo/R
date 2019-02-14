@@ -93,6 +93,7 @@ round0 <- function(number, digits) {
 getGene <- function(gene, start=NA, end=NA, beginWith=F, endWith=F, protein_coding=F) {
    if (grepl("^ENSG", gene)) {
       return(ensGene[gene,])
+    
    } else if (grepl("^chr", gene, ignore.case=F)) {
       if (is.na(start) || is.na(end))
          return(ensGene[1,][-1,])
@@ -124,10 +125,13 @@ getGene <- function(gene, start=NA, end=NA, beginWith=F, endWith=F, protein_codi
 }
 
 getGenes <- function(genes) {
-   out <- getGene(genes[1])
-   if (length(genes) >= 2)
-      for (g in 2:length(genes))
-         out <- rbind(out, getGene(genes[g]))
+   outs <- ensGene[1,][-1,]
    
-   return(out)
+   for (g in 1:length(genes)) {
+      out <- getGene(genes[g])
+      if (nrow(out) > 0)
+         outs <- rbind(outs, out)
+   }
+   
+   return(outs)
 }
