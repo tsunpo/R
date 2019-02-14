@@ -48,22 +48,38 @@ n0 <- length(samples0)
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
    chr <- chrs[c]
- 
-   ## Replication timing
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
+   ###
+   ## Read depth
    rpkms.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.N.chr.d <- readTable(file.path(wd.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    overlaps <- intersect(rownames(rpkms.T.chr.d), rownames(rpkms.N.chr.d))
    rpkms.T.chr.d.rt <- rpkms.T.chr.d[overlaps,]
    rpkms.N.chr.d.rt <- rpkms.N.chr.d[overlaps,]
- 
-   rpkms.chr <- toTable(NA, 3, length(overlaps), c("T", "N", "RT"))
-   rownames(rpkms.chr) <- overlaps
-   rpkms.chr$T  <- rpkms.T.chr.d.rt$MEDIAN
-   rpkms.chr$N  <- rpkms.N.chr.d.rt$MEDIAN
-   rpkms.chr$RT <- mapply(x = 1:nrow(rpkms.chr), function(x) getLog2RDRatio(rpkms.chr[x,]$T, rpkms.chr[x,]$N, pseudocount=0.01))
- 
-   #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
-   writeTable(outputRT(rpkms.chr), gzfile(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   
+   plotRD(wd.rt.plots, "_rpkm.corr.gc.d_", chr, bed.gc.chr, rpkms.T.chr.d, rpkms.N.chr.d, PAIR1, PAIR0, "pdf")
+
+   ###
+   ## Replicaiton timing
+   rpkms.chr.rt <-readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", NUM1, "-", NUM0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   
+   overlaps <- intersect(rownames(rpkms.chr.rt), rownames(bed.gc.chr))
+   bed.gc.chr.rt <- bed.gc.chr[overlaps,]
+   bed.gc.chr.rt$SPLINE <- 0
+   bed.gc.chr.rt$SLOPE  <- NA
+   
+   ## Determine replication direction for each expressed gene
+   ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
+   #slopes <- diff(smooth.spline(rpkms.chr.rt$MEDIAN)$y)/diff((bed.gc.chr.rt$START)/1E7)   ## BIG BUG FIX!!! 31/10/18: Warning message for using bed.gc.chr
+   spline <- smooth.spline(x=bed.gc.chr.rt$START, y=rpkms.chr.rt$RT)
+   slopes <- diff(spline$y)/diff(bed.gc.chr.rt$START/1E6)   ## ADD 31/10/18
+   
+   bed.gc.chr.rt$SPLINE <- spline$y
+   bed.gc.chr.rt$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.rt), as no slope for the last 1KB window 
+   #plotRT0(wd.rt.plots, BASE, chr, 101, 92, NA, NA, rpkms.chr.rt, bed.gc.chr.rt, PAIR1, PAIR0, "png", spline)
+   
+   
 }
 
 

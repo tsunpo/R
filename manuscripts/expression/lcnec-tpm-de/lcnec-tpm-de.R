@@ -80,7 +80,7 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="LCNEC RB1/WT fold change [log2]", ylab="P-value [-log10]", col="darkgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="LCNEC RB1/WT log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(pvalue)), lty=5)
    text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
