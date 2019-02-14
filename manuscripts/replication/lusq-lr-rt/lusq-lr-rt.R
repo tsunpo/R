@@ -27,128 +27,23 @@ BASE <- "LUSQ"
 base <- tolower(BASE)
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-ld-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs <- file.path(wd, BASE, "ngs/WGS")
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-#samples <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1.list", header=F, rownames=F, sep="")
-
-normals <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
-#normals <- readTable(file.path(wd.ngs, "sclc_wgs_n9_B.list"), header=F, rownames=F, sep="")
-#normals <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/CLL/ngs/WGS/cll_wgs_n96.list", header=F, rownames=F, sep="")
-#normals <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/lcl_wgs_n7.list", header=F, rownames=F, sep="")
-
-writeTable(samples[grep("FF", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
-writeTable(samples[grep("blood", bloods[samples, 2])], file.path(wd.ngs, "sclc_wgs_n92_N.list"), colnames=F, rownames=F, sep="")
-
-load(file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene.input <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F, proteinCodingNonRedundantOnly=F)
+wd.ngs <- file.path(wd, BASE, "ngs/LR")
+samples <- readTable(file.path(wd.ngs, "lusq_ld_n1.list"), header=F, rownames=F, sep="")
+normals <- readTable(file.path(wd.ngs, "lusq_ld_n1.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
-# Insert size (each sample)
-# Last Modified: 20/09/18
+# Plot read depth (See plotRD in ReplicationTiming.R)
+# Last Modified: 10/02/19
 # -----------------------------------------------------------------------------
-wd.meta <- file.path(wd.ngs, "insert_size")
-
-for (s in 1:length(samples)) {
-   table <- readTable(file.path(wd.meta, paste0(samples[s], "_qc.txt")), header=F, rownames=F, sep="")   
-}
-
-
-
-# -----------------------------------------------------------------------------
-# Insert size
-# Last Modified: 10/09/18
-# -----------------------------------------------------------------------------
-wd.meta <- file.path(wd, BASE, "metadata/George 2015")
-table <- readTable(file.path(wd.meta, "nature14664-s1_ST2.txt"), header=T, rownames=T, sep="\t")
-table <- table[samples,]
-
-table1 <- table[,c("Insert.Size", "Mean.Coverage")]
-table1$Group <- 1
-table0 <- table[,c("Insert.Size.1", "Mean.Coverage.1")]
-colnames(table0) <- c("Insert.Size", "Mean.Coverage")
-table0$Group <- 0
-table <- rbind(table1, table0)
-table$Group <- as.factor(table$Group)
-
-file.name <- file.path(wd.rt.plots, paste0("boxplot_", base, "_wgs_insert-size.pdf"))
-pdf(file.name, height=6, width=3)
-boxplot(Insert.Size ~ Group, data=table, outline=F, names=c("Normal", "Tumour"), col=c("dodgerblue", "red"), ylab="Insert size", main=BASE)
-dev.off()
-
-median(table1$Insert.Size)
-# [1] 312.312
-median(table0$Insert.Size)
-# [1] 308.56
-median(table0[normals,]$Insert.Size)
-
-sd(table1$Insert.Size)
-# [1] 16.19834
-sd(table0$Insert.Size)
-# [1] 13.34431
-
-## Tumour vs. Normal
-testW(table1$Insert.Size, table0$Insert.Size)
-# [1] 0.5489026
-
-
-# -----------------------------------------------------------------------------
-# Step 6.1: Define replicaiton timing direction for expressed genes (Following Step 4 in "asym-sclc-tx.R" and Step 5 from rt-sclc-wgs.R)
-# Link(s):  http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
-#           https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
-# Last Modified: 29/01/18
-# -----------------------------------------------------------------------------
-plotRT0 <- function(wd.rt.plots, BASE, chr, n1, n0, xmin, xmax, rpkms.chr.rt, bed.gc.chr.rt, pair1, pair0, ext, spline) {
-   file.name  <- file.path(wd.rt.plots, paste0(tolower(BASE), "_wgs_rt_bstrp1000_", chr, "_", pair1, "-", pair0, "_n", n1, "-", n0, "_spline"))
-   main.text <- paste0("Bootstrapped read depth (CN-, GC-corrected) ratio (", pair1, "/", pair0, ") in ", BASE)
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   ylab.text <- "Replication time (log2 FC)"
- 
-   cytoBand.chr <- subset(cytoBand, chrom == chr)
-   ymin <- min(rpkms.chr.rt$MEDIAN)
-   ymax <- max(rpkms.chr.rt$MEDIAN)
-   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
-   if (is.na(xmin)) xmin <- 0
-   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
-
-   if (ext == "pdf") {
-      pdf(paste0(file.name, ".pdf"), height=4, width=10)
-   } else if (ext == "png")
-      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   
-   plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr.rt$START/1E6, rpkms.chr.rt$MEDIAN, col="red", cex=0.3)
-   abline(h=0, lwd=0.5, col="grey")
-   lines(bed.gc.chr.rt$START/1E6, smooth.spline(rpkms.chr.rt$MEDIAN)$y)
-   lines(spline$x/1E6, spline$y, col="blue")
-   
-   #slopes <- diff(smooth.spline(rpkms.chr)$y)/diff((bed.gc.chr$START)/1E6)
-   #slopes2 <- diff(smooth.spline(rpkms.chr)$y)/diff(smooth.spline(rpkms.chr)$x)
-   
-   #temp <- loess.smooth(bed.gc.chr$START, rpkms.chr)
-   #slopes3 <- diff(temp$y)/diff(temp$x)
-   
-   for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
- 
-   dev.off()
-}
-
-getEnsGeneBED <- function(pos, bed.gc.chr) {
-   bed.gc.chr.start <- subset(bed.gc.chr, pos >= START)
-   bed.gc.chr.start.end <- subset(bed.gc.chr.start, pos <= END)
- 
-   return(rownames(bed.gc.chr.start.end))
-}
-
-BASE  <- "SCLC"
+BASE  <- "LUSQ"
 PAIR1 <- "T"
 PAIR0 <- "N"
 PAIR  <- paste0(PAIR1, "-", PAIR0)
-CHR   <- 6
+CHR   <- 2
 CUTOFF <- 0.15
 
 ###

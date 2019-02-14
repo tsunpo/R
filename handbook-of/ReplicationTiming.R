@@ -193,7 +193,7 @@ plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.
    dev.off()
 }
 
-plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, ext, cutoff) {
+plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, ext, cutoff, scale) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
@@ -205,10 +205,11 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    } else if (ext == "png")
       png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
  
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main=main.text)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n")
    points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col="grey", cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
- 
+   axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+   
    ## Plot smoothing spline
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
    lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt$RT)$y, col="black")
@@ -220,7 +221,6 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
  
    dev.off()
 }
-
 
 # -----------------------------------------------------------------------------
 # Read in bootstrapped data (in 2b)

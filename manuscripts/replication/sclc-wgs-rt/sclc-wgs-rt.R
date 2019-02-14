@@ -71,7 +71,7 @@ for (c in 1:22) {
    ylab.text <- "Replication timing"
    file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
    main.text <- paste0("Read depth ratio between ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")
-   plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, "png", 0.15)
+   plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, "png", 0.15, 0.1)
 }
 
 

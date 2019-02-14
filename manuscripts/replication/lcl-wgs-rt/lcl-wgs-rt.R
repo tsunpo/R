@@ -21,23 +21,66 @@ load(file.path(wd.src.guide, "hg19.1kb.gc.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-wd     <- "/projects/cangen/tyang2/LCL/analysis/"                ## tyang2@cheops
-wd.ngs <- "/projects/cangen/tyang2/LCL/ngs/WGS/" 
-#wd     <- "/ngs/cangen/tyang2/LCL/analysis/"                    ## tyang2@gauss
-#wd.ngs <- "/ngs/cangen/tyang2/LCL/ngs/WGS/" 
-wd     <- "/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/"   ## tpyang@localhost
-wd.ngs <- "/Users/tpyang/Work/uni-koeln/tyang2/LCL/ngs/WGS/"
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+BASE1 <- "LCL"
+PAIR1 <- "S"
+BASE0 <- "LCL"
+PAIR0 <- "G1"
+base1 <- tolower(BASE1)
+base0 <- tolower(BASE0)
 
-wd.rt       <- paste0(wd, "replication/lcl-wgs-rt-lcl/")
-wd.rt.data  <- paste0(wd.rt, "data/")
-wd.rt.plots <- paste0(wd.rt, "plots/")
+wd.anlys <- file.path(wd, BASE1, "analysis")
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data")
+wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.asym       <- paste0(wd, "asymmetries/", tolower(BASE), "-asym-tx/")
-wd.asym.data  <- paste0(wd.asym, "data/")
-wd.asym.plots <- paste0(wd.asym, "plots/")
-setwd(wd.asym)
+wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
+samples1 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+n1 <- length(samples1)
+n0 <- length(samples0)
 
-samples <- readTable(paste0(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+# -----------------------------------------------------------------------------
+# Plot RD and RT (see ReplicationTiming.R)
+# Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
+# -----------------------------------------------------------------------------
+for (c in 1:22) {
+   chr <- chrs[c]
+ 
+   rpkms.chr.rt <-readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+ 
+   ## RD   
+   ylab.text <- "Read depth"
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "_n", n1))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE1, " S phase cells (n=", n1, ")")
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$T + 0.01), bed.gc.chr, c("pink", "red"), "png", 7.25, 9.75)   #(7.75, 9.25) for chr2
+ 
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR0, "_n", n0))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE0, " G1 phase cells (n=", n0, ")")
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$N + 0.01), bed.gc.chr, c("lightskyblue1", "blue"), "png", 7.25, 9.75)
+ 
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "+", PAIR0, "_n", n1, "-", n0))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
+   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase cells", "G1 phase cells"), "png", 7.5, 9.25)
+ 
+   ## RT
+   ylab.text <- "Replication timing"
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
+   main.text <- paste0("Read depth ratio between ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
+   plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, "png", 1, 0.75)
+}
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Step 6.1: Define replicaiton timing direction for expressed genes (Following Step 4 in "asym-sclc-tx.R" and Step 5 from rt-sclc-wgs.R)
