@@ -56,7 +56,7 @@ for (c in 1:22) {
    ylab.text <- "Read depth"
    file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "_n", n1))
    main.text <- paste0("Read depth of 1kb windows in ", BASE1, " S phase cells (n=", n1, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$T + 0.01), bed.gc.chr, c("pink", "red"), "png", 7.25, 9.75)   #(7.75, 9.25) for chr2
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$T + 0.01), bed.gc.chr, c("pink", "red"), "png", 7.25, 9.75)
  
    file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR0, "_n", n0))
    main.text <- paste0("Read depth of 1kb windows in ", BASE0, " G1 phase cells (n=", n0, ")")
