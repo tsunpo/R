@@ -95,14 +95,14 @@ initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
 # Methods: Bootstraps (in 2a_cmd-rt_rpkm.corr.gc.d_bstrp.R)
 # Last Modified: 15/05/17
 # -----------------------------------------------------------------------------
-getDetectedRD <- function(rpkm) {   ## Find not dected (RPKM_CORR_GC = 0) windows in any of the samples 
-   return(mapply(x = 1:nrow(rpkm), function(x) !any(as.numeric(rpkm[x,]) == 0)))
+getDetectedRD <- function(rpkms) {   ## Find not dected (RPKM_CORR_GC = 0) windows in any of the samples 
+   return(mapply(x = 1:nrow(rpkms), function(x) !any(as.numeric(rpkms[x, -1]) == 0)))   ## ADD 15/02/19; To skip the first column "BED"
 }
 
 ## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
-pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, samples) {
-   rpkms.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")[, samples]   ## ADD samples 14/06/17
-   rpkms.chr.d <- rpkms.chr[getDetectedRD(rpkms.chr),]   ## ADD getDetected() 13/06/17
+pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR) {
+   rpkms.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+   rpkms.chr.d <- rpkms.chr[getDetectedRD(rpkms.chr),]   ## ADD 13/06/17; getDetectedRD()
  
    return(rpkms.chr.d)
 }

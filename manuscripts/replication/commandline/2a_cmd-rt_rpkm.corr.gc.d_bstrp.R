@@ -58,12 +58,12 @@ for (c in 1:22) {
    chr <- chrs[c]
 
    ## Read depth
-   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1, samples1)
-   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0, samples0)   
-   rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, ])))
-   rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, ])))
-   rpkms.T.chr.d$BED <- rownames(rpkms.T.chr.d)   ## CHANGE 23/10/18: After mapply(median()) otherwise warnings due to $BED
-   rpkms.N.chr.d$BED <- rownames(rpkms.N.chr.d)
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
+   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)   
+   rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   #rpkms.T.chr.d$BED <- rownames(rpkms.T.chr.d)   ## REMOVED 15/02/19; Already keep the first column "BED" in previous step; ## CHANGE 23/10/18: After mapply(median()) otherwise warnings due to $BED
+   #rpkms.N.chr.d$BED <- rownames(rpkms.N.chr.d)
    
    writeTable(rpkms.T.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
    writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
