@@ -57,21 +57,21 @@ for (c in 1:22) {
    ylab.text <- "Read depth"
    file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "_n", n1))
    main.text <- paste0("Read depth of 1kb windows in ", BASE1, " tumour cells (n=", n1, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$T + 0.01), bed.gc.chr, c("lightcoral", "red"), "png", 7.75, 9.25)   #(7.75, 9.25) for chr2
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$T + 0.01), bed.gc.chr, c("lightcoral", "red3"), "png", 7.75, 9.25)   #(7.75, 9.25) for chr2
    
    file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR0, "_n", n0))
    main.text <- paste0("Read depth of 1kb windows in ", BASE0, " normal cells (n=", n0, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$N + 0.01), bed.gc.chr, c("skyblue3", "blue"), "png", 7.75, 9.25)
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, log2(rpkms.chr.rt$N + 0.01), bed.gc.chr, c("skyblue3", "steelblue"), "png", 7.75, 9.25)
    
    file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "+", PAIR0, "_n", n1, "-", n0))
    main.text <- paste0("Read depth of 1kb windows in ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")
-   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour cells", "Normal cells"), "png", 7.75, 9)
+   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red3", "steelblue"), c("Tumour cells", "Normal cells"), "png", 7.75, 9)
 
    ## RD & RT 
    main.text <- paste0("T/N read depth ratio between ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")   
    file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour cells", "Normal cells"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(74353001, 85951001), 7.75, 9, 0.15, 0.1)
-   plotRD3(file.name, "T/N read depth ratio in SCLC", chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c("lightcoral", "skyblue3"), c("T", "N"), "png", width=5, peaks=c(74353001, 85951001), 7.75, 9, 0.15, 0.1)
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red3", "steelblue"), c("Tumour cells", "Normal cells"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(74353001, 85951001), 7.75, 9, 0.15, 0.1)
+   plotRD3(file.name, "T/N read depth ratio in SCLC", chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red3", "steelblue"), c("Tumour", "Normal"), c("lightcoral", "skyblue3"), c("T", "N"), "png", width=5, peaks=c(74353001, 85951001), 7.75, 9, 0.15, 0.1)
    
    ## RT
    ylab.text <- "Replication timing"

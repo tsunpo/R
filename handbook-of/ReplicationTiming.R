@@ -231,7 +231,7 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
  
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
-         abline(v=peaks[p]/1E6, lty=5, lwd=1, col="red")
+         abline(v=peaks[p]/1E6, lty=5, lwd=1, col="darkgrey")
    legend("bottomright", legends, col=colors, lty=1, lwd=2, bty="n", horiz=T)
    
    ## Initiate RT plot
@@ -261,7 +261,7 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    }
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
-         abline(v=peaks[p]/1E6, lty=5, lwd=1, col="red")
+         abline(v=peaks[p]/1E6, lty=5, lwd=1, col="darkgrey")
    dev.off()
 }
 
