@@ -73,10 +73,14 @@ for (c in 1:22) {
    origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
+   bed.gc.chr.sub <- subset(bed.gc.chr[origin.idx,], START > 85000000)
+   bed.gc.chr.sub <- subset(bed.gc.chr.sub, START < 87500000)
+   rpkms.chr.rt[rownames(bed.gc.rt.chr[rownames(bed.gc.chr.sub),]),]
+   
    start <- 128747680 - 500000
    end   <- 128753674 + 500000
    file.name <- file.path(wd.rt.plots, paste0(base, "_RFD_bstrps1000_", chr))
-   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
+   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 

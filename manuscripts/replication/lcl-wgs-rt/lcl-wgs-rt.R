@@ -66,6 +66,12 @@ for (c in 1:22) {
    main.text <- paste0("Read depth of 1kb windows in ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
    plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase cells", "G1 phase cells"), "png", 7.5, 9.25)
  
+   ## RD & RT 
+   main.text <- paste0("S/G1 read depth ratio between ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase cells", "G1 phase cells"), "png", width=10, peaks=c(74353001, 85951001), 7.5, 9.25, 1, 1)
+   plotRD3(file.name, "", chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 1, 1)
+   
    ## RT
    ylab.text <- "Replication timing"
    file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
