@@ -50,7 +50,7 @@ for (c in 1:22) {
    chr <- chrs[c]
    
    rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, scaled) 
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, scaled=T) 
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
 
@@ -70,13 +70,13 @@ for (c in 1:22) {
 
    ## RD & RT 
    main.text <- paste0("T/N read depth ratio between ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")   
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_cv"))   
    plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour cells", "Normal cells"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(74353001, 85951001), 7.75, 9, 3, 3)
    plotRD3(file.name, "T/N read depth ratio in SCLC", chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c("lightcoral", "skyblue3"), c("T", "N"), "png", width=5, peaks=c(74353001, 85951001), 7.75, 9, 3, 3)
    
    ## RT
    ylab.text <- "Replication timing"
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_cv"))
    main.text <- paste0("T/N read depth ratio between ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")
    plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("lightcoral", "skyblue3"), "png", 3, 3)
 }
@@ -90,7 +90,8 @@ setSlopes <- function(rpkms.chr.rt, bed.gc.chr) {
    rpkms.chr.rt <- rpkms.chr.rt[overlaps,]
    bed.gc.chr   <- bed.gc.chr[overlaps,]
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
+   #spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
+   spline <- smooth.spline(rpkms.chr.rt$RT)
    slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
  
    rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]
@@ -103,10 +104,12 @@ setSlopes2 <- function(rpkms.chr.rt, bed.gc.chr) {
    rpkms.chr.rt <- rpkms.chr.rt[overlaps,]
    bed.gc.chr   <- bed.gc.chr[overlaps,]
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
+   #spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N
+   spline <- smooth.spline(rpkms.chr.rt$N)
    slopes.N <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
+   #spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
+   spline <- smooth.spline(rpkms.chr.rt$T)
    slopes.T <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
  
    rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]

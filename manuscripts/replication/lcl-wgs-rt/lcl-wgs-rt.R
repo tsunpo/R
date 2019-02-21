@@ -49,7 +49,7 @@ for (c in 1:22) {
    chr <- chrs[c]
  
    rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, scaled) 
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, scaled=T) 
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
  
@@ -75,7 +75,7 @@ for (c in 1:22) {
    
    ## RT
    ylab.text <- "Replication timing"
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale"))
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
    main.text <- paste0("S/G1 read depth ratio between ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
    plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("lightcoral", "skyblue3"), "png", 3, 3)
 }
