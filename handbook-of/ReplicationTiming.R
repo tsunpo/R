@@ -154,7 +154,7 @@ plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
  
    ## Plot smoothing spline
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt)
-   lines(bed.gc.chr$START/1E6, smooth.spline(rpkms.chr.rt)$y, col=colors[2])
+   lines(bed.gc.chr$START/1E6, spline$y, col=colors[2])   ## CHANGED 21/02/19; From smooth.spline(rpkms.chr.rt$RT)$y
  
    ## Plot cytobands and legend
    cytoBand.chr <- subset(cytoBand, chrom == chr)
