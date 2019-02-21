@@ -153,15 +153,15 @@ plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colors[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
-   ## Plot smoothing spline
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt, cv=T)
-   points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)   ## CHANGED 21/02/19; From smooth.spline(rpkms.chr.rt$RT)$y
- 
-   ## Plot cytobands and legend
+   ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
- 
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+   
+   ## Plot smoothing spline
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt)
+   points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)   ## CHANGED 21/02/19; From smooth.spline(rpkms.chr.rt$RT)$y
+
    dev.off()
 }
 
@@ -190,10 +190,10 @@ plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing spline
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T, cv=T)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
    points(bed.gc.chr$START/1E6, spline$y, col=colors[1], pch=16, cex=0.2)
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N, cv=T)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
    points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)
  
    ## Plot legend
@@ -231,10 +231,10 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing splines
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T, cv=T)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
    points(bed.gc.chr$START/1E6, spline$y, col=colors[1], pch=16, cex=0.2)
    
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N, cv=T)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
    points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)
 
    ## Plot legend and peaks
@@ -262,7 +262,7 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
   
    ## Plot smoothing spline
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT, cv=T)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
    points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
    
    ## Plot legend and peaks
@@ -303,7 +303,7 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing spline
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT, cv=T)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
    points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
 
    dev.off()
