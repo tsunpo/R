@@ -1,9 +1,9 @@
 # =============================================================================
-# Manuscript   : The dangeous case of DNA replication
-# Chapter II   : Reconstruct replication timing profile in tumour cells
+# Manuscript   : 
+# Chapter II   : Tumour replication timing reconstruction
 # Name         : manuscripts/asymmetries/lcl-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 16/05/18
+# Last Modified: 20/02/19
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
@@ -19,37 +19,37 @@ load(file.path(wd.src.guide, "hg19.1kb.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
-# Last Modified: 30/01/18
+# Last Modified: 20/02/19
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE1 <- "LCL"
-PAIR1 <- "S"
+PAIR1 <- "T"
 BASE0 <- "LCL"
-PAIR0 <- "G1"
+PAIR0 <- "N"
 base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
 wd.anlys <- file.path(wd, BASE1, "analysis")
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
-wd.rt.data  <- file.path(wd.rt, "data")
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-ok-rt"))
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
-samples1 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
-n1 <- length(samples1)
-n0 <- length(samples0)
+wd.meta  <- file.path(wd, BASE1, "metadata/Petryk 2015")
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-for (c in 1:22) {
+ok <- readTable(file.path(wd.meta, "GM06990_Rep1.gff3"), header=F, rownames=F, sep="")
+for (c in 2:2) {
    chr <- chrs[c]
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, scaled) 
+
+   ok.chr <- readTable(file.path(wd.meta, paste0(chr, "_71500000_72500000.gff3")), header=F, rownames=F, sep="")
+   V9.C5 <- unlist(strsplit(ok.chr$V9[1], ";"))[5]
+   V9.C5.2C <- unlist(strsplit(V9.C5, "="))[2]
+   coverages <- unlist(strsplit(V9.C5.2C, "%2C"))
+   length(coverages)
+   
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
  

@@ -8,11 +8,12 @@ source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
 
 wd.src.ref <- "/Users/tpyang/Work/dev/R/guide-to-the"
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"
+BASE <- "HeLa"
 
 # -----------------------------------------------------------------------------
 # Tirosh et al., Nature 2016
 # -----------------------------------------------------------------------------
-wd.meta  <- file.path(wd, "HeLa", "metadata/Tirosh 2016")
+wd.meta  <- file.path(wd, BASE, "metadata/Tirosh 2016")
 core.G1S <- readTable(file.path(wd.meta, "Tirosh_G1-S.list"), header=F, rownames=F, sep="")
 core.G2M <- readTable(file.path(wd.meta, "Tirosh_G2-M.list"), header=F, rownames=F, sep="")
 core.Stemness <- readTable(file.path(wd.meta, "Tirosh_Stemness.list"), header=F, rownames=F, sep="")
@@ -31,7 +32,7 @@ core.Stemness <- subset(ensGene, external_gene_name %in% core.Stemness)$ensembl_
 # -----------------------------------------------------------------------------
 # Dominguez et al., Cell Res. 2016
 # -----------------------------------------------------------------------------
-wd.meta  <- file.path(wd, "HeLa", "metadata/Dominguez 2016")
+wd.meta  <- file.path(wd, BASE, "metadata/Dominguez 2016")
 periodic.G1S <- readTable(file.path(wd.meta, "Dominguez_G1-S.list"), header=F, rownames=F, sep="")   ## 304
 periodic.G2M <- readTable(file.path(wd.meta, "Dominguez_G2-M.list"), header=F, rownames=F, sep="")   ## 876
 
