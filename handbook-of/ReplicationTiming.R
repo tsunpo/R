@@ -124,17 +124,31 @@ outputRT <- function(rpkms.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-setScaledRT <- function(rpkms.chr.rt, pseudocount, scaled) {
+setScaledRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
    rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + pseudocount)
    rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + pseudocount)
-   if (scaled == T)
-      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)   ## ADD 19/02/19
+
+   if (recaliRT == T)
+      rpkms.chr.rt$RT <- rpkms.chr.rt$T - rpkms.chr.rt$N   ## ADD 24/02/19
+   if (scaledRT == T)
+      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)            ## ADD 19/02/19
    
    return(rpkms.chr.rt)
 }
 
-# https://www.r-bloggers.com/cubic-and-smoothing-splines-in-r/
-plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, ext, ymin=NA, ymax=NA) {
+setScaledOK <- function(rpkms.chr.rt, pseudocount, scaled) {
+   rpkms.chr.rt$T  <- log2(rpkms.chr.rt$T + pseudocount)
+   rpkms.chr.rt$N  <- log2(rpkms.chr.rt$N + pseudocount)
+   rpkms.chr.rt$RT <- rpkms.chr.rt$RT / (rpkms.chr.rt$T + rpkms.chr.rt$N)
+   if (scaled == T)
+      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)   ## ADD 19/02/19
+ 
+   return(rpkms.chr.rt)
+}
+
+## https://www.r-bloggers.com/cubic-and-smoothing-splines-in-r/
+## https://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ch07.pdf
+plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, ext, ymin=NA, ymax=NA) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
@@ -150,7 +164,7 @@ plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt), max(rpkms.chr.rt)), xlab=xlab.text, ylab=ylab.text, main=main.text)
    else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colors[1], cex=0.3)
+   points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
    ## Plot cytobands (before smoothing spline)
@@ -160,12 +174,12 @@ plotRD <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    
    ## Plot smoothing spline
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt)
-   points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)   ## CHANGED 21/02/19; From smooth.spline(rpkms.chr.rt$RT)$y
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)   ## CHANGED 21/02/19; From smooth.spline(rpkms.chr.rt$RT)$y
 
    dev.off()
 }
 
-plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, legends, ext, ymin=NA, ymax=NA) {
+plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, ext, ymin=NA, ymax=NA) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
@@ -181,7 +195,7 @@ plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt$T), max(rpkms.chr.rt$T)), xlab=xlab.text, ylab=ylab.text, main=main.text)
    else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colors[1], cex=0.3)
+   #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
    ## Plot cytobands (before smoothing spline)
@@ -191,18 +205,18 @@ plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.
    
    ## Plot smoothing spline
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
-   points(bed.gc.chr$START/1E6, spline$y, col=colors[1], pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[1], pch=16, cex=0.2)
  
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
-   points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
  
    ## Plot legend
-   legend("bottomright", legends, col=colors, lty=1, lwd=2, bty="n", horiz=T)
+   legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
    
    dev.off()
 }
 
-plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, legends, colors2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
+plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colors2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
@@ -222,7 +236,7 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt$T), max(rpkms.chr.rt$T)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
-   #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colors[1], cex=0.3)
+   #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
    ## Plot cytobands (before smoothing spline)
@@ -232,13 +246,17 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    
    ## Plot smoothing splines
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
-   points(bed.gc.chr$START/1E6, spline$y, col=colors[1], pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[1], pch=16, cex=0.2)
    
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
-   points(bed.gc.chr$START/1E6, spline$y, col=colors[2], pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
 
    ## Plot legend and peaks
-   legend("bottomright", legends, col=colors, lty=1, lwd=2, bty="n", horiz=T)
+   if (xmin == 0) {
+      legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
+   } else {
+      legend("bottomright", legends2, col=colours, lty=1, lwd=2, bty="n", horiz=T)
+   }
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
@@ -249,9 +267,12 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    ylab.text <- "Replication timing"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col=colors2[1], cex=0.3)
+   idx <- which(rpkms.chr.rt$RT == 0)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col="lightgrey", cex=0.3)
+   idx <- which(rpkms.chr.rt$RT > 0)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colours2[1], cex=0.3)
    idx <- which(rpkms.chr.rt$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colors2[2], cex=0.3)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colours2[2], cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
@@ -266,9 +287,14 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
    
    ## Plot legend and peaks
-   if (length(legends2) != 0) {
-      legend("topright",    paste0(legends2[1], " > ", legends2[2]), bty="n")   
-      legend("bottomright", paste0(legends2[1], " < ", legends2[2]), bty="n")
+   if (xmin == 0) {
+      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+      legend("topleft", "Early", bty="n", text.col="black")   
+      legend("bottomleft", "Late", bty="n", text.col="black")
+   } else {
+      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+      legend("topleft",    paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col=colours[1])   
+      legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col=colours[2])
    }
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
@@ -277,7 +303,7 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    dev.off()
 }
 
-plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, ext, cutoff, scale) {
+plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, colours2, legends2, ext, cutoff, scale) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
@@ -290,9 +316,13 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
       png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
  
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n")
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col=colors[1], cex=0.3)
+   idx <- which(rpkms.chr.rt$RT == 0)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col="lightgrey", cex=0.3)
+   idx <- which(rpkms.chr.rt$RT > 0)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colours2[1], cex=0.3)
    idx <- which(rpkms.chr.rt$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colors[2], cex=0.3)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colours2[2], cex=0.3)
+   
    
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
@@ -306,6 +336,43 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
    points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
 
+   ## Plot legend
+   legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T) 
+   legend("topleft", "Early", bty="n", text.col="black")   
+   legend("bottomleft", "Late", bty="n", text.col="black")
+   
+   dev.off()
+}
+
+plotOK <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, ext, ymin=NA, ymax=NA) {
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (is.na(xmin)) xmin <- 0
+   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+ 
+   ## Initiate plot
+   if (ext == "pdf") {
+      pdf(paste0(file.name, ".pdf"), height=4, width=10)
+   } else if (ext == "png")
+      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)   #, yaxt="n")
+   points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col=colors[1], cex=0.3)
+   idx <- which(rpkms.chr.rt$RT < 0)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colors[2], cex=0.3)
+ 
+   #abline(h=0, lwd=0.5, col="lightgrey")
+   #axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+ 
+   ## Plot cytobands (before smoothing spline)
+   cytoBand.chr <- subset(cytoBand, chrom == chr)
+      for (c in 1:nrow(cytoBand.chr))
+   abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+ 
+   ## Plot smoothing spline
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
+   points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
+ 
    dev.off()
 }
 
@@ -340,119 +407,4 @@ read.bedtools.multicov.cov <- function(cov.file) {
    rownames(cov) <- cov$BED
    
    return(cov)
-}
-
-
-
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# Methods: File manipulation and plotting
-# Last Modified: 13/06/17
-# -----------------------------------------------------------------------------
-## This method is for plotRT()
-getBEDFromPosition <- function(bed.gc, chr, start, end) {
- bed.gc.chr <- bed.gc[which(bed.gc$CHR == chr),]
- bed.gc.chr.end <- bed.gc.chr[which(bed.gc.chr$END >= start),]
- bed.gc.chr.end.start <- bed.gc.chr.end[which(bed.gc.chr.end$START <= end),]
- 
- return(bed.gc.chr.end.start)
-}
-
-plotRTPerChromPerSample <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
- main.text <- " read depth (copy number-, GC-corrected RPKM"
- xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
- ylab.text <- "Replication timing"
- 
- if (ext == "pdf")
-  pdf(paste0(wd.rt.plots, "pdf/", chr, "/", sample, "_rpkm.corr.gc.q_", chr, ".pdf"), height=4, width=10)
- else if (ext == "png")
-  png(paste0(wd.rt.plots, "png/", chr, "/", sample, "_rpkm.corr.gc.q_", chr, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
- plot(NULL, ylim=c(dao$ymin, dao$ymax), xlim=c(dao$xmin/1E6, dao$xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0(sample, main.text, ")"))
- points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
- lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
- dev.off()
-}
-
-removeNAinAnyRows <- function(rpkms.chr) {   ## Remove windows if FPKM = NA in any of the samples 
- rpkms.chr$KEEP <- mapply(x = 1:nrow(rpkms.chr), function(x) !any(is.na(rpkms.chr[x,])))
- rpkms.chr <- subset(rpkms.chr, KEEP == T)[,-ncol(rpkms.chr)]
- 
- return(rpkms.chr)
-}
-
-plotRT_old <- function(wd.rt.plots, chr, sample, rpkms.chr, bed.gc, cytoBand.chr, xmin, xmax, ext) {
- main.text <- " read depth (copy number-, GC-corrected RPKM"
- xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
- ylab.text <- "Read depth"
- 
- rpkm.chr <- log2(rpkms.chr$MEDIAN_RPKM + 0.01)
- ymin <- min(as.numeric(rpkm.chr))
- ymax <- max(as.numeric(rpkm.chr))
- bed.gc.chr <- bed.gc[rownames(rpkms.chr),]
- 
- if (ext == "pdf")
-  pdf(paste0(wd.rt.plots, "pdf/sclc_rpkm.corr.gc.q_", chr, "_N.pdf"), height=4, width=10)
- else if (ext == "png")
-  png(paste0(wd.rt.plots, "png/sclc_rpkm.corr.gc.q_", chr, "-", xmin, ":", xmax, "_N.png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
- plot(NULL, ylim=c(ymin, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0("Normal SCLC median", main.text, ")"))
- points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
- lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
- for (c in 1:nrow(cytoBand.chr))
-  abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey")
- 
- dev.off()
-}
-
-plotRT2 <- function(wd.rt.plots, chr, sample, rpkm.chr, bed.gc.chr, dao, ext) {
- main.text <- " read depth (copy number-, GC-corrected RPKM"
- xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
- ylab.text <- "Replication timing"
- 
- if (ext == "pdf")
-  pdf(paste0(wd.rt.plots, "pdf/sclc_rpkm.corr.gc.q.sd_", chr, "_N.pdf"), height=4, width=10)
- else if (ext == "png")
-  png(paste0(wd.rt.plots, "png/sclc_rpkm.corr.gc.q.sd_", chr, "_N.png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
- 
- plot(NULL, ylim=c(dao$ymin, dao$ymax), xlim=c(dao$xmin/1E6, dao$xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=paste0("Normal SCLC median", main.text, ")"))
- points(bed.gc.chr$START/1E6, rpkm.chr, col="red", cex=0.3)
- lines(bed.gc.chr$START/1E6, smooth.spline(rpkm.chr)$y)
- 
- dev.off()
-}
-
-# =============================================================================
-# Inner Class  : Collections of test/obsolete/deprecated methods
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified:
-# =============================================================================
-initRPKMRatio <- function(cn) {
-   colnames <- c("RPKM_T", "RPKM_N", "RPKM_RATIO", "RPKM_LOG2")
-   rr <- toTable(NA, length(colnames), nrow(cn), colnames)
-   rt.rr <- cbind(cn[,c("Partition", "BAM_T", "BAM_N")], rr)
- 
-   TOTAL_T <- sum(cn$BAM_T)
-   TOTAL_N <- sum(cn$BAM_N)
-   rt.rr$RPKM_T <- cn$BAM_T / TOTAL_T * 1E6 * 1000
-   rt.rr$RPKM_N <- cn$BAM_N / TOTAL_N * 1E6 * 1000
-   rt.rr$RPKM_RATIO <- rt.rr$RPKM_T / rt.rr$RPKM_N
-   rt.rr$RPKM_LOG2 <- log2(rt.rr$RPKM_T + 0.01) - log2(rt.rr$RPKM_N + 0.01)
- 
-   return(rt.rr)
-}
-
-removeZeroReads <- function(cn) {
-   cn.cln <- subset(cn, BAM_T != 0)
-   cn.cln <- subset(cn.cln, BAM_N != 0)
- 
-   return(cn.cln)
 }

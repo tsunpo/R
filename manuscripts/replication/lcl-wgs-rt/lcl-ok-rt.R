@@ -1,13 +1,13 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter II   : Tumour replication timing reconstruction
-# Name         : manuscripts/asymmetries/lcl-wgs-rt.R
+# Chapter      : Reconstruction of replication timing profile in tumour cells
+# Name         : manuscripts/asymmetries/lcl-ok-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 20/02/19
+# Last Modified: 23/02/19
 # =============================================================================
-wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
+#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
+wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
 wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
 handbooks <- c("Common.R", "ReplicationTiming.R", "Rearrangement.R")
@@ -32,51 +32,54 @@ base0 <- tolower(BASE0)
 
 wd.anlys <- file.path(wd, BASE1, "analysis")
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-ok-rt"))
+wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.meta  <- file.path(wd, BASE1, "metadata/Petryk 2015")
+wd.ngs <- file.path(wd, BASE1, "ngs/OK")
+samples1 <- readTable(file.path(wd.ngs, "lcl_ok_n1.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "lcl_ok_n1.list"), header=F, rownames=F, sep="")
+n1 <- length(samples1)
+n0 <- length(samples0)
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-ok <- readTable(file.path(wd.meta, "GM06990_Rep1.gff3"), header=F, rownames=F, sep="")
-for (c in 2:2) {
+for (c in 1:22) {
    chr <- chrs[c]
-
-   ok.chr <- readTable(file.path(wd.meta, paste0(chr, "_71500000_72500000.gff3")), header=F, rownames=F, sep="")
-   V9.C5 <- unlist(strsplit(ok.chr$V9[1], ";"))[5]
-   V9.C5.2C <- unlist(strsplit(V9.C5, "="))[2]
-   coverages <- unlist(strsplit(V9.C5.2C, "%2C"))
-   length(coverages)
    
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   #rpkms.chr.rt <- setScaledOK(rpkms.chr.rt, pseudocount=0.01, scaled=T)                       ## BASE1 ?
+   rpkms.chr.rt <- setScaledOK(rpkms.chr.rt, pseudocount=0.01, scaled=T)
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
- 
-   ## RD   
+   
+   ## RD
+   BASE <- "GM06990"
    ylab.text <- "Read depth"
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "_n", n1))
-   main.text <- paste0("Read depth of 1kb windows in ", BASE1, " S phase cells (n=", n1, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$T, bed.gc.chr, c("lightcoral", "red"), "png", 7.25, 9.75)
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", "C", "_n", n1))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE, "'s Crick strand (n=", n1, ")")
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$T, bed.gc.chr, c("lightcoral", "red"), "png", 5.5, 10)
  
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR0, "_n", n0))
-   main.text <- paste0("Read depth of 1kb windows in ", BASE0, " G1 phase cells (n=", n0, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$N, bed.gc.chr, c("skyblue3", "blue"), "png", 7.25, 9.75)
+   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", "W", "_n", n0))
+   main.text <- paste0("Read depth of 1kb windows in ", BASE, "'s Watson strand (n=", n0, ")")
+   plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$N, bed.gc.chr, c("skyblue3", "blue"), "png", 5.5, 10)
  
    file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "+", PAIR0, "_n", n1, "-", n0))
-   main.text <- paste0("Read depth of 1kb windows in ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
-   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase cells", "G1 phase cells"), "png", 7.5, 9.25)
+   main.text <- paste0("Read depth of 1kb windows in ", BASE, "'s Crick (n=", n1, ") and Watson (n=", n0, ") strands")
+   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick strand", "Watson strand"), "png", 5.5, 10)
  
    ## RD & RT 
-   main.text <- paste0("S/G1 read depth ratio between ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
+   main.text <- paste0("S/G1 read depth ratio between ", BASE, " Crick (n=", n1, ") and Watson (n=", n0, ") strands")  
    file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase cells", "G1 phase cells"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, "S/G1 read depth ratio in LCL", chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S", "G1"), c("lightcoral", "skyblue3"), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(74353001, 85951001), 5.5, 10, 3, 3)
+   plotRD3(file.name, paste0("C+W read depth in ", BASE), chr,  71500000,  90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c("lightcoral", "skyblue3"), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), 5.5, 10, 3, 3)
+   plotRD3(file.name, paste0("C+W read depth in ", BASE), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c("lightcoral", "skyblue3"), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), 5.5, 10, 3, 3)
    
    ## RT
    ylab.text <- "Replication timing"
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale"))
-   main.text <- paste0("S/G1 read depth ratio between ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
+   main.text <- paste0("C+W read depth between ", BASE, " Crick (n=", n1, ") and Watson (n=", n0, ") strands")
    plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("lightcoral", "skyblue3"), "png", 3, 3)
 }
 
