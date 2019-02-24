@@ -323,7 +323,6 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    idx <- which(rpkms.chr.rt$RT < 0)
    points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colours2[2], cex=0.3)
    
-   
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
    
