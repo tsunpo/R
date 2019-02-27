@@ -72,7 +72,7 @@ for (c in 1:22) {
    ## RD & RT 
    main.text <- paste0("S/G1 read depth ratio between ", BASE, " Crick (n=", n1, ") and Watson (n=", n0, ") strands")  
    file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(74353001, 85951001), 5.5, 10, 3, 3)
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c("lightcoral", "skyblue3"), c(), "png", width=10, peaks=c(115000000, 125000000), 5.5, 10, 3, 3)
    plotRD3(file.name, paste0("C+W read depth in ", BASE), chr,  71500000,  90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c("lightcoral", "skyblue3"), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), 5.5, 10, 3, 3)
    plotRD3(file.name, paste0("C+W read depth in ", BASE), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c("lightcoral", "skyblue3"), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), 5.5, 10, 3, 3)
    

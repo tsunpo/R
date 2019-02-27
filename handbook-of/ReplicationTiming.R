@@ -136,6 +136,18 @@ setScaledRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
    return(rpkms.chr.rt)
 }
 
+setScaledCLLRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
+   rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + pseudocount)
+   rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + pseudocount)
+ 
+   if (recaliRT == T)
+      rpkms.chr.rt$RT <- rpkms.chr.rt$N - rpkms.chr.rt$T   ## ADD 24/02/19
+   if (scaledRT == T)
+      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)            ## ADD 19/02/19
+ 
+   return(rpkms.chr.rt)
+}
+
 setScaledOK <- function(rpkms.chr.rt, pseudocount, scaled) {
    rpkms.chr.rt$T  <- log2(rpkms.chr.rt$T + pseudocount)
    rpkms.chr.rt$N  <- log2(rpkms.chr.rt$N + pseudocount)
@@ -211,12 +223,12 @@ plotRD2 <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.
    points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
  
    ## Plot legend
-   legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
+   legend("bottomright", c(legends[2], legends[1]), col=c(colours[2], colours[1]), lty=1, lwd=2, bty="n", horiz=T)
    
    dev.off()
 }
 
-plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colors2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
+plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
@@ -245,12 +257,12 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing splines
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)   ## TO-DO: Change it back to T and N
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
    points(bed.gc.chr$START/1E6, spline$y, col=colours[1], pch=16, cex=0.2)
    
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)
-   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
-
+   
    ## Plot legend and peaks
    if (xmin == 0) {
       legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)

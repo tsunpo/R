@@ -6,7 +6,8 @@ LIST1 <- args[3]
 BASE0 <- args[4]   ## Normal type
 PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
 LIST0 <- args[6]
-BSTRP <- as.numeric(args[7])
+#BSTRP <- as.numeric(args[7])
+CHR  <- as.numeric(args[7]) 
 base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
@@ -40,8 +41,11 @@ wd0.ngs.data <- file.path(wd0.ngs, "data")
 wd1.anlys  <- file.path(wd, BASE1, "analysis")
 wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
 wd1.rt.data   <- file.path(wd1.rt, "data")
-if (BSTRP != 0)
-   wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
+wd0.anlys  <- file.path(wd, BASE0, "analysis")
+wd0.rt     <- file.path(wd0.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd0.rt.data   <- file.path(wd0.rt, "data")
+#if (BSTRP != 0)
+#   wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
 samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
@@ -49,28 +53,31 @@ samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
 samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
 n1 <- length(samples1)
 n0 <- length(samples0)
-if (BSTRP != 0) {
-   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
-   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
-}
+#if (BSTRP != 0) {
+#   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
+#   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
+#}
 
-for (c in 1:22) {
-   chr <- chrs[c]
+#for (c in 1:22) {
+   chr <- chrs[CHR]
 
    ## Read depth
-   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
-   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)   
-   rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
-   rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   #rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
+   #rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)   
+   #rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   #rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    #rpkms.T.chr.d$BED <- rownames(rpkms.T.chr.d)   ## REMOVED 15/02/19; Already keep the first column "BED" in previous step; ## CHANGE 23/10/18: After mapply(median()) otherwise warnings due to $BED
    #rpkms.N.chr.d$BED <- rownames(rpkms.N.chr.d)
    
-   writeTable(rpkms.T.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-   writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   #writeTable(rpkms.T.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   #writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 
    ## Replication timing
-   #rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
-   #rpkms.N.chr.d <- readTable(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.N.chr.d <- readTable(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   
    overlaps <- intersect(rownames(rpkms.T.chr.d), rownames(rpkms.N.chr.d))
    rpkms.T.chr.d.rt <- rpkms.T.chr.d[overlaps,]
    rpkms.N.chr.d.rt <- rpkms.N.chr.d[overlaps,]
@@ -83,5 +90,5 @@ for (c in 1:22) {
    
    #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
    writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-}
+#}
 
