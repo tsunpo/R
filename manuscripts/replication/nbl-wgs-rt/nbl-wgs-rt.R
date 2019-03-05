@@ -89,18 +89,6 @@ for (c in 1:22) {
 # 
 # Last Modified: 18/02/19
 # -----------------------------------------------------------------------------
-setSlopes <- function(rpkms.chr.rt, bed.gc.chr, column) {
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt[, column])
-   slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
-   rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]
-   rpkms.chr.rt$SLOPE <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window 
-
-   sizes <- diff(bed.gc.chr$START)
-   gaps <- which(sizes != 1000)
-   
-   return(rpkms.chr.rt[-gaps, c("BED", column, "SLOPE")])
-}
-
 plotRDvsRT <- function(reads, timings, file.name, main.text, ylab.text, xlab.text, colours) {
    lm.fit <- lm(reads ~ timings)
    #r2 <- summary(lm.fit)$r.squared
@@ -217,9 +205,9 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-v
 
 ###
 ## NBL RT vs LCL RT
-BASE0 <- "CLL"
+BASE0 <- "LCL"
 base0 <- tolower(BASE0)
-n0 <- 96
+n0 <- 7
 
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
@@ -253,12 +241,14 @@ for (c in 1:22) {
 }
 ylab.text <- "Pearson's r"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_NBL&CLL-T-vs-LCL_pearson_All")
-main.text <- paste0("NBL–CLL (T/T) vs. LCL RT")
+file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_NBL&LCL-vs-LCL_pearson_All")
+main.text <- paste0("NBL–LCL RT (T/G1) vs. LCL RT")
 ymin <- -0.2
 ymax <- 0.85
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
-save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-T-vs-lcl_cors-pearson.RData")))
+
+
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-vs-lcl_cors-pearson.RData")))
 
 
 

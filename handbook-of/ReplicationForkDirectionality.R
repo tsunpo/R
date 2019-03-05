@@ -318,3 +318,50 @@ plotQ4SS <- function(q4ss, file.name, file.main, mtext, ylim, ylab, isLog10) {
    axis(side=1, at=1:4, names2, cex.axis=0.8, line=1, lwd=0)
    dev.off()
 }
+
+
+
+
+
+setScaledOK <- function(rpkms.chr.rt, pseudocount, scaled) {
+ rpkms.chr.rt$T  <- log2(rpkms.chr.rt$T + pseudocount)
+ rpkms.chr.rt$N  <- log2(rpkms.chr.rt$N + pseudocount)
+ rpkms.chr.rt$RT <- rpkms.chr.rt$RT / (rpkms.chr.rt$T + rpkms.chr.rt$N)
+ if (scaled == T)
+  rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)   ## ADD 19/02/19
+ 
+ return(rpkms.chr.rt)
+}
+
+plotOK <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, ext, ymin=NA, ymax=NA) {
+ xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+ if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+ if (is.na(xmin)) xmin <- 0
+ if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+ 
+ ## Initiate plot
+ if (ext == "pdf") {
+  pdf(paste0(file.name, ".pdf"), height=4, width=10)
+ } else if (ext == "png")
+  png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+ plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)   #, yaxt="n")
+ points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col=colors[1], cex=0.3)
+ idx <- which(rpkms.chr.rt$RT < 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colors[2], cex=0.3)
+ 
+ #abline(h=0, lwd=0.5, col="lightgrey")
+ #axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+ 
+ ## Plot cytobands (before smoothing spline)
+ cytoBand.chr <- subset(cytoBand, chrom == chr)
+ for (c in 1:nrow(cytoBand.chr))
+  abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+ 
+ ## Plot smoothing spline
+ spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
+ points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
+ 
+ dev.off()
+}
+

@@ -1,0 +1,106 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(TRUE)
+BASE1 <- args[1]   ## Cancer type
+PAIR1 <- args[2]   ## T(umour) or S (phase)
+LIST1 <- args[3]
+BASE0 <- args[4]   ## Normal type
+PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
+LIST0 <- args[6]
+SAMPLE <- args[7]
+base1 <- tolower(BASE1)
+base0 <- tolower(BASE0)
+
+# =============================================================================
+# Name: 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 22/10/18
+# =============================================================================
+wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
+#wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
+
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
+handbooks  <- c("Common.R", "DifferentialExpression.R", "ReplicationTiming.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
+
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+
+# -----------------------------------------------------------------------------
+# Replication timing
+# Last Modified: 31/08/18; 13/06/17
+# -----------------------------------------------------------------------------
+wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd1.ngs    <- file.path(wd, BASE1, "ngs/WGS")
+wd1.ngs.data <- file.path(wd1.ngs, "data") 
+wd0.ngs    <- file.path(wd, BASE0, "ngs/WGS")
+wd0.ngs.data <- file.path(wd0.ngs, "data")
+
+wd1.anlys  <- file.path(wd, BASE1, "analysis")
+wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd1.rt.data   <- file.path(wd1.rt, "data")
+
+samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
+samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
+samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
+samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
+n1 <- length(samples1)
+n0 <- length(samples0)
+#if (BSTRP != 0) {
+#   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
+#   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
+#}
+
+cors <- toTable(0, 2, 22, c("chr", "cor"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+
+   ## Replication timing
+   rpkms.chr.rt <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+   #bed.gc.chr <- subset(bed.gc, CHR == chr)
+   #bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+   #rpkms.chr.rt.RT     <- setSlopes(rpkms.chr.rt, bed.gc.chr, "RT")       ## REMOVED 05/03/19
+   
+   rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt-lcl/data/lcl_rpkm.corr.gc.d.rt.lcl_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   #bed.gc.chr <- subset(bed.gc, CHR == chr)
+   #bed.gc.chr <- bed.gc.chr[rpkms.chr.rt.lcl$BED,]
+   #rpkms.chr.rt.lcl.RT <- setSlopes(rpkms.chr.rt.lcl, bed.gc.chr, "RT")   ## REMOVED 05/03/19
+   
+   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   bed.gc.chr <- bed.gc.chr[overlaps,]
+   
+   rpkms.chr.rt.RT     <- rpkms.chr.rt[overlaps,]
+   rpkms.chr.rt.RT     <- setSlopes(rpkms.chr.rt.RT, bed.gc.chr, "RT")       ## ADD 05/03/19
+   rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl[overlaps,]
+   rpkms.chr.rt.lcl.RT <- setSlopes(rpkms.chr.rt.lcl.RT, bed.gc.chr, "RT")   ## ADD 05/03/19
+   
+   ## Individual replication timing
+   rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.N.chr.d <- readTable(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   
+   #overlaps <- intersect(rownames(rpkms.T.chr.d), rownames(rpkms.N.chr.d))
+   rpkms.chr.rt.sample <- toTable(0, 3, length(overlaps), c("BED", "N", "T"))
+   rpkms.chr.rt.sample$BED <- overlaps
+   rpkms.chr.rt.sample$N <- rpkms.N.chr.d[overlaps, SAMPLE]
+   rpkms.chr.rt.sample$T <- rpkms.T.chr.d[overlaps, SAMPLE]
+   rpkms.chr.rt.sample <- setScaledCLLRT(rpkms.chr.rt.sample, pseudocount=0.01, recaliRT=T, scaledRT=T)
+   
+   #bed.gc.chr <- subset(bed.gc, CHR == chr)
+   #bed.gc.chr <- bed.gc.chr[rpkms.chr.rt.sample.RT$BED,]
+   rpkms.chr.rt.sample.RT <- setSlopes(rpkms.chr.rt.sample, bed.gc.chr, "RT")
+   
+   
+   
+   
+
+   
+   
+   #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
+   writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+}
+

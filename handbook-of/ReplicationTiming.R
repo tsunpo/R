@@ -124,37 +124,18 @@ outputRT <- function(rpkms.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-setScaledRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
+setScaledRT <- function(rpkms.chr.rt, pseudocount, recaliRT, flipRT, scaledRT) {
    rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + pseudocount)
    rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + pseudocount)
 
    if (recaliRT == T)
-      rpkms.chr.rt$RT <- rpkms.chr.rt$T - rpkms.chr.rt$N   ## ADD 24/02/19
+      if (flipRT == F)
+         rpkms.chr.rt$RT <- rpkms.chr.rt$T - rpkms.chr.rt$N   ## ADD 24/02/19
+      else
+         rpkms.chr.rt$RT <- rpkms.chr.rt$N - rpkms.chr.rt$T   ## ADD 05/03/19; replaced setScaledCLLRT() for CLL RT (N/T)
    if (scaledRT == T)
       rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)            ## ADD 19/02/19
    
-   return(rpkms.chr.rt)
-}
-
-setScaledCLLRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
-   rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + pseudocount)
-   rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + pseudocount)
- 
-   if (recaliRT == T)
-      rpkms.chr.rt$RT <- rpkms.chr.rt$N - rpkms.chr.rt$T   ## ADD 24/02/19
-   if (scaledRT == T)
-      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)            ## ADD 19/02/19
- 
-   return(rpkms.chr.rt)
-}
-
-setScaledOK <- function(rpkms.chr.rt, pseudocount, scaled) {
-   rpkms.chr.rt$T  <- log2(rpkms.chr.rt$T + pseudocount)
-   rpkms.chr.rt$N  <- log2(rpkms.chr.rt$N + pseudocount)
-   rpkms.chr.rt$RT <- rpkms.chr.rt$RT / (rpkms.chr.rt$T + rpkms.chr.rt$N)
-   if (scaled == T)
-      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)   ## ADD 19/02/19
- 
    return(rpkms.chr.rt)
 }
 
@@ -355,35 +336,86 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    dev.off()
 }
 
-plotOK <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colors, ext, ymin=NA, ymax=NA) {
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
-   if (is.na(xmin)) xmin <- 0
-   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+# -----------------------------------------------------------------------------
+# Compare RD and RT in sclc-wgs-rt.R
+# Last Modified: 05/03/19
+# -----------------------------------------------------------------------------
+setSlope <- function(rpkms.chr.rt, bed.gc.chr, column) {
+   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
  
-   ## Initiate plot
-   if (ext == "pdf") {
-      pdf(paste0(file.name, ".pdf"), height=4, width=10)
-   } else if (ext == "png")
-      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt[, column])
+   slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
+   rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]
+   rpkms.chr.rt$SLOPE <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window 
  
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text)   #, yaxt="n")
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt$RT, col=colors[1], cex=0.3)
-   idx <- which(rpkms.chr.rt$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RT, col=colors[2], cex=0.3)
+   sizes <- diff(bed.gc.chr$START)
+   gaps <- which(sizes != 1000)
  
-   #abline(h=0, lwd=0.5, col="lightgrey")
-   #axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+   return(rpkms.chr.rt[-gaps, c("BED", column, "SLOPE")])
+}
+
+plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, xmin, xmax, ymin, ymax) {
+   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text)
  
-   ## Plot cytobands (before smoothing spline)
-   cytoBand.chr <- subset(cytoBand, chrom == chr)
-      for (c in 1:nrow(cytoBand.chr))
-   abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+   cors <- c()
+   lm.fit <- lm(reads1 ~ timings)
+   abline(lm.fit, col=colours[1], lwd=3)
+   cor <- cor.test(reads1, timings, method="pearson")$estimate
+   cors <- c(cors, round0(abs(cor), digits=2))
  
-   ## Plot smoothing spline
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
-   points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
+   lm.fit <- lm(reads2 ~ timings)
+   abline(lm.fit, col=colours[2], lwd=3)
+   cor <- cor.test(reads2, timings, method="pearson")$estimate
+   cors <- c(cors, round0(cor, digits=2))
  
+   #legend("bottomright", c(paste0("r = –", cors[1], " (RT vs. ", legends[1], ")"), paste0("r = –", cors[2], " (RT vs. ", legends[2], ")")), text.col=colours, bty="n", cex=1.2)
+   legend("topright", paste0("r = ", cors[1], " (RT vs. ", legends[1], ")"), text.col=colours[1], bty="n", cex=1.2)
+   legend("bottomright", paste0("r = –", cors[2], " (RT vs. ", legends[2], ")"), text.col=colours[2], bty="n", cex=1.2)
+ 
+   mtext("Pearson correlation", cex=1.2, line=0.3)
+   dev.off()
+}
+
+getCor <- function(reads, timings) {
+   cor <- cor.test(reads, timings, method="pearson")$estimate
+ 
+   return(cor)
+}
+
+# -----------------------------------------------------------------------------
+# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
+# Last Modified: 05/03/19
+# -----------------------------------------------------------------------------
+plotRTvsRT <- function(reads, timings, file.name, main.text, ylab.text, xlab.text, colours) {
+   lm.fit <- lm(reads ~ timings)
+   #r2 <- summary(lm.fit)$r.squared
+ 
+   #pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col=colours[1])
+   #plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white")
+   abline(lm.fit, col=colours[2], lwd=3)
+   #mtext(paste0("R^2=", paste0(round0(r2*100, digits=2), "%")), cex=1.2, line=0.3)
+ 
+   #rho <- cor.test(reads, timings, method="spearman", exact=F)[[4]]
+   #mtext(paste0("SRC's rho = ", round0(rho, digits=2)), cex=1.2, line=0.3)
+ 
+   cor <- cor.test(reads, timings, method="pearson")$estimate
+   mtext(paste0("Pearson's r = ", round0(cor, digits=2)), cex=1.2, line=0.3) 
+   dev.off()
+}
+
+plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0) {
+   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
+   lines(cors$cor, y=NULL, type="l", lwd=3)
+   if (line0)
+      abline(h=0, lty=5)
+ 
+   text(cors$chr[2], cors$cor[2], round0(cors$cor[2], digits=2), cex=1.2, pos=3)
+   axis(side=1, at=seq(2, 22, by=2))
+   axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
    dev.off()
 }
 

@@ -50,7 +50,7 @@ for (c in 1:22) {
    chr <- chrs[c]
   
    rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
 
@@ -88,114 +88,82 @@ for (c in 1:22) {
 }
 
 # -----------------------------------------------------------------------------
-# 
+# SCLC RD vs RT
 # Last Modified: 18/02/19
 # -----------------------------------------------------------------------------
-setSlopes <- function(rpkms.chr.rt, bed.gc.chr, column) {
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt[, column])
-   slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
-   rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]
-   rpkms.chr.rt$SLOPE <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window 
-
-   sizes <- diff(bed.gc.chr$START)
-   gaps <- which(sizes != 1000)
-   
-   return(rpkms.chr.rt[-gaps, c("BED", column, "SLOPE")])
-}
-
-plotRDvsRT <- function(reads, timings, file.name, main.text, ylab.text, xlab.text, colours) {
-   lm.fit <- lm(reads ~ timings)
-   #r2 <- summary(lm.fit)$r.squared
- 
-   #pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col=colours[1])
-   #plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white")
-   abline(lm.fit, col=colours[2], lwd=3)
-   #mtext(paste0("R^2=", paste0(round0(r2*100, digits=2), "%")), cex=1.2, line=0.3)
-   
-   #rho <- cor.test(reads, timings, method="spearman", exact=F)[[4]]
-   #mtext(paste0("SRC's rho = ", round0(rho, digits=2)), cex=1.2, line=0.3)
-   
-   cor <- cor.test(reads, timings, method="pearson")$estimate
-   mtext(paste0("Pearson's r = ", round0(cor, digits=2)), cex=1.2, line=0.3) 
-   dev.off()
-   
-   return(cor)
-}
-
-getCor <- function(reads, timings) {
-   cor <- cor.test(reads, timings, method="pearson")$estimate
-
-   return(cor)
-}
-
-plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, xmin, xmax, ymin, ymax) {
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text)
-
-   cors <- c()
-   lm.fit <- lm(reads1 ~ timings)
-   abline(lm.fit, col=colours[1], lwd=3)
-   cor <- cor.test(reads1, timings, method="pearson")$estimate
-   cors <- c(cors, round0(abs(cor), digits=2))
-   
-   lm.fit <- lm(reads2 ~ timings)
-   abline(lm.fit, col=colours[2], lwd=3)
-   cor <- cor.test(reads2, timings, method="pearson")$estimate
-   cors <- c(cors, round0(cor, digits=2))
-   
-   #legend("bottomright", c(paste0("r = –", cors[1], " (RT vs. ", legends[1], ")"), paste0("r = –", cors[2], " (RT vs. ", legends[2], ")")), text.col=colours, bty="n", cex=1.2)
-   legend("topright", paste0("r = ", cors[1], " (RT vs. ", legends[1], ")"), text.col=colours[1], bty="n", cex=1.2)
-   legend("bottomright", paste0("r = –", cors[2], " (RT vs. ", legends[2], ")"), text.col=colours[2], bty="n", cex=1.2)
-   
-   mtext("Pearson correlation", cex=1.2, line=0.3)
-   dev.off()
-}
-
-plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax) {
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
-   lines(cors$cor, y=NULL, type="l", lwd=3)
-   abline(h=0, lty=5)
-   
-   text(cors$chr[2], cors$cor[2], round0(cors$cor[2], digits=2), cex=1.2, pos=3)
-   axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(-0.2, 0.8, by=0.2), labels=c(-0.2, 0, 0.2, 0.4, 0.6, 0.8))
-   dev.off()
-}
-
-###
-## NBL RD vs RT
 for (c in 1:22) {
    chr <- chrs[c]
-   
-   #rpkms.chr.rt <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
-
-   rpkms.chr.rt.T  <- setSlopes(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSlopes(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSlopes(rpkms.chr.rt, bed.gc.chr, "RT")
    
-   main.text <- paste0("NBL RT vs. Read depths (", "Chr2", ")")
-   xlab.text <- "NBL RT (T/S)"
-   ylab.text <- "NBL read depth"
-   file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RD_NBL_pearson_chr2"))
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+
+   rpkms.chr.rt.T  <- setSlope(rpkms.chr.rt, bed.gc.chr, "T")
+   rpkms.chr.rt.N  <- setSlope(rpkms.chr.rt, bed.gc.chr, "N")
+   rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
+   
+   main.text <- paste0("SCLC RT vs. Read depths (", "Chr", c, ")")
+   xlab.text <- "SCLC RT (T/N)"
+   ylab.text <- "SCLC read depth"
+   file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RD_SCLC_pearson_chr",c))
    xmin <- min(rpkms.chr.rt.RT$SLOPE)
    xmax <- max(rpkms.chr.rt.RT$SLOPE)
    ymin <- min(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
    ymax <- max(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
-   plotRD2vsRT(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), xmin, xmax, ymin, ymax)
+   plotRD2vsRT(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), xmin, xmax, ymin, ymax)
 }
 
-###
-## NBL RT vs LCL RT
-BASE0 <- "CLL"
+# -----------------------------------------------------------------------------
+# SCLC RT vs LCL RT
+# Last Modified: 18/02/19
+# -----------------------------------------------------------------------------
+cors <- toTable(0, 2, 22, c("chr", "cor"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
+   ## SCLC and LCL RTs
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
+   rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
+   
+   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+   rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+   
+   ## Keep 1kb slopes based on overlapping windows
+   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]
+   rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]
+   
+   ##
+   main.text <- paste0("SCLC RT vs. LCL RT (", "Chr", c, ")")
+   xlab.text <- "SCLC RT (T/N)"
+   ylab.text <- "LCL RT (S/G1)"
+   file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RT_SCLC-vs-LCL_pearson_chr", c))
+   plotRTvsRT(rpkms.chr.rt.lcl.RT$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c(adjustcolor.gray, "black"))
+   
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT$SLOPE, rpkms.chr.rt.RT$SLOPE)
+}
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "-vs-lcl_cors-pearson.RData")))
+
+##
+ylab.text <- "Pearson's r"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SCLC-vs-LCL_pearson")
+main.text <- paste0("SCLC RT vs. LCL RT")
+ymin <- 0
+ymax <- 0.85
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=F)
+
+# -----------------------------------------------------------------------------
+# SCLC-NBL RT vs LCL RT
+# Last Modified: 18/02/19
+# -----------------------------------------------------------------------------
+BASE0 <- "LCL"
 base0 <- tolower(BASE0)
-n0 <- 96
+n0 <- 7
 
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
@@ -224,13 +192,17 @@ for (c in 1:22) {
 }
 ylab.text <- "Pearson's r"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SCLC&CLL_T-vs-LCL_pearson_All")
-main.text <- paste0("SCLC–CLL (T/T) vs. LCL RT")
+file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SCLC&LCL-vs-LCL_pearson_All")
+main.text <- paste0("SCLC–LCL RT (T/G1) vs. LCL RT")
 ymin <- -0.2
 ymax <- 0.85
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
-save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "_T-vs-lcl_cors-pearson.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-vs-lcl_cors-pearson.RData")))
 
+# -----------------------------------------------------------------------------
+# SCLC RT vs LCL RT
+# Last Modified: 18/02/19
+# -----------------------------------------------------------------------------
 for (c in 1:22) {
    chr <- chrs[c]
 
