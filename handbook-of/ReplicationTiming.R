@@ -2,7 +2,7 @@
 # Library      : Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 15/11/18
+# Last Modified: 05/03/19; 15/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -242,7 +242,6 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
    points(bed.gc.chr$START/1E6, spline$y, col=colours[1], pch=16, cex=0.2)
-   
    
    ## Plot legend and peaks
    if (xmin == 0) {

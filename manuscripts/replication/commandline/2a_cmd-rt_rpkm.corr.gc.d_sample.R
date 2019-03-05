@@ -11,7 +11,7 @@ base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
 # =============================================================================
-# Name: 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
+# Name: 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 22/10/18
 # =============================================================================
@@ -39,7 +39,7 @@ wd0.ngs.data <- file.path(wd0.ngs, "data")
 
 wd1.anlys  <- file.path(wd, BASE1, "analysis")
 wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
-wd1.rt.data   <- file.path(wd1.rt, "data")
+wd1.rt.data   <- file.path(wd1.rt, "data", "samples")
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
 samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
@@ -56,51 +56,36 @@ cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
 for (c in 1:22) {
    chr <- chrs[c]
-
-   ## Replication timing
-   rpkms.chr.rt <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
-   #bed.gc.chr <- subset(bed.gc, CHR == chr)
-   #bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
-   #rpkms.chr.rt.RT     <- setSlopes(rpkms.chr.rt, bed.gc.chr, "RT")       ## REMOVED 05/03/19
-   
-   rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt-lcl/data/lcl_rpkm.corr.gc.d.rt.lcl_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   #bed.gc.chr <- subset(bed.gc, CHR == chr)
-   #bed.gc.chr <- bed.gc.chr[rpkms.chr.rt.lcl$BED,]
-   #rpkms.chr.rt.lcl.RT <- setSlopes(rpkms.chr.rt.lcl, bed.gc.chr, "RT")   ## REMOVED 05/03/19
-   
-   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   bed.gc.chr <- bed.gc.chr[overlaps,]
-   
-   rpkms.chr.rt.RT     <- rpkms.chr.rt[overlaps,]
-   rpkms.chr.rt.RT     <- setSlopes(rpkms.chr.rt.RT, bed.gc.chr, "RT")       ## ADD 05/03/19
-   rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl[overlaps,]
-   rpkms.chr.rt.lcl.RT <- setSlopes(rpkms.chr.rt.lcl.RT, bed.gc.chr, "RT")   ## ADD 05/03/19
    
    ## Individual replication timing
    rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.N.chr.d <- readTable(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
    
-   #overlaps <- intersect(rownames(rpkms.T.chr.d), rownames(rpkms.N.chr.d))
    rpkms.chr.rt.sample <- toTable(0, 3, length(overlaps), c("BED", "N", "T"))
    rpkms.chr.rt.sample$BED <- overlaps
    rpkms.chr.rt.sample$N <- rpkms.N.chr.d[overlaps, SAMPLE]
    rpkms.chr.rt.sample$T <- rpkms.T.chr.d[overlaps, SAMPLE]
-   rpkms.chr.rt.sample <- setScaledCLLRT(rpkms.chr.rt.sample, pseudocount=0.01, recaliRT=T, scaledRT=T)
+   rpkms.chr.rt.sample <- setScaledRT(rpkms.chr.rt.sample, pseudocount=0.01, recaliRT=T, flipRT=T, scaledRT=T)   ## Be careful!! flipRT=T
+   rpkms.chr.rt.sample.RT <- setSlope(rpkms.chr.rt.sample, bed.gc.chr, "RT")
    
-   #bed.gc.chr <- subset(bed.gc, CHR == chr)
-   #bed.gc.chr <- bed.gc.chr[rpkms.chr.rt.sample.RT$BED,]
-   rpkms.chr.rt.sample.RT <- setSlopes(rpkms.chr.rt.sample, bed.gc.chr, "RT")
+   ## Replication timing
+   rpkms.chr.rt <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+   rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
    
+   rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt-lcl/data/lcl_rpkm.corr.gc.d.rt.lcl_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+   rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
    
+   ## Keep 1kb slopes based on overlapping windows
+   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   overlaps <- intersect(overlaps, rpkms.chr.rt.sample.RT$BED)
+   rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]
+   rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]
+   rpkms.chr.rt.sample.RT <- rpkms.chr.rt.sample.RT[overlaps,]
    
-   
-
-   
-   
-   #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
-   writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT$SLOPE, rpkms.chr.rt.sample.RT$SLOPE)
 }
-
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson.RData")))

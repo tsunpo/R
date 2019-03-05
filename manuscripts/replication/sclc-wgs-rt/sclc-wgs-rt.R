@@ -3,7 +3,7 @@
 # Chapter      : Reconstruction of replication timing profile in tumour cells
 # Name         : manuscripts/replication/sclc-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 25/02/19; 30/01/18
+# Last Modified: 05/03/19; 25/02/19; 30/01/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
@@ -115,7 +115,7 @@ for (c in 1:22) {
 
 # -----------------------------------------------------------------------------
 # SCLC RT vs LCL RT
-# Last Modified: 18/02/19
+# Last Modified: 05/03/19; 18/02/19
 # -----------------------------------------------------------------------------
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
@@ -198,6 +198,12 @@ ymin <- -0.2
 ymax <- 0.85
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-vs-lcl_cors-pearson.RData")))
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # SCLC RT vs LCL RT
