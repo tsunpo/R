@@ -39,7 +39,7 @@ wd0.ngs.data <- file.path(wd0.ngs, "data")
 
 wd1.anlys  <- file.path(wd, BASE1, "analysis")
 wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
-wd1.rt.data   <- file.path(wd1.rt, "data", "samples")
+wd1.rt.data   <- file.path(wd1.rt, "data")
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
 samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
@@ -64,6 +64,7 @@ for (c in 1:22) {
    overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
    
    rpkms.chr.rt.sample <- toTable(0, 3, length(overlaps), c("BED", "N", "T"))
+   rownames(rpkms.chr.rt.sample) <- overlaps
    rpkms.chr.rt.sample$BED <- overlaps
    rpkms.chr.rt.sample$N <- rpkms.N.chr.d[overlaps, SAMPLE]
    rpkms.chr.rt.sample$T <- rpkms.T.chr.d[overlaps, SAMPLE]
@@ -82,10 +83,10 @@ for (c in 1:22) {
    ## Keep 1kb slopes based on overlapping windows
    overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
    overlaps <- intersect(overlaps, rpkms.chr.rt.sample.RT$BED)
-   rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]
-   rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]
-   rpkms.chr.rt.sample.RT <- rpkms.chr.rt.sample.RT[overlaps,]
+   #rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]
+   #rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]
+   #rpkms.chr.rt.sample.RT <- rpkms.chr.rt.sample.RT[overlaps,]
    
-   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT$SLOPE, rpkms.chr.rt.sample.RT$SLOPE)
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rt.sample.RT[overlaps,]$SLOPE)
 }
-save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson.RData")))
+save(cors, file=file.path(wd1.rt.data, "samples", paste0("rt-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson.RData")))
