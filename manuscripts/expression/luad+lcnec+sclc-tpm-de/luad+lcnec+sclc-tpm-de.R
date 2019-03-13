@@ -238,7 +238,7 @@ plotBox <- function(gene, wd.de.plots, tpm.gene.log2, pheno.all, ylim=NULL) {
       id <- ids[i]
 
       gene.tpm <- cbind(t(tpm.gene.log2)[rownames(pheno.all), id], pheno.all)
-      colnames(gene.tpm)[1] <- "MEDIAN"  
+      colnames(gene.tpm)[1] <- "MEDIAN"
       file.name <- paste0("boxplot_tpm.gene.log2_", gene)
       if (is.null(ylim))
          ylim.id <- c(min(gene.tpm$MEDIAN), max(gene.tpm$MEDIAN))
@@ -264,3 +264,41 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 genes <- c("SPG11", "TRIM69", "DHDH", "NUCB1")
 for (g in 1:length(genes))
    plotBox(genes[g], wd.de.plots, tpm.gene.log2, samples)
+
+# -----------------------------------------------------------------------------
+# Expression levels amongst lung cancers (LUAD, LCNEC and SCLC)
+# Last Modified: 10/12/18
+# -----------------------------------------------------------------------------
+plotBoxWithNormal <- function(gene, wd.de.plots, tpm.gene.log2, pheno.all, ylim=NULL) {
+   ids <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id   ## E.g. RBL1 (ENSG00000080839 and ENSG00000269846)
+ 
+   for (i in 1:length(ids)) {
+      id <- ids[i]
+  
+      gene.tpm <- cbind(t(tpm.gene.log2)[rownames(pheno.all), id], pheno.all)
+      colnames(gene.tpm)[1] <- "MEDIAN"
+      file.name <- paste0("boxplot_tpm.gene.log2_", gene)
+      if (is.null(ylim))
+         ylim.id <- c(min(gene.tpm$MEDIAN), max(gene.tpm$MEDIAN))
+      else
+         ylim.id <- ylim
+  
+      if (length(ids) != 1)
+         file.name <- paste0(file.name, "_", id)
+  
+      pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=4.5)
+      boxplot(MEDIAN ~ Cancer_Type, data=gene.tpm, outline=T, names=c("Lung", "LUAD", "LCNEC", "SCLC"), ylim=ylim.id, ylab="log2(TPM+0.01)", main=paste0(gene, " (", id, ")"))
+      dev.off()
+   }
+}
+
+load("/Users/tpyang/Work/uni-koeln/tyang2/LUSC/analysis/expression/kallisto/normal-tpm-de/data/lusc_kallisto_0.43.1_tpm.gene_r5p47.RData")
+# > dim(tpm.gene)
+# [1] 19872    41
+tpm.gene.normal <- tpm.gene
+tpm.gene.normal.log2 <- log2(tpm.gene.normal + 0.01)
+
+genes <- c("KIAA1456")
+for (g in 1:length(genes))
+   plotBoxWithNormal(genes[g], wd.de.plots, tpm.gene.log2, samples)
+
