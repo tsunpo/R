@@ -70,8 +70,10 @@ for (s in 1:length(samples)) {
 }
 
 samples.rts <- list(samples1, samples0, setdiff(samples, c(samples1, samples0)))
-txts <- toTable(0, length(samples), length(muts), c(samples1, samples0, setdiff(samples, c(samples1, samples0))))
-rownames(txts) <- muts
+txts  <- toTable(0, length(samples), length(muts), c(samples1, samples0, setdiff(samples, c(samples1, samples0))))
+txts2 <- toTable(0, length(samples), length(muts), c(samples1, samples0, setdiff(samples, c(samples1, samples0))))
+rownames(txts)  <- muts
+rownames(txts2) <- muts
 for (r in 1:length(samples.rts)) {
    samples.rt <- samples.rts[[r]]
 
@@ -81,22 +83,32 @@ for (r in 1:length(samples.rts)) {
       mut <- data.frame(table(txt$Gene_Hugo))
       rownames(mut) <- mut$Var1
 
-      txts[rownames(mut), sample] <- mut$Freq
+      txts[rownames(mut), sample]  <- mut$Freq
+      txts2[rownames(mut), sample] <- 1
    }
 }
 
 txts.pos <- txts[,samples.rts[[1]]]
-txts.pos$T29 <- 0
-txts.pos$T29 <- mapply(x = 1:nrow(txts.pos), function(x) sum(txts.pos[x,]))
+txts2.pos <- txts2[,samples.rts[[1]]]
+txts.pos$T29_N <- 0
+txts.pos$T29_N <- mapply(x = 1:nrow(txts.pos), function(x) sum(txts.pos[x,]))
+txts.pos$T29_S <- 0
+txts.pos$T29_S <- mapply(x = 1:nrow(txts2.pos), function(x) sum(txts2.pos[x,]))
 writeTable(txts.pos, file.path(wd.rt.data, "muts_pos29.txt"), colnames=T, rownames=T, sep="\t")
 
 txts.neg <- txts[,samples.rts[[2]]]
-txts.neg$T33 <- 0
-txts.neg$T33 <- mapply(x = 1:nrow(txts.neg), function(x) sum(txts.neg[x,]))
+txts2.neg <- txts2[,samples.rts[[2]]]
+txts.neg$T33_N <- 0
+txts.neg$T33_N <- mapply(x = 1:nrow(txts.neg), function(x) sum(txts.neg[x,]))
+txts.neg$T33_S <- 0
+txts.neg$T33_S <- mapply(x = 1:nrow(txts.neg), function(x) sum(txts2.neg[x,]))
 writeTable(txts.neg, file.path(wd.rt.data, "muts_neg33.txt"), colnames=T, rownames=T, sep="\t")
 
 txts.var <- txts[,samples.rts[[3]]]
-txts.var$T34 <- 0
-txts.var$T34 <- mapply(x = 1:nrow(txts.var), function(x) sum(txts.var[x,]))
+txts2.var <- txts2[,samples.rts[[3]]]
+txts.var$V34_N <- 0
+txts.var$V34_N <- mapply(x = 1:nrow(txts.var), function(x) sum(txts.var[x,]))
+txts.var$V34_S <- 0
+txts.var$V34_S <- mapply(x = 1:nrow(txts.var), function(x) sum(txts2.var[x,]))
 writeTable(txts.var, file.path(wd.rt.data, "muts_var34.txt"), colnames=T, rownames=T, sep="\t")
 
