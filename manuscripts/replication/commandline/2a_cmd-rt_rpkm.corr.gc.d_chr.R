@@ -7,7 +7,8 @@ BASE0 <- args[4]   ## Normal type
 PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
 LIST0 <- args[6]
 #BSTRP <- as.numeric(args[7])
-CHR  <- as.numeric(args[7]) 
+CHR  <- as.numeric(args[7])
+N <- as.numeric(args[8])
 base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
@@ -53,10 +54,6 @@ samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
 samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
 n1 <- length(samples1)
 n0 <- length(samples0)
-#if (BSTRP != 0) {
-#   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
-#   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
-#}
 
 #for (c in 1:22) {
    chr <- chrs[CHR]
@@ -73,8 +70,15 @@ n0 <- length(samples0)
    #writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 
    ## Replication timing
-   rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.N.chr.d <- readTable(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   if (N != 0) {
+      rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
+      rpkms.T.chr.d <- rpkms.T.chr.d[,c("BED", samples1)]
+      rpkms.N.chr.d <- readTable(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
+      rpkms.N.chr.d <- rpkms.N.chr.d[,c("BED", samples0)]
+   } else {
+      rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
+      rpkms.N.chr.d <- readTable(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   }
    rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    

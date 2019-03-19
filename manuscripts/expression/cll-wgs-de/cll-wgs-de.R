@@ -2,7 +2,7 @@
 # Manuscript   : 
 # Chapter I    : 
 # Figure(s)    : 
-# Name         : manuscripts/expression/cll-tpm-de.R
+# Name         : manuscripts/expression/cll-wgs-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 15/03/19
 # =============================================================================
@@ -26,28 +26,22 @@ base <- tolower(BASE)
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
+wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-wgs-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=T, sep="\t")
+samples <- readTable(file.path(wd.rna, "cll_rna_n93.txt"), header=T, rownames=T, sep="")
 samples <- subset(samples, RT != 0)
 samples$RT <- as.factor(samples$RT)
-#samples <- subset(samples, CONSIST == T)
-#rownames(samples) <- samples$ID2_RNA
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene <- tpm.gene[, samples$ID_WGS]
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r20p100.RData")))
+tpm.gene <- tpm.gene[, rownames(samples)]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
-# > dim(tpm.gene.log2)   ## EGAD00001000258 (n=26)
-# [1] 18039    20
-# > dim(tpm.gene.log2)   ## EGAD00001003549 (n=71/74)
-# [1] 18502    20
 # > dim(tpm.gene.log2)
-# [1] 18502    40
+# [1] 29781    62   ## min_reads=20, min_prop=1.00
 # > dim(tpm.gene.log2)
-# [1] 18502    47
+# [1] 25460    62   ## min_reads=50, min_prop=1.00
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
@@ -58,8 +52,8 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 ## FDR : Q/BH
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
 argv      <- data.frame(predictor="RT", predictor.wt=-1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n20")
-file.main <- paste0("RT (n=8) vs WT (n=12) in ", BASE)
+file.name <- paste0("de_", base, "_tpm-gene-r20p100_rt_wilcox_q_n62")
+file.main <- paste0("RT (n=29) vs WT (n=33) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -89,10 +83,11 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
+   #xmax <- 1
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="CLL T20/T27 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="CLL T29/T33 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(pvalue)), lty=5)
    text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.02", cex=0.85)
@@ -132,11 +127,12 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
 
 ##
 plot.main <- "Differential expression between CLL T29 and T33"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r50p100_cll_rt_q0.02")
+plot.de <- file.path(wd.de.plots, "volcanoplot-r20p100_cll_rt_q0.02")
 
 ## Natural killer cell receptor phenotypes
 genes <- readTable(paste0(plot.de, "_nk.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "Natural killer cell receptors")
+#file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
 file.de <- paste0(plot.de, "_nk.pdf")
 plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 
@@ -145,7 +141,7 @@ plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n20")
+file.name <- paste0("de_cll_tpm-gene-r20p100_rt_wilcox_q_n62")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 

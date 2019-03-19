@@ -55,6 +55,7 @@ for (c in 1:22) {
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
 
    ## Colours (was "lightcoral", "skyblue3")
+   ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
    adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
    adjustcolor.blue <- adjustcolor("skyblue3", alpha.f=0.3)
    adjustcolor.gray <- adjustcolor("gray", alpha.f=0.3)
@@ -154,8 +155,8 @@ xlab.text <- "Chromosome"
 file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SCLC-vs-LCL_pearson")
 main.text <- paste0("SCLC RT vs. LCL RT")
 ymin <- 0
-ymax <- 0.85
-plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=F)
+ymax <- 0.8
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=T)
 
 # -----------------------------------------------------------------------------
 # SCLC-NBL RT vs LCL RT

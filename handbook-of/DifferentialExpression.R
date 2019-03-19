@@ -352,7 +352,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    cat(paste0("Samples with  WT ", predictor, ": ", length(samples.expr.wt)), sep="\n")
    
    ## DE
-   de <- toTable(0, 4, nrow(expr.pheno), c("P", "Q", paste0(predictor, "_WT"), predictor))
+   de <- toTable(0, 4, nrow(expr.pheno), c("P", "FDR", paste0(predictor, "_WT"), predictor))
    rownames(de) <- rownames(expr.pheno)
    if (test == "Wilcoxon" || test == "Mann–Whitney" || test == "U" || test == "wilcox.test") {
       de$P <- testWilcoxon(expr.pheno, pheno.expr, predictor)

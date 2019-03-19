@@ -238,10 +238,10 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing splines
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)   ## TO-DO: Change it back to T and N
-   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
    spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
    points(bed.gc.chr$START/1E6, spline$y, col=colours[1], pch=16, cex=0.2)
+   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)   ## TO-DO: Change it back to T and N
+   points(bed.gc.chr$START/1E6, spline$y, col=colours[2], pch=16, cex=0.2)
    
    ## Plot legend and peaks
    if (xmin == 0) {
@@ -252,7 +252,7 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
- 
+   
    ### 
    ## Initiate RT plot
    par(mar=c(5.5,4,0,1))
@@ -366,11 +366,11 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    lm.fit <- lm(reads2 ~ timings)
    abline(lm.fit, col=colours[2], lwd=3)
    cor <- cor.test(reads2, timings, method="pearson")$estimate
-   cors <- c(cors, round0(cor, digits=2))
+   cors <- c(cors, round0(abs(cor), digits=2))
  
-   #legend("bottomright", c(paste0("r = –", cors[1], " (RT vs. ", legends[1], ")"), paste0("r = –", cors[2], " (RT vs. ", legends[2], ")")), text.col=colours, bty="n", cex=1.2)
-   legend("topright", paste0("r = ", cors[1], " (RT vs. ", legends[1], ")"), text.col=colours[1], bty="n", cex=1.2)
-   legend("bottomright", paste0("r = –", cors[2], " (RT vs. ", legends[2], ")"), text.col=colours[2], bty="n", cex=1.2)
+   legend("bottomright", c(paste0("r = –", cors[1], " (RT vs. ", legends[1], ")"), paste0("r = –", cors[2], " (RT vs. ", legends[2], ")")), text.col=colours, bty="n", cex=1.2)
+   #legend("topright", paste0("r = ", cors[1], " (RT vs. ", legends[1], ")"), text.col=colours[1], bty="n", cex=1.2)
+   #legend("bottomright", paste0("r = –", cors[2], " (RT vs. ", legends[2], ")"), text.col=colours[2], bty="n", cex=1.2)
  
    mtext("Pearson correlation", cex=1.2, line=0.3)
    dev.off()

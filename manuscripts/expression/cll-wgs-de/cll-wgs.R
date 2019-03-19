@@ -1,9 +1,9 @@
 # =============================================================================
 # Manuscript   :
 # Chapter      :
-# Name         : manuscripts/expression/nbl-tpm-de.R
+# Name         : manuscripts/expression/cll-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 18/03/19
+# Last Modified: 23/05/18
 # =============================================================================
 wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
@@ -18,12 +18,12 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
 base <- tolower(BASE)
 
-wd.rna <- file.path(wd, BASE, "ngs/RNA")
+wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -31,7 +31,7 @@ wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=T, sep="")[,1]
+samples <- readTable(file.path(wd.rna, "EGAD00001002130.list"), header=F, rownames=T, sep="")[,1]
 
 # -----------------------------------------------------------------------------
 # Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
@@ -47,22 +47,45 @@ tsv <- file.path(wd.rna.raw, samples)
 s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
 t2g <- tx2Ens(ensGene.transcript)
 
-so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=5, min_prop=0.47)   ## Default filter settings
+so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=T, min_reads=20, min_prop=1.00)
 # reading in kallisto results
 # dropping unused factor levels
 # ......................................................
 # normalizing est_counts
-# 82682 targets passed the filter
+# 82031 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-# 19783 genes passed the filter
+# 31441 genes passed the filter
 # summarizing bootstraps
+# .............................................................................................
+# 37755 targets passed the filter   ## min_reads=100, min_prop=1.00
+# 20470 genes passed the filter
+# .............................................................................................
+# 59619 targets passed the filter   ## min_reads=50, min_prop=1.00
+# 26633 genes passed the filter
+# .............................................................................................
+# 88128 targets passed the filter   ## min_reads=50, min_prop=0.75
+# 32187 genes passed the filter
+# .............................................................................................
+# 93578 targets passed the filter   ## min_reads=30, min_prop=0.85
+# 33183 genes passed the filter
+# .............................................................................................
+# 82031 targets passed the filter   ## min_reads=20, min_prop=1.00
+# 31441 genes passed the filter
+# .............................................................................................
+# 118144 targets passed the filter   ## min_reads=10, min_prop=0.75
+# 36201 genes passed the filter
+# .............................................................................................
+# 129170 targets passed the filter   ## min_reads=5, min_prop=0.47; Default filter settings
+# 37681 genes passed the filter
 
+## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## See line 30 in guide-to-the/hg19.R
+## https://www.ncbi.nlm.nih.gov/grc/help/patches
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
 tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
 save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
-save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5p47.RData")))
+save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r20p100.RData")))
 
 ## Gene-level TPMs without filtering
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
@@ -72,13 +95,27 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r20p100.RData")))
 # > nrow(tpm.gene)
-# [1] 18039
+# [1] 29781
+# > nrow(tpm.gene)
+# [1] 19715   ## min_reads=100, min_prop=1.00
+# > nrow(tpm.gene)
+# [1] 25460   ## min_reads=50, min_prop=1.00
+# > nrow(tpm.gene)
+# [1] 30410   ## min_reads=50, min_prop=0.75
+# > nrow(tpm.gene)
+# [1] 31246   ## min_reads=30, min_prop=0.85
+# > nrow(tpm.gene)
+# [1] 29781   ## min_reads=20, min_prop=1.00
+# > nrow(tpm.gene)
+# [1] 33224   ## min_reads=10, min_prop=0.75
+# > nrow(tpm.gene)
+# [1] 34032   ## min_reads=5, min_prop=0.47
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
-# Last Modified: 11/06/18
+# Last Modified: 25/11/18
 # =============================================================================
 ## Detected genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))
@@ -89,9 +126,23 @@ plotDensity(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc0.01.pdf")
 plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc0.01.pdf"), detected=T, pseudocount=0.01, NULL)
 
 ## Expressed genes (with default filters)
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47"))
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r20p100"))
 load(paste0(file.main, ".RData"))
 
 tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
 plotDensity(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc0.01.pdf"), detected=F, pseudocount=0.01, NULL)
 plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc0.01.pdf"), detected=F, pseudocount=0.01, NULL)
+
+# =============================================================================
+# Density plot and histograms (See DifferentialExpression.R)
+# Last Modified: 18/03/19
+# =============================================================================
+## T29 and T33 genes (with default filters)
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r20p100"))
+load(paste0(file.main, ".RData"))
+
+tpm.gene <- tpm.gene[,samples.neg]
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
+plotDensity(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc0.01_T33.pdf"), detected=F, pseudocount=0.01, NULL)
+plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc0.01_T33.pdf"), detected=F, pseudocount=0.01, NULL)
+
