@@ -31,18 +31,16 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=T, sep="\t")
+samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=F, sep="\t")
 samples <- subset(samples, RT != 0)
-samples$RT <- as.factor(samples$RT)
 #samples <- subset(samples, CONSIST == T)
-#rownames(samples) <- samples$ID2_RNA
+samples$RT <- as.factor(samples$RT)
+rownames(samples) <- samples$ID2_RNA
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene <- tpm.gene[, samples$ID_WGS]
+tpm.gene <- tpm.gene[, samples$ID2_RNA]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
-# > dim(tpm.gene.log2)   ## EGAD00001000258 (n=26)
-# [1] 18039    20
-# > dim(tpm.gene.log2)   ## EGAD00001003549 (n=71/74)
+# > dim(tpm.gene.log2)
 # [1] 18502    20
 # > dim(tpm.gene.log2)
 # [1] 18502    40
@@ -59,7 +57,7 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
 argv      <- data.frame(predictor="RT", predictor.wt=-1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
 file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n20")
-file.main <- paste0("RT (n=8) vs WT (n=12) in ", BASE)
+file.main <- paste0("RT (n=14) vs WT (n=26) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -145,7 +143,7 @@ plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n20")
+file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n40")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 

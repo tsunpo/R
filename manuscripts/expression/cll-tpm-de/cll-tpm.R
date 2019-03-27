@@ -3,7 +3,7 @@
 # Chapter      :
 # Name         : manuscripts/expression/nbl-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 18/03/19
+# Last Modified: 23/05/18
 # =============================================================================
 wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
@@ -18,8 +18,8 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
 base <- tolower(BASE)
 
@@ -31,7 +31,7 @@ wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=T, sep="")[,1]
+samples <- readTable(file.path(wd.rna, "cll_rna_n74.list"), header=F, rownames=T, sep="")[,1]
 
 # -----------------------------------------------------------------------------
 # Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
@@ -52,11 +52,11 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 # dropping unused factor levels
 # ......................................................
 # normalizing est_counts
-# 82682 targets passed the filter
+# 87172 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-# 19783 genes passed the filter
+# 20328 genes passed the filter
 # summarizing bootstraps
 
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
@@ -74,7 +74,7 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 # > nrow(tpm.gene)
-# [1] 18039
+# [1] 18502
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)

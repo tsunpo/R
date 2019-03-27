@@ -83,7 +83,7 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
-   #xmax <- 1
+   xmax <- 1
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
@@ -129,11 +129,18 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
 plot.main <- "Differential expression between CLL T29 and T33"
 plot.de <- file.path(wd.de.plots, "volcanoplot-r20p100_cll_rt_q0.02")
 
+## Chr2
+genes <- readTable(paste0(plot.de, "_chr2.tab"), header=T, rownames=F, sep="\t")
+file.main <- c(plot.main, "chr2:74.3-85.9Mb")
+file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
+#file.de <- paste0(plot.de, "_chr2.pdf")
+plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
+
 ## Natural killer cell receptor phenotypes
 genes <- readTable(paste0(plot.de, "_nk.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "Natural killer cell receptors")
 #file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
-file.de <- paste0(plot.de, "_nk.pdf")
+file.de <- paste0(plot.de, "_nk2.pdf")
 plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
