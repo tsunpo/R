@@ -1,6 +1,6 @@
 # =============================================================================
-# Library      : Daily R Meal
-# Name         : handbook-of/Common.R 
+# Library      : Reusable common methods
+# Name         : handbook-of/Commons.R 
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 29/11/18
 # =============================================================================

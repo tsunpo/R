@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
 wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Common.R", "ReplicationTiming.R", "Rearrangement.R")
+handbooks <- c("Commons.R", "ReplicationTiming.R", "Rearrangement.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
 wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
