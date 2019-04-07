@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Common.R", "Mutation.R")
+handbooks  <- c("Commons.R", "Mutation.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -23,10 +23,10 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE1 <- "CLL"
+BASE1 <- "SCLC"
 PAIR1 <- "T"
-BASE0 <- "CLL"
-PAIR0 <- "T"
+BASE0 <- "SCLC"
+PAIR0 <- "N"
 base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
@@ -36,11 +36,9 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
-#samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
-#samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
-samples  <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
-samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96-rt29.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96-wt33.list"), header=F, rownames=F, sep="")
+samples <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
+samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92-rt56.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92-wt21.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -54,8 +52,8 @@ colnames(phenos) <- c("V1", "purity", "ploidy", "V4", "sex", "V6", "V7")
 samples.pos <- samples1
 samples.neg <- samples0
 samples.var <- setdiff(samples, c(samples1, samples0))
-# > 29+33+34
-# [1] 96
+# > 56+21+15
+# [1] 92
 
 # -----------------------------------------------------------------------------
 # Mutation burdens between T29 and T33
@@ -94,7 +92,7 @@ txts.pos$T29_N <- 0
 txts.pos$T29_N <- mapply(x = 1:nrow(txts.pos), function(x) sum(txts.pos[x,]))
 txts.pos$T29_S <- 0
 txts.pos$T29_S <- mapply(x = 1:nrow(txts2.pos), function(x) sum(txts2.pos[x,]))
-writeTable(txts.pos, file.path(wd.rt.data, "muts_pos29.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(txts.pos, file.path(wd.rt.data, "muts_pos56.txt"), colnames=T, rownames=T, sep="\t")
 
 txts.neg <- txts[,samples.rts[[2]]]
 txts2.neg <- txts2[,samples.rts[[2]]]
@@ -102,7 +100,7 @@ txts.neg$T33_N <- 0
 txts.neg$T33_N <- mapply(x = 1:nrow(txts.neg), function(x) sum(txts.neg[x,]))
 txts.neg$T33_S <- 0
 txts.neg$T33_S <- mapply(x = 1:nrow(txts.neg), function(x) sum(txts2.neg[x,]))
-writeTable(txts.neg, file.path(wd.rt.data, "muts_neg33.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(txts.neg, file.path(wd.rt.data, "muts_neg21.txt"), colnames=T, rownames=T, sep="\t")
 
 txts.var <- txts[,samples.rts[[3]]]
 txts2.var <- txts2[,samples.rts[[3]]]
@@ -110,5 +108,5 @@ txts.var$V34_N <- 0
 txts.var$V34_N <- mapply(x = 1:nrow(txts.var), function(x) sum(txts.var[x,]))
 txts.var$V34_S <- 0
 txts.var$V34_S <- mapply(x = 1:nrow(txts.var), function(x) sum(txts2.var[x,]))
-writeTable(txts.var, file.path(wd.rt.data, "muts_var34.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(txts.var, file.path(wd.rt.data, "muts_var15.txt"), colnames=T, rownames=T, sep="\t")
 

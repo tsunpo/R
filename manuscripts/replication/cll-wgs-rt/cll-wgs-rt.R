@@ -36,11 +36,11 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
-#samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
-#samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
-samples  <- readTable(file.path(wd.ngs, "cll_wgs_n93.txt"), header=T, rownames=T, sep="")
-samples1 <- readTable(file.path(wd.ngs, "cll_rna_n93-rt29.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "cll_rna_n93-wt33.list"), header=F, rownames=F, sep="")
+samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
+#samples  <- readTable(file.path(wd.ngs, "cll_wgs_n96.txt"), header=T, rownames=T, sep="")
+#samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96-rt29.list"), header=F, rownames=F, sep="")
+#samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96-wt33.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -288,6 +288,7 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples1, file.name, main.text=NA, y
    plot(cors.samples$mean, log(cors.samples$cv2), ylab="log(cv2)", xlab="mean")
    text(cors.samples$mean[2], log(cors.samples$cv2[2]), "chr2", cex=1.2, pos=3)
    text(cors.samples$mean[4], log(cors.samples$cv2[4]), "chr4", cex=1.2, pos=3)
+   text(cors.samples$mean[12], log(cors.samples$cv2[12]), "chr12", cex=1.2, pos=3)
    dev.off()
  
    png(paste0(file.name, "_var.png"), height=5, width=5.5, units="in", res=300)
@@ -319,7 +320,7 @@ ylab.text <- "Pearson's r (n=96)"
 xlab.text <- "Chromosome"
 file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SAMPLES-vs-LCL_pearson")
 main.text <- paste0("SCLC–LCL RT (T/G1) vs. LCL RT")   ## TO-DO
-ymin <- -0.2
+ymin <- -0.85
 ymax <- 0.85
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=T)
 

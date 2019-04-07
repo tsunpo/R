@@ -225,9 +225,9 @@ plotRD3 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
    par(mar=c(1,4,4,1))
    ylab.text <- "Read depth"
-   if (is.na(ymin) || is.na(ymax))
+   if (is.na(ymin) || is.na(ymax)) {
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt$T), max(rpkms.chr.rt$T)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
-   else
+   } else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
@@ -395,6 +395,8 @@ plotRTvsRT <- function(reads, timings, file.name, main.text, ylab.text, xlab.tex
    plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col=colours[1])
    #plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white")
    abline(lm.fit, col=colours[2], lwd=3)
+   abline(h=0, lty=5)
+   abline(v=0, lty=5)
    #mtext(paste0("R^2=", paste0(round0(r2*100, digits=2), "%")), cex=1.2, line=0.3)
  
    #rho <- cor.test(reads, timings, method="spearman", exact=F)[[4]]

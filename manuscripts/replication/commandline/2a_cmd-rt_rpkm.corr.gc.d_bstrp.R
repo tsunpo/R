@@ -66,7 +66,7 @@ for (c in 1:22) {
    #rpkms.N.chr.d$BED <- rownames(rpkms.N.chr.d)
    
    writeTable(rpkms.T.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-   writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 
    ## Replication timing
    #rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
