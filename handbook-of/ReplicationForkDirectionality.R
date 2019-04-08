@@ -16,24 +16,24 @@ setScaledOK <- function(rpkms.chr.rt, pseudocount) {
  
    rpkms.chr.rt$CW <- rpkms.chr.rt$C + rpkms.chr.rt$W
    rpkms.chr.rt$CW <- scale(rpkms.chr.rt$CW)
-   
+
    return(rpkms.chr.rt[,c("BED", "C", "W", "RFD", "CW")])
 }
 
-plotOK4 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
+plotCW <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) xmin <- 0
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
  
    if (ext == "pdf") {
-      pdf(paste0(file.name, ".pdf"), height=7, width=width)
+      pdf(paste0(file.name, ".pdf"), height=5, width=width)
    } else if (ext == "png")
-      png(paste0(file.name, ".png"), height=7, width=width, units="in", res=300)   ## ADD 16/05/17: res=300
+      png(paste0(file.name, ".png"), height=5, width=width, units="in", res=300)   ## ADD 16/05/17: res=300
  
    ###
    ## Initiate RD plot
-   layout(matrix(c(1,2,3), 3, 1), widths=1, heights=c(1,1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
    #par(mfrow=c(3,1)) 
    par(mar=c(1,4,4,1))
    ylab.text <- "Read depth"
@@ -62,54 +62,20 @@ plotOK4 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
- 
-   ### 
-   ## Initiate RFD plot
-   par(mar=c(5.5,4,0,1))
-   ylab.text <- "RFD"
- 
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1, 1), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
-   idx <- which(rpkms.chr.rt$RT == 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RFD, col="lightgrey", cex=0.3)
-   idx <- which(rpkms.chr.rt$RT > 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RFD, col=colours2[1], cex=0.3)
-   idx <- which(rpkms.chr.rt$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RFD, col=colours2[2], cex=0.3)
- 
-   abline(h=0, lwd=0.5, col="lightgrey")
-   axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
- 
-   ## Plot cytobands (before smoothing spline)
-   cytoBand.chr <- subset(cytoBand, chrom == chr)
-   for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
- 
-   ## Plot legend and peaks
-   if (xmin == 0) {
-      legend("topright", "(C-W)/(C+W)", col="black", lty=1, lwd=2, bty="n", horiz=T)
-      #legend("topleft", "Early", bty="n", text.col="black")   
-      #legend("bottomleft", "Late", bty="n", text.col="black")
-   } else {
-      legend("topright", "(C-W)/(C+W)", col="black", lty=1, lwd=2, bty="n", horiz=T)
-      #legend("topleft",    paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col=colours[1])   
-      #legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col=colours[2])
-   }
-   if (length(peaks) != 0)
-      for (p in 1:length(peaks))
-         abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
-   
+
    ### 
    ## Initiate C+W plot
    par(mar=c(5.5,4,0,1))
    ylab.text <- "C+W"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
-   idx <- which(rpkms.chr.rt$RT == 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col="lightgrey", cex=0.3)
-   idx <- which(rpkms.chr.rt$RT > 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col=colours2[1], cex=0.3)
-   idx <- which(rpkms.chr.rt$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col=colours2[2], cex=0.3)
+   points(bed.gc.chr$START/1E6, rpkms.chr.rt$CW, col="lightgrey", cex=0.3)
+   #idx <- which(rpkms.chr.rt$RT == 0)
+   #points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col="lightgrey", cex=0.3)
+   #idx <- which(rpkms.chr.rt$RT > 0)
+   #points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col=colours2[1], cex=0.3)
+   #idx <- which(rpkms.chr.rt$RT < 0)
+   #points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col=colours2[2], cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
@@ -125,11 +91,11 @@ plotOK4 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
    
    ## Plot legend and peaks
    if (xmin == 0) {
-      legend("topright", paste0(legends2[1], "+", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+      legend("topright", paste0(legends2[1], "+", legends2[2], " read depth"), col="black", lty=1, lwd=2, bty="n", horiz=T)
       #legend("topleft", "Early", bty="n", text.col="black")   
       #legend("bottomleft", "Late", bty="n", text.col="black")
    } else {
-      legend("topright", paste0(legends2[1], "+", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+      legend("topright", paste0(legends2[1], "+", legends2[2]), col="black", lty=1, lwd=2, bty="n", horiz=T)
       #legend("topleft",    paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col=colours[1])   
       #legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col=colours[2])
    }
@@ -138,6 +104,128 @@ plotOK4 <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
    
    dev.off()
+}
+
+
+## Change to plotRFD
+plotCW <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
+ xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
+ if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+ if (is.na(xmin)) xmin <- 0
+ if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
+ 
+ if (ext == "pdf") {
+  pdf(paste0(file.name, ".pdf"), height=5, width=width)
+ } else if (ext == "png")
+  png(paste0(file.name, ".png"), height=5, width=width, units="in", res=300)   ## ADD 16/05/17: res=300
+ 
+ ###
+ ## Initiate RD plot
+ layout(atrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
+ #par(mfrow=c(3,1)) 
+ par(mar=c(1,4,4,1))
+ ylab.text <- "Read depth"
+ if (is.na(ymin) || is.na(ymax)) {
+  plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-max(rpkms.chr.rt$W), max(rpkms.chr.rt$C)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
+ } else
+  plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
+ #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
+ abline(h=0, lwd=0.5, col="lightgrey")
+ 
+ ## Plot cytobands (before smoothing spline)
+ cytoBand.chr <- subset(cytoBand, chrom == chr)
+ for (c in 1:nrow(cytoBand.chr))
+  abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+ 
+ ## Plot smoothing splines
+ lines(bed.gc.chr$START/1E6, rpkms.chr.rt$C, col=colours[1], pch=16, cex=0.2, type="S")
+ lines(bed.gc.chr$START/1E6, -rpkms.chr.rt$W, col=colours[2], pch=16, cex=0.2, type="S")
+ 
+ ## Plot legend and peaks
+ if (xmin == 0) {
+  legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
+ } else {
+  legend("bottomright", legends2, col=colours, lty=1, lwd=2, bty="n", horiz=T)
+ }
+ if (length(peaks) != 0)
+  for (p in 1:length(peaks))
+   abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
+ 
+ ### 
+ ## Initiate RFD plot
+ par(mar=c(5.5,4,0,1))
+ ylab.text <- "RFD"
+ 
+ plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1, 1), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
+ idx <- which(rpkms.chr.rt$RT == 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RFD, col="lightgrey", cex=0.3)
+ idx <- which(rpkms.chr.rt$RT > 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RFD, col=colours2[1], cex=0.3)
+ idx <- which(rpkms.chr.rt$RT < 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$RFD, col=colours2[2], cex=0.3)
+ 
+ abline(h=0, lwd=0.5, col="lightgrey")
+ axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+ 
+ ## Plot cytobands (before smoothing spline)
+ cytoBand.chr <- subset(cytoBand, chrom == chr)
+ for (c in 1:nrow(cytoBand.chr))
+  abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+ 
+ ## Plot legend and peaks
+ if (xmin == 0) {
+  legend("topright", "(C-W)/(C+W)", col="black", lty=1, lwd=2, bty="n", horiz=T)
+  #legend("topleft", "Early", bty="n", text.col="black")   
+  #legend("bottomleft", "Late", bty="n", text.col="black")
+ } else {
+  legend("topright", "(C-W)/(C+W)", col="black", lty=1, lwd=2, bty="n", horiz=T)
+  #legend("topleft",    paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col=colours[1])   
+  #legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col=colours[2])
+ }
+ if (length(peaks) != 0)
+  for (p in 1:length(peaks))
+   abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
+ 
+ ### 
+ ## Initiate C+W plot
+ par(mar=c(5.5,4,0,1))
+ ylab.text <- "C+W"
+ 
+ plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
+ idx <- which(rpkms.chr.rt$RT == 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col="lightgrey", cex=0.3)
+ idx <- which(rpkms.chr.rt$RT > 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col=colours2[1], cex=0.3)
+ idx <- which(rpkms.chr.rt$RT < 0)
+ points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt[idx,]$CW, col=colours2[2], cex=0.3)
+ 
+ abline(h=0, lwd=0.5, col="lightgrey")
+ axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+ 
+ ## Plot cytobands (before smoothing spline)
+ cytoBand.chr <- subset(cytoBand, chrom == chr)
+ for (c in 1:nrow(cytoBand.chr))
+  abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+ 
+ ## Plot smoothing spline
+ spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$CW)
+ points(bed.gc.chr$START/1E6, spline$y, col="black", pch=16, cex=0.2)
+ 
+ ## Plot legend and peaks
+ if (xmin == 0) {
+  legend("topright", paste0(legends2[1], "+", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+  #legend("topleft", "Early", bty="n", text.col="black")   
+  #legend("bottomleft", "Late", bty="n", text.col="black")
+ } else {
+  legend("topright", paste0(legends2[1], "+", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+  #legend("topleft",    paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col=colours[1])   
+  #legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col=colours[2])
+ }
+ if (length(peaks) != 0)
+  for (p in 1:length(peaks))
+   abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
+ 
+ dev.off()
 }
 
 

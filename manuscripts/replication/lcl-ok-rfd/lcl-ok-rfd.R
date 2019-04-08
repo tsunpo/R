@@ -1,9 +1,9 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Reconstruction of replication timing profile in tumour cells
-# Name         : manuscripts/asymmetries/lcl-ok-rt.R
+# Name         : manuscripts/asymmetries/lcl-ok-rfd.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 23/02/19
+# Last Modified: 07/04/19; 23/02/19
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
@@ -23,6 +23,7 @@ load(file.path(wd.src.guide, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+BASE  <- "LCL"
 BASE1 <- "LCL"
 PAIR1 <- "T"
 BASE0 <- "LCL"
@@ -48,10 +49,10 @@ n0 <- length(samples0)
 for (c in 1:22) {
    chr <- chrs[c]
    
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledOK(rpkms.chr.rt, pseudocount=0.01)
+   rpkms.chr.rfd <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rfd <- setScaledOK(rpkms.chr.rfd, pseudocount=0.01)
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+   bed.gc.chr <- bed.gc.chr[rpkms.chr.rfd$BED,]
    
    ## Transparent colours to better visualise overlapping dots
    adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
@@ -75,13 +76,12 @@ for (c in 1:22) {
  
    ## RD & RFD 
    main.text <- paste0("Read depth ratio between Crick (n=", n1, ") and Watson (n=", n0, ") strands in ", BASE)  
-   file.name <- file.path(wd.rt.plots, paste0("RFD_", base0, "_rpkm.corr.gc.d.rfd_ps0.01_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
-   plotOK4(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c(adjustcolor.gray, adjustcolor.gray), c("C", "W"), "png", width=10, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
-   
-   plotOK4(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c(adjustcolor.red, adjustcolor.blue), c("C", "W"), "png", width=10, peaks=c(115000000, 125000000), 5.5, 10, 3, 3)
-   
-   plotOK4(file.name, paste0("C+W read depth in ", BASE), chr,  71500000,  90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c(adjustcolor.red, adjustcolor.blue), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), -12, 12, 3, 3)
-   plotOK4(file.name, paste0("C+W read depth in ", BASE), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c(adjustcolor.red, adjustcolor.blue), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), -12, 12, 3, 3)
+   file.name <- file.path(wd.rt.plots, paste0("RFD_", base0, "_rpkm.corr.gc.d_ps0.01_C+W_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
+   plotCW(file.name, main.text, chr, NA, NA, rpkms.chr.rfd, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c(adjustcolor.gray, adjustcolor.gray), c("C", "W"), "png", width=10, peaks=c(74353001, 85951001), -15, 15, 3, 3)
+   plotCW(file.name, paste0("C+W read depth in ", BASE), chr,  71500000,  90500000, rpkms.chr.rfd, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c(adjustcolor.red, adjustcolor.blue), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), -15, 15, 3, 3)
+  
+   plotCW(file.name, main.text, chr, 113500000, 130000000, rpkms.chr.rfd, bed.gc.chr, c("red", "blue"), c("Crick strand", "Waston strand"), c(adjustcolor.red, adjustcolor.blue), c("C", "W"), "png", width=10, peaks=c(115000000, 125000000), -15, 15, 3, 3)
+   plotCW(file.name, paste0("C+W read depth in ", BASE), chr, 115000000, 125000000, rpkms.chr.rfd, bed.gc.chr, c("red", "blue"), c("Crick", "Watson"), c(adjustcolor.red, adjustcolor.blue), c("C", "W"), "png", width=5, peaks=c(74353001, 85951001), -15, 15, 3, 3)
    
    ## RT
    #ylab.text <- "Replication timing"
@@ -89,6 +89,49 @@ for (c in 1:22) {
    #main.text <- paste0("C+W read depth between ", BASE, " Crick (n=", n1, ") and Watson (n=", n0, ") strands")
    #plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("lightcoral", "skyblue3"), "png", 3, 3)
 }
+
+# -----------------------------------------------------------------------------
+# SCLC RT vs LCL RT
+# Last Modified: 05/03/19; 18/02/19
+# -----------------------------------------------------------------------------
+cors <- toTable(0, 2, 22, c("chr", "cor"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## LCL RFD and LCL RTs
+   rpkms.chr.rfd <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rfd <- setScaledOK(rpkms.chr.rfd, pseudocount=0.01)
+   rpkms.chr.rfd.CW <- setSlope(rpkms.chr.rfd, bed.gc.chr, "CW")
+   
+   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+   rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+ 
+   ## Keep 1kb slopes based on overlapping windows
+   overlaps <- intersect(rpkms.chr.rfd.CW$BED, rpkms.chr.rt.lcl.RT$BED)
+   #rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]       ## Too slow
+   #rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]   ## Too slow
+ 
+   ##
+   main.text <- paste0("LCL C+W vs. LCL RT (", "Chr", c, ")")
+   xlab.text <- "LCL C+W"
+   ylab.text <- "LCL RT (S/G1)"
+   file.name <- file.path(wd.rt.plots, paste0("plot_C+W-vs-RT_LCL-vs-LCL_pearson_chr", c))
+   plotRTvsRT(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rfd.CW[overlaps,]$SLOPE, file.name, main.text, ylab.text, xlab.text, c(adjustcolor.gray, "black"))
+ 
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rfd.CW[overlaps,]$SLOPE)
+}
+save(cors, file=file.path(wd.rt.data, paste0("c+w-vs-rt_lcl-vs-lcl_cors-pearson.RData")))
+
+ylab.text <- "Pearson's r"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_C+W-vs-RT_LCL-vs-LCL_pearson")
+main.text <- paste0("LCL C+W vs. LCL RT")
+ymin <- -0.2
+ymax <- 0.6
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=T)
 
 
 

@@ -4,7 +4,7 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 15/03/18
 # =============================================================================
-source("/Users/tpyang/Work/dev/R/handbook-of/Common.R")
+source("/Users/tpyang/Work/dev/R/handbook-of/Commons.R")
 
 wd.reference <- "/Users/tpyang/Work/local/reference/hg19"
 wd.src.ref   <- "/Users/tpyang/Work/dev/R/guide-to-the"
@@ -185,3 +185,9 @@ bed$BED <- mapply(x = 1:nrow(bed), function(x) paste0("P", x))
 
 #save(bed, file=file.path(wd.src.ref, "hg19.1kb.RData"))
 writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.1kb.bed.gz")), colnames=F, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# File: hg19.ensembl.gene.txt (To test coverage on genes)
+# Last Modified: 07/04/19
+# -----------------------------------------------------------------------------
+writeTable(ensGene[,c("chromosome_name", "start_position", "end_position", "ensembl_gene_id")], file.path(wd.reference, "collections/hg19.ensembl.gene.txt"), colnames=F, rownames=F, sep="\t")
