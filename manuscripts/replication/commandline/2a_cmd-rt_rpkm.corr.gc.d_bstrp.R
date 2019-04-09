@@ -13,7 +13,7 @@ base0 <- tolower(BASE0)
 # =============================================================================
 # Name: 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 22/10/18
+# Last Modified: 09/04/19; 22/10/18
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
@@ -29,7 +29,7 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Replication timing
-# Last Modified: 31/08/18; 13/06/17
+# Last Modified: 09/04/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
 wd1.ngs    <- file.path(wd, BASE1, "ngs/WGS")
@@ -58,8 +58,8 @@ for (c in 1:22) {
    chr <- chrs[c]
 
    ## Read depth
-   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
-   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)   
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)[, c("BED", samples1)]   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
+   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)[, c("BED", samples0)]   
    rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    #rpkms.T.chr.d$BED <- rownames(rpkms.T.chr.d)   ## REMOVED 15/02/19; Already keep the first column "BED" in previous step; ## CHANGE 23/10/18: After mapply(median()) otherwise warnings due to $BED

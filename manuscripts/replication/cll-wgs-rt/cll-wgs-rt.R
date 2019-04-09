@@ -36,11 +36,11 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
-samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
+#samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
+#samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
 #samples  <- readTable(file.path(wd.ngs, "cll_wgs_n96.txt"), header=T, rownames=T, sep="")
-#samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96-rt29.list"), header=F, rownames=F, sep="")
-#samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96-wt33.list"), header=F, rownames=F, sep="")
+samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96-rt29.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96-wt33.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -88,6 +88,22 @@ for (c in 1:22) {
    #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.gray, adjustcolor.gray), c("T29", "T33"), "png", width=10, peaks=c(), 7.5, 9.25, 3, 3)
    plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.gray, adjustcolor.gray), c("T29", "T33"), "png", width=10, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
    plotRD3(file.name, paste0(BASE1, " T29/T33 read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.red, adjustcolor.blue), c("T29", "T33"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
+
+   ## PD-L1 / CD274 (chr9)
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_PD-L1"))
+   #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.gray, adjustcolor.gray), c("T29", "T33"), "png", width=10, peaks=c(32485120, 32498064), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, paste0(BASE1, " T29/T33 read depth ratio"), chr, 450503, 10450503, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.red, adjustcolor.blue), c("T29", "T33"), "png", width=5, peaks=c(32485120, 32498064), 7.5, 9.25, 3, 3)
+
+   ## PD-1 / PDCD1 (chr2)
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_PD-1"))
+   #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.gray, adjustcolor.gray), c("T29", "T33"), "png", width=10, peaks=c(32485120, 32498064), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, paste0(BASE1, " T29/T33 read depth ratio"), chr, 237801060, 247801060, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.red, adjustcolor.blue), c("T29", "T33"), "png", width=5, peaks=c(32485120, 32498064), 7.5, 9.25, 3, 3)
+   
+   ## KLRC3 (chr12)
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_KLRC3"))
+   #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.gray, adjustcolor.gray), c("T29", "T33"), "png", width=10, peaks=c(10564911,	10573194), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, paste0(BASE1, " T29/T33 read depth ratio"), chr, 10000000,	11000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour (n=29)", "Tumour (n=33)"), c(adjustcolor.red, adjustcolor.blue), c("T29", "T33"), "png", width=5, peaks=c(10564911,	10573194), 7.5, 9.25, 3, 3)
+   
    
    ## HLA-DRB5 (chr6)
    file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_HLA-DRB5"))

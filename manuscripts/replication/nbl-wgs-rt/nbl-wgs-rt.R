@@ -204,10 +204,10 @@ plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-vs-lcl_cors-pearson.RData")))
 
 ###
-## NBL RT vs LCL RT
-BASE0 <- "LCL"
+## NBL RT vs LCL RT   ## TO-DO
+BASE0 <- "SCLC"
 base0 <- tolower(BASE0)
-n0 <- 7
+n0 <- 9
 
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
@@ -239,12 +239,12 @@ for (c in 1:22) {
    #cors$cor[c] <- plotRDvsRT(rpkms.chr.rt.lcl.RT$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c(adjustcolor.gray, "black"))
    cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT$SLOPE, rpkms.chr.rt.RT$SLOPE)
 }
-save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-vs-lcl_cors-pearson.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "&", base0, "-B-vs-lcl_cors-pearson.RData")))
 
 ylab.text <- "Pearson's r"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_NBL&LCL-vs-LCL_pearson_All")
-main.text <- paste0("NBL–LCL RT (T/G1) vs. LCL RT")
+file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_NBL&SCLC-B-vs-LCL_pearson_All")
+main.text <- paste0("NBL–SCLC RT (T/B) vs. LCL RT")
 ymin <- -0.2
 ymax <- 0.85
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
