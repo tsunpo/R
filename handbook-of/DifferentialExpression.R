@@ -380,6 +380,35 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
 ## https://liorpachter.wordpress.com/2013/08/26/magnitude-of-effect-vs-statistical-significance/  ## Read counts accumulated across a gene cannot be used directly to estimate fold change 
 
 # -----------------------------------------------------------------------------
+# Method: Volcano plot
+# Last Modified: 14/04/18
+# -----------------------------------------------------------------------------
+fdrToP <- function(fdr, de) {
+   de.sig <- subset(de, FDR <= fdr)
+ 
+   return(max(de.sig$P))
+}
+
+pvalueToFDR <- function(pvalue, de) {
+   de.sig <- subset(de, P <= pvalue)
+ 
+   return(round0(max(de.sig$FDR)*100, digits=1))
+}
+
+rhoToP <- function(rho, de) {
+   de.rho <- rbind(subset(de, RHO >= rho), subset(de, RHO <= rho*-1))
+ 
+   return(max(de.rho$P))
+}
+
+getVolcanoGenes <- function(file.tab, de) {
+   genes <- readTable(file.tab, header=T, rownames=F, sep="\t")
+   rownames(genes) <- genes$GENE
+   
+   return(genes[intersect(genes$GENE, de$external_gene_name),])
+}
+
+# -----------------------------------------------------------------------------
 # Method: Fisher's combined probability test
 # Last Modified: 06/11/17
 # -----------------------------------------------------------------------------

@@ -84,29 +84,23 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Figure(s)    : Figure 1 (A)
 # Last Modified: 08/04/19; 07/01/19
 # -----------------------------------------------------------------------------
-fdrToP <- function(fdr, de) {
-   de.sig <- subset(de, FDR <= fdr)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   return(max(de.sig$P))
-}
-
 plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #pvalue <- fdrToP(fdr, de)
-   de.sig <- subset(de, FISHERS_P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$FISHERS_P)
+   fdr <- pvalueToFDR(pvalue, de)
+   de.sig <- subset(de, P <= pvalue)   #FISHERS_P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)   #FISHERS_P)
  
-   de$log10P <- -log10(de$FISHERS_P)
+   de$log10P <- -log10(de$P)   #FISHERS_P)
    #xmax <- max(de$LOG2_FC)
    xmax <- 1
    ymax <- max(de$log10P)
  
-   pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="CLL T29/T33 log2 fold change", ylab="-log10(Fishers' combined p-value)", col="darkgray", main=file.main[1], xaxt="n")
+   pdf(file.de, height=7, width=7)                                                                                             #Fishers' combined 
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(CLL T29/T33)", ylab="-log10(p-value)", col="darkgray", main=file.main[1], xaxt="n")
    axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1))
    
    abline(h=c(-log10(pvalue)), lty=5)
-   #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, "FDR=0.002", cex=0.85)
+   text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
    #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
@@ -143,7 +137,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
 
 ##
 plot.main <- "CLL and SCLC combined differential read depth analyses"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_cll_rt_fishers_p1e4")
+plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_cll_rt_p1e-4")
 
 ## Chr2
 genes <- readTable(paste0(plot.de, "_chr2.tab"), header=T, rownames=F, sep="\t")
@@ -166,18 +160,15 @@ file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
 plotVolcano(de.tpm.gene, 0.0001, genes, file.de, file.main)
 
 ##
-plot.main <- "CLL and SCLC combined differential read depth analyses"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_cll_rt_fishers_p1e6")
+plot.main <- "Differential gene read depth in CLL"
+plot.de <- file.path(wd.de.plots, "volcanoplot_r30p47-r5p47_cll_rt_p1e-4")
 
 ## EEF1A1
-genes <- readTable(paste0(plot.de, "_EEF1A1.tab"), header=T, rownames=F, sep="\t")
-rownames(genes) <- genes$GENE
-genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
-
+genes <- getVolcanoGenes(paste0(plot.de, "_EEF1A1.tab"), de.tpm.gene)
 file.main <- c(plot.main, "")
 file.de <- paste0(plot.de, "_EEF1A1_log2FC1.pdf")
 #file.de <- paste0(plot.de, "_EEF1A1.pdf")
-plotVolcano(de.tpm.gene, 0.000001, genes, file.de, file.main)
+plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Gene set enrichment analysis (GSEA) on LCNEC RB1/WT ranked gene lists

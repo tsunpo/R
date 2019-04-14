@@ -80,12 +80,6 @@ writeTable(de.tpm.gene, file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47
 # Figure(s)    : Figure S1 (D)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-rhoToP <- function(rho, de) {
-   de.rho <- rbind(subset(de, RHO >= rho), subset(de, RHO <= rho*-1))
- 
-   return(max(de.rho$P))
-}
-
 plotVolcano <- function(de, rho, genes, file.de, file.main) {
    pvalue <- rhoToP(rho, de)
    de.sig <- subset(de, P <= pvalue)

@@ -63,18 +63,6 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Figure(s)    : Figure S1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-fdrToP <- function(fdr, de) {
-   de.sig <- subset(de, FDR <= fdr)
-
-   return(max(de.sig$P))
-}
-
-pvalueToFDR <- function(pvalue, de) {
-   de.sig <- subset(de, P <= pvalue)
- 
-   return(round0(max(de.sig$FDR)*100, digits=1))
-}
-
 plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #pvalue <- fdrToP(fdr, de)
    fdr <- pvalueToFDR(pvalue, de)
@@ -130,7 +118,7 @@ plot.main <- "RB1-loss differential gene expression in LCNEC"
 plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_rb1_p1e-4")
 
 ## Cell cycle regulation
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_p1e-4_cycle.tab"), header=T, rownames=F, sep="\t")
+genes <- readTable(paste0(plot.de, "_cycle.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "Cell cycle regulation")
 file.de <- paste0(plot.de, "_cycle.pdf")
 plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
