@@ -77,7 +77,7 @@ writeTable(de.tpm.gene, file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss AE genes amongst lung cancers (LUAD, LCNEC and SCLC)
-# Figure(s)    : Figure 1 (D)
+# Figure(s)    : Figure S1 (D)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
 rhoToP <- function(rho, de) {
@@ -87,7 +87,7 @@ rhoToP <- function(rho, de) {
 }
 
 plotVolcano <- function(de, rho, genes, file.de, file.main) {
-   pvalue <- rhoToP(rho, de)  
+   pvalue <- rhoToP(rho, de)
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
@@ -96,7 +96,7 @@ plotVolcano <- function(de, rho, genes, file.de, file.main) {
    ymax <- max(de$log10P)
 
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="SCLC/LUAD log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(SCLC/LUAD)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
  
    abline(h=c(-log10(pvalue)), lty=5)
    text(xmax*-1 + 2*xmax/40, -log10(pvalue) + ymax/42, paste0("rho=±", rho), cex=0.85)
@@ -127,13 +127,13 @@ plotVolcano <- function(de, rho, genes, file.de, file.main) {
          print(genes[g])
    }
  
-   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
+   mtext(file.main[2], cex=1.2, line=0.3)
    legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "RB1-loss additive expression among LUAD, LCNEC and SCLC"
+plot.main <- "RB1-loss additive expression amongst LUAD, LCNEC and SCLC"
 plot.de <- file.path(wd.de.plots, "volcanoplot_luad+lcnec+sclc_rb1_rho0.7")
 de.tpm.gene$LOG2_FC <- de.tpm.gene$SCLC_LUAD
 
@@ -145,14 +145,14 @@ plotVolcano(de.tpm.gene, 0.7, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Principal component analysis (PCA) of LUAD, LCNEC and SCLC samples on RB1-loss AE genes
-# Figure(s)    : Figure 1 (E)
+# Figure(s)    : Figure S1 (E)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
 genes.rb1.rho0.7 <- rownames(subset(de.tpm.gene, P <= rhoToP(0.7, de.tpm.gene)))
 # > length(genes.rb1.rho0.7)
 # [1] 203
 
-## Figure 1 (E)
+## Figure S1 (E)
 test <- tpm.gene[genes.rb1.rho0.7, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
 
@@ -166,29 +166,23 @@ trait[which(trait == "NA")]  <- "LCNEC (NA)"
 file.main <- c("LUAD, LCNEC and SCLC samples on top 203 AE genes", "RB1-loss additive effect; absolute rho > 0.7")
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_luad+lcenc+sclc_rb1_rho0.7_ae203", size=6.5, file.main, "topleft", c("lightgray", "red", "dodgerblue", "yellowgreen", "orange"), NULL, flip.x=-1, flip.y=-1)
 
-##
-test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.de <- getPCA(t(test))
-
-file.main <- c("LUAD, LCNEC and SCLC samples on top 145 DE genes", "RB1-loss differential effect; FDR < 0.05")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_luad+lcenc+sclc_rb1_q0.05_de145", size=6.5, file.main, "topright", c("lightgray", "red", "dodgerblue", "yellowgreen", "orange"), NULL, flip.x=1, flip.y=-1)
-
 # -----------------------------------------------------------------------------
-# PCA of LUAD, LCNEC and SCLC samples on RB1-loss DE genes (FDR < 0.05)
-# Figure(s)    : Figure 1 (C)
-# Last Modified: 07/01/19
+# PCA of LCNEC and SCLC samples on RB1-loss DE genes (P < 1.00E-04)
+# Figure(s)    : Figure S1 (C)
+# Last Modified: 14/04/19; 07/01/19
 # -----------------------------------------------------------------------------
 base.lcnec <- "LCNEC"
 load(file.path(wd, base.lcnec, "analysis/expression/kallisto", paste0(base.lcnec, "-tpm-de/data/", "de_", base.lcnec, "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
-genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
-## > length(genes.rb1.q0.05)
-## [1] 145   ## Original 145 from lcnec-tpm-de-pca.R
+#genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
+# > length(genes.rb1.q0.05)
+# [1] 145   ## Original 145 from lcnec-tpm-de-pca.R
 
 ## Keep only LCNEC and SCLC samples
 samples <- subset(samples, Cancer_Type != 0)   ## MOVE HERE 08/01/19
 
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+#test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+test <- tpm.gene[genes.rb1.p1e4, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
 
 trait <- samples$RB1
@@ -197,9 +191,9 @@ trait[which(trait == "RB1")] <- "LCNEC (RB1)"
 trait[which(trait == "WT")]  <- "LCNEC (WT)"
 trait[which(trait == "NA")]  <- "LCNEC (NA)"
 
-## Figure 1 (E)
-file.main <- c("LCNEC and SCLC samples on top 145 DE genes", "RB1-loss differential effect; FDR < 0.05")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcenc+sclc_rb1_q0.05_de145", size=6.5, file.main, "bottomright", c("lightgray", "red", "dodgerblue", "orange"), NULL, flip.x=1, flip.y=1)
+##
+file.main <- c("LCNEC and SCLC samples on top 45 DE genes", "RB1-loss differential effect; P < 1.00E-04")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcenc+sclc_rb1_p1e-4_de45", size=6.5, file.main, "topleft", c("lightgray", "red", "dodgerblue", "orange"), NULL, flip.x=1, flip.y=-1)
 
 # -----------------------------------------------------------------------------
 # Gene set enrichment analysis (GSEA) on SCLC/LUAD ranked gene lists

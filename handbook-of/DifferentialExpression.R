@@ -233,7 +233,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
          text(scores[s, x]*flip.x, scores[s, y]*flip.y, samples[s], col="black", adj=c(0, -0.75), cex=0.75)
    }
 
-   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
+   mtext(file.main[2], cex=1.2, line=0.3)
    legend(legend, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
    dev.off()
 }

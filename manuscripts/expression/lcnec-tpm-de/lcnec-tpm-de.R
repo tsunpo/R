@@ -60,18 +60,24 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC
-# Figure(s)    : Figure 1 (A)
+# Figure(s)    : Figure S1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
 fdrToP <- function(fdr, de) {
    de.sig <- subset(de, FDR <= fdr)
-   de.sig$log10P <- -log10(de.sig$P)
- 
+
    return(max(de.sig$P))
 }
 
-plotVolcano <- function(de, fdr, genes, file.de, file.main) {
-   pvalue <- fdrToP(fdr, de)
+pvalueToFDR <- function(pvalue, de) {
+   de.sig <- subset(de, P <= pvalue)
+ 
+   return(round0(max(de.sig$FDR)*100, digits=1))
+}
+
+plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
+   #pvalue <- fdrToP(fdr, de)
+   fdr <- pvalueToFDR(pvalue, de)
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
@@ -80,10 +86,11 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="LCNEC RB1/WT log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(RB1/WT)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(pvalue)), lty=5)
-   text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
+   text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
+   #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
    #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
@@ -113,20 +120,20 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
          print(genes[g])
    }
    
-   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
+   mtext(file.main[2], cex=1.2, line=0.3)
    legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "RB1-loss differential expression between LCNEC RB1 and WT"
-plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05")
+plot.main <- "RB1-loss differential gene expression in LCNEC"
+plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_rb1_p1e-4")
 
 ## Cell cycle regulation
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05_cycle.tab"), header=T, rownames=F, sep="\t")
+genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_p1e-4_cycle.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "Cell cycle regulation")
 file.de <- paste0(plot.de, "_cycle.pdf")
-plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
 
 ## Hintone modifications
 #genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_rb1_q0.05_histone.tab"), header=T, rownames=F, sep="\t")
@@ -142,16 +149,19 @@ plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Principal component analysis (PCA) of LCNEC samples on RB1-loss DE genes
-# Figure(s)    : Figure 1 (B)
+# Figure(s)    : Figure S1 (B)
 # Last Modified: 23/11/17
 # -----------------------------------------------------------------------------
 #load(file.path("/Users/tpyang/Work/uni-koeln/tyang2", "LCNEC", "analysis/expression/kallisto", paste0("lcnec", "-tpm-de/data/", "de_", "lcnec", "_tpm-gene-r5p47_rb1_wilcox_q_n54.RData")))
-genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
+#genes.rb1.q0.05 <- rownames(subset(de.tpm.gene, FDR <= 0.05))
 # > length(genes.rb1.q0.05)
 # [1] 145
+genes.rb1.p1e4 <- rownames(subset(de.tpm.gene, P <= 1.00E-04))
+# > length(genes.rb1.p1e4)
+# [1] 45
 
 ##
-test <- tpm.gene[genes.rb1.q0.05, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+test <- tpm.gene[genes.rb1.p1e4, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
 
 trait <- as.numeric(samples[,"RB1_MUT"])
@@ -159,8 +169,8 @@ trait[which(trait == 0)] <- "LCNEC (WT)"
 trait[which(trait == 1)] <- "LCNEC (RB1)"
 trait[which(is.na(trait))] <- "LCNEC (NA)"
 
-file.main <- c("LCNEC samples on top 145 DE genes", "RB1-loss differential effect; FDR < 0.05")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcnec_rb1_q0.05_145de", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=-1)
+file.main <- c("LCNEC samples on top 45 DE genes", "RB1-loss differential effect; P < 1.00E-04")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_lcnec_rb1_p1e-4_de45", size=6.5, file.main, "topleft", c("gray", "red", "dodgerblue"), NULL, flip.x=1, flip.y=1)
 
 # -----------------------------------------------------------------------------
 # Gene set enrichment analysis (GSEA) on LCNEC RB1/WT ranked gene lists

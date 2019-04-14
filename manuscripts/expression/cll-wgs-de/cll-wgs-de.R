@@ -38,28 +38,23 @@ samples$RT <- as.factor(samples$RT)
 ## Expression level (07/04/19)
 wd.tpm    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.tpm.data  <- file.path(wd.tpm, "data")
-#load(file.path(wd.tpm.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
-#detected <- rownames(tpm.gene)
-# length(detected)
-# [1] 34908
 load(file.path(wd.tpm.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 expressed <- rownames(tpm.gene)
 # > length(expressed)
 # [1] 18502
 
 ## Read depth (07/04/19)
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p100.RData")))
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # > dim(tpm.gene.log2)
-# [1] 28364    62
+# [1] 32974    62
+# [1] 28364    62   ## min_reads=30, min_prop=1.00
 
-#overlaps <- intersect(rownames(tpm.gene.log2), detected)
-# > length(overlaps)
-# [1] 28364
 overlaps <- intersect(rownames(tpm.gene.log2), expressed)
 # > length(overlaps)
-# [1] 16784
+# [1] 18163
+# [1] 16784   ## min_reads=30, min_prop=1.00
 tpm.gene.log2 <- tpm.gene.log2[overlaps,]
 
 # -----------------------------------------------------------------------------
@@ -71,8 +66,8 @@ tpm.gene.log2 <- tpm.gene.log2[overlaps,]
 ## FDR : Q/BH
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
 argv      <- data.frame(predictor="RT", predictor.wt=-1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r30p100_rt_wilcox_q_n62")
-#file.name <- paste0("de_", base, "_tpm-gene-r30p100-r5p47_rt_wilcox_q_n62")
+#file.name <- paste0("de_", base, "_tpm-gene-r30p100_rt_wilcox_q_n62")
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n62")
 file.main <- paste0("RT (n=29) vs WT (n=33) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
@@ -96,21 +91,22 @@ fdrToP <- function(fdr, de) {
    return(max(de.sig$P))
 }
 
-plotVolcano <- function(de, fdr, genes, file.de, file.main) {
-   pvalue <- fdrToP(fdr, de)
-   de.sig <- subset(de, P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$P)
+plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
+   #pvalue <- fdrToP(fdr, de)
+   de.sig <- subset(de, FISHERS_P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$FISHERS_P)
  
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   #xmax <- 1
+   de$log10P <- -log10(de$FISHERS_P)
+   #xmax <- max(de$LOG2_FC)
+   xmax <- 1
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="CLL T29/T33 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
-
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="CLL T29/T33 log2 fold change", ylab="-log10(Fishers' combined p-value)", col="darkgray", main=file.main[1], xaxt="n")
+   axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1))
+   
    abline(h=c(-log10(pvalue)), lty=5)
-   text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, "FDR=0.013", cex=0.85)
+   #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, "FDR=0.002", cex=0.85)
    #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
@@ -139,15 +135,15 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
       } else
          print(genes[g])
    }
-   
-   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
+
+   mtext(file.main[2], cex=1.2, line=0.3)
    legend("topright", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "Differential read depth between CLL T29 and T33"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r30p100_cll_rt_q0.013")
+plot.main <- "CLL and SCLC combined differential read depth analyses"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_cll_rt_fishers_p1e4")
 
 ## Chr2
 genes <- readTable(paste0(plot.de, "_chr2.tab"), header=T, rownames=F, sep="\t")
@@ -155,9 +151,9 @@ rownames(genes) <- genes$GENE
 genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
 
 file.main <- c(plot.main, "chr2:74.3-85.9Mb")
-#file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
-file.de <- paste0(plot.de, "_chr2.pdf")
-plotVolcano(de.tpm.gene, 0.013, genes, file.de, file.main)
+file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
+#file.de <- paste0(plot.de, "_chr2.pdf")
+plotVolcano(de.tpm.gene, 0.0001, genes, file.de, file.main)
 
 ## Natural killer cell receptor phenotypes
 genes <- readTable(paste0(plot.de, "_nk.tab"), header=T, rownames=F, sep="\t")
@@ -165,16 +161,30 @@ rownames(genes) <- genes$GENE
 genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
 
 file.main <- c(plot.main, "Natural killer cell receptors")
-#file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
-file.de <- paste0(plot.de, "_nk.pdf")
-plotVolcano(de.tpm.gene, 0.013, genes, file.de, file.main)
+file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
+#file.de <- paste0(plot.de, "_nk.pdf")
+plotVolcano(de.tpm.gene, 0.0001, genes, file.de, file.main)
+
+##
+plot.main <- "CLL and SCLC combined differential read depth analyses"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_cll_rt_fishers_p1e6")
+
+## EEF1A1
+genes <- readTable(paste0(plot.de, "_EEF1A1.tab"), header=T, rownames=F, sep="\t")
+rownames(genes) <- genes$GENE
+genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
+
+file.main <- c(plot.main, "")
+file.de <- paste0(plot.de, "_EEF1A1_log2FC1.pdf")
+#file.de <- paste0(plot.de, "_EEF1A1.pdf")
+plotVolcano(de.tpm.gene, 0.000001, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Gene set enrichment analysis (GSEA) on LCNEC RB1/WT ranked gene lists
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_cll_tpm-gene-r30p100_rt_wilcox_q_n62")
+file.name <- paste0("de_cll_tpm-gene-r30p47-r5p47_rt_wilcox_q_n62")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 
@@ -194,10 +204,46 @@ periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
 writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
 
+# -----------------------------------------------------------------------------
+# Test
+# Last Modified: 12/04/19
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-wgs-de/data/de_cll_tpm-gene-r30p47-r5p47_rt_wilcox_q_n62.RData")
+de.tpm.gene.cll <- de.tpm.gene
 
+load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-wgs-de/data/de_sclc_tpm-gene-r30p47-r5p47_rt_wilcox_q_n77.RData")
+de.tpm.gene.sclc <- de.tpm.gene
 
+de.tpm.gene.cll.down  <- subset(de.tpm.gene.cll, LOG2_FC < 0)
+de.tpm.gene.sclc.down <- subset(de.tpm.gene.sclc, LOG2_FC < 0)
+de.tpm.gene.cll.down.p  <- subset(de.tpm.gene.cll.down, P <= 0.001)
+de.tpm.gene.sclc.down.p <- subset(de.tpm.gene.sclc.down, P <= 0.001)
+intersect(rownames(de.tpm.gene.cll.down.p), rownames(de.tpm.gene.sclc.down.p))
+# [1] "ENSG00000121351" "ENSG00000139116" "ENSG00000139218" "ENSG00000156508"
+# > de.tpm.gene.cll.down.p[c("ENSG00000121351", "ENSG00000139116", "ENSG00000139218", "ENSG00000156508"),]
+# ensembl_gene_id external_gene_name chromosome_name strand start_position end_position   gene_biotype            P        FDR    RT_WT       RT     LOG2_FC
+# ENSG00000121351 ENSG00000121351               IAPP           chr12      1       21507893     21532912 protein_coding 5.463067e-05 0.01285717 5.015109 4.786841 -0.22826819
+# ENSG00000139116 ENSG00000139116             KIF21A           chr12     -1       39687030     39837192 protein_coding 1.653357e-04 0.01320173 6.432993 6.103671 -0.32932176
+# ENSG00000139218 ENSG00000139218             SCAF11           chr12     -1       46312914     46385903 protein_coding 2.312490e-04 0.01320173 7.805038 7.742476 -0.06256168
+# ENSG00000156508 ENSG00000156508             EEF1A1            chr6     -1       74225473     74233520 protein_coding 6.738102e-04 0.01320173 5.926873 5.836459 -0.09041426
 
+# -----------------------------------------------------------------------------
+# Test
+# Last Modified: 12/04/19
+# -----------------------------------------------------------------------------
+overlaps <- intersect(rownames(de.tpm.gene.cll), rownames(de.tpm.gene.sclc))
+de.tpm.gene.cll.o  <- de.tpm.gene.cll[overlaps,]
+de.tpm.gene.sclc.o <- de.tpm.gene.sclc[overlaps,]
 
+de.tpm.gene.cll.o$FISHERS_P <- fishers(de.tpm.gene.cll.o$P, de.tpm.gene.sclc.o$P)
+library(qvalue)
+de.tpm.gene.cll.o$FISHERS_FDR <- qvalue(de.tpm.gene.cll.o$FISHERS_P)$qvalue
+
+de.tpm.gene.cll.o <- de.tpm.gene.cll.o[order(de.tpm.gene.cll.o$FISHERS_P),]
+de.tpm.gene <- de.tpm.gene.cll.o
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n62_fishers")
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 
 
