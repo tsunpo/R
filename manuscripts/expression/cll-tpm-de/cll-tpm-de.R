@@ -25,15 +25,17 @@ base <- tolower(BASE)
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
+wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=F, sep="\t")
-samples <- subset(samples, RT != 0)
-#samples <- subset(samples, CONSIST == T)
+samples.wgs <- readTable(file.path(wd.wgs, "cll_wgs_n96.txt"), header=T, rownames=T, sep="\t")
+samples     <- readTable(file.path(wd.rna, "cll_rna_n71.txt"), header=T, rownames=T, sep="\t")
+overlaps <- intersect(samples$ID_WGS, samples.wgs$SAMPLE_ID)
+samples$RT <- samples.wgs[overlaps,]$RT
 samples$RT <- as.factor(samples$RT)
 rownames(samples) <- samples$ID2_RNA
 
@@ -41,23 +43,19 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene <- tpm.gene[, samples$ID2_RNA]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # > dim(tpm.gene.log2)
-# [1] 18502    20
-# > dim(tpm.gene.log2)
-# [1] 18502    40
-# > dim(tpm.gene.log2)
-# [1] 18502    47
+# [1] 18502    71
 
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
+# Wilcoxon rank sum test (non-parametric; 35 RT vs 36 WT)
 # Last Modified: 22/05/18
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
-argv      <- data.frame(predictor="RT", predictor.wt=-1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n20")
-file.main <- paste0("RT (n=14) vs WT (n=26) in ", BASE)
+argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n71")
+file.main <- paste0("RT (n=35) vs WT (n=36) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -143,7 +141,7 @@ plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n40")
+file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n71")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 

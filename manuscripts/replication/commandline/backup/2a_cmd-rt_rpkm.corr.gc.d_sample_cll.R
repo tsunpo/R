@@ -7,7 +7,6 @@ BASE0 <- args[4]   ## Normal type
 PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
 LIST0 <- args[6]
 SAMPLE <- args[7]
-SAMPLE <- gsub("-", ".", SAMPLE)
 base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
@@ -30,7 +29,7 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Replication timing
-# Last Modified: 21/04/19; 31/08/18; 13/06/17
+# Last Modified: 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
 wd1.ngs    <- file.path(wd, BASE1, "ngs/WGS")
@@ -44,54 +43,51 @@ wd1.rt.data   <- file.path(wd1.rt, "data")
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
 samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
-#samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
-#samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
+samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
+samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
 n1 <- length(samples1)
-#n0 <- length(samples0)
+n0 <- length(samples0)
 #if (BSTRP != 0) {
 #   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
 #   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
 #}
 
-rpkms.T.chr.d.sample.T.all <- NULL
-rpkms.chr.rt.lcl.RT.all <- NULL
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
-for (c in 20:1) {
+for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    
-   ## Read depth
-   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)[, c("BED", samples1)]   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
-
-   ## Individual read depth
-   rpkms.T.chr.d.sample <- rpkms.T.chr.d[,c("BED", SAMPLE)]
-   colnames(rpkms.T.chr.d.sample) <- c("BED", "T")
-   rpkms.T.chr.d.sample$T <- log2(rpkms.T.chr.d.sample$T + 0.01)
-   rpkms.T.chr.d.sample.T <- setSlope(rpkms.T.chr.d.sample, bed.gc.chr, "T")
-
+   ## Individual replication timing
+   rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.N.chr.d <- readTable(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
+   
+   rpkms.chr.rt.sample <- toTable(0, 3, length(overlaps), c("BED", "T", "N"))
+   rownames(rpkms.chr.rt.sample) <- overlaps
+   rpkms.chr.rt.sample$BED <- overlaps
+   rpkms.chr.rt.sample$T <- rpkms.T.chr.d[overlaps, SAMPLE]
+   rpkms.chr.rt.sample$N <- rpkms.N.chr.d[overlaps, SAMPLE]
+   rpkms.chr.rt.sample <- setScaledRT(rpkms.chr.rt.sample, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)   ## Be careful!! flipRT=T in CLL
+   rpkms.chr.rt.sample.RT <- setSlope(rpkms.chr.rt.sample, bed.gc.chr, "RT")
+   
    ## Replication timing
-   rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt.lcl_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   #rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/SCLC/analysis/replication/sclc-wgs-rt/data/sclc_rpkm.corr.gc.d.rt_", chr, "_SCLC-SCLC_n101-92.txt.gz"), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", "N", "-", "T", "_n", 96, "-", 96, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
+   rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
+   
+   #rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt-lcl/data/lcl_rpkm.corr.gc.d.rt.lcl_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/SCLC/analysis/replication/sclc-wgs-rt/data/sclc_rpkm.corr.gc.d.rt_", chr, "_SCLC-SCLC_n101-92.txt.gz"), header=T, rownames=T, sep="\t")
    rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
    rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
    
    ## Keep 1kb slopes based on overlapping windows
-   overlaps <- intersect(rpkms.T.chr.d.sample.T$BED, rpkms.chr.rt.lcl.RT$BED)
-   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.T.chr.d.sample.T[overlaps,]$SLOPE)
+   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   overlaps <- intersect(overlaps, rpkms.chr.rt.sample.RT$BED)
+   #rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]
+   #rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]
+   #rpkms.chr.rt.sample.RT <- rpkms.chr.rt.sample.RT[overlaps,]
    
-   ##
-   if (is.null(rpkms.T.chr.d.sample.T.all)) {
-      rpkms.T.chr.d.sample.T.all <- rpkms.T.chr.d.sample.T[overlaps,]
-   } else {
-      rpkms.T.chr.d.sample.T.all <- rbind(rpkms.T.chr.d.sample.T.all, rpkms.T.chr.d.sample.T[overlaps,])
-   }
-   
-   if (is.null(rpkms.chr.rt.lcl.RT.all)) {
-      rpkms.chr.rt.lcl.RT.all <- rpkms.chr.rt.lcl.RT[overlaps,]
-   } else {
-      rpkms.chr.rt.lcl.RT.all <- rbind(rpkms.chr.rt.lcl.RT.all, rpkms.chr.rt.lcl.RT[overlaps,])
-   }
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rt.sample.RT[overlaps,]$SLOPE)
 }
-cor <- getCor(rpkms.chr.rt.lcl.RT.all$SLOPE, rpkms.T.chr.d.sample.T.all$SLOPE)
-save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson.RData")))
+save(cors, file=file.path(wd1.rt.data, "samples", paste0("rt-vs-rt_", SAMPLE, "-vs-sclc_cors-pearson.RData")))

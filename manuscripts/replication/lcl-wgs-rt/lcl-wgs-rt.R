@@ -74,11 +74,28 @@ for (c in 1:22) {
  
    ## RD & RT 
    main.text <- paste0(BASE1, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
+  
    file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
    #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(), 7.5, 9.25, 3, 3)
    plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
    plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
    plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
+   
+   ## EEF1A1 (chr6)
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_EEF1A1"))
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74225473, 74233520), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 69225473, 79233520, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74225473, 74233520), 7.5, 9.25, 3, 3)
+   
+   ## SLFN12 (chr17)
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_SLFN12"))
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(33738079, 33760302), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 27738079, 38760302, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(33738079, 33760302), 7.5, 9.25, 3, 3)
+   
+   ## KLRC4 (chr12)
+   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_KLRC4"))
+   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(10559983, 10562356), 7.5, 9.25, 3, 3)
+   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 5559983, 15562356, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(10559983, 10562356), 7.5, 9.25, 3, 3)
+   
    
    
    ## KLRC3 (chr12)

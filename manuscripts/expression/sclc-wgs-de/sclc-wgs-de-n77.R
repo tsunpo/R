@@ -32,8 +32,15 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
-samples$SAMPLE_ID <- paste0(samples$SAMPLE_ID, "_T")
+samples <- readTable(file.path(wd.wgs, "sclc_wgs_n92-rt56.list"), header=F, rownames=T, sep="")
+samples.1 <- toTable(1, 2, length(samples), c("SAMPLE_ID", "RT"))
+samples.1$SAMPLE_ID <- paste0(samples, "_T")
+
+samples <- readTable(file.path(wd.wgs, "sclc_wgs_n92-wt21.list"), header=F, rownames=T, sep="")
+samples.0 <- toTable(0, 2, length(samples), c("SAMPLE_ID", "RT"))
+samples.0$SAMPLE_ID <- paste0(samples, "_T")   ## 11/04/19 Changed from "_N"
+
+samples <- rbind(samples.1, samples.0)
 rownames(samples) <- samples$SAMPLE_ID
 samples$RT <- as.factor(samples$RT)
 
@@ -49,11 +56,13 @@ load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p47.RData"
 tpm.gene <- tpm.gene[, rownames(samples)]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # > dim(tpm.gene.log2)
-# [1] 33357   101
+# [1] 33357   77
+# [1] 29898   77   ## min_reads=30, min_prop=1.00
 
 overlaps <- intersect(rownames(tpm.gene.log2), expressed)
 # > length(overlaps)
 # [1] 18917
+# [1] 18432   ## min_reads=30, min_prop=1.00
 tpm.gene.log2 <- tpm.gene.log2[overlaps,]
 
 # -----------------------------------------------------------------------------
@@ -65,8 +74,8 @@ tpm.gene.log2 <- tpm.gene.log2[overlaps,]
 ## FDR : Q/BH
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
 argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
-file.main <- paste0("RT (n=50) vs WT (n=51) in ", BASE)
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n77")
+file.main <- paste0("RT (n=56) vs WT (n=21) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -100,7 +109,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="SCLC M1/M0 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])#, xaxt="n")
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="SCLC T56/T21 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])#, xaxt="n")
    #axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1))
 
    abline(h=c(-log10(pvalue)), lty=5)
@@ -142,7 +151,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
 
 ##
 plot.main <- "Differential read depth between SCLC T29 and T33"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_sclc_rt_p1e-6")
+plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_sclc_rt_p0.001")
 
 ## Chr2
 genes <- readTable(paste0(plot.de, "_chr2.tab"), header=T, rownames=F, sep="\t")
@@ -169,7 +178,7 @@ plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main)
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_sclc_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
+file.name <- paste0("de_sclc_tpm-gene-r30p47-r5p47_rt_wilcox_q_n77")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 

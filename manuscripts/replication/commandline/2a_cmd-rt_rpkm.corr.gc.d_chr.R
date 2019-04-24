@@ -13,9 +13,9 @@ base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
 # =============================================================================
-# Name: 2a_cmd-rt_rpkm.corr.gc.d_bstrap.R (commandline mode)
+# Name: 2a_cmd-rt_rpkm.corr.gc.d_chr.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 22/10/18
+# Last Modified: 23/04/19; 22/10/18
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
@@ -31,11 +31,11 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Replication timing
-# Last Modified: 31/08/18; 13/06/17
+# Last Modified: 23/04/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
 wd1.ngs    <- file.path(wd, BASE1, "ngs/WGS")
-wd1.ngs.data <- file.path(wd1.ngs, "data") 
+wd1.ngs.data <- file.path(wd1.ngs, "data")
 wd0.ngs    <- file.path(wd, BASE0, "ngs/WGS")
 wd0.ngs.data <- file.path(wd0.ngs, "data")
 
@@ -48,10 +48,10 @@ wd0.rt.data   <- file.path(wd0.rt, "data")
 #if (BSTRP != 0)
 #   wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
 
-samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
-samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
-samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
-samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
+samples1 <- readTable(file.path(wd1.ngs, LIST1), header=T, rownames=T, sep="")
+samples1 <- subset(samples1, RT == 1)[,1]
+samples0 <- readTable(file.path(wd0.ngs, LIST0), header=T, rownames=T, sep="")
+samples0 <- subset(samples0, RT == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 

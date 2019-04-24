@@ -34,7 +34,16 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 
-samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
+samples <- readTable(file.path(wd.wgs, "sclc_wgs_n92-rt56.list"), header=F, rownames=T, sep="")
+samples.1 <- toTable(1, 2, length(samples), c("SAMPLE_ID", "RT"))
+samples.1$SAMPLE_ID <- samples
+
+samples <- readTable(file.path(wd.wgs, "sclc_wgs_n92-wt21.list"), header=F, rownames=T, sep="")
+samples.0 <- toTable(0, 2, length(samples), c("SAMPLE_ID", "RT"))
+samples.0$SAMPLE_ID <- samples
+
+samples <- rbind(samples.1, samples.0)
+rownames(samples) <- samples$SAMPLE_ID
 samples$RT <- as.factor(samples$RT)
 
 ##
@@ -42,9 +51,9 @@ samples.rna <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rowna
 overlaps <- intersect(rownames(samples.rna), rownames(samples))
 samples <- samples[overlaps,]
 # > length(which(samples$RT == 1))
-# [1] 36
+# [1] 44
 # > length(which(samples$RT == 0))
-# [1] 34
+# [1] 10
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]
@@ -58,8 +67,8 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 ## FDR : Q/BH
 ## D.E.: RT (44) vs WT (10) as factor
 argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n70")
-file.main <- paste0("RT (n=36) vs WT (n=34) in ", BASE)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n54")
+file.main <- paste0("RT (n=44) vs WT (n=10) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -75,7 +84,7 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_sclc_tpm-gene-r5p47_rt_wilcox_q_n70")
+file.name <- paste0("de_sclc_tpm-gene-r5p47_rt_wilcox_q_n54")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 

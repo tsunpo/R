@@ -2,7 +2,7 @@
 # Manuscript   : 
 # Chapter I    : 
 # Figure(s)    : 
-# Name         : manuscripts/expression/cll-wgs-de.R
+# Name         : manuscripts/expression/cll-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 15/03/19
 # =============================================================================
@@ -19,42 +19,33 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-BASE <- "SCLC"
+BASE <- "CLL"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-wgs-de"))
+wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
-samples$SAMPLE_ID <- paste0(samples$SAMPLE_ID, "_T")
-rownames(samples) <- samples$SAMPLE_ID
+samples <- readTable(file.path(wd.rna, "cll_rna_n26.txt"), header=T, rownames=F, sep="\t")
+samples <- subset(samples, RT != 0)
+#samples <- subset(samples, CONSIST == T)
 samples$RT <- as.factor(samples$RT)
+rownames(samples) <- samples$ID2_RNA
 
-## Expression level (11/04/19)
-wd.tpm      <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
-wd.tpm.data <- file.path(wd.tpm, "data")
-load(file.path(wd.tpm.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-expressed <- rownames(tpm.gene)
-# > length(expressed)
-# [1] 19131
-
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p47.RData")))
-tpm.gene <- tpm.gene[, rownames(samples)]
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+tpm.gene <- tpm.gene[, samples$ID2_RNA]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # > dim(tpm.gene.log2)
-# [1] 33357   101
-
-overlaps <- intersect(rownames(tpm.gene.log2), expressed)
-# > length(overlaps)
-# [1] 18917
-tpm.gene.log2 <- tpm.gene.log2[overlaps,]
+# [1] 18502    20
+# > dim(tpm.gene.log2)
+# [1] 18502    40
+# > dim(tpm.gene.log2)
+# [1] 18502    47
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
@@ -64,9 +55,9 @@ tpm.gene.log2 <- tpm.gene.log2[overlaps,]
 ##       Student's/t.test
 ## FDR : Q/BH
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
-argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
-file.main <- paste0("RT (n=50) vs WT (n=51) in ", BASE)
+argv      <- data.frame(predictor="RT", predictor.wt=-1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n20")
+file.main <- paste0("RT (n=14) vs WT (n=26) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -89,23 +80,20 @@ fdrToP <- function(fdr, de) {
    return(max(de.sig$P))
 }
 
-plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
-   #pvalue <- fdrToP(fdr, de)
+plotVolcano <- function(de, fdr, genes, file.de, file.main) {
+   pvalue <- fdrToP(fdr, de)
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
-   #xmax <- 1
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="SCLC M1/M0 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])#, xaxt="n")
-   #axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1))
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="CLL T20/T27 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(pvalue)), lty=5)
-   #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
-   text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, "FDR=0.075", cex=0.85)
+   text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.02", cex=0.85)
    #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
@@ -141,35 +129,21 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
 }
 
 ##
-plot.main <- "Differential read depth between SCLC T29 and T33"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_sclc_rt_p1e-6")
-
-## Chr2
-genes <- readTable(paste0(plot.de, "_chr2.tab"), header=T, rownames=F, sep="\t")
-rownames(genes) <- genes$GENE
-genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
-
-file.main <- c(plot.main, "chr2:74.3-85.9Mb")
-#file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
-file.de <- paste0(plot.de, "_chr2.pdf")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main)
+plot.main <- "Differential expression between CLL T29 and T33"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r50p100_cll_rt_q0.02")
 
 ## Natural killer cell receptor phenotypes
 genes <- readTable(paste0(plot.de, "_nk.tab"), header=T, rownames=F, sep="\t")
-rownames(genes) <- genes$GENE
-genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
-
 file.main <- c(plot.main, "Natural killer cell receptors")
-#file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
 file.de <- paste0(plot.de, "_nk.pdf")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main)
+plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Gene set enrichment analysis (GSEA) on LCNEC RB1/WT ranked gene lists
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_sclc_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
+file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n40")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 
