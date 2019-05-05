@@ -209,6 +209,38 @@ writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
 
 # -----------------------------------------------------------------------------
+# Test 2
+# Last Modified: 24/04/19; 12/04/19
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-wgs-de/data/de_cll_tpm-gene-r30p47-r5p47_rt_wilcox_q_n93.RData")
+de.tpm.gene.wgs.cll <- de.tpm.gene
+load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-tpm-de/data/de_cll_tpm-gene-r5p47_rt_wilcox_q_n71.RData")
+de.tpm.gene.cll <- de.tpm.gene[rownames(de.tpm.gene.wgs.cll),]
+
+idx <- which(de.tpm.gene.wgs.cll$LOG2_FC * de.tpm.gene.cll$LOG2_FC > 0)
+
+de.tpm.gene.wgs.rna.cll <- de.tpm.gene.wgs.cll[idx,]
+
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n93-n71")
+save(de.tpm.gene.wgs.rna.cll, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene.wgs.rna.cll, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+writeRNKformat(de.tpm.gene.wgs.rna.cll, wd.de.gsea, file.name)
+
+de.tpm.gene.rna.wgs.cll <- de.tpm.gene.cll[rownames(de.tpm.gene.wgs.rna.cll),]
+de.tpm.gene.rna.wgs.cll <- de.tpm.gene.rna.wgs.cll[order(de.tpm.gene.rna.wgs.cll$P),]
+
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n71-n93")
+writeTable(de.tpm.gene.rna.wgs.cll, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+writeRNKformat(de.tpm.gene.rna.wgs.cll, wd.de.gsea, file.name)
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # Test
 # Last Modified: 24/04/19; 12/04/19
 # -----------------------------------------------------------------------------

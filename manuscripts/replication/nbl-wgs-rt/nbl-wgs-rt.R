@@ -198,44 +198,11 @@ plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
 # Last Modified: 06/03/19
 # -----------------------------------------------------------------------------
-plotSAMPLEvsRTALL <- function(cors.samples, samples1, file.name, main.text=NA, ylab.text=NA, xlab.text=NA, ymin=NA, ymax=NA, line0=NA) {
-   cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
-   n <- length(samples1)
-   cnt <- 0
-   for (c in 1:22) {
-      start <- n * cnt + 1
-      end   <- n * (cnt + 1)
-      cors.samples.plot[start:end, 1] <- c
-      cors.samples.plot[start:end, 2] <- as.numeric(cors.samples[c, samples1])
-  
-      cnt <- cnt + 1
-   }
- 
-   png(paste0(file.name, "_boxplot.png"), height=5, width=5, units="in", res=300)
-   boxplot(cor ~ chr, data=cors.samples.plot, ylab="Pearson's r (n=56)", outline=T, xaxt="n")
-   axis(side=1, at=seq(2, 22, by=2))
-   dev.off()
- 
-   png(paste0(file.name, "_scatter.png"), height=5, width=5, units="in", res=300)
-   plot(cors.samples$mean, log(cors.samples$cv2), ylab="log(cv2)", xlab="mean")
-   text(cors.samples$mean[2], log(cors.samples$cv2[2]), "chr2", cex=1.2, pos=3)
-   text(cors.samples$mean[4], log(cors.samples$cv2[4]), "chr4", cex=1.2, pos=3)
-   dev.off()
- 
-   png(paste0(file.name, "_var.png"), height=5, width=5, units="in", res=300)
-   #plot(cors.samples$var ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
-   plot(cors.samples$var ~ cors.samples$chr, ylab="var", xlab="Chromosome", col="black", xaxt="n", pch=19)
-   lines(cors.samples$var, y=NULL, type="l", lwd=3)
-   axis(side=1, at=seq(2, 22, by=2))
-   dev.off()
-}
-
-##
 cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
 cors.samples$chr <- 1:22
 for (s in 1:length(samples1)) {
    sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rt-vs-rt_", sample, "-vs-lcl_cors-pearson.RData")))
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_cors-pearson.RData")))
  
    cors.samples[, sample] <- cors$cor
 }
@@ -245,15 +212,106 @@ for (c in 1:22) {
    cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
    cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
 }
-save(cors.samples, file=file.path(wd.rt.data, paste0("rt-vs-rt_samples-vs-lcl_cors-pearson.RData")))
+save(cors.samples, file=file.path(wd.rt.data, paste0("rd-vs-rt_samples-vs-lcl_cors-pearson.RData")))
 
-ylab.text <- "Pearson's r (n=96)"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SAMPLES-vs-LCL_pearson")
-main.text <- paste0("NBL RT vs. LCL RT")   ## TO-DO
-ymin <- -0.2
-ymax <- 0.85
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=T)
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SAMPLES-vs-LCL_pearson")
+main.text <- c("NBL read depth profiles (n=56) vs. LCL RT", "NBL RD (T) vs. LCL RT")   ## TO-DO
+ymin <- -0.6920546
+ymax <- 0.6621544
+plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax, line0=T)
+
+# -----------------------------------------------------------------------------
+# Divide tumour samples into Q4
+# Last Modified: 06/03/19
+# -----------------------------------------------------------------------------
+cors.all <- toTable(0, 4, length(samples1), c("SAMPLE_ID", "COR", "Q4", "RT"))
+rownames(cors.all) <- samples1
+cors.all$SAMPLE_ID <- samples1
+for (s in 1:length(samples1)) {
+   sample <- samples1[s]
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_cors-pearson.RData")))
+ 
+   cors.all$COR[s] <- cor
+}
+
+q <- quantile(as.numeric(cors.all$COR))
+# 0%        25%        50%        75%       100% 
+# -0.2669331 -0.2217933 -0.2002513 -0.1150665  0.4184586 
+
+samples.q4 <- list()
+samples.q4[[4]] <- rownames(subset(cors.all, COR > as.numeric(q[4])))
+samples.q4[[3]] <- rownames(subset(subset(cors.all, COR > as.numeric(q[3])), COR <= as.numeric(q[4])))
+samples.q4[[2]] <- rownames(subset(subset(cors.all, COR > as.numeric(q[2])), COR <= as.numeric(q[3])))
+samples.q4[[1]] <- rownames(subset(cors.all, COR <= as.numeric(q[2])))
+
+cors.all$Q4[which(cors.all$SAMPLE_ID %in% samples.q4[[4]])] <- 4
+cors.all$Q4[which(cors.all$SAMPLE_ID %in% samples.q4[[3]])] <- 3
+cors.all$Q4[which(cors.all$SAMPLE_ID %in% samples.q4[[2]])] <- 2
+cors.all$Q4[which(cors.all$SAMPLE_ID %in% samples.q4[[1]])] <- 1
+
+cors.all$RT[which(cors.all$Q4 %in% c(3, 4))] <- 1
+cors.all$RT[which(cors.all$Q4 %in% c(1, 2))] <- 0
+writeTable(cors.all, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rownames=F, sep="\t")
+
+cors.all <- subset(cors.all, Q4 %in% c(4,1))
+writeTable(cors.all, file.path(wd.ngs, "nbl_wgs_n28.txt"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 21/04/19
+# -----------------------------------------------------------------------------
+samples  <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
+
+trait <- as.numeric(samples$Q4)
+trait[which(trait == 4)] <- "Q4 (-0.12 < r < 0.42)"
+trait[which(trait == 3)] <- "Q3 (-0.20 < r < -0.12)"
+trait[which(trait == 2)] <- "Q2 (-0.22 < r < -0.20)"
+trait[which(trait == 1)] <- "Q1 (-0.27 < r < -0.22)"
+
+rpkms.T.chr.d.all <- NA
+## Copy from 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
+for (c in 22:1) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## Read depth
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
+   #rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0) 
+   #overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
+ 
+   ##
+   test <- rpkms.T.chr.d[, samples$SAMPLE_ID]
+   pca.de <- getPCA(t(test))
+ 
+   file.main <- c(paste0("NBL tumours on chr", c), "")
+   plotPCA(1, 2, pca.de, trait, wd.rt.plots, paste0("pca_nbl_T_chr", c), size=6.5, file.main, "topleft", c("blue", "skyblue3", "lightcoral", "red"), NULL, flip.x=1, flip.y=1)
+   save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl_T_chr", c, ".RData")))
+ 
+   if (is.na(rpkms.T.chr.d.all)) {
+      rpkms.T.chr.d.all <- test
+   } else
+      rpkms.T.chr.d.all <- rbind(rpkms.T.chr.d.all, test)
+}
+
+##
+test <- rpkms.T.chr.d.all
+pca.de <- getPCA(t(test))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl_T_chrs.RData")))
+
+file.main <- c("NBL read depth profiles (n=56)", "")
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_nbl_T_chrs", size=6, file.main, "topleft", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title="Overall corr. with LCL RT", decreasing=T)
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # 

@@ -54,15 +54,12 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 # dropping unused factor levels
 # ......................................................
 # normalizing est_counts
-# 117096 targets passed the filter
+# 117847 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-# 36382 genes passed the filter
+# 36218 genes passed the filter
 # summarizing bootstraps
-# .............................................................................................
-# 85926 targets passed the filter   ## min_reads=30, min_prop=1.00
-# 31589 genes passed the filter
 
 ## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## See line 30 in guide-to-the/hg19.R
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
@@ -81,8 +78,7 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p47.RData")))
 # > nrow(tpm.gene)
-# [1] 33357
-# [1] 29898   ## min_reads=30, min_prop=1.00
+# [1] 33180
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)

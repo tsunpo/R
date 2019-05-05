@@ -53,12 +53,6 @@ for (c in 1:22) {
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
 
-   ## Colours (was "lightcoral", "skyblue3")
-   ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-   adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
-   adjustcolor.blue <- adjustcolor("skyblue3", alpha.f=0.3)
-   adjustcolor.gray <- adjustcolor("gray", alpha.f=0.3)
-   
    ## RD 
    ylab.text <- "Read depth"
    file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "_n", n1))
@@ -74,7 +68,7 @@ for (c in 1:22) {
    plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), "png", 8, 9.25)
 
    ## RD & RT 
-   main.text <- paste0(BASE1, " T/N read depth ratio between mate-pair (T; n=", n1, ") and pair-end (N; n=", n0, ") libraries")   
+   main.text <- paste0(BASE1, " T/N read depth ratio between mate-pair (n=", n1, ") and pair-end (n=", n0, ") libraries")   
    file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
    #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(), 8, 9.25, 3, 3)
    plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Mate-pair (T)", "Pair-end (N)"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(74353001, 85951001), 8, 9.25, 3, 3)
@@ -103,7 +97,7 @@ for (c in 1:22) {
    rpkms.chr.rt.N  <- setSlope(rpkms.chr.rt, bed.gc.chr, "N")
    rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
    
-   main.text <- paste0("SCLC RT vs. Read depths (", "Chr", c, ")")
+   main.text <- paste0("SCLC RT (T/N) vs. Read depths (", "Chr", c, ")")
    xlab.text <- "SCLC RT (T/N)"
    ylab.text <- "SCLC read depth"
    file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RD_SCLC_pearson_chr",c))
@@ -111,7 +105,7 @@ for (c in 1:22) {
    xmax <- max(rpkms.chr.rt.RT$SLOPE)
    ymin <- min(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
    ymax <- max(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
-   plotRD2vsRT(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T – Mate-pair", "N – Pair-end"), xmin, xmax, ymin, ymax)
+   plotRD2vsRT(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("Mate-pair T", "Pair-end N"), xmin, xmax, ymin, ymax)
 }
 
 # -----------------------------------------------------------------------------

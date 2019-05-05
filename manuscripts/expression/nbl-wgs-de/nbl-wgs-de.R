@@ -19,7 +19,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-BASE <- "SCLC"
+BASE <- "NBL"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
@@ -32,9 +32,7 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
-samples$SAMPLE_ID <- paste0(samples$SAMPLE_ID, "_T")
-rownames(samples) <- samples$SAMPLE_ID
+samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
 samples$RT <- as.factor(samples$RT)
 
 ## Expression level (11/04/19)
@@ -43,30 +41,30 @@ wd.tpm.data <- file.path(wd.tpm, "data")
 load(file.path(wd.tpm.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 expressed <- rownames(tpm.gene)
 # > length(expressed)
-# [1] 19131
+# [1] 18764
 
 load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # > dim(tpm.gene.log2)
-# [1] 33357   101
+# [1] 33180    56
 
 overlaps <- intersect(rownames(tpm.gene.log2), expressed)
 # > length(overlaps)
-# [1] 18917
+# [1] 18578
 tpm.gene.log2 <- tpm.gene.log2[overlaps,]
 
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
+# Wilcoxon rank sum test (non-parametric; n=56, 28 RT vs 28 WT)
 # Last Modified: 22/05/18
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
-## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
+## DE  : RT (1) vs WT (0) as factor
 argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
-file.main <- paste0("RT (n=50) vs WT (n=51) in ", BASE)
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n56")
+file.main <- paste0("RT (n=28) vs WT (n=28) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -169,7 +167,7 @@ plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main)
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_sclc_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
+file.name <- paste0("de_nbl_tpm-gene-r30p47-r5p47_rt_wilcox_q_n56")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 
@@ -188,6 +186,33 @@ periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
 
 writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
+
+# -----------------------------------------------------------------------------
+# Test 2
+# Last Modified: 24/04/19; 12/04/19
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-wgs-de/data/de_nbl_tpm-gene-r30p47-r5p47_rt_wilcox_q_n56.RData")
+de.tpm.gene.wgs.nbl <- de.tpm.gene
+load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/de_nbl_tpm-gene-r5p47_rt_wilcox_q_n53.RData")
+de.tpm.gene.nbl <- de.tpm.gene[rownames(de.tpm.gene.wgs.nbl),]
+
+idx <- which(de.tpm.gene.wgs.nbl$LOG2_FC * de.tpm.gene.nbl$LOG2_FC > 0)
+
+de.tpm.gene.wgs.rna.nbl <- de.tpm.gene.wgs.nbl[idx,]
+
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n56-n53")
+save(de.tpm.gene.wgs.rna.nbl, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene.wgs.rna.nbl, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+writeRNKformat(de.tpm.gene.wgs.rna.nbl, wd.de.gsea, file.name)
+
+de.tpm.gene.rna.wgs.nbl <- de.tpm.gene.nbl[rownames(de.tpm.gene.wgs.rna.nbl),]
+de.tpm.gene.rna.wgs.nbl <- de.tpm.gene.rna.wgs.nbl[order(de.tpm.gene.rna.wgs.nbl$P),]
+
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n53-n56")
+writeTable(de.tpm.gene.rna.wgs.nbl, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+writeRNKformat(de.tpm.gene.rna.wgs.nbl, wd.de.gsea, file.name)
+
+
 
 
 

@@ -88,57 +88,41 @@ for (c in 1:22) {
    #plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(74353001, 85951001), 7.75, 9, 3, 3)
    #plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(74353001, 85951001), 7.75, 9, 3, 3)
    
-   ## IL33 (chr9)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_IL33"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(6215805,	6257983), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 1215805,	11257983, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(6215805,	6257983), 7.75, 9, 3, 3)
-   
-   ## XRCC6 (chr22)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_XRCC6"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(42017123,	42060044), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 37017123,	47060044, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(42017123,	42060044), 7.75, 9, 3, 3)
-   
-   ## AHR (chr7)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_AHR"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(17338246,	17385776), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 12338246,	22385776, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(17338246,	17385776), 7.75, 9, 3, 3)
-   
-   
-   
-   
-   
-   ## EEF1A1 (chr6)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_EEF1A1"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(74225473, 74233520), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 69225473, 79233520, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(74225473, 74233520), 7.75, 9, 3, 3)
-   
-   ## SLFN12 (chr17)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_SLFN12"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(33738079, 33760302), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 27738079, 38760302, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(33738079, 33760302), 7.75, 9, 3, 3)
-   
-
- 
-   
-   
-   ## MANEAL (chr1)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_MANEAL"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(38259474, 38266809), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 33259474, 43266809, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(38259474, 38266809), 7.75, 9, 3, 3)
-   
-   ## chr12
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_chr12"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(21507893, 21532912, 39687030, 39837192, 46312914, 46385903), 7.75, 9, 3, 3)
-   
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_chr12"))
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 33259474, 43266809, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(21507893, 21532912, 39687030, 39837192, 46312914, 46385903), 7.75, 9, 3, 3)
-   
-   
    ## RT
    ylab.text <- "Replication timing"
    file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
    main.text <- paste0(BASE1, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") cells")
    #plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", 3, 3)
+}
+
+# -----------------------------------------------------------------------------
+# Plot RT for individual genes (see ReplicationTiming.R)
+# Last Modified: 26/04/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
+# -----------------------------------------------------------------------------
+genes <- c("ERCC6L2", "GNAQ")
+
+plotWholeChr <- T
+ranges <- c(50000, 500000, 5000000)
+for (g in 1:length(genes)) {
+   gene  <- getGene(genes[g])
+   chr   <- gene$chromosome_name
+   start <- gene$start_position
+   end   <- gene$end_position
+ 
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+ 
+   ## RD & RT 
+   main.text <- paste0(BASE1, "T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") cells")   
+ 
+   file.name <- file.path(wd.rt.plots, "genes", paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
+   if (plotWholeChr)
+      plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
+ 
+   for (r in 1:length(ranges))
+      plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("T", "N"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)
 }
 
 # -----------------------------------------------------------------------------
@@ -270,7 +254,7 @@ for (c in 1:22) {
 save(cors.samples, file=file.path(wd.rt.data, paste0("rd-vs-rt_samples-vs-lcl_cors-pearson.RData")))
 
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SAMPLES-vs-LCL_pearson")
-main.text <- c("SCLC (n=101) RD (T) vs. LCL RT", "SCLC RD (T) vs. LCL RT")   ## TO-DO
+main.text <- c("SCLC read depth profiles (n=101) vs. LCL RT", "SCLC RD (T) vs. LCL RT")   ## TO-DO
 ymin <- -0.6920546
 ymax <- 0.6621544
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax, line0=T)
@@ -351,11 +335,45 @@ for (c in 22:1) {
 ##
 test <- rpkms.T.chr.d.all
 pca.de <- getPCA(t(test))
-
-file.main <- c("SCLC tumours on all chromosomes", "")
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_sclc_T_chrs", size=6.5, file.main, "bottomright", c("blue", "skyblue3", "lightcoral", "red"), NULL, flip.x=1, flip.y=1)
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_T_chrs.RData")))
 
+file.main <- c("SCLC read depth profiles (n=101)", "")
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_sclc_T_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title="Overall corr. with LCL RT", decreasing=T)
+
+# -----------------------------------------------------------------------------
+# Before PCA (Beeswarm plots)
+# Last Modified: 21/04/19
+# -----------------------------------------------------------------------------
+samples.sclc <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/ngs/WGS/sclc_wgs_n101.txt", header=T, rownames=T, sep="")
+samples.nbl  <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1.txt", header=T, rownames=T, sep="")
+samples.cll  <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/CLL/ngs/WGS/cll_wgs_n96.txt", header=T, rownames=T, sep="")
+n.sclc <- nrow(samples.sclc)
+n.nbl  <- nrow(samples.nbl)
+n.cll  <- nrow(samples.cll)
+
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll, c("CANCER", "COR", "Q4"))
+samples$CANCER[1:n.sclc] <- 0
+samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
+samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
+samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR)
+samples$Q4 <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
+
+#install.packages('beeswarm')
+library(beeswarm)
+
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll.pdf"), height=5.2, width=5.2)
+ymax <- max(samples$COR)
+ymin <- -ymax
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC (n=101)", "NBL (n=56)", "CLL (n=96)"), ylim=c(ymin, ymax), ylab="Pearson's r", main="Overall correlation with LCL RT")
+abline(h=0, lty=5)
+
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="skyblue3", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
+
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"))
+dev.off()
 
 
 

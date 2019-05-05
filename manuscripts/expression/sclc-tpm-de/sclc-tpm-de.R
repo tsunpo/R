@@ -95,6 +95,74 @@ periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
 writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
 
+# -----------------------------------------------------------------------------
+# Meta-analysis on wgs.de first
+# Last Modified: 24/04/19; 12/04/19
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-tpm-de/data/de_sclc_tpm-gene-r5p47_rt_wilcox_q_n70.RData")
+de.tpm.gene.sclc <- de.tpm.gene
+
+load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/de_nbl_tpm-gene-r5p47_rt_wilcox_q_n53.RData")
+de.tpm.gene.nbl <- de.tpm.gene
+
+#load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-wgs-de/data/de_cll_tpm-gene-r30p47-r5p47_rt_wilcox_q_n93.RData")
+#de.tpm.gene.cll <- de.tpm.gene
+
+overlaps <- intersect(rownames(de.tpm.gene.sclc), rownames(de.tpm.gene.nbl))
+de.tpm.gene.sclc.o <- de.tpm.gene.sclc[overlaps,]
+de.tpm.gene.nbl.o  <- de.tpm.gene.nbl[overlaps,]
+# > length(overlaps)
+# [1] 17958
+
+idx1 <- which(de.tpm.gene.sclc.o$LOG2_FC * de.tpm.gene.nbl.o$LOG2_FC > 0)
+de.tpm.gene.sclc.o <- de.tpm.gene.sclc.o[idx1,]
+de.tpm.gene.nbl.o  <- de.tpm.gene.nbl.o[idx1,]
+# > length(idx1)
+# [1] 9947
+
+library(qvalue)
+de.tpm.gene.sclc.o$FISHERS_P2   <- fishers(de.tpm.gene.sclc.o$P, de.tpm.gene.nbl.o$P)
+de.tpm.gene.sclc.o$FISHERS_FDR2 <- qvalue(de.tpm.gene.sclc.o$FISHERS_P2)$qvalue
+
+de.tpm.gene.sclc.o <- de.tpm.gene.sclc.o[order(de.tpm.gene.sclc.o$FISHERS_P2),]
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_fishers_sclc+nbl")
+save(de.tpm.gene.sclc.o, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene.sclc.o, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
+overlaps <- intersect(intersect(rownames(de.tpm.gene.sclc), rownames(de.tpm.gene.nbl)), rownames(de.tpm.gene.wgs.cll))
+de.tpm.gene.wgs.o      <- de.tpm.gene.wgs[overlaps,]
+de.tpm.gene.wgs.nbl.o  <- de.tpm.gene.wgs.nbl[overlaps,]
+de.tpm.gene.wgs.cll.o  <- de.tpm.gene.wgs.cll[overlaps,]
+# > length(overlaps)
+# [1] 15939
+
+idx1 <- which(de.tpm.gene.wgs.o$LOG2_FC * de.tpm.gene.wgs.nbl.o$LOG2_FC > 0)
+idx2 <- which(de.tpm.gene.wgs.o$LOG2_FC * de.tpm.gene.wgs.cll.o$LOG2_FC > 0)
+idx <- intersect(idx1, idx2)
+de.tpm.gene.wgs.o     <- de.tpm.gene.wgs.o[idx,]
+de.tpm.gene.wgs.nbl.o <- de.tpm.gene.wgs.nbl.o[idx,]
+de.tpm.gene.wgs.cll.o <- de.tpm.gene.wgs.cll.o[idx,]
+# > length(idx)
+# [1] 9982
+
+library(qvalue)
+de.tpm.gene.wgs.o$FISHERS_P2 <- fishers(de.tpm.gene.wgs.o$P, de.tpm.gene.wgs.nbl.o$P)
+de.tpm.gene.wgs.o$FISHERS_FDR2 <- qvalue(de.tpm.gene.wgs.o$FISHERS_P2)$qvalue
+de.tpm.gene.wgs.o$FISHERS_P3 <- fishers(de.tpm.gene.wgs.o$FISHERS_P2, de.tpm.gene.wgs.cll.o$P)
+de.tpm.gene.wgs.o$FISHERS_FDR3<- qvalue(de.tpm.gene.wgs.o$FISHERS_P3)$qvalue
+
+de.tpm.gene.wgs.o <- de.tpm.gene.wgs.o[order(de.tpm.gene.wgs.o$FISHERS_P3),]
+file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_fishers_sclc+nbl+cll")
+save(de.tpm.gene.wgs.o, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene.wgs.o, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+
 
 
 

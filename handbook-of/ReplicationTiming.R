@@ -335,6 +335,12 @@ plotRT <- function(file.name, main.text, ylab.text, chr, xmin, xmax, rpkms.chr.r
    dev.off()
 }
 
+## Colours (was "lightcoral", "skyblue3")
+## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
+adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
+adjustcolor.blue <- adjustcolor("skyblue3", alpha.f=0.3)
+adjustcolor.gray <- adjustcolor("gray", alpha.f=0.3)
+
 # -----------------------------------------------------------------------------
 # Compare RD and RT in sclc-wgs-rt.R
 # Last Modified: 05/03/19
@@ -417,6 +423,41 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
    text(cors$chr[2], cors$cor[2], round0(cors$cor[2], digits=2), cex=1.2, pos=3)
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
+   dev.off()
+}
+
+plotSAMPLEvsRTALL <- function(cors.samples, samples1, file.name, main.text=NA, ymin=NA, ymax=NA, line0=NA) {
+   cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
+   n <- length(samples1)
+   cnt <- 0
+   for (c in 1:22) {
+      start <- n * cnt + 1
+      end   <- n * (cnt + 1)
+      cors.samples.plot[start:end, 1] <- c
+      cors.samples.plot[start:end, 2] <- as.numeric(cors.samples[c, samples1])
+  
+      cnt <- cnt + 1
+   }
+ 
+   pdf(paste0(file.name, "_boxplot.pdf"), height=5.2, width=5.2)
+   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Pearson's r", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1])
+   axis(side=1, at=seq(2, 22, by=2))
+   abline(h=0, lty=5)
+   dev.off()
+ 
+   png(paste0(file.name, "_scatter.png"), height=5, width=5.5, units="in", res=300)
+   plot(cors.samples$mean, log(cors.samples$cv2), ylab="log(cv2)", xlab="mean", main=main.text[2])
+   text(cors.samples$mean[2], log(cors.samples$cv2[2]), "chr2", cex=1.2, pos=3)
+   text(cors.samples$mean[4], log(cors.samples$cv2[4]), "chr4", cex=1.2, pos=3)
+   text(cors.samples$mean[20], log(cors.samples$cv2[20]), "chr20", cex=1.2, pos=3)
+   text(cors.samples$mean[12], log(cors.samples$cv2[12]), "chr12", cex=1.2, pos=3)
+   dev.off()
+ 
+   png(paste0(file.name, "_var.png"), height=5, width=5.5, units="in", res=300)
+   #plot(cors.samples$var ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
+   plot(cors.samples$var ~ cors.samples$chr, ylab="var", xlab="Chromosome", col="black", xaxt="n", pch=19, main=main.text[2])
+   lines(cors.samples$var, y=NULL, type="l", lwd=3)
+   axis(side=1, at=seq(2, 22, by=2))
    dev.off()
 }
 
