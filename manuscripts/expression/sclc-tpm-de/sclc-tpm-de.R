@@ -36,15 +36,25 @@ wd.de.gsea  <- file.path(wd.de, "gsea")
 
 samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
 samples$RT <- as.factor(samples$RT)
+#samples$Q2 <- samples$Q4
+#samples$Q2[which(samples$Q4 == 1)] <- 1
+#samples$Q2[which(samples$Q4 == 2)] <- 0
+#samples$Q2[which(samples$Q4 == 3)] <- 0
+#samples$Q2[which(samples$Q4 == 4)] <- 1
+#samples$Q2 <- as.factor(samples$Q2)
 
 ##
 samples.rna <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")
 overlaps <- intersect(rownames(samples.rna), rownames(samples))
 samples <- samples[overlaps,]
-# > length(which(samples$RT == 1))
-# [1] 36
 # > length(which(samples$RT == 0))
 # [1] 34
+# > length(which(samples$RT == 1))
+# [1] 36
+# > length(which(samples$Q2 == 0))
+# [1] 29
+# > length(which(samples$Q2 == 1))
+# [1] 41
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]
@@ -57,7 +67,7 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
 ## FDR : Q/BH
 ## D.E.: RT (44) vs WT (10) as factor
-argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+argv      <- data.frame(predictor="Q2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
 file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n70")
 file.main <- paste0("RT (n=36) vs WT (n=34) in ", BASE)
 
@@ -75,7 +85,7 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_sclc_tpm-gene-r5p47_rt_wilcox_q_n70")
+file.name <- paste0("de_sclc_tpm-gene-r5p47_rt_wilcox_q_n70_fishers_M1-M2")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 
@@ -105,9 +115,6 @@ de.tpm.gene.sclc <- de.tpm.gene
 load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/de_nbl_tpm-gene-r5p47_rt_wilcox_q_n53.RData")
 de.tpm.gene.nbl <- de.tpm.gene
 
-#load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-wgs-de/data/de_cll_tpm-gene-r30p47-r5p47_rt_wilcox_q_n93.RData")
-#de.tpm.gene.cll <- de.tpm.gene
-
 overlaps <- intersect(rownames(de.tpm.gene.sclc), rownames(de.tpm.gene.nbl))
 de.tpm.gene.sclc.o <- de.tpm.gene.sclc[overlaps,]
 de.tpm.gene.nbl.o  <- de.tpm.gene.nbl[overlaps,]
@@ -123,6 +130,10 @@ de.tpm.gene.nbl.o  <- de.tpm.gene.nbl.o[idx1,]
 library(qvalue)
 de.tpm.gene.sclc.o$FISHERS_P2   <- fishers(de.tpm.gene.sclc.o$P, de.tpm.gene.nbl.o$P)
 de.tpm.gene.sclc.o$FISHERS_FDR2 <- qvalue(de.tpm.gene.sclc.o$FISHERS_P2)$qvalue
+de.tpm.gene.sclc.o$LOG2_FC2     <- mapply(x = 1:nrow(de.tpm.gene.sclc.o), function(x) median(de.tpm.gene.sclc.o$LOG2_FC[x], de.tpm.gene.nbl.o$LOG2_FC[x]))
+
+
+
 
 de.tpm.gene.sclc.o <- de.tpm.gene.sclc.o[order(de.tpm.gene.sclc.o$FISHERS_P2),]
 file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_fishers_sclc+nbl")
@@ -201,23 +212,30 @@ plotPCA(1, 2, pca.de, trait, wd.de.plots, "pca_RB1_Q0.1_639DE", size=6.5, file.m
 # Volcano plots
 # Last Modified: 15/08/18
 # -----------------------------------------------------------------------------
-plotVolcano <- function(de, fdr, genes, file.de, file.main) {
+fdrToP <- function(fdr, de) {
    de.sig <- subset(de, FDR <= fdr)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   return(max(de.sig$P))
+}
+
+plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
+   #pvalue <- fdrToP(fdr, de)
+   fdr <- pvalueToFDR(pvalue, de)
+   de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
+   #xmax <- 1
    ymax <- max(de$log10P)
-   p <- max(de.sig$P)
- 
+   
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="RB1/WT fold change (log2)", ylab="P-value (-log10)", col="darkgray", main=file.main)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(SCLC M2/M1)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
-   abline(h=c(-log10(fdrToP(fdr, de))), lty=5)
-   text(xmax*-1 + 2*xmax/36, -log10(fdrToP(fdr, de)) + ymax/42, "FDR=0.05", cex=0.85)
-   abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
-
+   abline(h=c(-log10(pvalue)), lty=5)
+   text(xmax*-1 + 2*xmax/25, -log10(pvalue) + ymax/45, paste0("FDR=", fdr, "%"), cex=0.85)
+   
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
    de.down <- subset(de.sig, LOG2_FC < 0)
@@ -244,19 +262,67 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main) {
          print(genes[g])
    }
    
-   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
+   mtext(file.main[2], cex=1.2, line=0.3)
+   legend("topright", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
+
+##
+plot.main <- "Differential expression between M2 and M1 in SCLC"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47_sclc_p1e-4")
+
+## Chr2
+genes <- readTable(paste0(plot.de, "_g-protein.tab"), header=T, rownames=F, sep="\t")
+rownames(genes) <- genes$GENE
+genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
+
+file.main <- c(plot.main, "G protein-coupled receptor signalling")
+#file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
+file.de <- paste0(plot.de, "_g-protein.pdf")
+plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
+
+##
+plot.main <- "Meta-analysis of DE between M2 and M1 in SCLC and NBL"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47_sclc_p1e-4")
+
+## Chr2
+genes <- readTable(paste0(plot.de, "_g-protein.tab"), header=T, rownames=F, sep="\t")
+rownames(genes) <- genes$GENE
+genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
+
+file.main <- c(plot.main, "G protein-coupled receptor signalling")
+#file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
+file.de <- paste0(plot.de, "_g-protein_meta.pdf")
+de.tpm.gene.sclc.oo <- de.tpm.gene.sclc.o
+de.tpm.gene.sclc.oo$P <- de.tpm.gene.sclc.oo$FISHERS_P2
+de.tpm.gene.sclc.oo$LOG2_FC <- de.tpm.gene.sclc.oo$LOG2_FC2
+plotVolcano(de.tpm.gene.sclc.oo, 1.00E-05, genes, file.de, file.main)
+
+
+
+
+
+
+
+
+
+
+
 
 ##
 plot.main <- "RB1-loss differential expression in LCNEC"
 plot.de <- file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05")
 
-## Figure 1 (Cell cycle)
-genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Cycle.tab"), header=T, rownames=F, sep="\t")
+## Figure 1 (G protein)
+genes <- readTable(file.path(wd.de.plots, "volcanoplot-r5p47_sclc_p1e-4_g-protein.tab"), header=T, rownames=F, sep="\t")
 file.main <- c(plot.main, "", "Cell cycle pathway", "")
 file.de <- paste0(plot.de, "_Cycle.pdf")
 plotVolcano(de.tpm.gene, 0.05, genes, file.de, file.main)
+
+
+
+
+
 
 ## Figure 2 (Hintone)
 genes <- readTable(file.path(wd.de.plots, "volcanoplot_lcnec_RB1_Q0.05_Histone.tab"), header=T, rownames=F, sep="\t")

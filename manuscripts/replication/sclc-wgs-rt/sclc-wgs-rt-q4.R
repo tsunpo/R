@@ -50,6 +50,9 @@ samples0 <- subset(samples0, RT == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
+writeTable(samples1, file.path(wd.ngs, "sclc_wgs_n101_M2.txt"), colnames=F, rownames=F, sep="")
+writeTable(samples0, file.path(wd.ngs, "sclc_wgs_n101_M1.txt"), colnames=F, rownames=F, sep="")
+
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
@@ -96,6 +99,7 @@ genes <- c("TBC1D32", "BTBD1")
 genes <- c("IL6ST")
 genes <- c("ERCC6L2", "GNAQ")
 genes <- c("MYC", "MYCN", "MYCL", "EGFR", "TP53", "RB1", "IRS2", "CDKN2A", "FHIT", "FGFR1", "WHSC1L1")
+genes <- c("COL22A1", "GNAQ", "COL4A3BP")
 
 plotWholeChr <- T
 ranges <- c(50000, 500000, 5000000)
@@ -115,7 +119,7 @@ for (g in 1:length(genes)) {
 
    file.name <- file.path(wd.rt.plots, "genes", paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
    if (plotWholeChr)
-      plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Tumour"), c(adjustcolor.gray, adjustcolor.gray), c("M2 tumour", "M1 tumour"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
+      plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.gray, adjustcolor.gray), c("M2", "M1"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
    
    for (r in 1:length(ranges))
       plotRD3(file.name, paste0(BASE1, " M2/M1 read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2", "M1"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)

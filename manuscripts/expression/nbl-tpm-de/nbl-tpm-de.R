@@ -142,7 +142,7 @@ plotVolcano(de.tpm.gene, 0.02, genes, file.de, file.main)
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_cll_tpm-gene-r5p47_rt_wilcox_q_n53")
+file.name <- paste0("de_nbl_tpm-gene-r5p47_rt_wilcox_q_n53")
 writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 

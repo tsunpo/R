@@ -421,6 +421,7 @@ fishers <- function(x, y) {
 
 # -----------------------------------------------------------------------------
 # Method: Gene Set Enrichment Analysis (GSEA)
+# Link(s): https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/FAQ#Where_are_the_GSEA_statistics_.28ES.2C_NES.2C_FDR.2C_FWER.2C_nominal_p_value.29_described.3F
 # Last Modified: 16/08/18
 # -----------------------------------------------------------------------------
 ## GSEAPreranked tool

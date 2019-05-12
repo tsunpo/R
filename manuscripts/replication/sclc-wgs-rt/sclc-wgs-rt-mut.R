@@ -30,14 +30,20 @@ PAIR0 <- "N"
 base1 <- tolower(BASE1)
 base0 <- tolower(BASE0)
 
-wd.meta  <- file.path(wd, BASE1, "metadata", "George 2015")
+wd.wgs  <- file.path(wd, BASE1, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE1, "analysis")
+wd.meta  <- file.path(wd, BASE1, "metadata", "George 2015")
+
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
+samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
+phenos  <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, rownames=T, sep="\t")
+phenos  <- survSCLC(phenos, samples, isCensored=F)
+
+purities <- readTable(file.path(wd.meta, "nature14664-s1_ST2.txt"), header=T, rownames=T, sep="\t")
+phenos <- cbind(phenos, purities[rownames(phenos),])
 
 # -----------------------------------------------------------------------------
 # Mutation burdens between T29 and T33
@@ -59,17 +65,17 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 genes <- getGenes(muts)
 overlaps <- intersect(genes$ensembl_gene_id, rownames(tpm.gene))
 # > length(muts)
-# [1] 12482
+# [1] 12199
 # > nrow(genes)
-# [1] 12189
+# [1] 11912
 # > length(overlaps)
-# [1] 10328
+# [1] 10093
 muts <- genes[overlaps,]$external_gene_name
 # > length(muts)
-# [1] 10328
+# [1] 10093
 muts <- unique(genes[overlaps,]$external_gene_name)
 # > length(muts)
-# [1] 10311
+# [1] 10076
 
 samples.rts <- list(rownames(subset(samples, Q4 == 4)), rownames(subset(samples, Q4 == 3)), rownames(subset(samples, Q4 == 2)), rownames(subset(samples, Q4 == 1)))
 txts  <- toTable(0, nrow(samples), length(muts), c(rownames(subset(samples, Q4 == 4)), rownames(subset(samples, Q4 == 3)), rownames(subset(samples, Q4 == 2)), rownames(subset(samples, Q4 == 1))))
@@ -106,7 +112,7 @@ writeTable(txts.out, file.path(wd.rt.data, "muts_q4_expressed_ST3.txt"), colname
 
 sig <- readTable(file.path(wd.meta, "nature14664-s1_ST6.txt"), header=F, rownames=F, sep="")
 sig <- unique(sig)
-#writeTable(txts.out[sig,], file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(txts.out[sig,], file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_n101.txt"), colnames=T, rownames=T, sep="\t")
 
 mut <- txts.out[sig,]
 #mut <- txts.out
@@ -136,11 +142,12 @@ for (g in 1:nrow(mut)) {
 }
 results.gene <- results.gene[order(results.gene$P),]
 results.gene <- cbind(mut[rownames(results.gene), c("M2", "M1")], results.gene)
-results.gene <- subset(results.gene, M2 != 0)
-results.gene <- subset(results.gene, M1 != 0)
+results.gene$TOTAL <-0
+results.gene$TOTAL <- results.gene$M2 + results.gene$M1
+results.gene <- subset(results.gene, TOTAL > 10)
 results.gene$BH <- p.adjust(results.gene$P, "BH")
-
-writeTable(results.gene, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_M2-M1.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(results.gene, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_M2-M1_10genes.txt"), colnames=T, rownames=T, sep="\t")
+genes10 <- rownames(results.gene)
 
 ###
 ## Fisher's test for each mutations
@@ -158,113 +165,89 @@ for (g in 1:nrow(mut)) {
    results.gene[g, 1] <- fisher.test(test)[[1]]
 }
 results.gene <- results.gene[order(results.gene$P),]
+results.gene <- results.gene[genes10,]
 results.gene$BH <- p.adjust(results.gene$P, "BH")
 
 results.gene <- cbind(mut[rownames(results.gene), c("Q4_S", "Q1_S")], results.gene)
-writeTable(results.gene, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_Q4-Q1.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(results.gene, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_Q4-Q1_10genes.txt"), colnames=T, rownames=T, sep="\t")
+
+###
+## Fisher's test for each mutations
+results.gene <- toTable(0, 2, nrow(mut), c("P", "BH"))
+rownames(results.gene) <- rownames(mut)
+for (g in 1:nrow(mut)) {
+   test <- toTable(0, 2, 2, c("WT", "MUT"))
+   rownames(test) <- c("Q41_S", "Q23_S")
+ 
+   test[1, 2] <- mut[g, "Q4_S"] + mut[g, "Q1_S"]
+   test[1, 1] <- q4 + q1 - test[1, 2] 
+   test[2, 2] <- mut[g, "Q2_S"] + mut[g, "Q3_S"]
+   test[2, 1] <- q2 + q3 - test[2, 2]
+ 
+   results.gene[g, 1] <- fisher.test(test)[[1]]
+}
+results.gene <- results.gene[order(results.gene$P),]
+results.gene <- results.gene[genes10,]
+results.gene$BH <- p.adjust(results.gene$P, "BH")
+
+results.gene <- cbind(mut[rownames(results.gene), c("Q4_S", "Q1_S", "Q2_S", "Q3_S")], results.gene)
+writeTable(results.gene, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_Q41-Q23_10genes.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
-# Kaplan-Meier survival analysis (OS~kmeans)
+# Kaplan-Meier survival analysis (OS~kmeans): MUT genes
 # Last Modified: 02/05/19
 # -----------------------------------------------------------------------------
-samples1 <- unique(subset(txt, Gene_Hugo == "PDE4DIP")$PAT_ID)
-samples2 <- unique(subset(txt, Gene_Hugo == "ASPM")$PAT_ID)
-samples3 <- unique(subset(txt, Gene_Hugo == "COL22A1")$PAT_ID)
-samples.centro <- samples1
-#samples.centro <- union(samples1, samples2)
-#samples.centro <- union(union(samples1, samples2), samples3)
+results.gene$Survival <- NA
+results.gene$Survival_BH <- NA
+results.gene$Survival_SC <- NA
+results.gene$Survival_SC_BH <- NA
+for (g in 1:nrow(results.gene)) {
+   gene <- rownames(results.gene)[g]
+   #gene <- "COL22A1"
+   samples.mut <- unique(subset(txt, Gene_Hugo == gene)$PAT_ID)
+   phenos.surv.mut <- phenos.surv
+   
+   phenos.surv.mut$MUT <- 0
+   phenos.surv.mut[samples.mut,]$MUT <- 1
+   #phenos <- subset(phenos, sex == "male")
+   phenos.surv.mut <- subset(phenos.surv.mut, tissue.sampling == "surgical resection")
+   phenos.surv.mut <- subset(phenos.surv.mut, chemotherapy..yes.no. == "yes")
+   phenos.surv.mut$Groups <- phenos.surv.mut$MUT
+   extension <- paste0("_", gene, "_S+C")
+   
+   ##
+   fit <- survfit(Surv(OS_month, OS_censor) ~ Groups, data=phenos.surv.mut)
+   file.name <- file.path(wd.rt.plots, "survfit", "MUT", "S+C", paste0("survfit_", base, "_OS~Groups", extension))
+   main.text <- c(paste0(BASE, " overall survival (OS)"), paste0(gene, " status (in sugery and chemo)"))
+   cols    <- c("blue", "red")
+   legends <- c(paste0("WT", " (n=", fit[[1]][1], ")"), paste0("MUT", " (n=", fit[[1]][2], ")"))
 
-phenos <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, rownames=T, sep="\t")
-phenos <- phenos[samples$SAMPLE_ID,]
-#phenos <- subset(phenos, sex == "male")
-#phenos <- subset(phenos, tissue.sampling == "surgical resection")
-#phenos <- subset(phenos, chemotherapy..yes.no. == "yes")
-phenos$CENTRO <- 0
-phenos[samples.centro,]$CENTRO <- 1
-extension <- "_PDE4DIP"
-
-## OS_censor
-phenos.sub <- phenos[!is.na(phenos$overall_survival..months.),]
-phenos.sub$OS_month <- phenos.sub$overall_survival..months.
-phenos.sub$Groups <- phenos.sub$CENTRO
-
-phenos.sub$OS_censor <- phenos.sub$Status..at.time.of.last.follow.up.
-phenos.sub$OS_censor <- gsub("dead", 0, phenos.sub$OS_censor)
-phenos.sub$OS_censor <- gsub("alive", 1, phenos.sub$OS_censor)
-phenos.sub$OS_censor <- as.numeric(phenos.sub$OS_censor)
-
-##
-fit <- survfit(Surv(OS_month, OS_censor) ~ Groups, data=phenos.sub)
-file.name <- file.path(wd.rt.plots, "survfit", paste0("survfit_", base, "_OS~Groups", extension))
-main.text <- paste0(BASE, " overall survival (n=", nrow(phenos.sub), ")")
-cols    <- c("blue", "red")
-legends <- c(paste0("WT", " (n=", fit[[1]][1], ")"), paste0("MUT", " (n=", fit[[1]][2], ")"))
-
-pdf(paste0(file.name, ".pdf"), height=6, width=6)
-plot(fit, ylim=c(0, 1), xlab="Months", ylab="Survival probability", col=cols, main=main.text)
-legend("topright", legend=legends, lwd=1, col=cols)
-mtext(get_surv_pvalue(fit), cex=1.2, line=0.3)
-dev.off()
+   if (!is.na(fit[[1]][2])) {
+      pdf(paste0(file.name, ".pdf"), height=5, width=5)
+      plot(fit, ylim=c(0, 1), xlab="Months", ylab="Survival probability", col=cols, main=main.text[1], mark.time=T)
+      legend("topright", legend=legends, lwd=1, col=cols)
+      mtext(main.text[2], cex=1.2, line=0.3)
+      text(0, 0, get_surv_pvalue(fit), adj= c(-0.05, 0.1), col="black")
+      dev.off()
+   
+      #results.gene.sub$Survival[g] <- surv_pvalue(fit, method="log-rank")$pval
+   }
+}
+results.gene.sub$Survival_BH <- p.adjust(results.gene.sub$Survival, "BH")
+writeTable(results.gene.sub, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_M2-M1_Survival_S+C.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
-# Kaplan-Meier survival analysis (OS~kmeans)
+# Purities
 # Last Modified: 02/05/19
 # -----------------------------------------------------------------------------
-phenos <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, rownames=T, sep="\t")
-phenos <- phenos[samples$SAMPLE_ID,]
-phenos <- phenos[setdiff(phenos$Sample.ID, samples.centro),]   ## ADD 05/05/19
-extension <- "_PDE4DIP_REMOVED"
-#phenos <- subset(phenos, sex == "male")
-#extension <- "_sex_male"
-#phenos <- subset(phenos, tissue.sampling == "surgical resection")
-#extension <- "_sex_male_surgery"
-#phenos <- subset(phenos, chemotherapy..yes.no. == "no")
-#extension <- "_sex_male_surgery_chemotherapy_no"
-isRT <- T
-
-## OS_censor
-phenos.sub <- phenos[!is.na(phenos$overall_survival..months.),]
-phenos.sub$OS_month <- phenos.sub$overall_survival..months.
-phenos.sub$Groups <- samples[rownames(phenos.sub),]$Q4
-if (isRT)
-   phenos.sub$Groups <- samples[rownames(phenos.sub),]$RT
-
-phenos.sub$OS_censor <- phenos.sub$Status..at.time.of.last.follow.up.
-phenos.sub$OS_censor <- gsub("dead", 0, phenos.sub$OS_censor)
-phenos.sub$OS_censor <- gsub("alive", 1, phenos.sub$OS_censor)
-phenos.sub$OS_censor <- as.numeric(phenos.sub$OS_censor)
-
-##
-fit <- survfit(Surv(OS_month, OS_censor) ~ Groups, data=phenos.sub)
-file.name <- file.path(wd.rt.plots, "survfit", paste0("survfit_", base, "_OS~Groups", extension))
-main.text <- paste0(BASE, " overall survival (n=", nrow(phenos.sub), ")")
-plotSurvfitRT(fit, file.name, main.text, isRT)
+purities <- readTable(file.path(wd.meta, "nature14664-s1_ST2.txt"), header=T, rownames=T, sep="\t")
+phenos <- cbind(phenos[samples$SAMPLE_ID,], purities[samples$SAMPLE_ID,])
 
 
 
 
 
 
-
-
-
-
-
-pdf()
-fit <- survfit(Surv(OS_month, OS_censor) ~ Groups, data=phenos.sub) 
-plot(fit, ylim=c(0, 1), xlab="Months", ylab="Survival probability", col=cols, main=)
-legend("topright", legend=c("Q1", "Q2", "Q3", "Q4"), lwd=1, col=cols)
-mtext(paste0("log-rank P = ", surv_pvalue(fit, method="log-rank")$pval), cex=1.2, line=0.3)
-dev.off()
-
-## OS~kmeans
-cols <- c("blue", "red")
-pdf(file.path(wd.rt.plots, "survfit_sclc_OS~Groups_sex_male_RT.pdf"), height=6, width=6)
-fit <- survfit(Surv(OS_month, OS_censor) ~ Groups, data=phenos.sub) 
-plot(fit, ylim=c(0, 1), xlab="Months", ylab="Survival probability", col=cols, main="SCLC overall survival (n=57; male)")
-legend("topright", legend=c("M1", "M2"), lwd=1, col=cols)
-mtext(paste0("log-rank p-value = ", surv_pvalue(fit)$pval), cex=1.2, line=0.3)
-dev.off()
 
 # -----------------------------------------------------------------------------
 # Kaplan-Meier survival analysis
