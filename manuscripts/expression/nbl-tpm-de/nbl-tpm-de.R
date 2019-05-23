@@ -27,6 +27,7 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
+
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
@@ -35,7 +36,7 @@ wd.de.plots <- file.path(wd.de, "plots")
 samples.wgs <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="\t")
 samples     <- readTable(file.path(wd.rna, "nbl_rna_n54.list"), header=F, rownames=2, sep="\t")
 overlaps <- intersect(samples$V2, samples.wgs$SAMPLE_ID)
-samples <- samples[overlaps,]
+samples <- cbind(samples[overlaps,], samples.wgs[overlaps,])
 samples$RT <- samples.wgs[overlaps,]$RT
 samples$RT <- as.factor(samples$RT)
 rownames(samples) <- samples$V1

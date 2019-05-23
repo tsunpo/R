@@ -48,27 +48,29 @@ phenos.surv <- survSCLC(phenos, samples, isCensored=T)
 
 phenos.surv$Stage[which(phenos.surv$Stage == 1)] <- "II"
 phenos.surv$Stage[which(phenos.surv$Stage == 2)] <- "I"
-#phenos.surv$RT[which(phenos.surv$RT == 0)] <- "M1"
-#phenos.surv$RT[which(phenos.surv$RT == 1)] <- "M2"
+phenos.surv$RT[which(phenos.surv$RT == 0)] <- "M1"
+phenos.surv$RT[which(phenos.surv$RT == 1)] <- "M2"
 phenos.surv$RT <- phenos.surv$Q4
 #phenos.surv$RT <- as.factor(phenos.surv$RT)
-phenos.surv$RT[which(phenos.surv$Q4 == 1)] <- "Q1+Q4"
-phenos.surv$RT[which(phenos.surv$Q4 == 2)] <- "Q2+Q3"
-phenos.surv$RT[which(phenos.surv$Q4 == 3)] <- "Q2+Q3"
-phenos.surv$RT[which(phenos.surv$Q4 == 4)] <- "Q1+Q4"
+phenos.surv$RT[which(phenos.surv$Q4 == 1)] <- "Q1"
+phenos.surv$RT[which(phenos.surv$Q4 == 2)] <- "Q2"
+phenos.surv$RT[which(phenos.surv$Q4 == 3)] <- "Q3"
+phenos.surv$RT[which(phenos.surv$Q4 == 4)] <- "Q4"
+phenos.surv$RT <- as.factor(phenos.surv$RT)
 phenos.surv$Sex[which(phenos.surv$Sex == "male")] <- "boy"
 phenos.surv$Sex[which(phenos.surv$Sex == "female")] <- "girl"
+#phenos.surv$Sex <- as.factor(phenos.surv$Sex)
 
-phenos.surv <- subset(phenos.surv, Surgery == "yes")
+#phenos.surv <- subset(phenos.surv, Surgery == "yes")
 #phenos.surv <- subset(phenos.surv, sex == "male")
 #phenos.surv <- subset(phenos.surv, Chemotherapy == "yes")
 #phenos.surv <- subset(phenos.surv, Stage == "I")
 #phenos.surv <- subset(phenos.surv, RT == "Q2+Q3")
 
-#res.cox <- coxph(Surv(OS_month, OS_censor) ~ Surgery + Stage + RT + Chemotherapy + Radiation + Sex, data=phenos.surv)
-res.cox <- coxph(Surv(OS_month, OS_censor) ~ Stage + RT + Radiation + Chemotherapy + Sex, data=phenos.surv)
+res.cox <- coxph(Surv(OS_month, OS_censor) ~ Surgery + Stage + RT + Chemotherapy + Radiation + Sex, data=phenos.surv)
+#res.cox <- coxph(Surv(OS_month, OS_censor) ~ Stage + RT + Radiation + Chemotherapy + Sex, data=phenos.surv)
 #res.cox <- coxph(Surv(OS_month, OS_censor) ~ RT + Stage + Chemotherapy + Radiation, data=phenos.surv)
-ggforest(res.cox, data=phenos.surv, main = "Hazard ratio in SCLC, surgical patients", cpositions = c(0.02, 0.22, 0.4))
+ggforest(res.cox, data=phenos.surv, main = "Hazard ratio in SCLC patients", cpositions = c(0.02, 0.22, 0.4))
 # > summary(res.cox)
 # Call:
 #  coxph(formula = Surv(OS_month, OS_censor) ~ Surgical + Chemotherapy + 

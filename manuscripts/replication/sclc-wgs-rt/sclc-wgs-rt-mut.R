@@ -240,9 +240,9 @@ writeTable(results.gene.sub, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_M2
 # Purities
 # Last Modified: 02/05/19
 # -----------------------------------------------------------------------------
-purities <- readTable(file.path(wd.meta, "nature14664-s1_ST2.txt"), header=T, rownames=T, sep="\t")
-phenos <- cbind(phenos[samples$SAMPLE_ID,], purities[samples$SAMPLE_ID,])
-
+testU(subset(phenos, RT == 0)$Purity, subset(phenos, RT == 1)$Purity)
+testU(subset(phenos, Q2 == "Q1+Q4")$Purity, subset(phenos, Q2 == "Q2+Q3")$Purity)
+testU(subset(phenos, Q4 == 4)$Purity, subset(phenos, Q4 == 1)$Purity)
 
 
 

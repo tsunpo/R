@@ -2,9 +2,9 @@
 # Manuscript   : 
 # Chapter I    : 
 # Figure(s)    : 
-# Name         : manuscripts/expression/cll-wgs-de.R
+# Name         : manuscripts/expression/sclc-wgs-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 15/03/19
+# Last Modified: 22/05/19
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
@@ -27,55 +27,61 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
+
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-wgs-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
-samples$SAMPLE_ID <- paste0(samples$SAMPLE_ID, "_T")
-rownames(samples) <- samples$SAMPLE_ID
-samples$RT <- as.factor(samples$RT)
+wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data <- file.path(wd.rt, "data")
+
+samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.cm2"), header=T, rownames=T, sep="")[,-1]
 
 ## Expression level (11/04/19)
-wd.tpm      <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
-wd.tpm.data <- file.path(wd.tpm, "data")
-load(file.path(wd.tpm.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 expressed <- rownames(tpm.gene)
 # > length(expressed)
 # [1] 19131
 
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r30p47.RData")))
-tpm.gene <- tpm.gene[, rownames(samples)]
-tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
-# > dim(tpm.gene.log2)
-# [1] 33357   101
-
-overlaps <- intersect(rownames(tpm.gene.log2), expressed)
-# > length(overlaps)
-# [1] 18917
-tpm.gene.log2 <- tpm.gene.log2[overlaps,]
-
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=69-15NA, 20 RB1 vs 34 WT)
-# Last Modified: 22/05/18
+# Wilcoxon rank sum test (non-parametric; CM2 vs CM1)
+# Last Modified: 22/05/19
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
 ## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
-argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
-file.main <- paste0("RT (n=50) vs WT (n=51) in ", BASE)
+file.name <- paste0("de_", base, "_wgs-gene_cm2_wilcox_q_n101")
 
-de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+wgs.gene <- c()
+de <- c()
+for (c in 1:22) {
+   chr <- chrs[c]
+   samples[, chr] <- as.factor(samples[, chr])
+   
+   wgs.gene.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.ensGene_", chr, ".txt.gz")), header=T, rownames=T, sep="\t")[, rownames(samples)]
+   wgs.gene.chr <- wgs.gene.chr[intersect(rownames(wgs.gene.chr), expressed),]
+   wgs.gene.chr.log2 <- log2(wgs.gene.chr + 0.01)
+   wgs.gene <- rbind(wgs.gene, wgs.gene.chr)
+   
+   argv <- data.frame(predictor=chr, predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+   de.chr <- differentialAnalysis(wgs.gene.chr.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+   colnames(de.chr)[3:4] <- c("CM2_WT", "CM2")
+   de <- rbind(de, de.chr)
+}
+de$FDR <- testFDR(de$P, argv$test.fdr)
+de <- de[order(de$P),]
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)
+de.wgs.gene <- cbind(annot[rownames(de),], de)
 
-save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+save(de.wgs.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.wgs.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+wgs.gene.log2 <- log2(wgs.gene + 0.01)
+save(wgs.gene, file=file.path(wd.de.data, paste0(base, "_wgs.gene.RData")))
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC
@@ -91,6 +97,7 @@ fdrToP <- function(fdr, de) {
 
 plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #pvalue <- fdrToP(fdr, de)
+   fdr <- pvalueToFDR(pvalue, de)
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
@@ -100,15 +107,11 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="SCLC M1/M0 log2 fold change", ylab="-log10(p-value)", col="darkgray", main=file.main[1])#, xaxt="n")
-   #axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1))
-
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(SCLC CM2/CM1)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
+ 
    abline(h=c(-log10(pvalue)), lty=5)
-   #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
-   text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, "FDR=0.075", cex=0.85)
-   #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
-
+   text(xmax*-1 + 2*xmax/25, -log10(pvalue) + ymax/45, paste0("FDR=", fdr, "%"), cex=0.85)
+ 
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
    de.down <- subset(de.sig, LOG2_FC < 0)
@@ -117,10 +120,10 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    for (g in 1:nrow(genes)) {
       gene <- subset(de, external_gene_name == genes[g,]$GENE)
       gene <- cbind(gene, genes[g,])
-      
+  
       if (nrow(gene) > 0) {
          points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
-         
+   
          if (!is.na(gene$ADJ_1))
             if (is.na(gene$ADJ_2))
                text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
@@ -134,60 +137,238 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
       } else
          print(genes[g])
    }
-   
-   mtext(paste0("(", file.main[2], ")"), cex=1.2, line=0.3)
-   legend("topright", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
+ 
+   mtext(file.main[2], cex=1.2, line=0.3)
+   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "Differential read depth between SCLC T29 and T33"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r30p47-r5p47_sclc_rt_p1e-6")
+#plot.main <- "Differential read depth between CM2 and CM1 in SCLC"
+#plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_rt_p1e-6_cm2_n70_")
+plot.main <- "Differential expression between CM2 and CM1 in SCLC"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47_sclc_p1e-6_cm2_n70_")
 
 ## Chr2
-genes <- readTable(paste0(plot.de, "_chr2.tab"), header=T, rownames=F, sep="\t")
+genes <- readTable(paste0(plot.de, "CM2.tab"), header=T, rownames=F, sep="\t")
 rownames(genes) <- genes$GENE
-genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
+genes <- genes[intersect(genes$GENE, de.wgs.gene$external_gene_name),]
 
-file.main <- c(plot.main, "chr2:74.3-85.9Mb")
+file.main <- c(plot.main, "")
 #file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
-file.de <- paste0(plot.de, "_chr2.pdf")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main)
-
-## Natural killer cell receptor phenotypes
-genes <- readTable(paste0(plot.de, "_nk.tab"), header=T, rownames=F, sep="\t")
-rownames(genes) <- genes$GENE
-genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
-
-file.main <- c(plot.main, "Natural killer cell receptors")
-#file.de <- paste0(plot.de, "_nk_log2FC1.pdf")
-file.de <- paste0(plot.de, "_nk.pdf")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main)
+file.de <- paste0(plot.de, "CM2.pdf")
+#plotVolcano(de.wgs.gene, 1.00E-06, genes, file.de, file.main)
+plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
 
 # -----------------------------------------------------------------------------
 # Gene set enrichment analysis (GSEA) on LCNEC RB1/WT ranked gene lists
 # Figure(s)    : Figure S1 (A and B)
 # Last Modified: 08/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("de_sclc_tpm-gene-r30p47-r5p47_rt_wilcox_q_n101")
-writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
+file.name <- paste0("de_sclc_wgs-gene_cm2_wilcox_q_n101")
+writeRNKformat(de.wgs.gene, wd.de.gsea, file.name)
 
 ## Tirosh et al 2016 
 load(file.path(wd.src.ref, "cycle.RData"))                           ## See guide-to-the/cycle.R
-core.G1S <- intersect(core.G1S, rownames(tpm.gene.log2))             ## 41/43/43 are expressed in the dataset
-core.G2M <- intersect(core.G2M, rownames(tpm.gene.log2))             ## 54/54/55
-core.Stemness <- intersect(core.Stemness, rownames(tpm.gene.log2))   ## 54/58/63
+core.G1S <- intersect(core.G1S, rownames(wgs.gene.log2))             ## 41/43/43 are expressed in the dataset
+core.G2M <- intersect(core.G2M, rownames(wgs.gene.log2))             ## 54/54/55
+core.Stemness <- intersect(core.Stemness, rownames(wgs.gene.log2))   ## 54/58/63
 
 writeGRPformat(core.G1S, wd.de.gsea, "core.G1-S")
 writeGRPformat(core.G2M, wd.de.gsea, "core.G2-M")
 writeGRPformat(core.Stemness, wd.de.gsea, "core.Stemness")
 
 ## Dominguez et al 2016
-periodic.G1S <- intersect(periodic.G1S, rownames(tpm.gene.log2))   ## 262/304
-periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
+periodic.G1S <- intersect(periodic.G1S, rownames(wgs.gene.log2))   ## 262/304
+periodic.G2M <- intersect(periodic.G2M, rownames(wgs.gene.log2))   ## 792/876
 
 writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
+
+# -----------------------------------------------------------------------------
+# SRC
+# Last Modified: 23/05/19
+# -----------------------------------------------------------------------------
+overlaps  <- intersect(colnames(wgs.gene), colnames(tpm.gene))
+expressed <- intersect(rownames(wgs.gene), rownames(tpm.gene))
+wgs.gene.o <- wgs.gene[expressed, overlaps]
+tpm.gene.o <- tpm.gene[expressed, overlaps]
+samples.o  <- samples[overlaps,]
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; CM2 vs CM1)
+# Last Modified: 23/05/19
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
+file.name <- paste0("de_", base, "_wgs-gene-o_cm2_wilcox_q_n70")
+wgs.gene.o.log2 <- log2(wgs.gene.o + 0.01)
+
+de <- c()
+for (c in 1:22) {
+   chr <- chrs[c]
+   samples.o[, chr] <- as.factor(samples.o[, chr])
+   
+   ensGene.chr <- subset(ensGene, chromosome_name == chr)
+   wgs.gene.o.log2.chr <- wgs.gene.o.log2[intersect(rownames(wgs.gene.o.log2), rownames(ensGene.chr)),]
+
+   argv <- data.frame(predictor=chr, predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+   de.chr <- differentialAnalysis(wgs.gene.o.log2.chr, samples.o, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+   colnames(de.chr)[3:4] <- c("CM2_WT", "CM2")
+   de <- rbind(de, de.chr)
+}
+de$FDR <- testFDR(de$P, argv$test.fdr)
+de <- de[order(de$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.wgs.gene <- cbind(annot[rownames(de),], de)
+
+save(de.wgs.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.wgs.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; CM2 vs CM1)
+# Last Modified: 23/05/19
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
+file.name <- paste0("de_", base, "_tpm-gene-o_cm2_wilcox_q_n70")
+tpm.gene.o.log2 <- log2(tpm.gene.o + 0.01)
+
+de <- c()
+for (c in 1:22) {
+   chr <- chrs[c]
+   samples.o[, chr] <- as.factor(samples.o[, chr])
+ 
+   ensGene.chr <- subset(ensGene, chromosome_name == chr)
+   tpm.gene.o.log2.chr <- tpm.gene.o.log2[intersect(rownames(tpm.gene.o.log2), rownames(ensGene.chr)),]
+ 
+   argv <- data.frame(predictor=chr, predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+   de.chr <- differentialAnalysis(tpm.gene.o.log2.chr, samples.o, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+   colnames(de.chr)[3:4] <- c("CM2_WT", "CM2")
+   de <- rbind(de, de.chr)
+}
+de$FDR <- testFDR(de$P, argv$test.fdr)
+de <- de[order(de$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# SRC between WGS and TPM
+# Last Modified: 23/05/19
+# -----------------------------------------------------------------------------
+tpm.gene.log2 <- tpm.gene.log2[,rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
+
+colnames <- c("RHO", "P", "Q", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")   ##"ANOVA_P", "ANOVA_Q", 
+de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(de) <- rownames(tpm.gene.log2)
+
+## SRC
+de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$RB1_RATE, method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$RB1_RATE, method="spearman", exact=F)[[3]])
+## ANOVA
+#samples$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
+#de$ANOVA_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) testANOVA(x, expr.pheno.log2, pheno.all))
+
+## Log2 fold change
+de$LUAD  <- median00(tpm.gene.log2, rownames(subset(samples, Cancer_Type == 0)))
+de$LCNEC <- median00(tpm.gene.log2, rownames(subset(samples, Cancer_Type == 1)))
+de$SCLC  <- median00(tpm.gene.log2, rownames(subset(samples, Cancer_Type == 2)))
+de$LCNEC_LUAD <- de$LCNEC - de$LUAD
+de$SCLC_LUAD  <- de$SCLC  - de$LUAD
+
+## FDR
+library(qvalue)
+de$Q   <- qvalue(de$P)$qvalue
+#de$ANOVA_Q <- qvalue(de$ANOVA_P)$qvalue
+de <- de[order(de$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
+
+save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47_rb1_src_q_n198.RData"))
+writeTable(de.tpm.gene, file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47_rb1_src_q_n198.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Cannoli/Kilonova plot
+# -----------------------------------------------------------------------------
+plotKilonovaFishers <- function(de, genes, file.de, file.main, p, isIg) {
+   de.sig.positive <- subset(subset(subset(de, P_Fishers <= p), Effect1 > 0), Effect2 > 0)
+   de.sig.negative <- subset(subset(subset(de, P_Fishers <= p), Effect1 < 0), Effect2 < 0)
+ 
+   pdf(file.de, height=7, width=7)
+   plot(de$Effect1, de$Effect2, pch=16, xlab="Median fold change (log2 SCLC/LUAD)", ylab="Median fold change in CCLE", col="darkgray", main=file.main)
+ 
+   points(de.sig.positive$Effect1, de.sig.positive$Effect2, pch=16, col="red")
+   points(de.sig.negative$Effect1, de.sig.negative$Effect2, pch=16, col="dodgerblue")
+   if (isIg) {   ## ADD 02/11/17: Immunoglobulin (Ig) variable chain and T-cell receptor (TCR) genes
+      de.ig <- de[grep("IG", de$gene_biotype),]
+      points(de.ig$Effect1, de.ig$Effect2, pch=16, col="gold")
+      de.tr <- de[grep("TR", de$gene_biotype),]
+      points(de.tr$Effect1, de.tr$Effect2, pch=16, col="forestgreen")
+   }
+ 
+   for (g in 1:length(genes)) {
+      gene <- subset(de, external_gene_name == genes[g])
+      if (nrow(gene) > 0) {
+         points(gene$Effect1, gene$Effect2, pch=1, col="black")  
+   
+         if (genes[g] == "PMAIP1" || genes[g] == "XRCC3")
+            text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(-0.07, 1.2), cex=0.75)  
+         else if (genes[g] == "XRCC2")
+            text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=-0.1, cex=0.75)
+         else
+            if (gene$Effect1 > 0)
+               text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
+            else
+               text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+      } else
+         print(genes[g])
+   }
+ 
+   if (isIg)
+      legend("topleft", legend=c("Upregulated in both", "Downregulated in both", "Ig VJC genes (no D)", "TCR VC genes (no JD)"), col=c("red", "dodgerblue", "gold", "forestgreen"), pch=19)
+   else
+      legend("topleft", legend=c("Upregulated in both", "Downregulated in both"), col=c("red", "dodgerblue"), pch=19)
+ 
+   abline(h=0, lty=5)
+   abline(v=0, lty=5)
+   dev.off()
+}
+
+## Kilonova plot
+de.kilo <- de.fishers
+de.kilo$Effect1 <- de.kilo$George_Effect
+de.kilo$Effect2 <- de.kilo$CCLE_Effect
+
+plot.main <- "Mutual fold change between primary tumors and cancer cell lines"
+plot.de <- paste0(wd.ccle, "kilonovaplot_all-ccle_fishers")
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Test 2

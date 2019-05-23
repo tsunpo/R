@@ -61,14 +61,11 @@ survSCLC <- function(phenos, samples, isCensored) {
    phenos[which(phenos$stage_UICC == "IIIb"),]$Stage <- 2
    
    phenos[which(phenos$stage_UICC == "IV"),]$Stage <- 2
-   phenos$Stage <- as.factor(phenos$Stage)
+   #phenos$Stage <- as.factor(phenos$Stage)
    
-   ## Q2
-   phenos$Q2 <- "Q1+Q4"
-   phenos$Q2[which(phenos$Q4 == 2)] <- "Q2+Q3"
-   phenos$Q2[which(phenos$Q4 == 3)] <- "Q2+Q3"
-   phenos$Q4 <- as.factor(phenos$Q4)
-   phenos$RT <- as.factor(phenos$RT)
+   ## Q4
+   #phenos$Q4 <- as.factor(phenos$Q4)
+   #phenos$RT <- as.factor(phenos$RT)
    
    ## For Cox regression model
    phenos$Surgery <- "no"
