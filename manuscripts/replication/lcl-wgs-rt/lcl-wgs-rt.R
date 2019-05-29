@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
 wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Commons.R", "ReplicationTiming.R", "Rearrangement.R")
+handbooks <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
 wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
@@ -23,19 +23,18 @@ load(file.path(wd.src.guide, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE1 <- "LCL"
+BASE  <- "LCL"
 PAIR1 <- "S"
-BASE0 <- "LCL"
 PAIR0 <- "G1"
-base1 <- tolower(BASE1)
-base0 <- tolower(BASE0)
+base  <- tolower(BASE)
 
-wd.anlys <- file.path(wd, BASE1, "analysis")
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
+wd.anlys <- file.path(wd, BASE, "analysis")
+
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
 samples1 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
@@ -43,73 +42,37 @@ n0 <- length(samples0)
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
-# Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
+# Last Modified: 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
    chr <- chrs[c]
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
  
-   ## Transparent colours to better visualise overlapping dots
-   adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
-   adjustcolor.blue <- adjustcolor("skyblue3", alpha.f=0.3)
-   adjustcolor.gray <- adjustcolor("gray", alpha.f=0.3)
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
+
+   ## Plot RT
+   main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
+   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(), 7.5, 9.25, 3, 3)
    
-   ## RD   
-   ylab.text <- "Read depth"
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "_n", n1))
-   main.text <- paste0("Read depth in ", BASE1, " S phase cells (n=", n1, ")")
-   #plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$T, bed.gc.chr, c(adjustcolor.red, "red"), "png", 7.25, 9.75)
- 
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR0, "_n", n0))
-   main.text <- paste0("Read depth in ", BASE0, " G1 phase cells (n=", n0, ")")
-   #plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$N, bed.gc.chr, c(adjustcolor.blue, "blue"), "png", 7.25, 9.75)
- 
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "+", PAIR0, "_n", n1, "-", n0))
-   main.text <- paste0("Read depth in ", BASE1, " S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
-   #plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), "png", 7.5, 9.25)
- 
-   ## RD & RT 
-   main.text <- paste0(BASE1, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-  
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
-   #plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
-   
-   ## EEF1A1 (chr6)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_EEF1A1"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74225473, 74233520), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 69225473, 79233520, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74225473, 74233520), 7.5, 9.25, 3, 3)
-   
-   ## SLFN12 (chr17)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_SLFN12"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(33738079, 33760302), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 27738079, 38760302, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(33738079, 33760302), 7.5, 9.25, 3, 3)
-   
-   ## KLRC4 (chr12)
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_KLRC4"))
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(10559983, 10562356), 7.5, 9.25, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 5559983, 15562356, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(10559983, 10562356), 7.5, 9.25, 3, 3)
-   
-   
-   
-   ## KLRC3 (chr12)
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(10564911,	10573194), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 10000000,	11000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(10564911,	10573194), 7.75, 9, 3, 3)
-   
-   #plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, 115000000, 125000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74353001, 85951001), 7.5, 9.25, 3, 3)
-   
-   ## RT
-   ylab.text <- "Replication timing"
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
-   main.text <- paste0(BASE1, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")
-   plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", 3, 3)
+   ## chr2
+   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)
+   plotRT(file.name, paste0(BASE, " S/G1 read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)   ## T/N: 74353001, 85951001
+   ## chr4
+   #plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(128986001, 140285001), 7.5, 9.25, 3, 3)
+   #plotRT(file.name, paste0(BASE, " S/G1 read depth ratio"), chr, 125000000, 144000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(128986001, 140285001), 7.5, 9.25, 3, 3)
+   ## chr22
+   #plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(), 7.25, 9, 3, 3)
 }
+
+spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
+idx.1 <- which(spline$x > 73353001)
+idx.2 <- which(spline$x < 75353001)
+idx <- intersect(idx.1, idx.2)
+
+which(spline$y == max(spline$y[idx]))
+spline$x[72636]
 
 # -----------------------------------------------------------------------------
 # Plot RT for individual genes (see ReplicationTiming.R)
@@ -124,23 +87,59 @@ for (g in 1:length(genes)) {
    chr   <- gene$chromosome_name
    start <- gene$start_position
    end   <- gene$end_position
- 
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
    rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
- 
+
    ## RD & RT 
-   main.text <- paste0(BASE1, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")   
- 
-   file.name <- file.path(wd.rt.plots, "genes", paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
+   main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")   
+   file.name <- file.path(wd.rt.plots, "genes", paste0("RT_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
    if (plotWholeChr)
-      plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
+      plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
  
    for (r in 1:length(ranges))
-      plotRD3(file.name, paste0(BASE1, " S/G1 read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S", "G1"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)
+      plotRT(file.name, paste0(BASE, " S/G1 read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S", "G1"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)
 }
 
+# -----------------------------------------------------------------------------
+# LCL RD vs RT
+# Last Modified: 27/05/19
+# -----------------------------------------------------------------------------
+cors <- toTable(0, 3, 22, c("chr", "cor1", "cor2"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
+   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
+   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
+   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+ 
+   main.text <- paste0("LCL read depths vs. LCL RT (", "Chr", c, ")")
+   xlab.text <- "LCL S/G1 RT"
+   ylab.text <- "LCL read depth [log2]"
+   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_pearson_chr", c, "_spline"))
+   xmin <- min(rpkms.chr.rt.RT$SPLINE)
+   xmax <- max(rpkms.chr.rt.RT$SPLINE)
+   ymin <- min(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
+   ymax <- max(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
+   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), xmin, xmax, ymin, ymax, line0=T)
+   
+   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE)
+   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE)
+}
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_cors-pearson_spline.RData")))
+
+ylab.text <- "Pearson's r"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_pearson_spline")
+main.text <- paste0("LCL read depths vs. LCL RT")
+ymin <- -0.7
+ymax <- 0.6
+plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
 
 
 

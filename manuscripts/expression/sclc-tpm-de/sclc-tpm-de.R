@@ -82,7 +82,7 @@ for (c in 1:22) {
    
    argv <- data.frame(predictor=chr, predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
    de.chr <- differentialAnalysis(tpm.gene.log2.chr, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-   colnames(de.chr)[3:4] <- c("CM2_WT", "CM2")
+   colnames(de.chr)[3:4] <- c("CM1", "CM2")
    de <- rbind(de, de.chr)
 }
 de$FDR <- testFDR(de$P, argv$test.fdr)
@@ -139,6 +139,33 @@ periodic.G2M <- intersect(periodic.G2M, rownames(tpm.gene.log2))   ## 792/876
 
 writeGRPformat(periodic.G1S, wd.de.gsea, "G1-S")
 writeGRPformat(periodic.G2M, wd.de.gsea, "G2-M")
+
+# -----------------------------------------------------------------------------
+# Meta-analysis on wgs.de first
+# Last Modified: 24/04/19; 12/04/19
+# -----------------------------------------------------------------------------
+overlaps <- rownames(subset(de.tpm.gene, P <= 1E-04))
+tpm.gene <- tpm.gene.sclc[overlaps, samples.sclc$SAMPLE_ID]
+
+test <- tpm.gene
+pca.de <- getPCA(t(test))
+
+##
+BASE <- "SCLC"
+base <- "sclc"
+traits <- samples.sclc$PCA
+cols <- c("blue", "gray", "red")
+
+file.main <- paste0(BASE, " on ", length(overlaps), " (P < 1E-04) DE genes")
+plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DE"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+plotPCA(1, 3, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DE"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+plotPCA(2, 3, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DE"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Meta-analysis on wgs.de first

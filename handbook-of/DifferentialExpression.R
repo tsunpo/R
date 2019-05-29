@@ -369,7 +369,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    ## Log2 fold change
    de[,3] <- median00(expr.pheno, samples.expr.wt)
    de[,4] <- median00(expr.pheno, samples.expr.mut)
-   de$LOG2_FC <- de[,4] - de[,3]
+   de$LOG_2FC <- de[,4] - de[,3]
  
    ## NOTE: Sort AFTER fold change and BEFORE annotation!!
    de <- de[order(de$P),]

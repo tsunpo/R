@@ -72,12 +72,16 @@ subset0 <- function(table, colname, values) {
    return(table[which(table[, colname] %in% values),])   ## NEW VERSION: 29/11/18
 }
 
+round0 <- function(number, digits) {
+   return(sprintf(paste0("%.", digits, "f"), round(number, digits=digits)))
+}
+
 separator <- function(number) {
    return(formatC(number, format="f", big.mark=",", digits=0))
 }
 
-round0 <- function(number, digits) {
-   return(sprintf(paste0("%.", digits, "f"), round(number, digits=digits)))
+scientific <- function(number) {
+   return(formatC(number, format="e", digits=2))
 }
 
 # -----------------------------------------------------------------------------

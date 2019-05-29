@@ -57,7 +57,7 @@ rpkms.T.chr.d.sample.T.all <- NULL
 rpkms.chr.rt.lcl.RT.all <- NULL
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
-for (c in 20:1) {
+for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    
@@ -68,17 +68,17 @@ for (c in 20:1) {
    rpkms.T.chr.d.sample <- rpkms.T.chr.d[,c("BED", SAMPLE)]
    colnames(rpkms.T.chr.d.sample) <- c("BED", "T")
    rpkms.T.chr.d.sample$T <- log2(rpkms.T.chr.d.sample$T + 0.01)
-   rpkms.T.chr.d.sample.T <- setSlope(rpkms.T.chr.d.sample, bed.gc.chr, "T")
+   rpkms.T.chr.d.sample.T <- setSpline(rpkms.T.chr.d.sample, bed.gc.chr, "T")
 
    ## Replication timing
    rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt.lcl_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
    #rpkms.chr.rt.lcl <-readTable(paste0("/projects/cangen/tyang2/SCLC/analysis/replication/sclc-wgs-rt/data/sclc_rpkm.corr.gc.d.rt_", chr, "_SCLC-SCLC_n101-92.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
-   rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
    
    ## Keep 1kb slopes based on overlapping windows
    overlaps <- intersect(rpkms.T.chr.d.sample.T$BED, rpkms.chr.rt.lcl.RT$BED)
-   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.T.chr.d.sample.T[overlaps,]$SLOPE)
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, rpkms.T.chr.d.sample.T[overlaps,]$SPLINE)
    
    ##
    if (is.null(rpkms.T.chr.d.sample.T.all)) {
@@ -93,5 +93,5 @@ for (c in 20:1) {
       rpkms.chr.rt.lcl.RT.all <- rbind(rpkms.chr.rt.lcl.RT.all, rpkms.chr.rt.lcl.RT[overlaps,])
    }
 }
-cor <- getCor(rpkms.chr.rt.lcl.RT.all$SLOPE, rpkms.T.chr.d.sample.T.all$SLOPE)
-save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson.RData")))
+cor <- getCor(rpkms.chr.rt.lcl.RT.all$SPLINE, rpkms.T.chr.d.sample.T.all$SPLINE)
+save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson_spline.RData")))

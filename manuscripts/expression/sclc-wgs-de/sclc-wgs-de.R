@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R")
+handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -267,40 +267,183 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # SRC between WGS and TPM
 # Last Modified: 23/05/19
 # -----------------------------------------------------------------------------
-tpm.gene.log2 <- tpm.gene.log2[,rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
-
-colnames <- c("RHO", "P", "Q", "LUAD", "LCNEC", "SCLC", "LCNEC_LUAD", "SCLC_LUAD")   ##"ANOVA_P", "ANOVA_Q", 
-de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
-rownames(de) <- rownames(tpm.gene.log2)
+colnames <- c("RHO", "P", "Q", "PCC_R", "PCC_P", "PCC_Q", "LOG2FC_WGS", "LOG2FC_TPM")
+de <- toTable(0, length(colnames), nrow(tpm.gene.o.log2), colnames)
+rownames(de) <- rownames(tpm.gene.o.log2)
 
 ## SRC
-de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$RB1_RATE, method="spearman", exact=F)[[4]])
-de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$RB1_RATE, method="spearman", exact=F)[[3]])
-## ANOVA
-#samples$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
-#de$ANOVA_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) testANOVA(x, expr.pheno.log2, pheno.all))
+de$RHO <- mapply(x = 1:nrow(tpm.gene.o.log2), function(x) cor.test(as.numeric(tpm.gene.o.log2[x,]), as.numeric(wgs.gene.o.log2[x,]), method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.o.log2), function(x) cor.test(as.numeric(tpm.gene.o.log2[x,]), as.numeric(wgs.gene.o.log2[x,]), method="spearman", exact=F)[[3]])
+
+## Pearson
+de$PCC_R <- mapply(x = 1:nrow(tpm.gene.o.log2), function(x) cor.test(as.numeric(tpm.gene.o.log2[x,]), as.numeric(wgs.gene.o.log2[x,]), method="pearson")$estimate)
+de$PCC_P <- mapply(x = 1:nrow(tpm.gene.o.log2), function(x) cor.test(as.numeric(tpm.gene.o.log2[x,]), as.numeric(wgs.gene.o.log2[x,]), method="pearson")$p.value)
 
 ## Log2 fold change
-de$LUAD  <- median00(tpm.gene.log2, rownames(subset(samples, Cancer_Type == 0)))
-de$LCNEC <- median00(tpm.gene.log2, rownames(subset(samples, Cancer_Type == 1)))
-de$SCLC  <- median00(tpm.gene.log2, rownames(subset(samples, Cancer_Type == 2)))
-de$LCNEC_LUAD <- de$LCNEC - de$LUAD
-de$SCLC_LUAD  <- de$SCLC  - de$LUAD
+de$LOG2FC_WGS <- de.wgs.gene[rownames(de),]$LOG2_FC
+de$LOG2FC_TPM <- de.tpm.gene[rownames(de),]$LOG2_FC
+de$KEEP <- 0
+de$KEEP <- de$LOG2FC_WGS * de$LOG2FC_TPM
 
 ## FDR
 library(qvalue)
-de$Q   <- qvalue(de$P)$qvalue
-#de$ANOVA_Q <- qvalue(de$ANOVA_P)$qvalue
+de$Q     <- qvalue(de$P)$qvalue
+de$PCC_Q <- qvalue(de$PCC_P)$qvalue
 de <- de[order(de$P),]
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
+de.wgs.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
 
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47_rb1_src_q_n198.RData"))
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47_rb1_src_q_n198.txt"), colnames=T, rownames=F, sep="\t")
+save(de.wgs.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_wgs-tpm-gene-o_rt_src_pcc_q_n70.RData"))
+writeTable(de.wgs.tpm.gene, file.path(wd.de.data, "de_sclc_wgs-tpm-gene-o_rt_src_pcc_q_n70.txt"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Final report
+# Last Modified: 23/05/19
+# -----------------------------------------------------------------------------
+de.wgs.tpm.gene.out <- subset(de.wgs.tpm.gene, KEEP > 0)
+#de.wgs.tpm.gene.out <- subset(de.wgs.tpm.gene.out, P <= 1E-03)
+
+overlaps <- intersect(rownames(de.wgs.tpm.gene.out), rownames(subset(de.tpm.gene, P <= 1E-03)))
+overlaps <- intersect(overlaps, rownames(subset(de.wgs.gene, P <= 1E-06)))
+length(overlaps)
+# [1] 20
+
+de.wgs.tpm.gene.out <- de.wgs.gene[overlaps,]
+colnames(de.wgs.tpm.gene.out)[8:12] <- paste0("WGS_", colnames(de.wgs.tpm.gene.out)[8:12])
+de.wgs.tpm.gene.out <- cbind(de.wgs.tpm.gene.out, de.tpm.gene[overlaps, 8:12])
+colnames(de.wgs.tpm.gene.out)[13:17] <- paste0("RNA_", colnames(de.wgs.tpm.gene.out)[13:17])
+
+save(de.wgs.tpm.gene.out, samples, file=file.path(wd.de.data, "de_sclc_wgs-tpm-gene-out_rt_p1e-06_p1e-02_n70.RData"))
+writeTable(de.wgs.tpm.gene.out, file.path(wd.de.data, "de_sclc_wgs-tpm-gene-out_rt_p1e-06_p1e-02_n70.txt"), colnames=T, rownames=F, sep="\t")
+
+###
+## PCA of SCLC
+#overlaps <- rownames(de.wgs.tpm.gene.out)
+tpm.gene <- tpm.gene.sclc[overlaps, samples.sclc$SAMPLE_ID]
+
+test <- tpm.gene
+pca.de <- getPCA(t(test))
+
+##
+BASE <- "SCLC"
+base <- "sclc"
+traits <- samples.sclc$PCA
+cols <- c("blue", "gray", "red")
+
+file.main <- paste0(BASE, " on ", length(overlaps), " DRD and DE genes")
+plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DRD+DE_20genes"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+plotPCA(1, 3, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DRD+DE_20genes"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+plotPCA(2, 3, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DRD+DE_20genes"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+
+###
+## PCA of combine HeLa and SCLC
+#samples.hela$PCA <- samples.hela$CYCLE_PCA_2
+#samples.sclc$PCA <- paste0("SCLC (", samples.sclc$G1S, ")")
+samples <- rbind(samples.hela[,c("SAMPLE_ID", "PCA")], samples.sclc[,c("SAMPLE_ID", "PCA")])
+
+overlaps <- intersect(overlaps, rownames(tpm.gene.hela))
+# > setdiff(overlaps, rownames(tpm.gene))
+# [1] "ENSG00000164114"
+# > ensGene["ENSG00000164114",]
+# ensembl_gene_id chromosome_name strand start_position end_position   gene_biotype external_gene_name
+# ENSG00000164114 ENSG00000164114            chr4     -1      156263810    156298122 protein_coding               MAP9
+
+#overlaps <- intersect(rownames(de.wgs.tpm.gene.out), rownames(tpm.gene.hela))
+tpm.gene <- cbind(tpm.gene.hela[overlaps,], tpm.gene.sclc[overlaps,])
+tpm.gene <- tpm.gene[, samples$SAMPLE_ID]
+
+test <- tpm.gene
+pca.de <- getPCA(t(test))
+
+##
+BASE <- "SCLC and HeLa"
+base <- "sclc+hela"
+traits <- samples$PCA
+cols <- c("purple3", "forestgreen", "gold", "blue", "gray", "red")
+
+file.main <- paste0(BASE, " on ", nrow(de.wgs.tpm.gene.out), " DRD and DE genes")
+plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DRD+DE_19genes"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+plotPCA(1, 3, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DRD+DE_19genes"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+plotPCA(2, 3, pca.de, traits, wd.de.plots, paste0("pca_", base, "_DRD+DE_19genes"), size=6.5, file.main, "topleft", cols, NA, 1, 1)
+
+# -----------------------------------------------------------------------------
+# Plot
+# -----------------------------------------------------------------------------
+plotBoxTPM <- function(gene, wd.de.plots, tpm.gene.log2, de.tpm.gene, samples, ylim=NULL) {
+   ids <- subset(ensGene, external_gene_name == gene)   ## E.g. RBL1 (ENSG00000080839 and ENSG00000269846)
+   chr <- ids$chromosome_name[1]
+   
+   for (i in 1:nrow(ids)) {
+      id <- ids$ensembl_gene_id[i]
+
+      ##
+      file.name <- paste0("boxplot_tpm.gene.o.log2_", gene)
+      if (nrow(ids) != 1)
+         file.name <- paste0(file.name, "_", id)
+      
+      gene.tpm <- cbind(t(tpm.gene.o.log2[id, rownames(samples.o)]), samples.o)
+      colnames(gene.tpm)[1] <- "MEDIAN"
+  
+      pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=3.5)
+      boxplot(gene.tpm$MEDIAN ~ gene.tpm[, chr], outline=T, names=c("CM1", "CM2"), ylab="log2(TPM+0.01)", main=paste0(gene, " (", id, ")"))
+      
+      mtext(paste0("p-value = ", scientific(de.tpm.gene[id,]$P)), cex=1.2, line=0.3)
+      dev.off()
+   }
+}
+
+plotBox <- function(gene, wd.de.plots, wgs.gene.o.log2, tpm.gene.o.log2, samples.o, ylim=NULL) {
+ ids <- subset(ensGene, external_gene_name == gene)   ## E.g. RBL1 (ENSG00000080839 and ENSG00000269846)
+ chr <- ids$chromosome_name[1]
+ 
+ for (i in 1:nrow(ids)) {
+  id <- ids$ensembl_gene_id[i]
+  
+  ## 
+  file.name <- paste0("boxplot_tpm.gene.o.log2_", gene)
+  if (nrow(ids) != 1)
+   file.name <- paste0(file.name, "_", id)
+  
+  gene.tpm <- cbind(t(tpm.gene.o.log2[id, rownames(samples.o)]), samples.o)
+  colnames(gene.tpm)[1] <- "MEDIAN"
+  
+  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=3.5)
+  boxplot(gene.tpm$MEDIAN ~ gene.tpm[, chr], outline=T, names=c("CM1", "CM2"), ylab="log2(TPM+0.01)", main=paste0(gene, " (", id, ")"))
+  dev.off()
+  
+  ##
+  file.name <- paste0("boxplot_wgs.gene.o.log2_", gene)
+  if (nrow(ids) != 1)
+   file.name <- paste0(file.name, "_", id)
+  
+  gene.wgs <- cbind(t(wgs.gene.o.log2[id, rownames(samples.o)]), samples.o)
+  colnames(gene.wgs)[1] <- "MEDIAN"
+  
+  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=3.5)
+  boxplot(gene.wgs$MEDIAN ~ gene.tpm[, chr], outline=T, names=c("CM1", "CM2"), ylab="log2(RD+0.01)", main=paste0(gene, " (", id, ")"))
+  mtext(paste0("p-value = ", scientifc(gene.wgs$)), cex=1.2, line=0.3)
+  dev.off()
+  
+  ##
+  file.name <- paste0("plot_wgs.tpm.gene.o.log2_", gene)
+  if (nrow(ids) != 1)
+   file.name <- paste0(file.name, "_", id)
+  
+  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=6)
+  plot(gene.tpm$MEDIAN ~ gene.wgs$MEDIAN, xlab="log2(RD+0.01)", ylab="log2(TPM+0.01)", main=paste0(gene, " (", id, ")"))
+  dev.off()
+ }
+}
 
 
+##
+genes <- c("RP11-141C7.3", "BRD9", "MAP9", "RAD9A", "POLE", "MCM10", "DNA2", "CCAR1", "SMARCD1", "E2F3", "ERCC8")
+for (g in 1:length(genes)) {
+   plotBoxTPM(genes[g], wd.de.plots, tpm.gene.o.log2, de.tpm.gene.sclc, samples.o)
+   #plotBoxWGS(genes[g], wd.de.plots, wgs.gene.o.log2, de.wgs.tpm.gene, samples.o)
+}
 
 
 
@@ -310,60 +453,90 @@ writeTable(de.tpm.gene, file.path(wd.de.data, "de_luad+lcnec+sclc_tpm-gene-r5p47
 # -----------------------------------------------------------------------------
 # Cannoli/Kilonova plot
 # -----------------------------------------------------------------------------
-plotKilonovaFishers <- function(de, genes, file.de, file.main, p, isIg) {
-   de.sig.positive <- subset(subset(subset(de, P_Fishers <= p), Effect1 > 0), Effect2 > 0)
-   de.sig.negative <- subset(subset(subset(de, P_Fishers <= p), Effect1 < 0), Effect2 < 0)
- 
+plotCannoli <- function(de.1, de.2, de.sig, genes, file.de, file.main, xlim=NA, ylim=NA) {
+   overlaps <- intersect(rownames(de.1), rownames(de.2))
+   de.1 <- de.1[overlaps,]
+   de.2 <- de.2[overlaps,]
+   
+   de <- de.1
+   de$Effect1 <- de$LOG2_FC
+   de$Effect2 <- de.2[overlaps,]$LOG2_FC
+   de$Effect1 <- -log10(de.1$P) * de$Effect1
+   de$Effect2 <- -log10(de.2$P) * de$Effect2
+   de.positive <- subset(subset(subset(de, Effect1 > 0), Effect2 > 0), P < 1E-06)
+   de.negative <- subset(subset(subset(de, Effect1 < 0), Effect2 < 0), P < 1E-06)
+   de.sig <- de[rownames(de.sig),]
+   
+   xlab.text <- "Differential replication timing (CM2/CM1)"
+   ylab.text <- "Differential gene expression (CM2/CM1)"
    pdf(file.de, height=7, width=7)
-   plot(de$Effect1, de$Effect2, pch=16, xlab="Median fold change (log2 SCLC/LUAD)", ylab="Median fold change in CCLE", col="darkgray", main=file.main)
+   if (is.na(xlim) && is.na(ylim)) {
+      plot(de$Effect1, de$Effect2, pch=16, xlab=xlab.text, ylab=ylab.text, col=adjustcolor.gray, main=file.main[1])
+   } else
+      plot(de$Effect1, de$Effect2, pch=16, xlab=xlab.text, ylab=ylab.text, col=adjustcolor.gray, main=file.main[1], xlim=xlim, ylim=ylim)
+   
+   points(de.positive$Effect1, de.positive$Effect2, pch=16, col=adjustcolor.red)
+   points(de.negative$Effect1, de.negative$Effect2, pch=16, col=adjustcolor.blue)
  
-   points(de.sig.positive$Effect1, de.sig.positive$Effect2, pch=16, col="red")
-   points(de.sig.negative$Effect1, de.sig.negative$Effect2, pch=16, col="dodgerblue")
-   if (isIg) {   ## ADD 02/11/17: Immunoglobulin (Ig) variable chain and T-cell receptor (TCR) genes
-      de.ig <- de[grep("IG", de$gene_biotype),]
-      points(de.ig$Effect1, de.ig$Effect2, pch=16, col="gold")
-      de.tr <- de[grep("TR", de$gene_biotype),]
-      points(de.tr$Effect1, de.tr$Effect2, pch=16, col="forestgreen")
+   for (g in 1:nrow(de.sig)) {
+      de.sig.gene <- de.sig[g,]
+      
+      if (de.sig.gene$Effect1 > 0) {
+         points(de.sig.gene$Effect1, de.sig.gene$Effect2, pch=16, col="red")
+      } else
+         points(de.sig.gene$Effect1, de.sig.gene$Effect2, pch=16, col="dodgerblue")
    }
- 
+   
    for (g in 1:length(genes)) {
       gene <- subset(de, external_gene_name == genes[g])
       if (nrow(gene) > 0) {
-         points(gene$Effect1, gene$Effect2, pch=1, col="black")  
-   
-         if (genes[g] == "PMAIP1" || genes[g] == "XRCC3")
-            text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(-0.07, 1.2), cex=0.75)  
-         else if (genes[g] == "XRCC2")
-            text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=-0.1, cex=0.75)
+         points(gene$Effect1, gene$Effect2, pch=1, col="black")
+       
+         if (gene$Effect1 > 0)
+            text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
          else
-            if (gene$Effect1 > 0)
-               text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
-            else
-               text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+            text(gene$Effect1, gene$Effect2, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
       } else
          print(genes[g])
    }
  
-   if (isIg)
-      legend("topleft", legend=c("Upregulated in both", "Downregulated in both", "Ig VJC genes (no D)", "TCR VC genes (no JD)"), col=c("red", "dodgerblue", "gold", "forestgreen"), pch=19)
-   else
-      legend("topleft", legend=c("Upregulated in both", "Downregulated in both"), col=c("red", "dodgerblue"), pch=19)
+   legend("topleft", legend=c("Early (P < 1E-06) & Up (P < 1.00E-03)", "Late  (P < 1E-06) & Down (P < 1.00E-03)", "Early (P < 1E-06) & Up", "Late  (P < 1E-06) & Down", "Weighted effect (-log10P * log2FC)"), col=c("red", "dodgerblue", adjustcolor.red, adjustcolor.blue, adjustcolor.gray), pch=19)
  
    abline(h=0, lty=5)
    abline(v=0, lty=5)
    dev.off()
 }
 
-## Kilonova plot
-de.kilo <- de.fishers
-de.kilo$Effect1 <- de.kilo$George_Effect
-de.kilo$Effect2 <- de.kilo$CCLE_Effect
+## Cannoli plot
+#overlaps <- intersect(rownames(de.wgs.gene), rownames(de.tpm.gene))
+#de.cannoli <- de.wgs.gene[overlaps,]
+#de.cannoli$Effect1 <- de.cannoli$LOG2_FC
+#de.cannoli$Effect2 <- de.tpm.gene[overlaps,]$LOG2_FC
 
-plot.main <- "Mutual fold change between primary tumors and cancer cell lines"
-plot.de <- paste0(wd.ccle, "kilonovaplot_all-ccle_fishers")
+plot.main <- "Consensual differential replication and gene expression"
+plot.de <- file.path(wd.de.plots, "cannoliplot_weight_sclc_")
+
+###
+## Immunoglobulin class switching
+#genes <- c("DDX55", "KNTC1", "NSUN2", "AL359195.1", "EVPL", "PHKG2", "RCE1", "GTPBP4", "PAPD7", "IGHMBP2", "ZNF598", "GTF3C2", "RBM6", "AARSD1", "KAT2A")
+genes <- c("BRD9", "SMARCD1", "MCM10", "RAD9A", "MAP9", "RCHY1")
+file.main <- c(plot.main, "Cell cycle")
+
+file.de <- paste0(plot.de, "Cycle.pdf")
+plotCannoli(de.wgs.gene, de.tpm.gene, de.wgs.tpm.gene.out, genes, file.de, file.main)
+
+file.de <- paste0(plot.de, "Cycle_xlim-ylim5.pdf")
+plotCannoli(de.wgs.gene, de.tpm.gene, de.wgs.tpm.gene.out, genes, file.de, file.main, xlim=c(-2, 2), ylim=c(-5, 5))
 
 
 
+
+
+## 
+genes <- ""
+file.main <- c("Consensual fold change (log2FC CM2/CM1)", "", "", "")
+file.de <- paste0(wd.de, "cannoliplot_sclc_de-wgs-tpm_121genes.pdf")
+plotKilonova(de1, de2, genes, file.de, file.main)
 
 
 

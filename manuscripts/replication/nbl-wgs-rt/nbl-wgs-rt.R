@@ -23,19 +23,18 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE1 <- "NBL"
+BASE  <- "NBL"
 PAIR1 <- "T"
-BASE0 <- "NBL"
 PAIR0 <- "N"
-base1 <- tolower(BASE1)
-base0 <- tolower(BASE0)
+base  <- tolower(BASE)
 
-wd.anlys <- file.path(wd, BASE1, "analysis")
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
+wd.anlys <- file.path(wd, BASE, "analysis")
+
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs <- file.path(wd, BASE1, "ngs/WGS")
 samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
@@ -43,46 +42,19 @@ n0 <- length(samples0)
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
-# Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
+# Last Modified: 29/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
    chr <- chrs[c]
- 
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
    rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
- 
-   ## Colours (was "lightcoral", "skyblue3")
-   adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
-   adjustcolor.blue <- adjustcolor("skyblue3", alpha.f=0.3)
-   adjustcolor.gray <- adjustcolor("gray", alpha.f=0.3)
- 
-   ## RD 
-   ylab.text <- "Read depth"
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "_n", n1))
-   main.text <- paste0("Read depth in ", BASE1, " tumour cells (n=", n1, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$T, bed.gc.chr, c(adjustcolor.red, "red"), "png", 7.75, 9.25)   #(7.75, 9.25) for chr2
- 
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR0, "_n", n0))
-   main.text <- paste0("Read depth in ", BASE0, " normal cells (n=", n0, ")")
-   plotRD(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt$N, bed.gc.chr, c(adjustcolor.blue, "blue"), "png", 7.75, 9.25)
- 
-   file.name <- file.path(wd.rt.plots, paste0("RD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "+", PAIR0, "_n", n1, "-", n0))
-   main.text <- paste0("Read depth in ", BASE1, " tumour (n=", n1, ") and normal (n=", n0, ") cells")
-   plotRD2(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), "png", 7.75, 9)
- 
-   ## RD & RT 
-   main.text <- paste0(BASE1, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") cells")   
-   file.name <- file.path(wd.rt.plots, paste0("RTD_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))   
-   plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(74353001, 85951001), 7.75, 9, 3, 3)
-   plotRD3(file.name, paste0(BASE1, " T/N read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(74353001, 85951001), 7.75, 9, 3, 3)
- 
-   ## RT
-   ylab.text <- "Replication timing"
+
+   ## Plot RT
+   main.text <- paste0(BASE, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") samples")
    file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
-   main.text <- paste0(BASE1, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") cells")
-   plotRT(file.name, main.text, ylab.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", 3, 3)
+   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(), 7.75, 9, 3, 3)
 }
 
 # -----------------------------------------------------------------------------
@@ -202,7 +174,7 @@ cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2"
 cors.samples$chr <- 1:22
 for (s in 1:length(samples1)) {
    sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_cors-pearson.RData")))
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_cors-pearson_spline.RData")))
  
    cors.samples[, sample] <- cors$cor
 }
@@ -212,13 +184,17 @@ for (c in 1:22) {
    cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
    cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
 }
-save(cors.samples, file=file.path(wd.rt.data, paste0("rd-vs-rt_samples-vs-lcl_cors-pearson.RData")))
+save(cors.samples, file=file.path(wd.rt.data, paste0("rd-vs-rt_samples-vs-lcl_cors-pearson_spline.RData")))
+# > min(cors.samples[,-c(1:4)])
+# [1] -0.7785501
+# > max(cors.samples[,-c(1:4)])
+# [1] 0.8380297
 
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SAMPLES-vs-LCL_pearson")
-main.text <- c("NBL read depth profiles (n=56) vs. LCL RT", "NBL RD (T) vs. LCL RT")   ## TO-DO
-ymin <- -0.6920546
-ymax <- 0.6621544
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax, line0=T)
+main.text <- c("NBL read depth profiles (n=56) vs. LCL RT", "NBL T vs. LCL S/G1 RT")   ## TO-DO
+ymin <- -0.8318379
+ymax <- 0.8457572
+plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # CM2 and CQ4

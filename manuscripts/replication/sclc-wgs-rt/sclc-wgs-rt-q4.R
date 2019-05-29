@@ -122,7 +122,7 @@ for (g in 1:length(genes)) {
       plotRD3(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.gray, adjustcolor.gray), c("M2", "M1"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
    
    for (r in 1:length(ranges))
-      plotRD3(file.name, paste0(BASE1, " M2/M1 read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2", "M1"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)
+      plotRD3(file.name, paste0(BASE, " M2/M1 read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2", "M1"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)
 }
 
 # -----------------------------------------------------------------------------
