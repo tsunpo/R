@@ -99,8 +99,8 @@ for (g in 1:length(genes)) {
 }
 
 # -----------------------------------------------------------------------------
-# SCLC RD vs RT
-# Last Modified: 18/02/19
+# SCLC RD vs LCL RT
+# Last Modified: 31/05/19
 # -----------------------------------------------------------------------------
 cors <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
 cors$chr <- 1:22
@@ -113,8 +113,9 @@ for (c in 1:22) {
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
    rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
    rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-
+   #rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+   #cors$length[c] <- nrow(rpkms.chr.rt.RT)
+   
    rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
    rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
    rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
@@ -123,14 +124,10 @@ for (c in 1:22) {
    overlaps <- intersect(rpkms.chr.rt.T$BED, rpkms.chr.rt.lcl.RT$BED)
    cors$length[c] <- length(overlaps)
    
-   main.text <- paste0("SCLC read depths vs. LCL RT (", "Chr", c, ")")
+   main.text <- paste0("SCLC read depths vs. LCL S/G1 RT (", "Chr", c, ")")
    xlab.text <- "LCL S/G1 RT"
    ylab.text <- "SCLC read depth [log2]"
    file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_SCLC-vs-LCL_chr", c, "_spearman_spline"))
-   #xmin <- min(rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE)
-   #xmax <- max(rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE)
-   #ymin <- min(c(rpkms.chr.rt.T[overlaps,]$SPLINE, rpkms.chr.rt.N[overlaps,]$SPLINE))
-   #ymax <- max(c(rpkms.chr.rt.T[overlaps,]$SPLINE, rpkms.chr.rt.N[overlaps,]$SPLINE))
    plotRD2vsRT(rpkms.chr.rt.T[overlaps,]$SPLINE, rpkms.chr.rt.N[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), method="spearman")
 
    cors$cor1[c] <- getCor(rpkms.chr.rt.T[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, method="spearman")
@@ -150,10 +147,65 @@ plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col
 
 ylab.text <- "Intercept difference"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-LCL_spearman_spline_intercept_0.06")
-main.text <- c(paste0("SCLC read depths vs. LCL RT"), "Linear regression")
-ymin <- -0.06034766
-ymax <- 0.06034766
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-LCL_spearman_spline_intercept_0.063")
+main.text <- c(paste0("SCLC read depths vs. LCL S/G1 RT"), "Linear regression")
+ymin <- -0.063
+ymax <- 0.063
+plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(13, 17))
+
+# -----------------------------------------------------------------------------
+# SCLC RD vs SCLC RT
+# Last Modified: 31/05/19
+# -----------------------------------------------------------------------------
+cors <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
+cors$chr <- 1:22
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
+   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
+   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+   cors$length[c] <- nrow(rpkms.chr.rt.RT)
+   
+   #rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   #rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   #rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+ 
+   ## Keep only overlapping 1kb windows
+   #overlaps <- intersect(rpkms.chr.rt.T$BED, rpkms.chr.rt.lcl.RT$BED)
+   #cors$length[c] <- length(overlaps)
+ 
+   main.text <- paste0("SCLC read depths vs. SCLC T/N RT (", "Chr", c, ")")
+   xlab.text <- "SCLC T/N RT"
+   ylab.text <- "SCLC read depth [log2]"
+   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_SCLC-vs-SCLC_chr", c, "_spearman_spline"))
+   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), method="spearman")
+ 
+   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1] 
+}
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-sclc_spearman_spline.RData")))
+
+ylab.text <- "Spearman's rho"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-SCLC_spearman_spline")
+main.text <- paste0("SCLC read depths vs. SCLC RT")
+ymin <- -0.75
+ymax <- 0.75
+plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
+
+ylab.text <- "Intercept difference"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-SCLC_spearman_spline_intercept_0.063")
+main.text <- c(paste0("SCLC read depths vs. SCLC T/N RT"), "Linear regression")
+ymin <- -0.063
+ymax <- 0.063
 plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(13, 17))
 
 # -----------------------------------------------------------------------------

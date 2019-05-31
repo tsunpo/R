@@ -120,7 +120,7 @@ for (c in 1:22) {
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
    cors$length[c] <- nrow(rpkms.chr.rt.RT)
    
-   main.text <- paste0("LCL read depths vs. LCL RT (", "Chr", c, ")")
+   main.text <- paste0("LCL read depths vs. LCL S/G1 RT (", "Chr", c, ")")
    xlab.text <- "LCL S/G1 RT"
    ylab.text <- "LCL read depth [log2]"
    file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_chr", c, "_spearman_spline"))
@@ -140,7 +140,7 @@ save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_spearma
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline")
-main.text <- paste0("LCL read depths vs. LCL RT")
+main.text <- paste0("LCL read depths vs. LCL S/G1 RT")
 ymin <- -0.75
 ymax <- 0.75
 plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
@@ -148,7 +148,7 @@ plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col
 ylab.text <- "Intercept difference"
 xlab.text <- "Chromosome"
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline_intercept")
-main.text <- c(paste0("LCL read depths vs. LCL RT"), "Linear regression")
+main.text <- c(paste0("LCL read depths vs. LCL S/G1 RT"), "Linear regression")
 ymin <- -0.209753
 ymax <- 0.209753
 plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(13, 17))

@@ -349,7 +349,7 @@ plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, y
  
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(cors$diff ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
+   plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, yaxt="n")
    abline(h=cors$diff[2], lty=5)
    lines(cors$diff, y=NULL, type="l", lwd=3, col=cols[3])
    
@@ -374,7 +374,7 @@ plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, y
    legend("bottomleft", "Later than Chr2", bty="n", text.col=cols[2], pch=16, col=cols[2])
    
    axis(side=1, at=seq(2, 22, by=2))
-   #axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
+   axis(side=2, at=seq(-0.06, 0.06, by=0.03), labels=c(-0.06, -0.03, "0.0", 0.03, 0.06))
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
