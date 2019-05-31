@@ -78,7 +78,7 @@ for (c in 1:22) {
    
    ## Keep 1kb slopes based on overlapping windows
    overlaps <- intersect(rpkms.T.chr.d.sample.T$BED, rpkms.chr.rt.lcl.RT$BED)
-   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, rpkms.T.chr.d.sample.T[overlaps,]$SPLINE)
+   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, rpkms.T.chr.d.sample.T[overlaps,]$SPLINE, method="spearman")
    
    ##
    if (is.null(rpkms.T.chr.d.sample.T.all)) {
@@ -93,5 +93,5 @@ for (c in 1:22) {
       rpkms.chr.rt.lcl.RT.all <- rbind(rpkms.chr.rt.lcl.RT.all, rpkms.chr.rt.lcl.RT[overlaps,])
    }
 }
-cor <- getCor(rpkms.chr.rt.lcl.RT.all$SPLINE, rpkms.T.chr.d.sample.T.all$SPLINE)
-save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_cors-pearson_spline.RData")))
+cor <- getCor(rpkms.chr.rt.lcl.RT.all$SPLINE, rpkms.T.chr.d.sample.T.all$SPLINE, method="spearman")
+save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spearman_spline.RData")))

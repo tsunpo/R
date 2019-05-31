@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -200,8 +200,8 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("rd-vs-rt_samples-vs-lcl_co
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SAMPLES-vs-LCL_pearson")
 main.text <- c("CLL read depth profiles (n=96) vs. LCL RT", "CLL T vs. LCL S/G1 RT")   ## TO-DO
 ymin <- -0.8318379
-ymax <- 0.6621544
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax, line0=T)
+ymax <- 0.8457572
+plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # Divide tumour samples into Q4

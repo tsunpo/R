@@ -10,7 +10,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
 wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks <- c("Commons.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
 wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
@@ -57,8 +57,8 @@ for (c in 1:22) {
    plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(), 7.5, 9.25, 3, 3)
    
    ## chr2
-   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)
-   plotRT(file.name, paste0(BASE, " S/G1 read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)   ## T/N: 74353001, 85951001
+   #plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)
+   #plotRT(file.name, paste0(BASE, " S/G1 read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)   ## T/N: 74353001, 85951001
    ## chr4
    #plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.gray, adjustcolor.gray), c("S", "G1"), "png", width=10, peaks=c(128986001, 140285001), 7.5, 9.25, 3, 3)
    #plotRT(file.name, paste0(BASE, " S/G1 read depth ratio"), chr, 125000000, 144000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=5, peaks=c(128986001, 140285001), 7.5, 9.25, 3, 3)
@@ -106,8 +106,9 @@ for (g in 1:length(genes)) {
 # LCL RD vs RT
 # Last Modified: 27/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 3, 22, c("chr", "cor1", "cor2"))
+cors <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
 cors$chr <- 1:22
+
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -117,30 +118,40 @@ for (c in 1:22) {
    rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
    rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
- 
+   cors$length[c] <- nrow(rpkms.chr.rt.RT)
+   
    main.text <- paste0("LCL read depths vs. LCL RT (", "Chr", c, ")")
    xlab.text <- "LCL S/G1 RT"
    ylab.text <- "LCL read depth [log2]"
-   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_pearson_chr", c, "_spline"))
-   xmin <- min(rpkms.chr.rt.RT$SPLINE)
-   xmax <- max(rpkms.chr.rt.RT$SPLINE)
-   ymin <- min(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
-   ymax <- max(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
-   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), xmin, xmax, ymin, ymax, line0=T)
+   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_chr", c, "_spearman_spline"))
+   #xmin <- min(rpkms.chr.rt.RT$SPLINE)
+   #xmax <- max(rpkms.chr.rt.RT$SPLINE)
+   #ymin <- min(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
+   #ymax <- max(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
+   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
    
-   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE)
-   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE)
+   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]    
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_cors-pearson_spline.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_spearman_spline.RData")))
 
-ylab.text <- "Pearson's r"
+ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_pearson_spline")
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline")
 main.text <- paste0("LCL read depths vs. LCL RT")
-ymin <- -0.7
-ymax <- 0.6
+ymin <- -0.75
+ymax <- 0.75
 plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
 
+ylab.text <- "Intercept difference"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline_intercept")
+main.text <- c(paste0("LCL read depths vs. LCL RT"), "Linear regression")
+ymin <- -0.209753
+ymax <- 0.209753
+plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(13, 17))
 
 
 

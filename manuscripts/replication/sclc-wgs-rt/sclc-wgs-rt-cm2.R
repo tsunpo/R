@@ -23,15 +23,14 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+BASE  <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "T"
-base <- tolower(BASE)
+base  <- tolower(BASE)
 
-wd.ngs    <- file.path(wd, BASE, "ngs/WGS")
-wd.ngs.data <- file.path(wd.ngs, "data") 
-
+wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
+
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-cm2"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
