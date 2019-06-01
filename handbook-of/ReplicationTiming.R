@@ -316,11 +316,12 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
       text(0, intercept2, round0(intercept2, digits=2), cex=1.1, col=colours[2], pos=3)
    }
    
+   RT <- paste0(legends[1], "/", legends[2])
    if (cor1 < 0 && cor2 < 0) {
-      legend("bottomright", c(paste0(cor, " = -", round0(abs(cor1), digits=2), " (", legends[1], " vs. RT)"), paste0(cor, " = -", round0(abs(cor2), digits=2), " (", legends[2], " vs. RT)")), text.col=colours, bty="n", cex=1.1)
+      legend("bottomright", c(paste0(cor, " = -", round0(abs(cor1), digits=2), " (", legends[1], " vs. ", RT, ")"), paste0(cor, " = -", round0(abs(cor2), digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, bty="n", cex=1.1)
    } else if (as.numeric(cor1) > 0 && as.numeric(cor2) < 0) {
-      legend("topright", paste0(cor, " = ", round0(cor1, digits=2), " (", legends[1], " vs. RT)"), text.col=colours[1], bty="n", cex=1.1)        
-      legend("bottomright", paste0(cor, " = -", round0(abs(cor2), digits=2), " (", legends[2], " vs. RT)"), text.col=colours[2], bty="n", cex=1.1)
+      legend("topright", paste0(cor, " = ", round0(cor1, digits=2), " (", legends[1], " vs. ", RT, ")"), text.col=colours[1], bty="n", cex=1.1)        
+      legend("bottomright", paste0(cor, " = -", round0(abs(cor2), digits=2), " (", legends[2], " vs. ", RT, ")"), text.col=colours[2], bty="n", cex=1.1)
    }
    mtext(main.text2, cex=1.2, line=0.3)
    dev.off()
@@ -340,7 +341,7 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymi
       text(c+1.5, cors$cor2[c], paste0(round0(cors$cor2[c], digits=2), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=3)
    }
    axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
+   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8))
    dev.off()
 }
 
@@ -349,7 +350,11 @@ plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, y
  
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(cors$diff ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, yaxt="n")
+   if (ymax < 0.1)
+      plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, yaxt="n")
+   else
+      plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
+   
    abline(h=cors$diff[2], lty=5)
    lines(cors$diff, y=NULL, type="l", lwd=3, col=cols[3])
    
@@ -370,11 +375,12 @@ plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, y
       }
    #text(5, ymax-0.005, "Earlier than Chr2", cex=1.1, col=cols[1])
    #text(5, ymin+0.005, "Later than Chr2", cex=1.1, col=cols[2])
-   legend("topleft", "Earlier than Chr2", bty="n", text.col=cols[1], pch=16, col=cols[1])   
-   legend("bottomleft", "Later than Chr2", bty="n", text.col=cols[2], pch=16, col=cols[2])
+   legend("topleft", "Earlier than chr2", bty="n", text.col=cols[1], pch=16, col=cols[1])   
+   legend("bottomleft", "Later than chr2", bty="n", text.col=cols[2], pch=16, col=cols[2])
    
    axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(-0.06, 0.06, by=0.03), labels=c(-0.06, -0.03, "0.0", 0.03, 0.06))
+   if (ymax < 0.1)
+      axis(side=2, at=seq(-0.06, 0.06, by=0.03), labels=c(-0.06, -0.03, "0.0", 0.03, 0.06))
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
