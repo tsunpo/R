@@ -145,13 +145,10 @@ ymin <- -0.75
 ymax <- 0.75
 plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
 
-ylab.text <- "Intercept difference"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-LCL_spearman_spline_intercept_0.063")
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-LCL_spearman_spline_rd-skew")
 main.text <- c(paste0("SCLC read depths vs. LCL S/G1"), "Linear regression")
-ymin <- -0.063
-ymax <- 0.063
-plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(4, 17))
+ymax <- 0.004
+plotReadDepthSkew(cors, file.name, main.text, ymax, c(4, 17), digits=3)
 
 # -----------------------------------------------------------------------------
 # SCLC RD vs SCLC RT
@@ -200,13 +197,10 @@ ymin <- -0.75
 ymax <- 0.75
 plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
 
-ylab.text <- "Intercept difference"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-SCLC_spearman_spline_intercept_0.063")
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-SCLC_spearman_spline_rd-skew")
 main.text <- c(paste0("SCLC read depths vs. SCLC T/N"), "Linear regression")
-ymin <- -0.063
-ymax <- 0.063
-plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(4, 17))
+ymax <- 0.004
+plotReadDepthSkew(cors, file.name, main.text, ymax, c(4, 17), digits=3)
 
 # -----------------------------------------------------------------------------
 # SCLC RT vs LCL RT

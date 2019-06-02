@@ -345,15 +345,19 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymi
    dev.off()
 }
 
-plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols, cs=NULL) {
-   cors$diff <- cors$intercept1 - cors$intercept2
- 
+plotReadDepthSkew <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
+   ylab.text <- "Read depth skew"
+   xlab.text <- "Chromosome"
+   cols <- c("red", "blue", "black")
+   cors$diff <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
+   ymin <- (ymax - cors$diff[2]) * -1
+   if (cors$diff[2] > 0)
+      ymin <- ((ymax - cors$diff[2]) - cors$diff[2]) * -1
+      
+   
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(cors$diff ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   if (ymax < 0.1)
-      plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, yaxt="n")
-   else
-      plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
+   plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
    
    abline(h=cors$diff[2], lty=5)
    lines(cors$diff, y=NULL, type="l", lwd=3, col=cols[3])
@@ -364,14 +368,14 @@ plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, y
    points(cors$diff[idx] ~ cors$chr[idx], col=cols[2], pch=19)
    points(cors$diff[2] ~ cors$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2]+1.5, cors$diff[2], paste0(round0(abs(cors$diff[2]), digits=2), " (Chr", 2, ")"), cex=1.1, col=cols[3], pos=3)
+   text(cors$chr[2]+1.5, cors$diff[2], paste0(round0(abs(cors$diff[2]), digits=digits), " (Chr", 2, ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
          if (cors$diff[c] > cors$diff[2])
-            text(cors$chr[c]+1.5, cors$diff[c], paste0(round0(cors$diff[c], digits=2), " (Chr", c, ")"), cex=1.1, col=cols[1], pos=3)
+            text(cors$chr[c]+1.5, cors$diff[c], paste0(round0(cors$diff[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c]+1.5, cors$diff[c], paste0(round0(cors$diff[c], digits=2), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=1)
+            text(cors$chr[c]+1.5, cors$diff[c], paste0(round0(cors$diff[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=1)
       }
    #text(5, ymax-0.005, "Earlier than Chr2", cex=1.1, col=cols[1])
    #text(5, ymin+0.005, "Later than Chr2", cex=1.1, col=cols[2])
@@ -379,8 +383,8 @@ plotInterceptALL <- function(cors, file.name, main.text, ylab.text, xlab.text, y
    legend("bottomleft", "Later than chr2", bty="n", text.col=cols[2], pch=16, col=cols[2])
    
    axis(side=1, at=seq(2, 22, by=2))
-   if (ymax < 0.1)
-      axis(side=2, at=seq(-0.06, 0.06, by=0.03), labels=c(-0.06, -0.03, "0.0", 0.03, 0.06))
+   #if (ymax < 0.1)
+   #   axis(side=2, at=seq(-0.06, 0.06, by=0.03), labels=c(-0.06, -0.03, "0.0", 0.03, 0.06))
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }

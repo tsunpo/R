@@ -145,13 +145,10 @@ ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
 
-ylab.text <- "Intercept difference"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline_intercept")
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline_rd-skew")
 main.text <- c(paste0("LCL read depths vs. LCL S/G1"), "Linear regression")
-ymin <- -0.209753
-ymax <- 0.209753
-plotInterceptALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c("red", "blue", "black"), c(4, 17))
+ymax <- 0.015
+plotReadDepthSkew(cors, file.name, main.text, ymax, c(4, 17), digits=2)
 
 
 
