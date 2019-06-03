@@ -387,7 +387,7 @@ plotRDSkews <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
 
 plotRDCorsRDSkews <- function(cors, skews, file.name, main.text, ymax, xlim=NULL, cs=NULL) {
    ylab.text <- "Read depth skew"
-   xlab.text <- "Read depth correlation"
+   xlab.text <- "Read depth correlation [rho]"
    cols <- c("red", "blue", "black", "purple")
    skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
    

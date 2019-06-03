@@ -229,7 +229,7 @@ cors.skew <- cors
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RD_SCLC_spearman_spline")
 main.text <- c(paste0("SCLC T vs. SCLC N"), "Linear regression")
 ymax <- 0.004
-xlim <- c(0.97625, 0.995625)
+xlim <- c(0.97599, 0.996)
 plotRDCorsRDSkews(cors.rd, cors.skew, file.name, main.text, ymax, xlim=xlim, c(1, 4, 13, 17, 19, 22))
 
 
