@@ -209,7 +209,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
-
+   
    ### 
    ## Initiate RT plot
    par(mar=c(5.5,4,0,1))
@@ -345,46 +345,82 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymi
    dev.off()
 }
 
-plotReadDepthSkew <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
+plotRDSkews <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
    ylab.text <- "Read depth skew"
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
-   cors$diff <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
-   ymin <- (ymax - cors$diff[2]) * -1
-   if (cors$diff[2] > 0)
-      ymin <- ((ymax - cors$diff[2]) - cors$diff[2]) * -1
+   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
+   ymin <- -ymax
+   #ymin <- (ymax - cors$skew[2]) * -1
+   #if (cors$skew[2] > 0)
+   #   ymin <- ((ymax - cors$skew[2]) - cors$skew[2]) * -1
       
-   
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   #plot(cors$diff ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
+   #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
    plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
    
-   abline(h=cors$diff[2], lty=5)
-   lines(cors$diff, y=NULL, type="l", lwd=3, col=cols[3])
+   abline(h=cors$skew[2], lty=5)
+   lines(cors$skew, y=NULL, type="l", lwd=3, col=cols[3])
    
-   idx <- which(cors$diff > cors$diff[2])
-   points(cors$diff[idx] ~ cors$chr[idx], col=cols[1], pch=19)
-   idx <- which(cors$diff < cors$diff[2])
-   points(cors$diff[idx] ~ cors$chr[idx], col=cols[2], pch=19)
-   points(cors$diff[2] ~ cors$chr[2], col=cols[3], pch=19)
+   idx <- which(cors$skew > cors$skew[2])
+   points(cors$skew[idx] ~ cors$chr[idx], col=cols[1], pch=19)
+   idx <- which(cors$skew < cors$skew[2])
+   points(cors$skew[idx] ~ cors$chr[idx], col=cols[2], pch=19)
+   points(cors$skew[2] ~ cors$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2]+1.5, cors$diff[2], paste0(round0(abs(cors$diff[2]), digits=digits), " (Chr", 2, ")"), cex=1.1, col=cols[3], pos=3)
+   text(cors$chr[2]+1.5, cors$skew[2], paste0(round0(abs(cors$skew[2]), digits=digits), " (Chr", 2, ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (cors$diff[c] > cors$diff[2])
-            text(cors$chr[c]+1.5, cors$diff[c], paste0(round0(cors$diff[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[1], pos=3)
+         if (cors$skew[c] > cors$skew[2])
+            text(cors$chr[c]+1.5, cors$skew[c], paste0(round0(cors$skew[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c]+1.5, cors$diff[c], paste0(round0(cors$diff[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=1)
+            text(cors$chr[c]+1.5, cors$skew[c], paste0(round0(cors$skew[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=1)
       }
-   #text(5, ymax-0.005, "Earlier than Chr2", cex=1.1, col=cols[1])
-   #text(5, ymin+0.005, "Later than Chr2", cex=1.1, col=cols[2])
-   legend("topleft", "Earlier than chr2", bty="n", text.col=cols[1], pch=16, col=cols[1])   
-   legend("bottomleft", "Later than chr2", bty="n", text.col=cols[2], pch=16, col=cols[2])
-   
+   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   
+   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
+
    axis(side=1, at=seq(2, 22, by=2))
-   #if (ymax < 0.1)
-   #   axis(side=2, at=seq(-0.06, 0.06, by=0.03), labels=c(-0.06, -0.03, "0.0", 0.03, 0.06))
+   mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+}
+
+plotRDCorsRDSkews <- function(cors, skews, file.name, main.text, ymax, xlim=NULL, cs=NULL) {
+   ylab.text <- "Read depth skew"
+   xlab.text <- "Read depth correlation"
+   cols <- c("red", "blue", "black", "purple")
+   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
+   
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   if (is.null(xlim))
+      plot(skews$skew ~ cors$cor, ylim=c(-ymax, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+    else
+      plot(skews$skew ~ cors$cor, ylim=c(-ymax, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+
+   abline(h=skews$skew[2], lty=5)
+   lm.fit <- lm(skews$skew ~ cors$cor)
+   abline(lm.fit, col=cols[4], lwd=3)
+
+   idx <- which(skews$skew > skews$skew[2])
+   points(skews$skew[idx] ~ cors$cor[idx], col=cols[1], pch=19)
+   idx <- which(skews$skew < skews$skew[2])
+   points(skews$skew[idx] ~ cors$cor[idx], col=cols[2], pch=19)
+   points(skews$skew[2] ~ cors$cor[2], col=cols[3], pch=19)
+ 
+   text(cors$cor[2], skews$skew[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   if (!is.null(cs))
+      for (c in 1:length(cs)) {
+         c <- cs[c]
+         if (skews$skew[c] > skews$skew[2])
+            text(cors$cor[c], skews$skew[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
+         else
+            text(cors$cor[c], skews$skew[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
+      }
+   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   ## bty="n"
+   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
+   
+   legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
+   #axis(side=1, at=seq(2, 22, by=2))
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }

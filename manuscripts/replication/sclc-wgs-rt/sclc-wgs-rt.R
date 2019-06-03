@@ -200,7 +200,42 @@ plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col
 file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SCLC-vs-SCLC_spearman_spline_rd-skew")
 main.text <- c(paste0("SCLC read depths vs. SCLC T/N"), "Linear regression")
 ymax <- 0.004
-plotReadDepthSkew(cors, file.name, main.text, ymax, c(4, 17), digits=3)
+plotRDSkews(cors, file.name, main.text, ymax, c(4, 17), digits=3)
+
+# -----------------------------------------------------------------------------
+# LCL RD vs RD
+# Last Modified: 03/06/19
+# -----------------------------------------------------------------------------
+cors <- toTable(0, 2, 22, c("chr", "cor"))
+cors$chr <- 1:22
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
+   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
+   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
+ 
+   cors$cor[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
+}
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rd_", base, "_spearman_spline.RData")))
+cors.rd <- cors
+
+load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_spearman_spline.RData")))
+cors.skew <- cors
+
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RD_SCLC_spearman_spline")
+main.text <- c(paste0("SCLC T vs. SCLC N"), "Linear regression")
+ymax <- 0.004
+xlim <- c(0.97625, 0.995625)
+plotRDCorsRDSkews(cors.rd, cors.skew, file.name, main.text, ymax, xlim=xlim, c(1, 4, 13, 17, 19, 22))
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # SCLC RT vs LCL RT
