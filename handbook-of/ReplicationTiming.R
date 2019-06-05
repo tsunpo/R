@@ -368,14 +368,14 @@ plotRDSkews <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
    points(cors$skew[idx] ~ cors$chr[idx], col=cols[2], pch=19)
    points(cors$skew[2] ~ cors$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2]+1.5, cors$skew[2], paste0(round0(abs(cors$skew[2]), digits=digits), " (Chr", 2, ")"), cex=1.1, col=cols[3], pos=3)
+   text(cors$chr[2]+1.8, cors$skew[2], paste0("Chr2 (", round0(abs(cors$skew[2]), digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
          if (cors$skew[c] > cors$skew[2])
-            text(cors$chr[c]+1.5, cors$skew[c], paste0(round0(cors$skew[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[1], pos=3)
+            text(cors$chr[c]+1.8, cors$skew[c], paste0("Chr", c, " (", round0(cors$skew[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c]+1.5, cors$skew[c], paste0(round0(cors$skew[c], digits=digits), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=1)
+            text(cors$chr[c]+1.8, cors$skew[c], paste0("Chr", c, " (", round0(cors$skew[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   
    legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
@@ -468,6 +468,7 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
    #lm.fit <- lm(cors$cor ~ cors$length)
 }
 
+## TO-DO??
 plotRTDvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c=NA) {
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
@@ -490,39 +491,85 @@ plotRTDvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymi
    dev.off()
 }
 
-plotSAMPLEvsRTALL <- function(cors.samples, samples1, file.name, main.text=NA, ymin=NA, ymax=NA) {
+# -----------------------------------------------------------------------------
+# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
+# Last Modified: 03/06/19
+# -----------------------------------------------------------------------------
+plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA) {
    cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
-   n <- length(samples1)
+   n <- length(samples)
    cnt <- 0
    for (c in 1:22) {
       start <- n * cnt + 1
       end   <- n * (cnt + 1)
       cors.samples.plot[start:end, 1] <- c
-      cors.samples.plot[start:end, 2] <- as.numeric(cors.samples[c, samples1])
+      cors.samples.plot[start:end, 2] <- as.numeric(cors.samples[c, samples])
   
       cnt <- cnt + 1
    }
  
-   pdf(paste0(file.name, "_boxplot_spline.pdf"), height=5, width=5)
-   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Pearson's r", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1])
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text)
    axis(side=1, at=seq(2, 22, by=2))
    abline(h=0, lty=5)
    dev.off()
  
-   png(paste0(file.name, "_scatter_spline.png"), height=5, width=5.5, units="in", res=300)
-   plot(cors.samples$mean, log(cors.samples$cv2), ylab="log(cv2)", xlab="mean", main=main.text[2])
-   text(cors.samples$mean[2], log(cors.samples$cv2[2]), "chr2", cex=1.2, pos=3)
-   text(cors.samples$mean[4], log(cors.samples$cv2[4]), "chr4", cex=1.2, pos=3)
-   text(cors.samples$mean[20], log(cors.samples$cv2[20]), "chr20", cex=1.2, pos=3)
-   text(cors.samples$mean[12], log(cors.samples$cv2[12]), "chr12", cex=1.2, pos=3)
-   dev.off()
+   #png(paste0(file.name, "_scatter_spline.png"), height=5, width=5.5, units="in", res=300)
+   #plot(cors.samples$mean, log(cors.samples$cv2), ylab="log(cv2)", xlab="mean", main=main.text[2])
+   #text(cors.samples$mean[2], log(cors.samples$cv2[2]), "chr2", cex=1.2, pos=3)
+   #text(cors.samples$mean[4], log(cors.samples$cv2[4]), "chr4", cex=1.2, pos=3)
+   #text(cors.samples$mean[20], log(cors.samples$cv2[20]), "chr20", cex=1.2, pos=3)
+   #text(cors.samples$mean[12], log(cors.samples$cv2[12]), "chr12", cex=1.2, pos=3)
+   #dev.off()
  
-   png(paste0(file.name, "_var_spline.png"), height=5, width=5.5, units="in", res=300)
+   #png(paste0(file.name, "_var_spline.png"), height=5, width=5.5, units="in", res=300)
    #plot(cors.samples$var ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
-   plot(cors.samples$var ~ cors.samples$chr, ylab="var", xlab="Chromosome", col="black", xaxt="n", pch=19, main=main.text[2])
-   lines(cors.samples$var, y=NULL, type="l", lwd=3)
-   axis(side=1, at=seq(2, 22, by=2))
-   dev.off()
+   #plot(cors.samples$var ~ cors.samples$chr, ylab="var", xlab="Chromosome", col="black", xaxt="n", pch=19, main=main.text[2])
+   #lines(cors.samples$var, y=NULL, type="l", lwd=3)
+   #axis(side=1, at=seq(2, 22, by=2))
+   #dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19
+# -----------------------------------------------------------------------------
+setSamplesSG1 <- function(wd.rt.data, samples, cors.samples) {
+   cors.all <- toTable(0, 3, length(samples), c("SAMPLE_ID", "COR", "SG1"))
+   rownames(cors.all) <- samples
+   cors.all$SAMPLE_ID <- samples
+   for (s in 1:length(samples)) {
+      sample <- samples[s]
+      load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+  
+      cors.all$COR[s] <- cor
+   }
+   print(quantile(as.numeric(cors.all$COR)))
+ 
+   ##
+   s_likes <- c()
+   g1_likes <- c()
+   for (c in 1:22) {
+      samples <- cors.samples[c, -c(1:4)]
+      median <- median(as.numeric(samples))
+    
+      if (c == 1) {
+         s_likes  <- colnames(samples)[which(as.numeric(samples) > median)]
+         g1_likes <- colnames(samples)[which(as.numeric(samples) <= median)]
+      } else {
+         s_likes  <- intersect(s_likes, colnames(samples)[which(as.numeric(samples) > median)])
+         g1_likes <- intersect(g1_likes, colnames(samples)[which(as.numeric(samples) <= median)])
+      }
+   }
+   print(length(s_likes))
+   print(length(g1_likes))
+   print(s_likes)
+   print(g1_likes)
+   
+   cors.all$SG1 <- NA
+   cors.all[s_likes,]$SG1 <- "S-like"
+   cors.all[g1_likes,]$SG1 <- "G1-like"
+   return(cors.all)
 }
 
 # =============================================================================

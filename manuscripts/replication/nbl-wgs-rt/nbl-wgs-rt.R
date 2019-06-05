@@ -174,7 +174,7 @@ cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2"
 cors.samples$chr <- 1:22
 for (s in 1:length(samples1)) {
    sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_cors-pearson_spline.RData")))
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman_spline.RData")))
  
    cors.samples[, sample] <- cors$cor
 }
@@ -184,16 +184,16 @@ for (c in 1:22) {
    cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
    cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
 }
-save(cors.samples, file=file.path(wd.rt.data, paste0("rd-vs-rt_samples-vs-lcl_cors-pearson_spline.RData")))
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spearman_spline.RData")))
 # > min(cors.samples[,-c(1:4)])
-# [1] -0.7785501
+# [1] -0.8373368
 # > max(cors.samples[,-c(1:4)])
-# [1] 0.8380297
+# [1] 0.8643419
 
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_SAMPLES-vs-LCL_pearson")
-main.text <- c("NBL read depth profiles (n=56) vs. LCL RT", "NBL T vs. LCL S/G1 RT")   ## TO-DO
-ymin <- -0.8318379
-ymax <- 0.8457572
+file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_NBL-vs-LCL_spearman_spline")
+main.text <- "NBL T (n=56) vs. LCL S/G1"
+ymin <- -0.8732989
+ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------

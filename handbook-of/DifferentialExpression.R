@@ -209,7 +209,7 @@ isNA <- function(input) {
 plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
-   trait.v <- sort(unique(trait))
+   trait.v <- sort(unique(trait), decreasing=T)
    
    if (isNA(cols))
       cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
@@ -221,18 +221,22 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    cols[which(trait.v == "NA")] <- "lightgray"
    trait.col[which(trait == "NA")] <- "lightgray"
-   
    xlab <- paste0("Principal component ", x, " (", pcaProportionofVariance(pca, x), "%)")
    ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   plot(scores[,x]*flip.x, scores[,y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
-   
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+   idx <- which(trait != "NA")
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+
    if (!is.null(samples)) {
       for (s in 1:length(samples))
          text(scores[s, x]*flip.x, scores[s, y]*flip.y, samples[s], col="black", adj=c(0, -0.75), cex=0.75)
    }
 
+   for (l in 1:length(trait.v))
+      trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
+   
    mtext(file.main[2], cex=1.2, line=0.3)
    if (is.na(legend.title))
       legend(legend, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
