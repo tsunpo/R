@@ -84,7 +84,7 @@ plotCellCyclePCA(wd.de.plots, "HeLa", tpm.gene.hela, samples.hela, "CYCLE_PCA_2"
 ## SCLC
 overlaps <- intersect(colnames(tpm.gene.sclc), rownames(samples.sclc))
 samples.sclc <- samples.sclc[overlaps,]
-plotCellCyclePCA(wd.de.plots, "SCLC", tpm.gene.sclc, samples.sclc, "G1S", genes.G1S, genes.G2M, isID=F, c("blue", "gray", "red"), 1, 1)
+plotCellCyclePCA(wd.de.plots, "SCLC", tpm.gene.sclc, samples.sclc, "SG1", genes.G1S, genes.G2M, isID=F, c("blue", "gray", "red"), 1, 1)
 
 ## LCNEC
 samples.lcnec$PCA <- NA
@@ -98,7 +98,7 @@ plotCellCyclePCA(wd.de.plots, "NBL", tpm.gene.nbl, samples.nbl, "G1S", genes.G1S
 ###
 ## Combine HeLa and SCLC
 samples.hela$PCA <- samples.hela$CYCLE_PCA_2
-samples.sclc$PCA <- paste0("SCLC (", samples.sclc$G1S, ")")
+samples.sclc$PCA <- paste0("SCLC (", samples.sclc$SG1, ")")
 samples <- rbind(samples.hela[,c("SAMPLE_ID", "PCA")], samples.sclc[,c("SAMPLE_ID", "PCA")])
 
 overlaps <- intersect(rownames(tpm.gene.hela), rownames(tpm.gene.sclc))
@@ -118,7 +118,7 @@ test <- tpm.gene[genes.G1S, rownames(samples)]
 pca.de <- getPCA(t(test))
 
 file.main <- paste0(BASE2, " on ", length(genes.G1S), "/304 G1-S genes")
-plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", base2, "_G1-S"), size=6.5, file.main, "topleft", cols, NA, -1, 1)
+plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", base2, "_G1-S"), size=6.5, file.main, "topleft", cols, c("S00050", "S00472", "S02139"), -1, 1)
 plotPCA(1, 3, pca.de, traits, wd.de.plots, paste0("pca_", base2, "_G1-S"), size=6.5, file.main, "topleft", cols, NA, -1, -1)
 plotPCA(2, 3, pca.de, traits, wd.de.plots, paste0("pca_", base2, "_G1-S"), size=6.5, file.main, "topleft", cols, NA, 1, -1)
 plotPCA(4, 3, pca.de, traits, wd.de.plots, paste0("pca_", base2, "_G1-S"), size=6.5, file.main, "topleft", cols, NA, 1, -1)

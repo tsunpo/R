@@ -94,4 +94,4 @@ for (c in 1:22) {
    }
 }
 cor <- getCor(rpkms.chr.rt.lcl.RT.all$SPLINE, rpkms.T.chr.d.sample.T.all$SPLINE, method="spearman")
-save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spearman_spline.RData")))
+save(cor, cors, file=file.path(wd1.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spline_spearman.RData")))

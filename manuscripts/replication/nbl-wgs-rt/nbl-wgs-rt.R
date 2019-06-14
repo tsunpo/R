@@ -35,6 +35,7 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
+wd.ngs.data <- file.path(wd.ngs, "data")
 samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
@@ -48,12 +49,12 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
 
    ## Plot RT
    main.text <- paste0(BASE, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") samples")
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base0, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
    plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(), 7.75, 9, 3, 3)
 }
 
@@ -166,15 +167,15 @@ ymax <- 0.85
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
-# 
+# RD vs LCL S/G1
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
-# Last Modified: 06/03/19
+# Last Modified: 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
 cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
 cors.samples$chr <- 1:22
 for (s in 1:length(samples1)) {
    sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman_spline.RData")))
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-g1_", sample, "-vs-lcl_spline_spearman.RData")))
  
    cors.samples[, sample] <- cors$cor
 }
@@ -184,13 +185,23 @@ for (c in 1:22) {
    cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
    cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
 }
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spearman_spline.RData")))
-# > min(cors.samples[,-c(1:4)])
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-g1_nbl-vs-lcl_spline_spearman.RData")))
+
+# > min(cors.samples[,-c(1:4)])   ## G1
+# [1] -0.9539688
+# > max(cors.samples[,-c(1:4)])
+# [1] 0.9650863
+file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-G1_NBL-vs-LCL_spline_spearman")
+main.text <- "NBL T (n=56) vs. LCL G1"
+ymin <- -0.9539688
+ymax <- 0.9650863
+plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
+
+# > min(cors.samples[,-c(1:4)])   ## RT
 # [1] -0.8373368
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8643419
-
-file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_NBL-vs-LCL_spearman_spline")
+file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
 main.text <- "NBL T (n=56) vs. LCL S/G1"
 ymin <- -0.8732989
 ymax <- 0.8643419
@@ -225,6 +236,68 @@ cm2$SAMPLE_ID <- ""
 cm2$SAMPLE_ID <- rownames(cors)
 writeTable(cq4[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_wgs_n57-1.cq4"), colnames=T, rownames=F, sep="\t")
 writeTable(cm2[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_wgs_n57-1.cm2"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19; 06/03/19
+# -----------------------------------------------------------------------------
+samples.nbl <- setSamplesQ4(wd.rt.data, samples1)
+writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.nbl, Q4 %in% c(4,1)), file.path(wd.ngs, "nbl_wgs_n28.txt"), colnames=T, rownames=F, sep="\t")
+# 0%        25%        50%        75%       100% 
+# -0.6706882 -0.6456027 -0.6235412 -0.3598829  0.6929762
+
+#samples.nbl <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
+#writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rownames=F, sep="\t")
+# > length(s_likes)
+# [1] 16
+# > length(g1_likes)
+# [1] 10
+# > s_likes
+# [1] "P15239" "P19537" "P21702" "P21776" "P21924" "P22496" "P23103" "P23267" "P24478" "P24632" "P24679" "P24702" "P24885" "P25114" "P25262" "P25376"
+# > g1_likes
+# [1] "P13967" "P16885" "P1695"  "P17344" "P17612" "P18478" "P18972" "P19743" "P20865" "P22283"
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 04/06/19; 21/04/19
+# -----------------------------------------------------------------------------
+## Copy from 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
+rpkms.T.chr.d.all <- NULL
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## Read depth
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1)
+   #rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0) 
+   #overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
+ 
+   test <- rpkms.T.chr.d[, samples.nbl$SAMPLE_ID]
+   if (is.null(rpkms.T.chr.d.all)) {
+      rpkms.T.chr.d.all <- test
+   } else
+      rpkms.T.chr.d.all <- rbind(rpkms.T.chr.d.all, test)
+}
+
+##
+test <- rpkms.T.chr.d.all
+pca.de <- getPCA(t(test))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl_T_chrs_spline_spearman.RData")))
+
+file.main <- c("NBL T (n=56) read depth profiles", "")
+trait <- as.numeric(samples.sclc$Q4)
+trait[which(trait == 4)] <- "Q4 (-0.36 < r < 0.69)"
+trait[which(trait == 3)] <- "Q3 (-0.62 < r < -0.36)"
+trait[which(trait == 2)] <- "Q2 (-0.65 < r < -0.62)"
+trait[which(trait == 1)] <- "Q1 (-0.67 < r < -0.65)"
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_nbl_T_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title="Overall corr. with LCL S/G1")
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Divide tumour samples into Q4

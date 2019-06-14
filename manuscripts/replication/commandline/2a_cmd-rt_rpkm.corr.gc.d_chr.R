@@ -49,9 +49,9 @@ wd0.rt.data   <- file.path(wd0.rt, "data")
 #   wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=T, rownames=T, sep="")
-samples1 <- subset(samples1, RT == 1)[,1]
+samples1 <- subset(samples1, M2 == 1)[,1]
 samples0 <- readTable(file.path(wd0.ngs, LIST0), header=T, rownames=T, sep="")
-samples0 <- subset(samples0, RT == 0)[,1]
+samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 

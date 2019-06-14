@@ -123,7 +123,7 @@ for (c in 1:22) {
    main.text <- paste0("LCL read depths vs. LCL S/G1 (", "Chr", c, ")")
    xlab.text <- "LCL S/G1"
    ylab.text <- "LCL read depth [log2]"
-   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_chr", c, "_spearman_spline"))
+   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_chr", c, "_spline_spearman"))
    #xmin <- min(rpkms.chr.rt.RT$SPLINE)
    #xmax <- max(rpkms.chr.rt.RT$SPLINE)
    #ymin <- min(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
@@ -135,17 +135,17 @@ for (c in 1:22) {
    cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
    cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]    
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_spearman_spline.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline")
+file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spline_spearman")
 main.text <- paste0("LCL read depths vs. LCL S/G1")
 ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols=c("red", "blue"), c=2)
 
-file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_LCL-vs-LCL_spearman_spline_rd-skew")
+file.name <- file.path(wd.rt.plots, "plot_RD-SKEW-vs-RT_LCL_spline_spearman")
 main.text <- c(paste0("LCL read depths vs. LCL S/G1"), "Linear regression")
 ymax <- 0.015
 plotRDSkews(cors, file.name, main.text, ymax, c(4, 17), digits=2)

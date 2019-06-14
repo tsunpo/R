@@ -225,15 +225,17 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
-   idx <- which(trait != "NA")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+   #plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+   #idx <- which(trait != "NA")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
 
-   if (!is.null(samples)) {
-      for (s in 1:length(samples))
-         text(scores[s, x]*flip.x, scores[s, y]*flip.y, samples[s], col="black", adj=c(0, -0.75), cex=0.75)
-   }
-
+   if (!is.null(samples))
+      for (s in 1:length(samples)) {
+         sample <- samples[s]
+         text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=0.75)
+      }
+   
    for (l in 1:length(trait.v))
       trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
@@ -373,7 +375,7 @@ differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, tes
    ## Log2 fold change
    de[,3] <- median00(expr.pheno, samples.expr.wt)
    de[,4] <- median00(expr.pheno, samples.expr.mut)
-   de$LOG_2FC <- de[,4] - de[,3]
+   de$LOG2_FC <- de[,4] - de[,3]
  
    ## NOTE: Sort AFTER fold change and BEFORE annotation!!
    de <- de[order(de$P),]
@@ -434,9 +436,12 @@ fishers <- function(x, y) {
 
 ## http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#RNK:_Ranked_list_file_format_.28.2A.rnk.29
 writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
-   de.sorted <- de.tpm.gene[order(de.tpm.gene$LOG2_FC, decreasing=T),]
+   #de.sorted <- de.tpm.gene[order(de.tpm.gene$LOG2_FC, decreasing=T),]
+   de.tpm.gene$WEIGHT <- de.tpm.gene$LOG2_FC*(-log10(de.tpm.gene$P))
+   de.sorted <- de.tpm.gene[order(de.tpm.gene$WEIGHT, decreasing=T),]
+   
    file <- file.path(wd.de.data, paste0(file.name, ".rnk"))
-   writeTable(de.sorted[,c("ensembl_gene_id", "LOG2_FC")], file, colnames=F, rownames=F, sep="\t")
+   writeTable(de.sorted[,c("ensembl_gene_id", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
 }
 
 ## http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GRP

@@ -19,19 +19,19 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
 base <- tolower(BASE)
 
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-wgs-de"))
+wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-wgs-de"))
 wd.de.data  <- file.path(wd.de, "data")
-wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
+wd.de.gsea  <- file.path(wd.de, "gsea")
 
 wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data")

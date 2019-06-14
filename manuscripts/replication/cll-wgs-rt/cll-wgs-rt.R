@@ -35,6 +35,7 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
+wd.ngs.data <- file.path(wd.ngs, "data")
 samples1 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
@@ -181,7 +182,7 @@ cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2"
 cors.samples$chr <- 1:22
 for (s in 1:length(samples1)) {
    sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman_spline.RData")))
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
  
    cors.samples[, sample] <- cors$cor
 }
@@ -191,17 +192,76 @@ for (c in 1:22) {
    cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
    cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
 }
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_spearman_spline.RData")))
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.8732989
 # > max(cors.samples[,-c(1:4)])
-# [1] 0.6086962
+# [1] 0.6353611
 
-file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_CLL-vs-LCL_spearman_spline")
+file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_CLL-vs-LCL_spline_spearman")
 main.text <- "CLL T (n=96) vs. LCL S/G1"
 ymin <- -0.8732989
 ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19; 06/03/19
+# -----------------------------------------------------------------------------
+samples.cll <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
+writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownames=F, sep="\t")
+# > q
+# 0%        25%        50%        75%       100% 
+# -0.7045751 -0.6693360 -0.6554563 -0.6462150  0.3761251 
+
+# > length(s_likes)
+# [1] 7
+# > length(g1_likes)
+# [1] 10
+# > s_likes
+# [1] "SP115064" "SP116746" "SP116766" "SP13291"  "SP13323"  "SP13365"  "SP13490"
+# > g1_likes
+# [1] "SP115060" "SP116744" "SP116754" "SP116764" "SP116776" "SP116780" "SP13442"  "SP13478"  "SP13624"  "SP96882"
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 04/06/19; 21/04/19
+# -----------------------------------------------------------------------------
+## Copy from 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
+rpkms.T.chr.d.all <- NULL
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## Read depth
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1)
+   #rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0) 
+   #overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
+ 
+   test <- rpkms.T.chr.d[, samples.cll$SAMPLE_ID]
+   if (is.null(rpkms.T.chr.d.all)) {
+      rpkms.T.chr.d.all <- test
+   } else
+      rpkms.T.chr.d.all <- rbind(rpkms.T.chr.d.all, test)
+}
+
+##
+test <- rpkms.T.chr.d.all
+pca.de <- getPCA(t(test))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_cll_T_chrs_spline_spearman.RData")))
+
+file.main <- c("CLL T (n=96) read depth profiles", "")
+trait <- samples.cll$SG1
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_cll_T_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=-1, flip.y=1, legend.title="CM2 in all chrs")
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Divide tumour samples into Q4
