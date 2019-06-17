@@ -240,10 +240,11 @@ writeTable(results.gene.sub, file.path(wd.rt.data, "muts_q4_expressed_ST3_ST6_M2
 # Purities
 # Last Modified: 02/05/19
 # -----------------------------------------------------------------------------
-testU(subset(phenos, RT == 0)$Purity, subset(phenos, RT == 1)$Purity)
+testU(subset(phenos, M2 == 0)$Purity, subset(phenos, M2 == 1)$Purity)
+# [1] 0.07851402
 testU(subset(phenos, Q2 == "Q1+Q4")$Purity, subset(phenos, Q2 == "Q2+Q3")$Purity)
 testU(subset(phenos, Q4 == 4)$Purity, subset(phenos, Q4 == 1)$Purity)
-
+# [1] 0.2956466
 
 
 

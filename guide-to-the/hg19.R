@@ -52,7 +52,7 @@ ensGene.transcript <- readTable(file.path(wd.reference, "ensembl/BioMart.GRCh37.
 colnames(ensGene.transcript) <- c("ensembl_transcript_id", "ensembl_gene_id", "chromosome_name", "strand", "transcript_start", "transcript_end", "start_position", "end_position", "transcript_biotype", "gene_biotype", "external_gene_name")   ##"hugo_gene", "refseq_mrna", "refseq_mrna"
 rownames(ensGene.transcript) <- ensGene.transcript$ensembl_transcript_id
 #ensGene.transcript$chromosome_name <- paste0("chr", ensGene.transcript$chromosome_name)   ## REMOVED 15/03/18
-ensGene.transcript <- ensGene.transcript[, -c(4,7,8,10)]   ## ADD 14/03/18
+ensGene.transcript <- ensGene.transcript[, -c(7,8,10)]   ## CHANGED 14/06/19 Now with strand information (column 4); ADD 14/03/18
 # > nrow(ensGene.transcript)
 # [1] 215170
 # > length(unique(ensGene.transcript$ensembl_gene_id))

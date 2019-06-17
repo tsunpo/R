@@ -337,45 +337,45 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymi
    abline(h=0, lty=5)
  
    if (!is.na(c)) {
-      text(c+1.5, cors$cor1[c], paste0(round0(cors$cor1[c], digits=2), " (Chr", c, ")"), cex=1.1, col=cols[1], pos=3, offset=1.3)
-      text(c+1.5, cors$cor2[c], paste0(round0(cors$cor2[c], digits=2), " (Chr", c, ")"), cex=1.1, col=cols[2], pos=3)
+      text(c+1.5, cors$cor1[c], paste0("Chr", c, " (", round0(cors$cor1[c], digits=2), ")"), cex=1.1, col=cols[1], pos=3, offset=1.3)
+      text(c+1.5, cors$cor2[c], paste0("Chr", c, " (", round0(cors$cor2[c], digits=2), ")"), cex=1.1, col=cols[2], pos=3)
    }
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8))
    dev.off()
 }
 
-plotRDSkews <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
-   ylab.text <- "Read depth skew"
+plotRDS <- function(skews, file.name, main.text, ymax, cs=NULL, digits) {
+   ylab.text <- "RDS"
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
-   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
-   ymin <- -ymax
-   #ymin <- (ymax - cors$skew[2]) * -1
-   #if (cors$skew[2] > 0)
-   #   ymin <- ((ymax - cors$skew[2]) - cors$skew[2]) * -1
+   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
+   #ymin <- -ymax
+   ymin <- (ymax - skews$skew[2]) * -1
+   if (skews$skew[2] > 0)
+      ymin <- ((ymax - skews$skew[2]) - skews$skew[2]) * -1
       
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
+   #plot(skews$skew ~ skews$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
    plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
    
-   abline(h=cors$skew[2], lty=5)
-   lines(cors$skew, y=NULL, type="l", lwd=3, col=cols[3])
+   abline(h=skews$skew[2], lty=5)
+   lines(skews$skew, y=NULL, type="l", lwd=3, col=cols[3])
    
-   idx <- which(cors$skew > cors$skew[2])
-   points(cors$skew[idx] ~ cors$chr[idx], col=cols[1], pch=19)
-   idx <- which(cors$skew < cors$skew[2])
-   points(cors$skew[idx] ~ cors$chr[idx], col=cols[2], pch=19)
-   points(cors$skew[2] ~ cors$chr[2], col=cols[3], pch=19)
+   idx <- which(skews$skew > skews$skew[2])
+   points(skews$skew[idx] ~ skews$chr[idx], col=cols[1], pch=19)
+   idx <- which(skews$skew < skews$skew[2])
+   points(skews$skew[idx] ~ skews$chr[idx], col=cols[2], pch=19)
+   points(skews$skew[2] ~ skews$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2]+1.8, cors$skew[2], paste0("Chr2 (", round0(abs(cors$skew[2]), digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
+   text(skews$chr[2]+1.8, skews$skew[2], paste0("Chr2 (", round0(abs(skews$skew[2]), digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (cors$skew[c] > cors$skew[2])
-            text(cors$chr[c]+1.8, cors$skew[c], paste0("Chr", c, " (", round0(cors$skew[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
+         if (skews$skew[c] > skews$skew[2])
+            text(skews$chr[c]+1.8, skews$skew[c], paste0("Chr", c, " (", round0(skews$skew[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c]+1.8, cors$skew[c], paste0("Chr", c, " (", round0(cors$skew[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
+            text(skews$chr[c]+1.8, skews$skew[c], paste0("Chr", c, " (", round0(skews$skew[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   
    legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
@@ -385,17 +385,21 @@ plotRDSkews <- function(cors, file.name, main.text, ymax, cs=NULL, digits) {
    dev.off()
 }
 
-plotRDCorsRDSkews <- function(cors, skews, file.name, main.text, ymax, xlim=NULL, cs=NULL) {
-   ylab.text <- "Read depth skew"
+plotRDCorsRDS <- function(cors, skews, file.name, main.text, ymax, xlim=NULL, cs=NULL) {
+   ylab.text <- "RDS"
    xlab.text <- "Read depth correlation [rho]"
    cols <- c("red", "blue", "black", "purple")
    skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
+   #ymin <- -ymax
+   ymin <- (ymax - skews$skew[2]) * -1
+   if (skews$skew[2] > 0)
+      ymin <- ((ymax - skews$skew[2]) - skews$skew[2]) * -1
    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    if (is.null(xlim))
-      plot(skews$skew ~ cors$cor, ylim=c(-ymax, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
-    else
-      plot(skews$skew ~ cors$cor, ylim=c(-ymax, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+      plot(skews$skew ~ cors$cor, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+   else
+      plot(skews$skew ~ cors$cor, ylim=c(ymin, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
 
    abline(h=skews$skew[2], lty=5)
    lm.fit <- lm(skews$skew ~ cors$cor)
@@ -451,7 +455,7 @@ plotRTvsRT <- function(reads, timings, file.name, main.text, ylab.text, xlab.tex
    dev.off()
 }
 
-plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA) {
+plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA, offset=1) {
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col, xaxt="n", yaxt="n", pch=19)
@@ -459,7 +463,7 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
    abline(h=0, lty=5)
 
    if (!is.na(c))
-      text(cors[c,]$chr+1.5, cors[c,]$cor, paste0(round0(cors[c,]$cor, digits=2), " (Chr", c, ")"), cex=1.1, col=col, pos=3, offset=1)
+      text(cors[c,]$chr+1.5, cors[c,]$cor, paste0("Chr", c, " (", round0(cors[c,]$cor, digits=2), ")"), cex=1.1, col=col, pos=3, offset=offset)
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
    dev.off()
@@ -509,9 +513,10 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
    }
  
    pdf(paste0(file.name, ".pdf"), height=5.1, width=5.1)
-   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text)
+   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1])#, medcol="red")
    axis(side=1, at=seq(2, 22, by=2))
    abline(h=0, lty=5)
+   mtext(main.text[2], cex=1.1, line=0.3) 
    dev.off()
  
    #png(paste0(file.name, "_scatter_spline.png"), height=5, width=5.5, units="in", res=300)
@@ -566,7 +571,7 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
 }
 
 setSamplesSG1 <- function(wd.rt.data, samples1, cors.samples) {
-   cors.all <- toTable(0, 3, length(samples1), c("SAMPLE_ID", "COR", "SG1"))
+   cors.all <- toTable(0, 4, length(samples1), c("SAMPLE_ID", "COR", "SG1", "M2"))
    rownames(cors.all) <- samples1
    cors.all$SAMPLE_ID <- samples1
    for (s in 1:length(samples1)) {
@@ -575,7 +580,7 @@ setSamplesSG1 <- function(wd.rt.data, samples1, cors.samples) {
   
       cors.all$COR[s] <- cor
    }
-   print(quantile(as.numeric(cors.all$COR)))
+   #print(quantile(as.numeric(cors.all$COR)))
  
    ##
    s_likes <- c()
@@ -599,8 +604,12 @@ setSamplesSG1 <- function(wd.rt.data, samples1, cors.samples) {
    print(g1_likes)
    
    cors.all$SG1 <- NA
-   cors.all[s_likes,]$SG1 <- "S-like"
-   cors.all[g1_likes,]$SG1 <- "G1-like"
+   cors.all[s_likes, ]$SG1 <- "SL"
+   cors.all[g1_likes,]$SG1 <- "G1L"
+   
+   cors.all$M2 <- NA
+   cors.all$M2[which(cors.all$SG1 == "SL") ] <- 1
+   cors.all$M2[which(cors.all$SG1 == "G1L")] <- 0
    return(cors.all)
 }
 
