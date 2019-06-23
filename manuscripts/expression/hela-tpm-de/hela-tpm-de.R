@@ -48,9 +48,10 @@ tpm.gene <- tpm.gene[,rownames(samples)]
 genes.G1S <- readTable(file.path(wd.meta, "Dominguez_G1-S.list"), header=F, rownames=F, sep="")
 genes.G2M <- readTable(file.path(wd.meta, "Dominguez_G2-M.list"), header=F, rownames=F, sep="")
 
-plotCellCyclePCA <- function(wd.de.plots, BASE, tpm.gene, samples, trait, genes.G1S, genes.G2M, isID, cols, flip.x, flip.y) {
+plotCellCyclePCA <- function(wd.de.plots, BASE, tpm.gene, samples, trait, genes.G1S, genes.G2M, genes, isID, cols, flip.x, flip.y) {
    genes.G1S <- intersect(genes.G1S, rownames(tpm.gene))
    genes.G2M <- intersect(genes.G2M, rownames(tpm.gene))
+   genes <- intersect(genes, rownames(tpm.gene))
    traits <- samples[,trait]
    ids <- NA
    if (isID) ids <- rownames(samples)
@@ -72,14 +73,36 @@ plotCellCyclePCA <- function(wd.de.plots, BASE, tpm.gene, samples, trait, genes.
    plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", tolower(BASE), "_G2-M"), size=6.5, file.main, "topleft", cols, ids, flip.x, flip.y)
    plotPCA(1, 3, pca.de, traits, wd.de.plots, paste0("pca_", tolower(BASE), "_G2-M"), size=6.5, file.main, "topleft", cols, ids, flip.x, flip.y)
    plotPCA(2, 3, pca.de, traits, wd.de.plots, paste0("pca_", tolower(BASE), "_G2-M"), size=6.5, file.main, "topleft", cols, ids, flip.x, flip.y)
+   
+   ##
+   test <- tpm.gene[genes, rownames(samples)]
+   pca.de <- getPCA(t(test))
+   
+   file.main <- paste0(BASE, " on ", length(genes), "/151 read depth and expression correlated genes")
+   plotPCA(1, 2, pca.de, traits, wd.de.plots, paste0("pca_", tolower(BASE), "_DRE"), size=6.5, file.main, "bottomleft", cols, ids, flip.x, flip.y)
+   plotPCA(1, 3, pca.de, traits, wd.de.plots, paste0("pca_", tolower(BASE), "_DRE"), size=6.5, file.main, "topleft", cols, ids, flip.x, flip.y)
+   plotPCA(2, 3, pca.de, traits, wd.de.plots, paste0("pca_", tolower(BASE), "_DEE"), size=6.5, file.main, "topleft", cols, ids, flip.x, flip.y)
 }
-
 
 # -----------------------------------------------------------------------------
 # PCA of HeLa on G1-S/G2-M genes
 # Last Modified: 09/08/18
 # -----------------------------------------------------------------------------
-plotCellCyclePCA(wd.de.plots, "HeLa", tpm.gene.hela, samples.hela, "CYCLE_PCA_2", genes.G1S, genes.G2M, isID=T, c("purple3", "forestgreen", "gold"), 1, 1)
+genes <- rownames(de.tpm.wgs.gene.scr)
+plotCellCyclePCA(wd.de.plots, "HeLa", tpm.gene.hela, samples.hela, "CYCLE_PCA_2", genes.G1S, genes.G2M, genes, isID=T, c("purple3", "forestgreen", "gold"), 1, 1)
+
+genes <- rownames(de.tpm.wgs.gene.scr.tpm.pos)
+length(intersect(genes, genes.G2M))
+# > length(intersect(genes, genes.G1S))
+# [1] 0
+# > length(intersect(genes, genes.G2M))
+# [1] 8
+# > genes <- rownames(de.tpm.wgs.gene.scr.tpm)
+# > length(intersect(genes, genes.G2M))
+# [1] 1
+# > genes <- rownames(de.tpm.wgs.gene.scr.tpm.pos)
+# > length(intersect(genes, genes.G2M))
+# [1] 1
 
 ## SCLC
 overlaps <- intersect(colnames(tpm.gene.sclc), rownames(samples.sclc))

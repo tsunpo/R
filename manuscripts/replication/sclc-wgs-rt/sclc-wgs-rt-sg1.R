@@ -64,7 +64,7 @@ for (c in 1:22) {
 }
 
 # -----------------------------------------------------------------------------
-# NBL RT vs LCL S/G1
+# SCLC RT vs LCL S/G1
 # Last Modified: 06/06/19
 # -----------------------------------------------------------------------------
 cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
@@ -145,12 +145,12 @@ save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-vs-sclc_spli
 #plotRD2vsRTALL(skews, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2)
 
 file.name <- file.path(wd.rt.plots, "plot_RDS-vs-RT_SCLC_spline_spearman")
-main.text <- c("SCLC read depths vs. SCLC SL/G1L", "RDS = (T-N)/(T+N)")
+main.text <- c("SCLC read depths vs. SCLC SL/G1L", "RDS = (SL-G1L)/(SL+G1L)")
 ymax <- 0.01505
 plotRDS(skews, file.name, main.text, ymax, c(4, 17), digits=3)
 
 # -----------------------------------------------------------------------------
-# NBL RD vs RD
+# SCLC RD vs RD
 # Last Modified: 03/06/19
 # -----------------------------------------------------------------------------
 cors <- toTable(0, 2, 22, c("chr", "cor"))

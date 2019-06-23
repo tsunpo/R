@@ -132,6 +132,14 @@ writeTable(de.tpm.wgs.gene, file.path(wd.de.data, "de_sclc_tpm-wgs-gene_cm2_src_
 
 # -----------------------------------------------------------------------------
 # 
+# Last Modified: 17/06/19
+# -----------------------------------------------------------------------------
+de.tpm.wgs.gene.scr <- subset(de.tpm.wgs.gene, P < 1E-03)
+de.tpm.wgs.gene.scr.tpm <- subset(de.tpm.wgs.gene.scr, TPM_P < 5E-03)
+de.tpm.wgs.gene.scr.tpm.pos <- subset(de.tpm.wgs.gene.scr.tpm, TPM_LOG2_FC > 0)
+ 
+# -----------------------------------------------------------------------------
+# 
 # Last Modified: 11/06/19
 # -----------------------------------------------------------------------------
 ylab.text <- "Differential replication"
@@ -298,7 +306,7 @@ plotBox <- function(gene, wd.de.plots, tpm.gene.log2, de.tpm.gene, samples, type
       if (nrow(ids) != 1)
          file.name <- paste0(file.name, "_", id)
       
-      gene.tpm <- cbind(t(tpm.gene.log2[id, rownames(samples.o)]), samples)
+      gene.tpm <- cbind(t(tpm.gene.log2[id, rownames(samples)]), samples)
       colnames(gene.tpm)[1] <- "MEDIAN"
   
       pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=3.5)
@@ -326,7 +334,7 @@ plotScatter <- function(gene, wd.de.plots, tpm.gene.log2, wgs.gene.log2, samples
       colnames(gene.tpm)[1] <- "MEDIAN"
       colnames(gene.wgs)[1] <- "MEDIAN"
       
-      pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=5, width=5)
+      pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=6)
       plot(gene.wgs$MEDIAN ~ gene.tpm$MEDIAN, xlab="log2(TPM+0.01)", ylab="log2(WGS+0.01)", main=paste0(gene, " (", id, ")"))
 
       cor <- cor.test(gene.wgs$MEDIAN, gene.tpm$MEDIAN, method="spearman", exact=F)
@@ -341,6 +349,8 @@ plotScatter <- function(gene, wd.de.plots, tpm.gene.log2, wgs.gene.log2, samples
 genes <- c("RP11-141C7.3", "BRD9", "MAP9", "RAD9A", "POLE", "MCM10", "DNA2", "CCAR1", "SMARCD1", "E2F3", "ERCC8")
 genes <- c("NRG1", "GULP1", "NIPSNAP3A", "CCAR1", "SMARCD1")
 genes <- c("RP11-141C7.3", "AGBL4")
+genes <- c("DDX55", "KNTC1", "NRG1", "RP11-141C7.3", "BRD9", "MAP9", "RAD9A", "POLE", "MCM10", "DNA2", "CCAR1", "SMARCD1", "E2F3", "ERCC8", "NRG1", "GULP1", "NIPSNAP3A", "CCAR1", "SMARCD1")
+genes <- c("HJURP", "TOX")
 
 for (g in 1:length(genes)) {
    plotBox(genes[g], wd.de.plots, tpm.gene.log2, de.tpm.gene, samples, "TPM")

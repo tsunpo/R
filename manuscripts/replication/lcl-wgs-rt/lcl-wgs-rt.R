@@ -80,6 +80,7 @@ spline$x[72636]
 # -----------------------------------------------------------------------------
 genes <- c("MYC", "MYCN", "MYCL1")
 genes <- c("NRG1", "DDX55", "KNTC1")
+genes <- c("CCAR1", "SMARCD1")
 
 plotWholeChr <- T
 ranges <- c(50000, 500000, 5000000)

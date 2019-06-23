@@ -145,7 +145,7 @@ save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "_spline_spear
 #plotRD2vsRTALL(skews, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2)
 
 file.name <- file.path(wd.rt.plots, "plot_RDS-vs-RT_NBL_spline_spearman")
-main.text <- c("NBL read depths vs. NBL SL/G1L", "RDS = (T-N)/(T+N)")
+main.text <- c("NBL read depths vs. NBL SL/G1L", "RDS = (SL-G1L)/(SL+G1L)")
 ymax <- 0.0207
 plotRDS(skews, file.name, main.text, ymax, c(4, 17), digits=3)
 

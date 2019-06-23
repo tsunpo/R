@@ -158,8 +158,8 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
 
    abline(h=c(-log10(pvalue)), lty=5)
    text(xmax*-1 + 2*xmax/25, -log10(pvalue) + ymax/45, paste0("FDR=", fdr, "%"), cex=0.85)
-   abline(h=c(-log10(5E-03)), lty=5, col="gray")
-   text(xmax*-1 + 2*xmax/25, -log10(5E-03) + ymax/45, paste0("FDR=", pvalueToFDR(5E-03, de), "%"), cex=0.85, col="gray")
+   #abline(h=c(-log10(5.00E-03)), lty=5, col="darkgray")
+   #text(xmax*-1 + 2*xmax/25, -log10(5.00E-03) + ymax/45, paste0("FDR=", 29.2, "%"), cex=0.85, col="darkgray")
    
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
@@ -194,7 +194,8 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
 
 ##
 plot.main <- "Differential expression between CM2 and CM1 in SCLC"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47-wgs_sclc_p1e-3_cm2_")
+xlab.text <- "log2FC(SCLC CM2/CM1)"
+plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47-wgs_sclc_p1e-4_cm2_")
 
 ## E2F3
 genes <- readTable(paste0(plot.de, "E2F3.tab"), header=T, rownames=F, sep="\t")
@@ -204,7 +205,7 @@ genes <- genes[intersect(genes$GENE, de.tpm.gene$external_gene_name),]
 file.main <- c(plot.main, "")
 #file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
 file.de <- paste0(plot.de, "E2F3.pdf")
-plotVolcano(de.tpm.gene, 1.00E-03, genes, file.de, file.main)
+plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
 
 
 
