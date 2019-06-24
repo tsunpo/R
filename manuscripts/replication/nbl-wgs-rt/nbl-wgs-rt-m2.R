@@ -301,9 +301,9 @@ for (c in 1:22) {
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
    rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
  
-   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   #rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
    #rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", q4, "-", q1, ".txt.gz")), header=T, rownames=T, sep="\t")
-   #rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0("sclc", "_rpkm.corr.gc.d.rt_", chr, "_", "SCLC", "-", "SCLC", "_n", 101, "-", 92, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0("sclc", "_rpkm.corr.gc.d.rt_", chr, "_", "SCLC", "-", "SCLC", "_n", 101, "-", 92, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
    rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
  

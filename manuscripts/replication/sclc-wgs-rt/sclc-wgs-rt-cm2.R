@@ -212,9 +212,7 @@ file.name <- file.path(wd.rt.plots, "plot_RDS-vs-RD_SCLC_spline_spearman")
 main.text <- c(paste0("SCLC CM2 vs. SCLC CM1"), "Linear regression")
 ymax <- 0.00695
 xlim <- c(0.85, 0.9925)
-plotRDCorsRDS(cors, skews, file.name, main.text, ymax, xlim=xlim, c(1, 4, 13, 17, 19, 22))
-
-
+plotRDCorsRDS(cors, skews, file.name, main.text, ymax, xlim=xlim, c(1, 4, 5, 13, 17, 19, 22))
 
 # -----------------------------------------------------------------------------
 # Plot RT for individual genes (see ReplicationTiming.R)
@@ -258,29 +256,105 @@ for (g in 1:length(genes)) {
 }
 
 # -----------------------------------------------------------------------------
+# SCLC CM2/CM1 RT vs SCLC SL/G1L RT
+# Last Modified: 25/04/19; 05/03/19; 18/02/19
+# -----------------------------------------------------------------------------
+n1 <- 50
+n0 <- 51
+sl <- 24
+g1l <- 14
+ 
+cors <- toTable(0, 2, 22, c("chr", "cor"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## SCLC CM2/CM1 and SCLC SL/G1L
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.cm2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+   
+   #rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   #rpkms.chr.rt.lcl <- readTable(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-sg1"), "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", sl, "-", g1l, ".txt.gz")), header=T, rownames=T, sep="\t")
+   #rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0("sclc", "_rpkm.corr.gc.d.rt_", chr, "_", "SCLC", "-", "SCLC", "_n", 101, "-", 92, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- readTable(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"), "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", "SCLC", "-", "SCLC", "_n", 101, "-", 92, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+ 
+   ## Keep 1kb slopes based on overlapping windows
+   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   cors$cor[c] <- getCor(rpkms.chr.rt.RT[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, method="spearman")
+}
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-cm2-cm1-vs-sclc-t-n_spline_spearman.RData")))
+
+ylab.text <- "Spearman's rho"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SCLC-CM2-CM1-vs-SCLC-T-N_spline_spearman")
+main.text <- paste0("SCLC CM2/CM1 vs. SCLC T/N")
+ymin <- 0.25
+ymax <- 1.05
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black")
+
+# -----------------------------------------------------------------------------
+# TO-DO (require "ReplicationForkDirectionality.R")
+# Last Modified: 24/06/19
+# -----------------------------------------------------------------------------
+ensGene.rt <- ensGene[1,]
+ensGene.rt$SPLINE_START <- NA
+ensGene.rt$SPLINE_END   <- NA
+ensGene.rt <- ensGene.rt[-1,]
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## SCLC CM2/CM1 RT
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.cm2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+ 
+   ##
+   ensGene.rt.chr <- subset(ensGene, chromosome_name == chr)
+   ensGene.rt.chr$SPLINE_START <- NA
+   ensGene.rt.chr$SPLINE_END   <- NA   ## BUG 29/10/18
+   for (g in 1:nrow(ensGene.rt.chr)) {
+      gene <- ensGene.rt.chr[g,]
+      bed.s <- getEnsGeneBED(gene$start_position, bed.gc.chr)   ## Not bed.gc.chr.rt
+      bed.e <- getEnsGeneBED(gene$end_position, bed.gc.chr)
+ 
+      if (length(bed.s) != 0) ensGene.rt.chr$SPLINE_START[g] <- rpkms.chr.rt.RT[bed.s[1],]$SPLINE
+      if (length(bed.e) != 0) ensGene.rt.chr$SPLINE_END[g]   <- rpkms.chr.rt.RT[bed.e[1],]$SPLINE
+   }
+}
+ensGene.rt <- rbind(ensGene.rt, ensGene.rt.chr)
+
+
+
+
+# -----------------------------------------------------------------------------
 # SCLC RD vs RT
 # Last Modified: 18/02/19
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
-
-   rpkms.chr.rt.T  <- setSlope(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSlope(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
-   
-   main.text <- paste0("SCLC RT (M2/M1) vs. Read depths (", "Chr", c, ")")
-   xlab.text <- "SCLC RT (M2/M1)"
-   ylab.text <- "SCLC read depth"
-   file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RD_SCLC-M2-M1_pearson_chr",c))
-   xmin <- min(rpkms.chr.rt.RT$SLOPE)
-   xmax <- max(rpkms.chr.rt.RT$SLOPE)
-   ymin <- min(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
-   ymax <- max(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
-   plotRD2vsRT(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), xmin, xmax, ymin, ymax)
+ chr <- chrs[c]
+ bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+ rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+ rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+ 
+ rpkms.chr.rt.T  <- setSlope(rpkms.chr.rt, bed.gc.chr, "T")
+ rpkms.chr.rt.N  <- setSlope(rpkms.chr.rt, bed.gc.chr, "N")
+ rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
+ 
+ main.text <- paste0("SCLC RT (M2/M1) vs. Read depths (", "Chr", c, ")")
+ xlab.text <- "SCLC RT (M2/M1)"
+ ylab.text <- "SCLC read depth"
+ file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RD_SCLC-M2-M1_pearson_chr",c))
+ xmin <- min(rpkms.chr.rt.RT$SLOPE)
+ xmax <- max(rpkms.chr.rt.RT$SLOPE)
+ ymin <- min(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
+ ymax <- max(c(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE))
+ plotRD2vsRT(rpkms.chr.rt.T$SLOPE, rpkms.chr.rt.N$SLOPE, rpkms.chr.rt.RT$SLOPE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), xmin, xmax, ymin, ymax)
 }
 
 # -----------------------------------------------------------------------------
@@ -290,31 +364,31 @@ for (c in 1:22) {
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
 for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   ## SCLC and LCL RTs
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
-   rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
-   
-   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
-   rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
-   
-   ## Keep 1kb slopes based on overlapping windows
-   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
-   #rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]       ## Too slow
-   #rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]   ## Too slow
-   
-   ##
-   #main.text <- paste0("SCLC RT vs. LCL RT (", "Chr", c, ")")
-   #xlab.text <- "SCLC RT (T/N)"
-   #ylab.text <- "LCL RT (S/G1)"
-   #file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RT_SCLC-vs-LCL_pearson_chr", c))
-   #plotRTvsRT(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rt.RT[overlaps,]$SLOPE, file.name, main.text, ylab.text, xlab.text, c(adjustcolor.gray, "black"))
-   
-   cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rt.RT[overlaps,]$SLOPE)
+ chr <- chrs[c]
+ bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+ ## SCLC and LCL RTs
+ rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+ rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
+ rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
+ 
+ rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+ rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
+ rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+ 
+ ## Keep 1kb slopes based on overlapping windows
+ overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+ #rpkms.chr.rt.RT     <- rpkms.chr.rt.RT[overlaps,]       ## Too slow
+ #rpkms.chr.rt.lcl.RT <- rpkms.chr.rt.lcl.RT[overlaps,]   ## Too slow
+ 
+ ##
+ #main.text <- paste0("SCLC RT vs. LCL RT (", "Chr", c, ")")
+ #xlab.text <- "SCLC RT (T/N)"
+ #ylab.text <- "LCL RT (S/G1)"
+ #file.name <- file.path(wd.rt.plots, paste0("plot_RT-vs-RT_SCLC-vs-LCL_pearson_chr", c))
+ #plotRTvsRT(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rt.RT[overlaps,]$SLOPE, file.name, main.text, ylab.text, xlab.text, c(adjustcolor.gray, "black"))
+ 
+ cors$cor[c] <- getCor(rpkms.chr.rt.lcl.RT[overlaps,]$SLOPE, rpkms.chr.rt.RT[overlaps,]$SLOPE)
 }
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base1, "-M2-M1-vs-lcl_cors-pearson.RData")))
 
@@ -325,6 +399,7 @@ main.text <- paste0("SCLC M2/M1 vs. LCL S/G1")
 ymin <- 0
 ymax <- 0.8
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, line0=T)
+
 
 # -----------------------------------------------------------------------------
 # SCLC M2/M1 RT vs SCLC Q4/Q1 RT
@@ -346,9 +421,9 @@ for (c in 1:22) {
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T)
    rpkms.chr.rt.RT <- setSlope(rpkms.chr.rt, bed.gc.chr, "RT")
  
-   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+   #rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
    #rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", q4, "-", q1, ".txt.gz")), header=T, rownames=T, sep="\t")
-   #rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0("sclc", "_rpkm.corr.gc.d.rt_", chr, "_", "SCLC", "-", "SCLC", "_n", 101, "-", 92, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt.lcl <- readTable(file.path(wd.rt.data, paste0("sclc", "_rpkm.corr.gc.d.rt_", chr, "_", "SCLC", "-", "SCLC", "_n", 101, "-", 92, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, flipRT=F, scaledRT=T) 
    rpkms.chr.rt.lcl.RT <- setSlope(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
  

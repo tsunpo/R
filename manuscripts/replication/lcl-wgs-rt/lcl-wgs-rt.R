@@ -177,4 +177,4 @@ file.name <- file.path(wd.rt.plots, "plot_RDS-vs-RD_LCL_spline_spearman")
 main.text <- c(paste0("LCL S vs. LCL G1"), "Linear regression")
 ymax <- 0.015
 xlim <- c(0.15, 0.9425)
-plotRDCorsRDS(cors, skews, file.name, main.text, ymax, xlim, c(1, 4, 13, 17, 19, 22))
+plotRDCorsRDS(cors, skews, file.name, main.text, ymax, xlim, c(1, 4, 5, 13, 17, 19, 22))
