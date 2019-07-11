@@ -3,13 +3,13 @@ args <- commandArgs(TRUE)
 BASE1 <- args[1]   ## Cancer type
 PAIR1 <- args[2]   ## T(umour) or S (phase)
 LIST1 <- args[3]
-BASE0 <- args[4]   ## Normal type
-PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
-LIST0 <- args[6]
-SAMPLE <- args[7]
-SAMPLE <- gsub("-", ".", SAMPLE)
+#BASE0 <- args[4]   ## Normal type
+#PAIR0 <- args[5]   ## N(ormal) or B(lood) or G1 (phase)
+#LIST0 <- args[6]
+SAMPLE <- args[4]
+SAMPLE <- toupper(gsub("-", "", SAMPLE))   ## ADDED for NBL CCL
 base1 <- tolower(BASE1)
-base0 <- tolower(BASE0)
+#base0 <- tolower(BASE0)
 
 # =============================================================================
 # Name: 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
@@ -35,15 +35,15 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
 wd1.ngs    <- file.path(wd, BASE1, "ngs/WGS")
 wd1.ngs.data <- file.path(wd1.ngs, "data") 
-wd0.ngs    <- file.path(wd, BASE0, "ngs/WGS")
-wd0.ngs.data <- file.path(wd0.ngs, "data")
+#wd0.ngs    <- file.path(wd, BASE0, "ngs/WGS")
+#wd0.ngs.data <- file.path(wd0.ngs, "data")
 
 wd1.anlys  <- file.path(wd, BASE1, "analysis")
-wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd1.rt     <- file.path(wd1.anlys, "replication", paste0(base1, "-ccl-rt"))
 wd1.rt.data   <- file.path(wd1.rt, "data")
 
 samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
-samples1 <- gsub("-", ".", samples1)   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)
+samples1 <- toupper(gsub("-", "", samples1))   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)   ## ADDED for NBL CCL
 #samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
 #samples0 <- gsub("-", ".", samples0)   ## ADD 03/07/17 for LCL (e.g. NA19240.2 to NA19240.2)
 n1 <- length(samples1)
@@ -62,7 +62,9 @@ for (c in 1:22) {
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    
    ## Read depth
-   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)[, c("BED", samples1)]   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
+   colnames(rpkms.T.chr.d) <- toupper(gsub("\\.", "", colnames(rpkms.T.chr.d)))
+   #rpkms.T.chr.d <- rpkms.T.chr.d[, c("BED", samples1)]   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
 
    ## Individual read depth
    rpkms.T.chr.d.sample <- rpkms.T.chr.d[,c("BED", SAMPLE)]

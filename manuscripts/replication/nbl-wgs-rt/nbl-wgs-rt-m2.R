@@ -36,10 +36,8 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
-#samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n28.txt"), header=T, rownames=T, sep="")
 samples1 <- subset(samples1, M2 == 1)[,1]
 samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
-#samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n28.txt"), header=T, rownames=T, sep="")
 samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
@@ -56,55 +54,20 @@ for (c in 1:22) {
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
    
    ## Plot RT
-   main.text <- paste0(BASE, " SL/G1L read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")
+   main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
-   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("SL tumour", "G1L tumour"), c(adjustcolor.gray, adjustcolor.gray), c("SL", "G1L"), "png", width=10, peaks=c(), 7.75, 9, 3, 3)
-
-   ## chr2
-   #plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("SL tumour", "G1L tumour"), c(adjustcolor.gray, adjustcolor.gray), c("SL", "G1L"), "png", width=10, peaks=c(74393001, 85508001), 7.75, 9, 3, 3)   ## T/N: 74353001, 85951001
-   #plotRT(file.name, paste0(BASE, " SL/G1L read depth ratio"), chr, 71500000, 90500000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("SL tumour", "G1L tumour"), c(adjustcolor.red, adjustcolor.blue), c("SL", "G1L"), "png", width=5, peaks=c(74393001, 85508001), 7.75, 9, 3, 3)
+   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=10, peaks=c(), 7.75, 9, 3, 3)
+   #plotRT(file.name, paste0(BASE, " M2/M1 read depth ratio"), chr, 44000000, 45000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=5, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)
 }
+# > 9 - 7.75
+# [1] 1.25
 
 # -----------------------------------------------------------------------------
-# NBL RT vs LCL S/G1
-# Last Modified: 06/06/19
-# -----------------------------------------------------------------------------
-cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
-cors$chr <- 1:22
-
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-
-   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
- 
-   ## Keep only overlapping 1kb windows
-   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
-   cors$length[c] <- length(overlaps)
-   cors$cor[c] <- getCor(rpkms.chr.rt.RT[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, method="spearman")
-}
-save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
-
-ylab.text <- "Spearman's rho"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman")
-main.text <- paste0("NBL SL/G1L vs. LCL S/G1")
-ymin <- 0.25
-ymax <- 1.05
-plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2)
-
-# -----------------------------------------------------------------------------
-# SCLC RD vs SCLC T/N
+# SCLC RD vs RT (RDS and SPR)
 # Last Modified: 31/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
-cors$chr <- 1:22
+skews <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
+skews$chr <- 1:22
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -115,7 +78,7 @@ for (c in 1:22) {
    rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
    rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   cors$length[c] <- nrow(rpkms.chr.rt.RT)
+   skews$length[c] <- nrow(rpkms.chr.rt.RT)
  
    #rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
    #rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
@@ -123,37 +86,46 @@ for (c in 1:22) {
  
    ## Keep only overlapping 1kb windows
    #overlaps <- intersect(rpkms.chr.rt.T$BED, rpkms.chr.rt.lcl.RT$BED)
-   #cors$length[c] <- length(overlaps)
+   #skews$length[c] <- length(overlaps)
  
-   main.text <- paste0("NBL read depths vs. NBL SL/G1L (", "Chr", c, ")")
-   xlab.text <- "NBL SL/G1L"
+   main.text <- paste0("NBL read depths vs. NBL M2/M1 (", "Chr", c, ")")
+   xlab.text <- "NBL M2/M1"
    ylab.text <- "NBL read depth [log2]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("plot_RD-vs-RT_SCLC-vs-SCLC_chr", c, "_spline_spearman"))
-   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("SL", "G1L"), method="spearman")
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-M2-M1_chr", c, "_spline_spearman"))
+   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
  
-   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1] 
+   skews$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   skews$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   skews$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   skews$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   
+   ## Read depth skew (RDS)
+   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)   
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-sclc_spline_spearman.RData")))
+save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 
+#load(file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 #ylab.text <- "Spearman's rho"
 #xlab.text <- "Chromosome"
 #file.name <- file.path(wd.rt.plots, "plot_RD-vs-RT_NBL-vs-NBL_spline_spearman")
 #main.text <- paste0("NBL read depths vs. NBL SL/G1L")
 #ymin <- -0.75
 #ymax <- 0.75
-#plotRD2vsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2)
+#plotRD2vsRTALLREVERSED(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2)
 
-file.name <- file.path(wd.rt.plots, "plot_RDS-vs-RT_NBL_spline_spearman")
-main.text <- "NBL read depths vs. NBL SL/G1L"
-ymax <- 0.00745
-plotRDS(cors, file.name, main.text, ymax, c(4, 17), digits=3)
+## Read depth skew (RDS)
+file.name <- file.path(wd.rt.plots, "RDS_NBL-M2-M1_spline_spearman")
+main.text <- c(paste0("Read depth skew of ", BASE), "Y-axis intercept")
+plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("M2 tumour", "M1 tumour"), c=c(2, 13, 17), digits=3)
+
+## S-phase progression rate (SPR)
+file.name <- file.path(wd.rt.plots, "RDS-SPR_NBL-M2-M1_spline_spearman")
+main.text <- c(paste0("S-phase progression rate of ", BASE), "SPR = (M2-M1)/(M2+M1)")
+plotSPR(skews, file.name, main.text, c(13, 17), digits=3, unit=4.5)
 
 # -----------------------------------------------------------------------------
-# NBL RD vs RD
-# Last Modified: 03/06/19
+# NBL RD vs RD (RDC)
+# Last Modified: 11/07/19; 03/06/19
 # -----------------------------------------------------------------------------
 cors <- toTable(0, 2, 22, c("chr", "cor"))
 cors$chr <- 1:22
@@ -169,17 +141,56 @@ for (c in 1:22) {
  
    cors$cor[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rd_", base, "_spline_spearman.RData")))
-cors.rd <- cors
+save(cors, file=file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-m2-m1_spline_spearman.RData")))
 
-load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-vs-sclc_spline_spearman.RData")))
-cors.skew <- cors
+#load(file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-m2-m1_spline_spearman.RData")))
+file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_NBL-M2-M1_spline_spearman")
+main.text <- c(paste0("SPR vs. Read depth correlation of ", BASE), "Linear regression")
+xlab.text <- "Read depth correlation [rho]"
+plotSPRRDC(cors, skews, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), xlab.text, unit=4.5)
 
-file.name <- file.path(wd.rt.plots, "plot_RDS-vs-RD_NBL_spline_spearman")
-main.text <- c(paste0("NBL SL vs. NBL G1L"), "Linear regression")
-ymax <- 0.00745
-xlim <- c(0.6725, 0.99)
-plotRDCorsRDS(cors.rd, cors.skew, file.name, main.text, ymax, xlim=xlim, c(1, 4, 13, 17, 19, 22))
+
+
+
+
+# -----------------------------------------------------------------------------
+# NBL RT vs LCL S/G1
+# Last Modified: 06/06/19
+# -----------------------------------------------------------------------------
+cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
+cors$chr <- 1:22
+
+for (c in 1:22) {
+ chr <- chrs[c]
+ bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+ rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+ rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+ rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+ 
+ rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
+ rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
+ rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+ 
+ ## Keep only overlapping 1kb windows
+ overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+ cors$length[c] <- length(overlaps)
+ cors$cor[c] <- getCor(rpkms.chr.rt.RT[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, method="spearman")
+}
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
+
+#load(file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
+ylab.text <- "Spearman's rho"
+xlab.text <- "Chromosome"
+file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman")
+main.text <- paste0("NBL M2/M1 vs. LCL S/G1")
+ymin <- 0.25
+ymax <- 1.05
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Plot RT for individual genes (see ReplicationTiming.R)

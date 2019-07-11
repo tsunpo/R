@@ -52,7 +52,7 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
 ## FDR : Q/BH
 ## D.E.: CM2 vs CM1 (as factor)
-argv      <- data.frame(predictor="M2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+argv      <- data.frame(predictor="CM2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
 file.name <- paste0("de_", base, "_tpm-gene-r5p47-wgs_cm2_wilcox_q_n70")
 file.main <- paste0("CM2 (n=??) vs CM1 (n=??) in ", BASE)
 
@@ -193,9 +193,9 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
 }
 
 ##
-plot.main <- "Differential expression between CM2 and CM1 in SCLC"
+plot.main <- c("Differential expression between CM2 and CM1 in SCLC", "Late replication")
 xlab.text <- "log2FC(SCLC CM2/CM1)"
-plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47-wgs_sclc_p1e-4_cm2_")
+plot.de <- file.path(wd.de.plots, "volcanoplot-r5p47-wgs_sclc_p1e-4_cm2_late_")
 
 ## E2F3
 genes <- readTable(paste0(plot.de, "E2F3.tab"), header=T, rownames=F, sep="\t")
@@ -207,7 +207,20 @@ file.main <- c(plot.main, "")
 file.de <- paste0(plot.de, "E2F3.pdf")
 plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
 
+## E2F3 (RT > 0)
+de.tpm.gene.early <- de.tpm.gene[intersect(rownames(de.tpm.gene), rownames(ensGene.rt.consist.early)),]
+de.tpm.gene.early$FDR <- testFDR(de.tpm.gene.early$P, argv$test.fdr)
+de.tpm.gene.late  <- de.tpm.gene[intersect(rownames(de.tpm.gene), rownames(ensGene.rt.consist.late)),]
+de.tpm.gene.late$FDR <- testFDR(de.tpm.gene.late$P, argv$test.fdr)
 
+genes <- readTable(paste0(plot.de, "E2F3.tab"), header=T, rownames=F, sep="\t")
+rownames(genes) <- genes$GENE
+genes <- genes[intersect(genes$GENE, de.tpm.gene.late$external_gene_name),]
+
+file.main <- c(plot.main, "")
+#file.de <- paste0(plot.de, "_chr2_log2FC1.pdf")
+file.de <- paste0(plot.de, "E2F3.pdf")
+plotVolcano(de.tpm.gene.late, 1.00E-04, genes, file.de, file.main, xlab.text)
 
 
 

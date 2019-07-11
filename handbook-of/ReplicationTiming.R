@@ -2,7 +2,7 @@
 # Library      : Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 05/03/19; 15/11/18
+# Last Modified: 11/07/19; 05/03/19; 15/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -158,6 +158,11 @@ setSpline <- function(rpkms.chr.rt, bed.gc.chr, column) {
 }
 
 plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
+   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
+   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
+   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+   #bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt.RT),]   ## NOT HERE?
+ 
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {
@@ -178,7 +183,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    par(mar=c(1,4,4,1))
    ylab.text <- "Read depth [log2]"
    if (is.na(ymin) || is.na(ymax)) {
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rpkms.chr.rt$T), max(rpkms.chr.rt$T)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
+      rds <- c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    } else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
@@ -190,22 +196,14 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing splines
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt.RT),]
+   bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt.RT),]   ## BUT HERE?
    
-   #spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$T)
    points(bed.gc.chr$START/1E6, rpkms.chr.rt.T$SPLINE, col=colours[1], pch=16, cex=0.2)
-   #spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$N)   ## TO-DO: Change it back to T and N
    points(bed.gc.chr$START/1E6, rpkms.chr.rt.N$SPLINE, col=colours[2], pch=16, cex=0.2)
    
    ## Plot legend and peaks
-   if (width == 10) {
-      legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
-   } else
-      legend("bottomright", legends2, col=colours, lty=1, lwd=2, bty="n", horiz=T)
-    
+   legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
+
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
@@ -218,10 +216,10 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
    idx <- which(rpkms.chr.rt.RT$RT == 0)
    points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col="lightgrey", cex=0.3)
-   idx <- which(rpkms.chr.rt.RT$RT > 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col=colours2[1], cex=0.3)
    idx <- which(rpkms.chr.rt.RT$RT < 0)
    points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col=colours2[2], cex=0.3)
+   idx <- which(rpkms.chr.rt.RT$RT > 0)
+   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col=colours2[1], cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
@@ -232,19 +230,13 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
   
    ## Plot smoothing spline
-   #spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt$RT)
    points(bed.gc.chr$START/1E6, rpkms.chr.rt.RT$SPLINE, col="black", pch=16, cex=0.2)
+   abline(h=0, lty=5, lwd=1, col="black")
    
    ## Plot legend and peaks
-   if (width == 10) {
-      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
-      legend("topleft", "Early", bty="n", text.col="black")   
-      legend("bottomleft", "Late", bty="n", text.col="black")
-   } else {
-      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
-      legend("topleft",    paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col=colours[1])   
-      legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col=colours[2])
-   }
+   legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+   legend("topleft", paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col="black")   
+   legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col="black")
    
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
@@ -257,19 +249,6 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
 # Compare RD and RT in sclc-wgs-rt.R
 # Last Modified: 05/03/19
 # -----------------------------------------------------------------------------
-#setSlope <- function(rpkms.chr.rt, bed.gc.chr, column) {
-#   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
-# 
-#   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt[, column])
-#   slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
-#   rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]    ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
-#   rpkms.chr.rt$SLOPE <- slopes
-# 
-#   sizes <- diff(bed.gc.chr$START)
-#   gaps <- which(sizes != 1000)
-#   return(rpkms.chr.rt[-gaps, c("BED", column, "SLOPE")])
-#}
-
 getCor <- function(reads, timings, method) {
    if (method == "pearson") {
       return(cor.test(reads, timings, method="pearson")$estimate)
@@ -282,6 +261,10 @@ getCor <- function(reads, timings, method) {
 }
 
 plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
+   #xmin <- min(rpkms.chr.rt.RT$SPLINE)
+   #xmax <- max(rpkms.chr.rt.RT$SPLINE)
+   #ymin <- min(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
+   #ymax <- max(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
    xlim <- c(min(timings), max(timings))
    ylim <- c(min(c(reads1, reads2)), max(c(reads1, reads2)))
    cor <- "rho"
@@ -327,37 +310,114 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    dev.off()
 }
 
-plotRD2vsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, cols, c=NA) {
+plotRD2vsRTALL <- function(skews, file.name, main.text, ymin, ymax, cols, legends, c=NA) {
+   ylab.text <- "Spearman's rho"
+   xlab.text <- "Chromosome"
+ 
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19)
-   lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
-   points(cors$chr, cors$cor2, col=cols[2], pch=19)
-   lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
+   plot(skews$cor1 ~ skews$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19)
+   lines(skews$cor1, y=NULL, type="l", lwd=3, col=cols[1])
+   points(skews$chr, skews$cor2, col=cols[2], pch=19)
+   lines(skews$cor2, y=NULL, type="l", lwd=3, col=cols[2])
    abline(h=0, lty=5)
  
+   RT <- paste0(legends[1], "/", legends[2])
+   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.3)        
+   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.3)
+   
    if (!is.na(c)) {
-      text(c+1.5, cors$cor1[c], paste0("Chr", c, " (", round0(cors$cor1[c], digits=2), ")"), cex=1.1, col=cols[1], pos=3, offset=1.3)
-      text(c+1.5, cors$cor2[c], paste0("Chr", c, " (", round0(cors$cor2[c], digits=2), ")"), cex=1.1, col=cols[2], pos=3)
+      text(c, skews$cor1[c], round0(skews$cor1[c], digits=2), cex=1.3, col=cols[1], pos=3)   ##, offset=1.3)
+      text(c, skews$cor2[c], round0(skews$cor2[c], digits=2), cex=1.3, col=cols[2], pos=3)
    }
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8))
    dev.off()
 }
 
-plotRDS <- function(skews, file.name, main.text, ymax, cs=NULL, digits) {
-   ylab.text <- "RDS"
+## TO-DO
+plotRD2vsRTALLREVERSED <- function(skews, file.name, main.text, ymin, ymax, cols, legends, c=NA) {
+   ylab.text <- "Spearman's rho"
+   xlab.text <- "Chromosome"
+   skews$cor1 <- skews$cor1 *-1
+   skews$cor2 <- skews$cor2 *-1
+   
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(skews$cor1 ~ skews$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19)
+   lines(skews$cor1, y=NULL, type="l", lwd=3, col=cols[1])
+   points(skews$chr, skews$cor2, col=cols[2], pch=19)
+   lines(skews$cor2, y=NULL, type="l", lwd=3, col=cols[2])
+   abline(h=0, lty=5)
+ 
+   RT <- paste0(legends[1], "/", legends[2])
+   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.3)        
+   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.3)
+ 
+   if (!is.na(c)) {
+      text(c, skews$cor1[c], round0(skews$cor1[c], digits=2), cex=1.3, col=cols[1], pos=3)   ##, offset=1.3)
+      text(c, skews$cor2[c], round0(skews$cor2[c], digits=2), cex=1.3, col=cols[2], pos=3)
+   }
+   axis(side=1, at=seq(2, 22, by=2))
+   axis(side=2, at=seq(0.6, 1, by=0.2), labels=c(1, 0.8, 0.6))
+   dev.off()
+}
+
+## Read depth skew (RDS)
+## Regression Analysis: How to Interpret the Constant (Y Intercept)
+## https://blog.minitab.com/blog/adventures-in-statistics-2/regression-analysis-how-to-interpret-the-constant-y-intercept
+plotRDS <- function(skews, file.name, main.text, ymin, ymax, cols, legends, cs=NULL, digits) {
+   ylab.text <- "Constant"
+   xlab.text <- "Chromosome"  
+ 
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(skews$intercept1 ~ skews$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col=cols[1], xaxt="n", pch=19)
+   lines(skews$intercept1, y=NULL, type="l", lwd=3, col=cols[1])
+   points(skews$chr, skews$intercept2, col=cols[2], pch=19)
+   lines(skews$intercept2, y=NULL, type="l", lwd=3, col=cols[2])
+   #abline(h=0, lty=5)
+ 
+   legend("topleft", legends[1], text.col=cols[1], pch=16, col=cols[1])        
+   legend("bottomleft", legends[2], text.col=cols[2], pch=16, col=cols[2])
+ 
+   if (!is.null(c)) {
+      for (c in 1:length(cs)) {
+         c <- cs[c]
+         if (skews$intercept1[c] > skews$intercept2[c]) {
+            text(skews$chr[c], skews$intercept1[c], round0(skews$intercept1[c], digits=digits), cex=1.1, col=cols[1], pos=3)
+            text(skews$chr[c], skews$intercept2[c], round0(skews$intercept2[c], digits=digits), cex=1.1, col=cols[2], pos=1)
+         } else {
+            text(skews$chr[c], skews$intercept1[c], round0(skews$intercept1[c], digits=digits), cex=1.1, col=cols[1], pos=1)
+            text(skews$chr[c], skews$intercept2[c], round0(skews$intercept2[c], digits=digits), cex=1.1, col=cols[2], pos=3)
+         }
+      }
+   }
+   axis(side=1, at=seq(2, 22, by=2))
+   #axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8))
+   mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+}
+
+## S-phase progression rate (SPR)
+getYlim <- function(skews, unit) {
+   unit <- max(skews$skew)/unit
+   ymax <- max(skews$skew) + unit
+   
+   ymin <- ((ymax - skews$skew[2]) - skews$skew[2]) * -1
+   
+   return(c(ymin, ymax))
+}
+
+plotSPR <- function(skews, file.name, main.text, cs=NULL, digits, unit) {
+   ylab.text <- "SPR"
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
-   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
-   #ymin <- -ymax
-   ymin <- (ymax - skews$skew[2]) * -1
-   if (skews$skew[2] > 0)
-      ymin <- ((ymax - skews$skew[2]) - skews$skew[2]) * -1
-      
+   ylim <- getYlim(skews, unit)
+
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(skews$skew ~ skews$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
+   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
    
    abline(h=skews$skew[2], lty=5)
    lines(skews$skew, y=NULL, type="l", lwd=3, col=cols[3])
@@ -368,7 +428,7 @@ plotRDS <- function(skews, file.name, main.text, ymax, cs=NULL, digits) {
    points(skews$skew[idx] ~ skews$chr[idx], col=cols[2], pch=19)
    points(skews$skew[2] ~ skews$chr[2], col=cols[3], pch=19)
  
-   text(skews$chr[2]+1.8, skews$skew[2], paste0("Chr2 (", round0(abs(skews$skew[2]), digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
+   text(skews$chr[2]+1.8, skews$skew[2], paste0("Chr2 (", round0(skews$skew[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
@@ -385,21 +445,20 @@ plotRDS <- function(skews, file.name, main.text, ymax, cs=NULL, digits) {
    dev.off()
 }
 
-plotRDCorsRDS <- function(cors, skews, file.name, main.text, ymax, xlim=NULL, cs=NULL) {
-   ylab.text <- "RDS"
-   xlab.text <- "Read depth correlation [rho]"
+plotSPRRDC <- function(cors, skews, file.name, main.text, cs=NULL, xlab.text, unit) {
+   ylab.text <- "SPR"
+   #xlab.text <- "Read depth correlation [rho]"
    cols <- c("red", "blue", "black", "purple")
-   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
-   #ymin <- -ymax
-   ymin <- (ymax - skews$skew[2]) * -1
-   if (skews$skew[2] > 0)
-      ymin <- ((ymax - skews$skew[2]) - skews$skew[2]) * -1
+   ylim <- getYlim(skews, unit)
+
+   unit <- (max(cors$cor) - min(cors$cor))/20
+   xlim <- c(min(cors$cor) - unit, max(cors$cor) + unit)
    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    if (is.null(xlim))
-      plot(skews$skew ~ cors$cor, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+      plot(skews$skew ~ cors$cor, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
    else
-      plot(skews$skew ~ cors$cor, ylim=c(ymin, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+      plot(skews$skew ~ cors$cor, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
 
    abline(h=skews$skew[2], lty=5)
    lm.fit <- lm(skews$skew ~ cors$cor)
@@ -430,32 +489,81 @@ plotRDCorsRDS <- function(cors, skews, file.name, main.text, ymax, xlim=NULL, cs
 }
 
 # -----------------------------------------------------------------------------
-# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
-# Last Modified: 05/03/19
+# 
+# Last Modified: 07/07/19
 # -----------------------------------------------------------------------------
-plotRTvsRT <- function(reads, timings, file.name, main.text, ylab.text, xlab.text, colours, method) {
-   lm.fit <- lm(reads ~ timings)
-   #r2 <- summary(lm.fit)$r.squared
+plotMUTLength <- function(cors, muts, file.name, main.text, cs=NULL, xlab.text) {
+   ylab.text <- "Chromosome length"
+   cols <- c("red", "blue", "black", "purple")
+   
+   unit <- (max(cors$cor) - min(cors$cor))/20
+   xlim <- c(min(cors$cor) - unit, max(cors$cor) + unit)
+   
+   unit <- (max(muts$LENGTH) - min(muts$LENGTH))/15
+   ymin <- min(muts$LENGTH) - unit
+   ymax <- max(muts$LENGTH) + unit
+    
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   if (is.null(xlim))
+      plot(muts$LENGTH ~ cors$cor, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+   else
+      plot(muts$LENGTH ~ cors$cor, ylim=c(ymin, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
  
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   #pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col=colours[1])
-   #plot(reads ~ timings, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white")
-   abline(lm.fit, col=colours[2], lwd=3)
-   abline(h=0, lty=5)
-   abline(v=0, lty=5)
-   #mtext(paste0("R^2=", paste0(round0(r2*100, digits=2), "%")), cex=1.2, line=0.3)
+   lm.fit <- lm(muts$LENGTH ~ cors$cor)
+   abline(lm.fit, col=cols[4], lwd=3)
  
-   #rho <- cor.test(reads, timings, method="spearman", exact=F)[[4]]
-   #mtext(paste0("SRC's rho = ", round0(rho, digits=2)), cex=1.2, line=0.3)
+   points(muts$LENGTH ~ cors$cor, col=cols[3], pch=19)
  
-   #cor <- cor.test(reads, timings, method="pearson")$estimate
-   cor <- getCor(reads, timings, method=method)
-   mtext(paste0("Spearman's rho = ", round0(cor, digits=2)), cex=1.1, line=0.3) 
+   text(cors$cor[2], muts$LENGTH[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   if (!is.null(cs))
+      for (c in 1:length(cs)) {
+         c <- cs[c]
+         text(cors$cor[c], muts$LENGTH[c], paste0("Chr", c), cex=1.1, col=cols[3], pos=3)
+      }
+
+   legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
+   #axis(side=1, at=seq(2, 22, by=2))
+   mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
 
-plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA, offset=1) {
+plotSNVLength <- function(snvs, muts, file.name, main.text, cs=NULL, xlab.text) {
+   ylab.text <- "Chromosome length"
+   cols <- c("red", "blue", "black", "purple")
+ 
+   unit <- (max(snvs) - min(snvs))/20
+   xlim <- c(min(snvs) - unit, max(snvs) + unit)
+ 
+   unit <- (max(muts$LENGTH) - min(muts$LENGTH))/15
+   ymin <- min(muts$LENGTH) - unit
+   ymax <- max(muts$LENGTH) + unit
+ 
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(muts$LENGTH ~ snvs, ylim=c(ymin, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+ 
+   lm.fit <- lm(muts$LENGTH ~ snvs)
+   abline(lm.fit, col=cols[4], lwd=3)
+ 
+   points(muts$LENGTH ~ snvs, col=cols[3], pch=19)
+ 
+   text(snvs[2], muts$LENGTH[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   if (!is.null(cs))
+      for (c in 1:length(cs)) {
+         c <- cs[c]
+         text(snvs[c], muts$LENGTH[c], paste0("Chr", c), cex=1.1, col=cols[3], pos=3)
+      }
+ 
+   legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
+   #axis(side=1, at=seq(2, 22, by=2))
+   mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
+# Last Modified: 05/03/19
+# -----------------------------------------------------------------------------
+plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA, pos) {
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col, xaxt="n", yaxt="n", pch=19)
@@ -463,33 +571,7 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
    abline(h=0, lty=5)
 
    if (!is.na(c))
-      text(cors[c,]$chr+1.5, 0.9, paste0("Chr", c, " (", round0(cors[c,]$cor, digits=2), ")"), cex=1.1, col=col, pos=3, offset=offset)
-   axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
-   dev.off()
-
-   #cors.s <- cors[order(cors$length),]
-   #lm.fit <- lm(cors$cor ~ cors$length)
-}
-
-## TO-DO??
-plotRTDvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, c=NA) {
-   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$RT ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
-   lines(cors$RT, y=NULL, type="l", lwd=3, col="black")
-   abline(h=0, lty=5)
- 
-   points(cors$chr, cors$T, col="red", pch=19)
-   lines(cors$T, y=NULL, type="l", lwd=3, col="red")
-
-   points(cors$chr, cors$N, col="blue", pch=19)
-   lines(cors$N, y=NULL, type="l", lwd=3, col="blue")
-   
-   legend("bottomright", c("T vs. G1", "T vs. S", "T vs. S/G1"), text.col=c("blue", "red", "black"), bty="n", cex=1.1)
-   
-   if (!is.na(c))
-      text(cors[c,]$chr+1.5, cors[c,]$RT, paste0(round0(cors[c,]$cor, digits=2), " (Chr", c, ")"), cex=1.1, col=col, pos=3, offset=1)
+      text(cors[c,]$chr, cors[c,]$cor, round0(cors[c,]$cor, digits=2), cex=1.3, col=col, pos=pos)
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
    dev.off()
@@ -518,21 +600,6 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
    abline(h=0, lty=5)
    mtext(main.text[2], cex=1.1, line=0.3) 
    dev.off()
- 
-   #png(paste0(file.name, "_scatter_spline.png"), height=5, width=5.5, units="in", res=300)
-   #plot(cors.samples$mean, log(cors.samples$cv2), ylab="log(cv2)", xlab="mean", main=main.text[2])
-   #text(cors.samples$mean[2], log(cors.samples$cv2[2]), "chr2", cex=1.2, pos=3)
-   #text(cors.samples$mean[4], log(cors.samples$cv2[4]), "chr4", cex=1.2, pos=3)
-   #text(cors.samples$mean[20], log(cors.samples$cv2[20]), "chr20", cex=1.2, pos=3)
-   #text(cors.samples$mean[12], log(cors.samples$cv2[12]), "chr12", cex=1.2, pos=3)
-   #dev.off()
- 
-   #png(paste0(file.name, "_var_spline.png"), height=5, width=5.5, units="in", res=300)
-   #plot(cors.samples$var ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col="black", xaxt="n", yaxt="n", pch=19)
-   #plot(cors.samples$var ~ cors.samples$chr, ylab="var", xlab="Chromosome", col="black", xaxt="n", pch=19, main=main.text[2])
-   #lines(cors.samples$var, y=NULL, type="l", lwd=3)
-   #axis(side=1, at=seq(2, 22, by=2))
-   #dev.off()
 }
 
 # -----------------------------------------------------------------------------
@@ -569,6 +636,57 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
 
    return(cors.all)
 }
+
+# =============================================================================
+# Inner Class  : PeifLyne File Reader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 01/05/17
+# =============================================================================
+read.peiflyne.cn.txt <- function(cn.file) {
+   cn <- readTable(cn.file, header=F, rownames=T, sep="")
+   colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "BAM_T", "BAM_N", "V10", "INSERT_SIZE_T", "INSERT_SIZE_N")
+ 
+   return(cn)
+}
+
+read.peiflyne.cn.seg <- function(cn.file) {
+   cn <- readTable(cn.file, header=F, rownames=F, sep="")
+   colnames(cn) <- c("SAMPLE", "CHR", "START", "END", "V5", "Ratio")
+ 
+   return(cn)
+}
+
+# =============================================================================
+# Inner Class  : Bedtools File Reader
+# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 10/05/17
+# =============================================================================
+read.bedtools.multicov.cov <- function(cov.file) {
+   cov <- readTable(cov.file, header=F, rownames=F, sep="")
+   colnames(cov) <- c("CHR", "START", "END", "BAM_T", "BAM_N")
+   cov$BED <- paste0("P", 1:nrow(cov))
+   rownames(cov) <- cov$BED
+ 
+   return(cov)
+}
+
+# =============================================================================
+# Inner Class: Collections of test/obsolete/deprecated methods
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 01/02/18
+# =============================================================================
+#setSlope <- function(rpkms.chr.rt, bed.gc.chr, column) {
+#   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+# 
+#   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt[, column])
+#   slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
+#   rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]    ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
+#   rpkms.chr.rt$SLOPE <- slopes
+# 
+#   sizes <- diff(bed.gc.chr$START)
+#   gaps <- which(sizes != 1000)
+#   return(rpkms.chr.rt[-gaps, c("BED", column, "SLOPE")])
+#}
 
 setSamplesSG1 <- function(wd.rt.data, samples1, cors.samples) {
    cors.all <- toTable(0, 4, length(samples1), c("SAMPLE_ID", "COR", "SG1", "M2"))
@@ -611,37 +729,4 @@ setSamplesSG1 <- function(wd.rt.data, samples1, cors.samples) {
    cors.all$M2[which(cors.all$SG1 == "SL") ] <- 1
    cors.all$M2[which(cors.all$SG1 == "G1L")] <- 0
    return(cors.all)
-}
-
-# =============================================================================
-# Inner Class  : PeifLyne File Reader
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 01/05/17
-# =============================================================================
-read.peiflyne.cn.txt <- function(cn.file) {
-   cn <- readTable(cn.file, header=F, rownames=T, sep="")
-   colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "BAM_T", "BAM_N", "V10", "INSERT_SIZE_T", "INSERT_SIZE_N")
- 
-   return(cn)
-}
-
-read.peiflyne.cn.seg <- function(cn.file) {
-   cn <- readTable(cn.file, header=F, rownames=F, sep="")
-   colnames(cn) <- c("SAMPLE", "CHR", "START", "END", "V5", "Ratio")
- 
-   return(cn)
-}
-
-# =============================================================================
-# Inner Class  : Bedtools File Reader
-# Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 10/05/17
-# =============================================================================
-read.bedtools.multicov.cov <- function(cov.file) {
-   cov <- readTable(cov.file, header=F, rownames=F, sep="")
-   colnames(cov) <- c("CHR", "START", "END", "BAM_T", "BAM_N")
-   cov$BED <- paste0("P", 1:nrow(cov))
-   rownames(cov) <- cov$BED
-   
-   return(cov)
 }

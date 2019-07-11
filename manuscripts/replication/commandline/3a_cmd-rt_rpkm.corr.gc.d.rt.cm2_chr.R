@@ -33,7 +33,7 @@ wd.ngs    <- file.path(wd, BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data")
 
 wd.anlys   <- file.path(wd, BASE, "analysis")
-wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-cl-rt"))
 wd.rt.data <- file.path(wd.rt, "data")
 
 samples <- readTable(file.path(wd.ngs, LIST), header=T, rownames=T, sep="")
@@ -43,6 +43,7 @@ samples <- readTable(file.path(wd.ngs, LIST), header=T, rownames=T, sep="")
 
    ## Replication timing
    rpkms.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d_", chr, "_", PAIR, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
+   colnames(rpkms.chr.d) <- toupper(gsub("\\.", "", colnames(rpkms.chr.d)))
    rpkms.chr.d <- rpkms.chr.d[, rownames(samples)]
    
    rpkms.T.chr.d <- rpkms.chr.d[, which(samples[,chr] == 1)]

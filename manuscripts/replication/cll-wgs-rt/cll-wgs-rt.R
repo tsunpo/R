@@ -67,7 +67,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_s
 # [1] 0.6353611
 
 file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_CLL-vs-LCL_spline_spearman")
-main.text <- c("CLL T (n=96) vs. LCL S/G1", "Chromosomal median (CM2/CM1)")
+main.text <- c("CLL (n=96) read depth vs. LCL S/G1", "Chromosomal median (CM2/CM1)")
 ymin <- -0.8732989
 ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -123,16 +123,16 @@ for (c in 1:22) {
 ## Q4
 test <- rpkms.T.chr.d.all
 pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_cll_T_chrs_spline_spearman.RData")))
+save(pca.de, file=file.path(wd.rt.data, paste0("PCA_cll_chrs_spline_spearman.RData")))
 
-file.main <- c("CLL T (n=96) read depth profiles", "")
+file.main <- c("CLL (n=96) read depth profiles", "Overall correlation with LCL S/G1")
 trait <- as.numeric(samples.cll$Q4)
 trait[which(trait == 4)] <- "Q4 (-0.65 < r < 0.38)"
 trait[which(trait == 3)] <- "Q3 (-0.66 < r < -0.65)"
 trait[which(trait == 2)] <- "Q2 (-0.67 < r < -0.66)"
 trait[which(trait == 1)] <- "Q1 (-0.70 < r < -0.67)"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_cll_T_chrs_spline_spearman", size=6, file.main, "topleft", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=-1, flip.y=1, legend.title="Overall corr. with LCL S/G1")
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_CLL_chrs_spline_spearman", size=6, file.main, "topleft", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=-1, flip.y=1, legend.title=NA)
 
 ## SG1
-trait <- samples.cll.sg1$SG1
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_cll_T_chrs_spline_spearman_SG1", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=-1, flip.y=1, legend.title="Consist. CM in all chrs")
+#trait <- samples.cll.sg1$SG1
+#plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_cll_T_chrs_spline_spearman_SG1", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=-1, flip.y=1, legend.title="Consist. CM in all chrs")
