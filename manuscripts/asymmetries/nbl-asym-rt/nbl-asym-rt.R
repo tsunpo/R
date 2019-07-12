@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Chromosome replication timing of the human genome
-# Name         : manuscripts/asymmetries/sclc-asym-rt.R
+# Name         : manuscripts/asymmetries/cll-asym-tx.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/06/18
 # =============================================================================
@@ -23,13 +23,14 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+BASE <- "NBL"
 PAIR1 <- "T"
 PAIR0 <- "T"
 base <- tolower(BASE)
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata", "Peifer 2015")
 
 wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-rt"))
 wd.asym.data  <- file.path(wd.asym, "data")
@@ -39,9 +40,9 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"))   
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-n1 <- 50
-n0 <- 51
+samples <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
+n1 <- 28
+n0 <- 28
 
 # -----------------------------------------------------------------------------
 # Step 1: Load all mutations
@@ -88,7 +89,7 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
  
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.cm2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
    rpkms.chr.rt <- cbind(rpkms.chr.rt[rownames(rpkms.chr.rt.RT),], rpkms.chr.rt.RT[, "SPLINE"])
@@ -114,46 +115,13 @@ for (c in 1:22) {
 save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 
 ###
-## After copy files back from cheops
+## After copying files back from cheops
 muts <- toTable(0, 9, 0, c("CHR", "LENGTH", "TOTAL", "C>A", "C>G", "C>T", "T>A", "T>C", "T>G"))
 for (c in 1:22) {
    load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_chr", c,".RData")))
    muts <- rbind(muts, muts.chr)
 }
 save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
-
-# -----------------------------------------------------------------------------
-# SCLC RD vs RD
-# Last Modified: 07/07/19
-# -----------------------------------------------------------------------------
-load(file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearman.RData")))   ## Load skews
-load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
-#load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
-#load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_late.RData")))
-time <- "EARLY"
-
-s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
-for (s in 1:6) {
-   cors <- toTable(0, 2, 22, c("chr", "cor"))
-   cors$chr <- 1:22
-   idx <- idxs[s]
-   
-   for (c in 1:22)
-      cors$cor[c] <- muts[c, 3+s] / muts[c, "LENGTH"]
-
-   file.name <- file.path(wd.asym.plots, paste0(time, "_RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
-   main.text <- c(paste0(s6[s], ""), BASE)
-   xlab.text <- "SNVs/Mb"
-   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
-   
-   #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
-   #main.text <- c(paste0(s6[s], ""), "")
-   #plotMUTLength(cors, muts, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), "SNVs/Mb")
-   
-   #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-SNV-", gsub("/", "_", s6[s]), "_", BASE))
-   #main.text <- c(paste0(s6[s], ""), "")
-   #plotSNVLength(muts[, 3+s], muts, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), "SNVs")
-}
 
 # -----------------------------------------------------------------------------
 # Step 2.1: Build S6 table for early/late replicated region
@@ -184,7 +152,63 @@ for (c in 1:22) {
 }
 save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
 
+# -----------------------------------------------------------------------------
+# SCLC RD vs RD
+# Last Modified: 07/07/19
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearman.RData")))   ## Load skews
+load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
+#load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
+#load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_late.RData")))
+#load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_gtg_s6.RData")))
+time <- "EARLY"
 
+s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
+for (s in 1:6) {
+   cors <- toTable(0, 2, 22, c("chr", "cor"))
+   cors$chr <- 1:22
+   idx <- idxs[s]
+ 
+   for (c in 1:22)
+      cors$cor[c] <- muts[c, 3+s] / muts[c, "LENGTH"]
+ 
+   file.name <- file.path(wd.asym.plots, paste0(time, "_RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
+   #main.text <- c(paste0(s6[s], ""), "NBL (G[T>G]G removed)")
+   main.text <- c(paste0(s6[s], ""), BASE)
+   xlab.text <- "SNVs/Mb"
+   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5)
+ 
+   #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
+   #main.text <- c(paste0(s6[s], ""), "")
+   #plotMUTLength(cors, muts, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), "SNVs/Mb")
+ 
+   #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-SNV-", gsub("/", "_", s6[s]), "_", BASE))
+   #main.text <- c(paste0(s6[s], ""), "")
+   #plotSNVLength(muts[, 3+s], muts, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), "SNVs")
+}
+
+# -----------------------------------------------------------------------------
+# SCLC RD vs RD
+# Last Modified: 07/07/19
+# -----------------------------------------------------------------------------
+###
+## Remove G[T>G]G
+arts <- readTable(file.path(wd.meta, "G[T>G]G.csv"), header=T, rownames=F, sep=",")
+
+load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
+#muts <- toTable(0, 9, 0, c("CHR", "LENGTH", "TOTAL", "C>A", "C>G", "C>T", "T>A", "T>C", "T>G"))
+for (c in 1:22) {
+   chr <- chrs[c]
+ 
+   load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_chr", c,".RData")))   ## Load snvs.chr
+   arts.chr <- subset(arts, seqnames == chr)
+   idx <- which(snvs.chr$POS %in% arts.chr$starts)
+
+   muts$TOTAL[c] <- muts$TOTAL[c] - length(idx)
+   s <- 6
+   muts[c, 3+s] <- muts[c, 3+s] - length(idx)
+}
+save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_gtg_s6.RData")))
 
 
 

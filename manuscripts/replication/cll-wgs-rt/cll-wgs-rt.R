@@ -66,8 +66,8 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_s
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.6353611
 
-file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_CLL-vs-LCL_spline_spearman")
-main.text <- c("CLL (n=96) read depth vs. LCL S/G1", "Chromosomal median (CM2/CM1)")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_CLL-vs-LCL_spline_spearman")
+main.text <- c("CLL (n=96) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
 ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)

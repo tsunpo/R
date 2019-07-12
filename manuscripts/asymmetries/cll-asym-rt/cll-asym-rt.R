@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Chromosome replication timing of the human genome
-# Name         : manuscripts/asymmetries/sclc-asym-rt.R
+# Name         : manuscripts/asymmetries/cll-asym-tx.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/06/18
 # =============================================================================
@@ -23,7 +23,7 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "SCLC"
+BASE <- "CLL"
 PAIR1 <- "T"
 PAIR0 <- "T"
 base <- tolower(BASE)
@@ -39,9 +39,9 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"))   
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-n1 <- 50
-n0 <- 51
+samples <- readTable(file.path(wd.ngs, "cll_wgs_n96.list"), header=F, rownames=F, sep="")
+n1 <- 48
+n0 <- 48
 
 # -----------------------------------------------------------------------------
 # Step 1: Load all mutations
@@ -88,7 +88,7 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
  
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.cm2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
    rpkms.chr.rt <- cbind(rpkms.chr.rt[rownames(rpkms.chr.rt.RT),], rpkms.chr.rt.RT[, "SPLINE"])
@@ -114,7 +114,7 @@ for (c in 1:22) {
 save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 
 ###
-## After copy files back from cheops
+## After copying files back from cheops
 muts <- toTable(0, 9, 0, c("CHR", "LENGTH", "TOTAL", "C>A", "C>G", "C>T", "T>A", "T>C", "T>G"))
 for (c in 1:22) {
    load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_chr", c,".RData")))
@@ -130,7 +130,7 @@ load(file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearm
 load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_late.RData")))
-time <- "EARLY"
+time <- "LATE"
 
 s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
 for (s in 1:6) {
@@ -144,7 +144,7 @@ for (s in 1:6) {
    file.name <- file.path(wd.asym.plots, paste0(time, "_RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
    main.text <- c(paste0(s6[s], ""), BASE)
    xlab.text <- "SNVs/Mb"
-   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
+   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, legends=c("topright", "bottomleft"))
    
    #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
    #main.text <- c(paste0(s6[s], ""), "")

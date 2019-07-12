@@ -66,7 +66,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_s
 # [1] -0.8373368
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8643419
-file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
 main.text <- c("NBL (n=56) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
 ymax <- 0.8643419

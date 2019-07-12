@@ -143,12 +143,12 @@ save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-t-n_spline_s
 
 ## Read depth skew (RDS)
 file.name <- file.path(wd.rt.plots, "RDS_SCLC-T-N_spline_spearman")
-main.text <- c(paste0("Read depth skew of ", BASE), "Y-axis intercept")
+main.text <- c(paste0("Read depth imbalance in ", BASE), "Y-axis intercept")
 plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("Tumour", "Normal"), c=c(2, 13, 17), digits=3)
 
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "RDS-SPR_SCLC-T-N_spline_spearman")
-main.text <- c(paste0("S-phase progression rate of ", BASE), "SPR = (T-N)/(T+N)")
+main.text <- c(paste0("S-phase progression rate in ", BASE), "SPR = (T-N)/(T+N)")
 plotSPR(skews, file.name, main.text, c(13, 17), digits=3, unit=5.5)
 
 # -----------------------------------------------------------------------------
@@ -173,9 +173,9 @@ save(cors, file=file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-t-n_spline_sp
 
 #load(file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-t-n_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_SCLC-T-N_spline_spearman")
-main.text <- c(paste0("SPR vs. Read depth correlation of ", BASE), "Linear regression")
+main.text <- c(paste0("SPR vs. Read depth correlation in ", BASE), "Linear regression")
 xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, skews, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), xlab.text, unit=4.5)
+plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, legends=c("topleft", "bottomleft"))
 
 # -----------------------------------------------------------------------------
 # SCLC T/N vs LCL S/G1
@@ -236,7 +236,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8160865
 
-file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
 main.text <- c("SCLC (n=101) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
 ymax <- 0.8643419

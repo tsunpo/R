@@ -118,7 +118,7 @@ for (c in 1:22) {
    main.text <- paste0("LCL read depths vs. LCL S/G1 (", "Chr", c, ")")
    xlab.text <- "LCL S/G1"
    ylab.text <- "LCL read depth [log2]"
-   file.name <- file.path(wd.rt.plots, paste0("plot_RD-vs-RT_LCL-vs-LCL_chr", c, "_spline_spearman"))
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
    
    skews$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
@@ -140,12 +140,12 @@ plotRD2vsRTALL(skews, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c
 
 ## Read depth skew (RDS)
 file.name <- file.path(wd.rt.plots, "RDS_LCL-S-G1_spline_spearman")
-main.text <- c(paste0("Read depth skew of ", BASE), "Y-axis intercept")
-plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S phase", "G1 phasae"), c=c(2, 13, 17), digits=2)
+main.text <- c(paste0("Read depth imbalance in ", BASE), "Y-axis intercept")
+plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S phase", "G1 phase"), c=c(2, 13, 17), digits=2)
 
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "RDS-SPR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0("S-phase progression rate of ", BASE), "SPR = (S-G1)/(S+G1)")
+main.text <- c(paste0("S-phase progression rate in ", BASE), "SPR = (S-G1)/(S+G1)")
 plotSPR(skews, file.name, main.text, c(13, 17), digits=2, unit=5)
 
 # -----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ for (c in 1:22) {
 save(cors, file=file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-s-g1_spline_spearman.RData")))
 
 #load(file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-s-g1_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_LC-S-G1_spline_spearman")
-main.text <- c(paste0("SPR vs. Read depth correlation of ", BASE), "Linear regression")
+file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_LCL-S-G1_spline_spearman")
+main.text <- c(paste0("SPR vs. Read depth correlation in ", BASE), "")
 xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, skews, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), xlab.text, unit=5)
+plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5)

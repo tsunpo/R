@@ -301,12 +301,12 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    
    RT <- paste0(legends[1], "/", legends[2])
    if (cor1 < 0 && cor2 < 0) {
-      legend("bottomright", c(paste0(cor, " = -", round0(abs(cor1), digits=2), " (", legends[1], " vs. ", RT, ")"), paste0(cor, " = -", round0(abs(cor2), digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, bty="n", cex=1.1)
+      legend("bottomright", c(paste0(cor, " = ", round0(cor1, digits=2), " (", legends[1], " vs. ", RT, ")"), paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, bty="n", cex=1.1)
    } else if (as.numeric(cor1) > 0 && as.numeric(cor2) < 0) {
       legend("topright", paste0(cor, " = ", round0(cor1, digits=2), " (", legends[1], " vs. ", RT, ")"), text.col=colours[1], bty="n", cex=1.1)        
-      legend("bottomright", paste0(cor, " = -", round0(abs(cor2), digits=2), " (", legends[2], " vs. ", RT, ")"), text.col=colours[2], bty="n", cex=1.1)
+      legend("bottomright", paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")"), text.col=colours[2], bty="n", cex=1.1)
    }
-   mtext(main.text2, cex=1.2, line=0.3)
+   #mtext(main.text2, cex=1.2, line=0.3)
    dev.off()
 }
 
@@ -459,7 +459,7 @@ plotSPRRDC <- function(cors, skews, file.name, main.text, cs=NULL, xlab.text, un
       plot(skews$skew ~ cors$cor, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
    else
       plot(skews$skew ~ cors$cor, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
-
+   
    abline(h=skews$skew[2], lty=5)
    lm.fit <- lm(skews$skew ~ cors$cor)
    abline(lm.fit, col=cols[4], lwd=3)
@@ -479,10 +479,15 @@ plotSPRRDC <- function(cors, skews, file.name, main.text, cs=NULL, xlab.text, un
          else
             text(cors$cor[c], skews$skew[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
       }
-   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   ## bty="n"
-   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
    
-   legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
+   cor <- cor.test(skews$skew, cors$cor, method="spearman", exact=F)
+   legends <- c("topright", "bottomleft")
+   if (cor[[4]] > 0) legends[1] <- "topleft"
+   legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   ## bty="n"
+   legend(legends[2], "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
+   
+   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.1)
+   #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
    #axis(side=1, at=seq(2, 22, by=2))
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()

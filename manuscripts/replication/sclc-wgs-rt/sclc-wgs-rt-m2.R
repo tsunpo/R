@@ -115,12 +115,12 @@ save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline
 
 ## Read depth skew (RDS)
 file.name <- file.path(wd.rt.plots, "RDS_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0("Read depth skew of ", BASE), "Y-axis intercept")
+main.text <- c(paste0("Read depth imbalance in ", BASE), "Y-axis intercept")
 plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("M2 tumour", "M1 tumour"), c=c(2, 13, 17), digits=3)
 
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "RDS-SPR_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0("S-phase progression rate of ", BASE), "SPR = (M2-M1)/(M2+M1)")
+main.text <- c(paste0("S-phase progression rate in ", BASE), "SPR = (M2-M1)/(M2+M1)")
 plotSPR(skews, file.name, main.text, c(13, 17), digits=3, unit=5.5)
 
 # -----------------------------------------------------------------------------
@@ -145,9 +145,9 @@ save(cors, file=file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-m2-m1_spline_
 
 #load(file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-m2-m1_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "RDS-SPR-vs-RDC_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0("SPR vs. Read depth correlation of ", BASE), "Linear regression")
+main.text <- c(paste0("SPR vs. Read depth correlation in ", BASE), "")
 xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, skews, file.name, main.text, c(1, 4, 5, 13, 17, 19, 22), xlab.text, unit=5.5)
+plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
 
 # -----------------------------------------------------------------------------
 # SCLC M2/M1 vs LCL S/G1
