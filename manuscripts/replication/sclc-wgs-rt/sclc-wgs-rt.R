@@ -1,6 +1,6 @@
 # =============================================================================
 # Manuscript   : 
-# Chapter      : Reconstruction of replication timing profile in tumour cells
+# Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/sclc-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 05/03/19; 25/02/19; 30/01/18

@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Chromosome replication timing of the human genome
-# Name         : manuscripts/asymmetries/cll-asym-tx.R
+# Name         : manuscripts/asymmetries/cll-asym-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/06/18
 # =============================================================================
@@ -130,7 +130,7 @@ load(file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearm
 load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_late.RData")))
-time <- "LATE"
+time <- "EARLY"
 
 s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
 for (s in 1:6) {
@@ -144,7 +144,7 @@ for (s in 1:6) {
    file.name <- file.path(wd.asym.plots, paste0(time, "_RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
    main.text <- c(paste0(s6[s], ""), BASE)
    xlab.text <- "SNVs/Mb"
-   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, legends=c("topright", "bottomleft"))
+   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5)
    
    #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
    #main.text <- c(paste0(s6[s], ""), "")
