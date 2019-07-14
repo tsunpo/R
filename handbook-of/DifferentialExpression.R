@@ -233,11 +233,11 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    if (!is.null(samples))
       for (s in 1:length(samples)) {
          sample <- samples[s]
-         #if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
-         #   text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=0.75)
-         #else if (sample == "TR14")
-         #   text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=0.75)
-         #else
+         if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=0.75)
+         else if (sample == "TR14")
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=0.75)
+         else
             text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=0.75)
       }
    

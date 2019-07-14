@@ -64,8 +64,8 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-cl-vs-lc
 # [1] -0.8373368
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8643419
-file.name <- file.path(wd.rt.plots, "boxplot_SAMPLES-vs-RT_NBL-CL-vs-LCL_spline_spearman")
-main.text <- c("NBL CL (n=8) vs. LCL S/G1", "Chromosomal median (CM2/CM1)")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-CL-vs-LCL_spline_spearman")
+main.text <- c("NBL CL (n=8) vs. LCL S/G1", "")
 ymin <- -0.8732989
 ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -99,17 +99,6 @@ cm2$SAMPLE_ID <- ""
 cm2$SAMPLE_ID <- rownames(cors)
 writeTable(cq4[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_cl_n8.cq4"), colnames=T, rownames=F, sep="\t")
 writeTable(cm2[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_cl_n8.cm2"), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Find S-like and G1-like tumour samples
-# Last Modified: 04/06/19; 06/03/19
-# -----------------------------------------------------------------------------
-samples.nbl.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
-writeTable(samples.nbl.sg1, file.path(wd.ngs, "nbl_wgs_n57-1.sg1"), colnames=T, rownames=F, sep="\t")
-# [1] 3
-# [1] 3
-# [1] "CLBGA" "NGP"   "SKNAS"
-# [1] "GIMEN" "LAN6"  "SKNFI"
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
@@ -156,8 +145,23 @@ trait[which(trait == 4)] <- "Q4 (0.34 < r < 0.38)"
 trait[which(trait == 3)] <- "Q3 (0.02 < r < 0.34)"
 trait[which(trait == 2)] <- "Q2 (-0.19 < r < 0.02)"
 trait[which(trait == 1)] <- "Q1 (-0.31 < r < -0.19)"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_nbl_CL_chrs_spline_spearman", size=6, file.main, "topleft", c("red", "lightcoral", "skyblue3", "blue"), samples1, flip.x=-1, flip.y=1, legend.title="Overall corr. with LCL S/G1")
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL_CL_chrs_spline_spearman", size=6, file.main, "topleft", c("red", "lightcoral", "skyblue3", "blue"), samples1, flip.x=-1, flip.y=1, legend.title="Overall corr. with LCL S/G1")
 
 ## SG1
-trait <- samples.nbl.sg1$SG1
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_nbl_CL_chrs_spline_spearman_SG1", size=6, file.main, "topright", c("red", "lightgray", "blue"), samples1, flip.x=-1, flip.y=1, legend.title="Consist. CM in all chrs")
+#trait <- samples.nbl.sg1$SG1
+#plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_nbl_CL_chrs_spline_spearman_SG1", size=6, file.main, "topright", c("red", "lightgray", "blue"), samples1, flip.x=-1, flip.y=1, legend.title="Consist. CM in all chrs")
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19; 06/03/19
+# -----------------------------------------------------------------------------
+samples.nbl.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
+writeTable(samples.nbl.sg1, file.path(wd.ngs, "nbl_wgs_n57-1.sg1"), colnames=T, rownames=F, sep="\t")
+# [1] 3
+# [1] 3
+# [1] "CLBGA" "NGP"   "SKNAS"
+# [1] "GIMEN" "LAN6"  "SKNFI"
