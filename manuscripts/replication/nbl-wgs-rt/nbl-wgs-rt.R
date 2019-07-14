@@ -73,51 +73,6 @@ ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
-# CM2 and CQ4
-# Last Modified: 19/05/19
-# -----------------------------------------------------------------------------
-cors <- t(cors.samples[, -c(1:4)]) 
-colnames(cors) <- paste0("chr", c(1:22))
-cm2 <- cors
-cq4 <- cors
-
-for (c in 1:22) {
-   cors.chr <- cors[,c]
-   q <- quantile(as.numeric(cors.chr))
- 
-   cq4[which(cors[, c] > q[4]), c] <- 4
-   cq4[intersect(as.vector(which(cors[, c] > q[3])), as.vector(which(cors[, c] <= q[4]))), c] <- 3
-   cq4[intersect(as.vector(which(cors[, c] > q[2])), as.vector(which(cors[, c] <= q[3]))), c] <- 2
-   cq4[which(cors[, c] <= q[2]), c] <- 1
- 
-   cm2[which(cors[, c] > q[3]), c] <- 1
-   cm2[which(cors[, c] <= q[3]), c] <- 0
-}
-cq4 <- as.data.frame(cq4)
-cq4$SAMPLE_ID <- ""
-cq4$SAMPLE_ID <- rownames(cors)
-cm2 <- as.data.frame(cm2)
-cm2$SAMPLE_ID <- ""
-cm2$SAMPLE_ID <- rownames(cors)
-writeTable(cq4[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_wgs_n53.cq4"), colnames=T, rownames=F, sep="\t")
-writeTable(cm2[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_wgs_n53.cm2"), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Find S-like and G1-like tumour samples
-# Last Modified: 04/06/19; 06/03/19
-# -----------------------------------------------------------------------------
-samples.nbl.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
-writeTable(samples.nbl.sg1, file.path(wd.ngs, "nbl_wgs_n57-1.sg1"), colnames=T, rownames=F, sep="\t")
-# > length(s_likes)
-# [1] 16
-# > length(g1_likes)
-# [1] 10
-# > s_likes
-# [1] "P15239" "P19537" "P21702" "P21776" "P21924" "P22496" "P23103" "P23267" "P24478" "P24632" "P24679" "P24702" "P24885" "P25114" "P25262" "P25376"
-# > g1_likes
-# [1] "P13967" "P16885" "P1695"  "P17344" "P17612" "P18478" "P18972" "P19743" "P20865" "P22283"
-
-# -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
@@ -166,3 +121,52 @@ plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_NBL_chrs_spline_spearman", size=6
 ## SG1
 #trait <- samples.nbl.sg1$SG1
 #plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_nbl_T_chrs_spline_spearman_SG1", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=1, flip.y=1, legend.title="Consist. CM in all chrs")
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# CM2 and CQ4
+# Last Modified: 19/05/19
+# -----------------------------------------------------------------------------
+cors <- t(cors.samples[, -c(1:4)]) 
+colnames(cors) <- paste0("chr", c(1:22))
+cm2 <- cors
+cq4 <- cors
+
+for (c in 1:22) {
+ cors.chr <- cors[,c]
+ q <- quantile(as.numeric(cors.chr))
+ 
+ cq4[which(cors[, c] > q[4]), c] <- 4
+ cq4[intersect(as.vector(which(cors[, c] > q[3])), as.vector(which(cors[, c] <= q[4]))), c] <- 3
+ cq4[intersect(as.vector(which(cors[, c] > q[2])), as.vector(which(cors[, c] <= q[3]))), c] <- 2
+ cq4[which(cors[, c] <= q[2]), c] <- 1
+ 
+ cm2[which(cors[, c] > q[3]), c] <- 1
+ cm2[which(cors[, c] <= q[3]), c] <- 0
+}
+cq4 <- as.data.frame(cq4)
+cq4$SAMPLE_ID <- ""
+cq4$SAMPLE_ID <- rownames(cors)
+cm2 <- as.data.frame(cm2)
+cm2$SAMPLE_ID <- ""
+cm2$SAMPLE_ID <- rownames(cors)
+writeTable(cq4[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_wgs_n53.cq4"), colnames=T, rownames=F, sep="\t")
+writeTable(cm2[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "nbl_wgs_n53.cm2"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19; 06/03/19
+# -----------------------------------------------------------------------------
+samples.nbl.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
+writeTable(samples.nbl.sg1, file.path(wd.ngs, "nbl_wgs_n57-1.sg1"), colnames=T, rownames=F, sep="\t")
+# > length(s_likes)
+# [1] 16
+# > length(g1_likes)
+# [1] 10
+# > s_likes
+# [1] "P15239" "P19537" "P21702" "P21776" "P21924" "P22496" "P23103" "P23267" "P24478" "P24632" "P24679" "P24702" "P24885" "P25114" "P25262" "P25376"
+# > g1_likes
+# [1] "P13967" "P16885" "P1695"  "P17344" "P17612" "P18478" "P18972" "P19743" "P20865" "P22283"

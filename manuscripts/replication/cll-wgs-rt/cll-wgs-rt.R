@@ -73,21 +73,6 @@ ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
-# Find S-like and G1-like tumour samples
-# Last Modified: 04/06/19; 06/03/19
-# -----------------------------------------------------------------------------
-samples.cll.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
-writeTable(samples.cll.sg1, file.path(wd.ngs, "cll_wgs_n96.sg1"), colnames=T, rownames=F, sep="\t")
-# > length(s_likes)
-# [1] 7
-# > length(g1_likes)
-# [1] 10
-# > s_likes
-# [1] "SP115064" "SP116746" "SP116766" "SP13291"  "SP13323"  "SP13365"  "SP13490"
-# > g1_likes
-# [1] "SP115060" "SP116744" "SP116754" "SP116764" "SP116776" "SP116780" "SP13442"  "SP13478"  "SP13624"  "SP96882"
-
-# -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
@@ -136,3 +121,22 @@ plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_CLL_chrs_spline_spearman", size=6
 ## SG1
 #trait <- samples.cll.sg1$SG1
 #plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_cll_T_chrs_spline_spearman_SG1", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=-1, flip.y=1, legend.title="Consist. CM in all chrs")
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19; 06/03/19
+# -----------------------------------------------------------------------------
+samples.cll.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
+writeTable(samples.cll.sg1, file.path(wd.ngs, "cll_wgs_n96.sg1"), colnames=T, rownames=F, sep="\t")
+# > length(s_likes)
+# [1] 7
+# > length(g1_likes)
+# [1] 10
+# > s_likes
+# [1] "SP115064" "SP116746" "SP116766" "SP13291"  "SP13323"  "SP13365"  "SP13490"
+# > g1_likes
+# [1] "SP115060" "SP116744" "SP116754" "SP116764" "SP116776" "SP116780" "SP13442"  "SP13478"  "SP13624"  "SP96882"

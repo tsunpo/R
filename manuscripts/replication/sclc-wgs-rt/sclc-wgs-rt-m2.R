@@ -36,8 +36,10 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
+#samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n51.txt"), header=T, rownames=T, sep="")
 samples1 <- subset(samples1, M2 == 1)[,1]
 samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
+#samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n51.txt"), header=T, rownames=T, sep="")
 samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
@@ -220,7 +222,7 @@ xlab.text <- "Chromosome"
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-SCLC-T-N_spline_spearman")
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-SCLC-Q4-Q1_spline_spearman")
 file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-NBL-M2-M1_spline_spearman")
-main.text <- paste0("SCLC M2/M1 vs. SCLC Q4/Q1")
+main.text <- paste0("SCLC M2/M1 vs. SCLC T/N")
 ymin <- 0.25
 ymax <- 1.05
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=3)

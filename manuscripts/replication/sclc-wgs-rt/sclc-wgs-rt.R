@@ -205,11 +205,11 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-t-n-vs-lcl-s-g
 
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "plot_RT-vs-RT_SCLC-T-N-vs-LCL-S-G1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-T-N-vs-LCL-S-G1_spline_spearman")
 main.text <- paste0("SCLC T/N vs. LCL S/G1")
 ymin <- 0.25
 ymax <- 1.05
-plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2)
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
 
 # -----------------------------------------------------------------------------
 # SCLC T vs LCL S/G1
@@ -241,58 +241,6 @@ main.text <- c("SCLC (n=101) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
 ymax <- 0.8643419
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# CM2 and CQ4
-# Last Modified: 19/05/19
-# -----------------------------------------------------------------------------
-cors <- t(cors.samples[, -c(1:4)])
-#cors <- cors[overlaps,]   ## Overlapping between WGS and RNA (n=70); after sclc-tpm.de.R
-colnames(cors) <- paste0("chr", c(1:22))
-cq4 <- cors
-cm2 <- cors
-
-for (c in 1:22) {
-   cors.chr <- cors[,c]
-   q <- quantile(as.numeric(cors.chr))
- 
-   cq4[which(cors[, c] > q[4]), c] <- 4
-   cq4[intersect(as.vector(which(cors[, c] > q[3])), as.vector(which(cors[, c] <= q[4]))), c] <- 3
-   cq4[intersect(as.vector(which(cors[, c] > q[2])), as.vector(which(cors[, c] <= q[3]))), c] <- 2
-   cq4[which(cors[, c] <= q[2]), c] <- 1
-   
-   cm2[which(cors[, c] > q[3]), c] <- 1
-   cm2[which(cors[, c] <= q[3]), c] <- 0
-}
-cq4 <- as.data.frame(cq4)
-cq4$SAMPLE_ID <- ""
-cq4$SAMPLE_ID <- rownames(cors)
-cm2 <- as.data.frame(cm2)
-cm2$SAMPLE_ID <- ""
-cm2$SAMPLE_ID <- rownames(cors)
-writeTable(cq4[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "sclc_wgs_n101.cq4"), colnames=T, rownames=F, sep="\t")
-writeTable(cm2[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "sclc_wgs_n101.cm2"), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Find S-like and G1-like tumour samples
-# Last Modified: 04/06/19; 06/03/19
-# -----------------------------------------------------------------------------
-samples.sclc.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
-writeTable(samples.sclc.sg1, file.path(wd.ngs, "sclc_wgs_n101.sg1"), colnames=T, rownames=F, sep="\t")
-# > length(s_likes)
-# [1] 24
-# > length(g1_likes)
-# [1] 14
-# > s_likes
-# [1] "S00339" "S00825" "S00827" "S00833" "S00837" "S00838" "S00938" "S00941" "S01020" "S01022" "S01366" "S01524" "S01864" "S02120" "S02219" "S02285" "S02286" "S02287" "S02289" "S02290" "S02291" "S02292"
-# [23] "S02295" "S02296"
-# > g1_likes
-# [1] "S00050" "S00472" "S00831" "S00944" "S01861" "S02139" "S02237" "S02241" "S02248" "S02342" "S02344" "S02352" "S02353" "S02378"
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
@@ -380,5 +328,56 @@ beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
 
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"))
-mtext("Overall median (M2/M1)", cex=1.2, line=0.3) 
+mtext("", cex=1.2, line=0.3) 
 dev.off()
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# CM2 and CQ4
+# Last Modified: 19/05/19
+# -----------------------------------------------------------------------------
+cors <- t(cors.samples[, -c(1:4)])
+#cors <- cors[overlaps,]   ## Overlapping between WGS and RNA (n=70); after sclc-tpm.de.R
+colnames(cors) <- paste0("chr", c(1:22))
+cq4 <- cors
+cm2 <- cors
+
+for (c in 1:22) {
+ cors.chr <- cors[,c]
+ q <- quantile(as.numeric(cors.chr))
+ 
+ cq4[which(cors[, c] > q[4]), c] <- 4
+ cq4[intersect(as.vector(which(cors[, c] > q[3])), as.vector(which(cors[, c] <= q[4]))), c] <- 3
+ cq4[intersect(as.vector(which(cors[, c] > q[2])), as.vector(which(cors[, c] <= q[3]))), c] <- 2
+ cq4[which(cors[, c] <= q[2]), c] <- 1
+ 
+ cm2[which(cors[, c] > q[3]), c] <- 1
+ cm2[which(cors[, c] <= q[3]), c] <- 0
+}
+cq4 <- as.data.frame(cq4)
+cq4$SAMPLE_ID <- ""
+cq4$SAMPLE_ID <- rownames(cors)
+cm2 <- as.data.frame(cm2)
+cm2$SAMPLE_ID <- ""
+cm2$SAMPLE_ID <- rownames(cors)
+writeTable(cq4[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "sclc_wgs_n101.cq4"), colnames=T, rownames=F, sep="\t")
+writeTable(cm2[, c("SAMPLE_ID", paste0("chr", c(1:22)))], file.path(wd.ngs, "sclc_wgs_n101.cm2"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Find S-like and G1-like tumour samples
+# Last Modified: 04/06/19; 06/03/19
+# -----------------------------------------------------------------------------
+samples.sclc.sg1 <- setSamplesSG1(wd.rt.data, samples1, cors.samples)
+writeTable(samples.sclc.sg1, file.path(wd.ngs, "sclc_wgs_n101.sg1"), colnames=T, rownames=F, sep="\t")
+# > length(s_likes)
+# [1] 24
+# > length(g1_likes)
+# [1] 14
+# > s_likes
+# [1] "S00339" "S00825" "S00827" "S00833" "S00837" "S00838" "S00938" "S00941" "S01020" "S01022" "S01366" "S01524" "S01864" "S02120" "S02219" "S02285" "S02286" "S02287" "S02289" "S02290" "S02291" "S02292"
+# [23] "S02295" "S02296"
+# > g1_likes
+# [1] "S00050" "S00472" "S00831" "S00944" "S01861" "S02139" "S02237" "S02241" "S02248" "S02342" "S02344" "S02352" "S02353" "S02378"

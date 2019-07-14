@@ -141,12 +141,12 @@ plotRD2vsRTALL(skews, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c
 ## Read depth skew (RDS)
 file.name <- file.path(wd.rt.plots, "RDS_LCL-S-G1_spline_spearman")
 main.text <- c(paste0("Read depth imbalance in ", BASE), "Y-axis intercept")
-plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S phase", "G1 phase"), c=c(2, 13, 17), digits=2)
+plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S phase", "G1 phase"), c=c(2, 13, 17), digits=3)
 
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "RDS-SPR_LCL-S-G1_spline_spearman")
 main.text <- c(paste0("S-phase progression rate in ", BASE), "SPR = (S-G1)/(S+G1)")
-plotSPR(skews, file.name, main.text, c(13, 17), digits=2, unit=5)
+plotSPR(skews, file.name, main.text, c(13, 17), digits=3, unit=5)
 
 # -----------------------------------------------------------------------------
 # LCL RD vs RD (RDC)
