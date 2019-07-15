@@ -87,7 +87,7 @@ for (c in 1:22) {
    cor <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
    cors$cor[c] <- cor
    
-   main.text <- c(paste0("SCLC read depths vs. SCLC Q4/Q1 (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (Q4 vs. Q1)"))
+   main.text <- c(paste0("SCLC read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (Q4 vs. Q1)"))
    xlab.text <- "SCLC Q4/Q1"
    ylab.text <- "SCLC read depth [log2]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-Q4-Q1_chr", c, "_spline_spearman"))

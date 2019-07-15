@@ -85,7 +85,7 @@ for (c in 1:22) {
    cor <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
    cors$cor[c] <- cor
    
-   main.text <- c(paste0("CLL read depths vs. CLL M2/M1 (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (M2 vs. M1)"))
+   main.text <- c(paste0("CLL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (M2 vs. M1)"))
    xlab.text <- "CLL M2/M1"
    ylab.text <- "CLL read depth [log2]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_CLL-M2-M1_chr", c, "_spline_spearman"))
