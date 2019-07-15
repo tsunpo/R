@@ -98,61 +98,10 @@ for (g in 1:length(genes)) {
 }
 
 # -----------------------------------------------------------------------------
-# LCL RD vs RT (RDS and SPR)
+# RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
-skews <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
-skews$chr <- 1:22
-
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   skews$length[c] <- nrow(rpkms.chr.rt.RT)
-   
-   main.text <- paste0("LCL read depths vs. LCL S/G1 (", "Chr", c, ")")
-   xlab.text <- "LCL S/G1"
-   ylab.text <- "LCL read depth [log2]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
-   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
-   
-   skews$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   skews$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   skews$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   skews$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   
-   ## Read depth skew (RDS)
-   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
-}
-save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-s-g1_spline_spearman.RData")))
-
-#load(file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-s-g1_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
-main.text <- paste0("LCL read depths vs. LCL S/G1")
-ymin <- -0.8
-ymax <- 0.8
-plotRD2vsRTALL(skews, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
-
-## Read depth skew (RDS)
-file.name <- file.path(wd.rt.plots, "RDS_LCL-S-G1_spline_spearman")
-main.text <- c(paste0("Read depth imbalance in ", BASE), "Y-axis intercept")
-plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S phase", "G1 phase"), c=c(2, 13, 17), digits=3)
-
-## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "RDS-SPR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0("S-phase progression rate in ", BASE), "SPR = (S-G1)/(S+G1)")
-plotSPR(skews, file.name, main.text, c(13, 17), digits=3, unit=5)
-
-# -----------------------------------------------------------------------------
-# LCL RD vs RD (RDC)
-# Last Modified: 03/06/19
-# -----------------------------------------------------------------------------
-cors <- toTable(0, 2, 22, c("chr", "cor"))
+cors <- toTable(0, 7, 22, c("chr", "length", "cor", "cor1", "cor2", "intercept1", "intercept2"))
 cors$chr <- 1:22
 
 for (c in 1:22) {
@@ -163,13 +112,48 @@ for (c in 1:22) {
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
    rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
    rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
- 
-   cors$cor[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
+   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+   cors$length[c] <- nrow(rpkms.chr.rt.RT)
+   
+   cor <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
+   cors$cor[c] <- cor
+   
+   main.text <- c(paste0("LCL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (S vs. G1)"))
+   xlab.text <- "LCL S/G1"
+   ylab.text <- "LCL read depth [log2]"
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
+   
+   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   
+   ## Read depth skew (RDS)
+   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
 }
-save(cors, file=file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-s-g1_spline_spearman.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
-#load(file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-s-g1_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
+main.text <- paste0("LCL read depth vs. LCL S/G1")
+ymin <- -0.8
+ymax <- 0.8
+plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
+
+## Read depth skew (RDS)
+file.name <- file.path(wd.rt.plots, "RDS_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " read depth imbalance"), "Y-axis intercept")
+plotRDS(cors, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S phase", "G1 phase"), c(2, 13, 17), digits=3)
+
+## S-phase progression rate (SPR)
+file.name <- file.path(wd.rt.plots, "RDS-SPR_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (S-G1)/(S+G1)")
+plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5)
+
+## SPR vs Read depth correlation (RDC)
 file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_LCL-S-G1_spline_spearman")
-main.text <- c(paste0("SPR vs. Read depth correlation in ", BASE), "")
+main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = (S-G1)/(S+G1)")
 xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5)
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5)

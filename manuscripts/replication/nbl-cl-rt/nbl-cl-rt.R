@@ -68,7 +68,7 @@ file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-CL-vs-LCL_spline_spearman
 main.text <- c("NBL CL (n=8) vs. LCL S/G1", "")
 ymin <- -0.8732989
 ymax <- 0.8643419
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
+plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax, size=6)
 
 # -----------------------------------------------------------------------------
 # CM2 and CQ4

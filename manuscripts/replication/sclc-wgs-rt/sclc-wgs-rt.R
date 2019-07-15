@@ -96,8 +96,8 @@ for (g in 1:length(genes)) {
 # SCLC RD vs T/N (RDS and SPR)
 # Last Modified: 11/07/19; 31/05/19
 # -----------------------------------------------------------------------------
-skews <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
-skews$chr <- 1:22
+cors <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
+cors$chr <- 1:22
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -108,74 +108,50 @@ for (c in 1:22) {
    rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
    rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   skews$length[c] <- nrow(rpkms.chr.rt.RT)
+   cors$length[c] <- nrow(rpkms.chr.rt.RT)
    
-   #rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   #rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   #rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+   cor <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
+   cors$cor[c] <- cor
  
-   ## Keep only overlapping 1kb windows
-   #overlaps <- intersect(rpkms.chr.rt.T$BED, rpkms.chr.rt.lcl.RT$BED)
-   #skews$length[c] <- length(overlaps)
- 
-   main.text <- paste0("SCLC read depths vs. SCLC T/N (", "Chr", c, ")")
+   main.text <- c(paste0("SCLC read depths vs. SCLC T/N (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (T vs. N)"))
    xlab.text <- "SCLC T/N"
    ylab.text <- "SCLC read depth [log2]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-T-N_chr", c, "_spearman_spline"))
    plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), method="spearman")
  
-   skews$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   skews$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   skews$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   skews$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
+   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
+   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
    
    ## Read depth skew (RDS)
-   skews$skew <- (skews$intercept1 - skews$intercept2) / (skews$intercept1 + skews$intercept2)
+   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
 }
-save(skews, file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-t-n_spline_spearman.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
+writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
-#load(file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-t-n_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
 #file.name <- file.path(wd.rt.plots, "RD-vs-RT_SCLC_spline_spearman")
 #main.text <- paste0("SCLC read depths vs. SCLC M2/M1")
 #ymin <- 0.6
 #ymax <- 1
-#plotRD2vsRTALLREVERSED(skews, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("M2", "M1"), c=2)
+#plotRD2vsRTALLREVERSED(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("M2", "M1"), c=2)
 
 ## Read depth skew (RDS)
 file.name <- file.path(wd.rt.plots, "RDS_SCLC-T-N_spline_spearman")
-main.text <- c(paste0("Read depth imbalance in ", BASE), "Y-axis intercept")
-plotRDS(skews, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("Tumour", "Normal"), c=c(2, 13, 17), digits=3)
+main.text <- c(paste0(BASE, " read depth imbalance"), "Y-axis intercept")
+plotRDS(cors, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("Tumour", "Normal"), c(2, 13, 17), digits=3)
 
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "RDS-SPR_SCLC-T-N_spline_spearman")
-main.text <- c(paste0("S-phase progression rate in ", BASE), "SPR = (T-N)/(T+N)")
-plotSPR(skews, file.name, main.text, c(13, 17), digits=3, unit=5.5)
+main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (T-N)/(T+N)")
+plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5.5)
 
-# -----------------------------------------------------------------------------
-# SCLC RD vs RD
-# Last Modified: 03/06/19
-# -----------------------------------------------------------------------------
-cors <- toTable(0, 2, 22, c("chr", "cor"))
-cors$chr <- 1:22
-
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
- 
-   cors$cor[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
-}
-save(cors, file=file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-t-n_spline_spearman.RData")))
-
-#load(file.path(wd.rt.data, paste0("rds-vs-rd_", base, "-t-n_spline_spearman.RData")))
+## SPR vs Read depth correlation (RDC)
 file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_SCLC-T-N_spline_spearman")
-main.text <- c(paste0("SPR vs. Read depth correlation in ", BASE), "Linear regression")
+main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = (T-N)/(T+N)")
 xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, legends=c("topleft", "bottomleft"))
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
 
 # -----------------------------------------------------------------------------
 # SCLC T/N vs LCL S/G1
