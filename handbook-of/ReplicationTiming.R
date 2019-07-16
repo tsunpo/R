@@ -445,8 +445,8 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit) {
    dev.off()
 }
 
-plotSPRRDC <- function(cors, file.name, main.text, cs=NULL, xlab.text, unit) {
-   ylab.text <- "SPR"
+plotSPRRDC <- function(cors, file.name, main.text, cs, xlab.text, unit, ylab.text="SPR") {
+   #ylab.text <- "SPR"
    #xlab.text <- "Read depth correlation [rho]"
    cols <- c("red", "blue", "black", "purple")
    ylim <- getYlim(cors, unit)
@@ -491,6 +491,13 @@ plotSPRRDC <- function(cors, file.name, main.text, cs=NULL, xlab.text, unit) {
    #axis(side=1, at=seq(2, 22, by=2))
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
+}
+
+plotSPRRDCSNV <- function(snvs, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
+   snvs <- cbind(snvs, cors[, "skew"])
+   colnames(snvs) <- c("chr", "cor", "skew")
+   
+   plotSPRRDC(snvs, file.name, main.text, cs, xlab.text, unit, ylab.text) 
 }
 
 # -----------------------------------------------------------------------------
