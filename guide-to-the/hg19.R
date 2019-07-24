@@ -165,16 +165,18 @@ save(bed.gc, file=file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Last Modified: 17/11/18
 # -----------------------------------------------------------------------------
 colnames <- c("CHR", "START", "END")
+window <- 5000
+
 bed <- NULL
 for (c in 1:length(chrs)) {
    chr <- chrs[c]
    chromInfo.chr <- subset(chromInfo, chrom == chr)
-   size <- floor(chromInfo.chr$size/1000)
+   size <- floor(chromInfo.chr$size/window)
  
    bed.chr <- toTable(0, 3, size+1, colnames)
    bed.chr$CHR <- chr
-   bed.chr$START <- mapply(x = 0:size, function(x) x*1000 + 1)
-   bed.chr$END[1:size] <- mapply(x = 1:size, function(x) x*1000)
+   bed.chr$START <- mapply(x = 0:size, function(x) x*window + 1)
+   bed.chr$END[1:size] <- mapply(x = 1:size, function(x) x*window)
    bed.chr$END[size+1] <- chromInfo.chr$size
    bed.chr$END <-format(bed.chr$END, scientific=F)   ## ADD 17/11/18: To avoid scientific notation e.g. chr2    99001   1e+05   P249351
  
@@ -184,7 +186,8 @@ for (c in 1:length(chrs)) {
 bed$BED <- mapply(x = 1:nrow(bed), function(x) paste0("P", x))
 
 #save(bed, file=file.path(wd.src.ref, "hg19.1kb.RData"))
-writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.1kb.bed.gz")), colnames=F, rownames=F, sep="\t")
+#writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.1kb.bed.gz")), colnames=F, rownames=F, sep="\t")
+writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.5kb.bed.gz")), colnames=F, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # File: hg19.ensembl.gene.txt (To test coverage on genes)

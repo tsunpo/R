@@ -87,8 +87,8 @@ muts$CHR <- 1:22
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.cm2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
    rpkms.chr.rt <- cbind(rpkms.chr.rt[rownames(rpkms.chr.rt.RT),], rpkms.chr.rt.RT[, "SPLINE"])
@@ -126,7 +126,7 @@ save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 # SCLC RD vs RD
 # Last Modified: 07/07/19
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearman.RData")))   ## Load skews
+load(file=file.path(wd.rt.data, paste0("rds-vs-rt_", base, "-m2-m1_spline_spearman.RData")))   ## Load skews ??
 load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_late.RData")))
@@ -134,17 +134,17 @@ time <- "EARLY"
 
 s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
 for (s in 1:6) {
-   cors <- toTable(0, 2, 22, c("chr", "cor"))
-   cors$chr <- 1:22
+   snvs <- toTable(0, 2, 22, c("chr", "cor"))
+   snvs$chr <- 1:22
    idx <- idxs[s]
    
    for (c in 1:22)
-      cors$cor[c] <- muts[c, 3+s] / muts[c, "LENGTH"]
+      snvs$cor[c] <- muts[c, 3+s] / muts[c, "LENGTH"]
 
    file.name <- file.path(wd.asym.plots, paste0(time, "_RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
    main.text <- c(paste0(s6[s], ""), BASE)
    xlab.text <- "SNVs/Mb"
-   plotSPRRDC(cors, skews, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
+   plotSPRRDCSNV(snvs, cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5, ylab.text="SPR")
    
    #file.name <- file.path(wd.asym.plots, paste0(time, "_LENGTH-vs-MUT-", gsub("/", "_", s6[s]), "_", BASE))
    #main.text <- c(paste0(s6[s], ""), "")

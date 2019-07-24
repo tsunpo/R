@@ -28,7 +28,7 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "NBL"
+BASE <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "T"
 base <- tolower(BASE)
@@ -46,9 +46,9 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
-samples <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
-n1 <- 28
-n0 <- 28
+samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
+n1 <- 50
+n0 <- 51
 
 # -----------------------------------------------------------------------------
 # Step 2: Build S6 table
@@ -68,12 +68,15 @@ save(muts, file=file.path(wd.asym.data, paste0(icgc, "_mut_snvs_s6.RData")))
 # Last Modified: 07/07/19
 # -----------------------------------------------------------------------------
 load(file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))   ## Load skews
+skews <- cors
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
 #load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_late.RData")))
 time <- ""
 
 s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
+rhos <- toTable(0, 2, 6, c("rho", "P"))
+rownames(rhos) <- s6
 for (s in 1:6) {
    snvs <- toTable(0, 2, 22, c("chr", "cor"))
    snvs$chr <- 1:22
@@ -85,8 +88,17 @@ for (s in 1:6) {
    file.name <- file.path(wd.asym.plots, paste0(time, "RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", ICGC))
    main.text <- c(paste0(s6[s], ""), paste0("ICGC ", ICGC, " (n=", NUM, ")"))
    xlab.text <- "SNVs/Mb"
-   plotSPRRDCSNV(snvs, cors, file.name, main.text, cs=c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, ylab.text="NBL SPR")
+   plotSPRRDCSNV(snvs, cors, file.name, main.text, cs=c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, ylab.text="SCLC SPR")
+                                                                                                5.5 for SCLC?
+   ## TO-DO
+   ins <- cbind(snvs, cors[, "skew"])
+   colnames(ins) <- c("chr", "cor", "skew")
+   
+   cor <- cor.test(ins$skew, ins$cor, method="spearman", exact=F)
+   rhos$rho[s] <- cor[[4]]
+   rhos$P[s]   <- cor[[3]]
 }
+save(rhos, file=file.path(wd.asym.data, paste0(icgc, "_mut_snvs_rho_s6.RData")))
 
 # -----------------------------------------------------------------------------
 # Step 2.1: Build S6 table for EARLY replicated region
@@ -130,7 +142,7 @@ for (s in 1:6) {
    file.name <- file.path(wd.asym.plots, paste0(time, "RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", ICGC))
    main.text <- c(paste0(s6[s], ""), paste0("ICGC ", ICGC, " (n=", NUM, ")"))
    xlab.text <- "SNVs/Mb"
-   plotSPRRDCSNV(snvs, cors, file.name, main.text, cs=c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, ylab.text="NBL SPR")
+   plotSPRRDCSNV(snvs, cors, file.name, main.text, cs=c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, ylab.text="SCLC SPR")
 }
 
 # -----------------------------------------------------------------------------
@@ -175,5 +187,5 @@ for (s in 1:6) {
    file.name <- file.path(wd.asym.plots, paste0(time, "RDS-vs-MUT-", gsub("/", "_", s6[s]), "_", ICGC))
    main.text <- c(paste0(s6[s], ""), paste0("ICGC ", ICGC, " (n=", NUM, ")"))
    xlab.text <- "SNVs/Mb"
-   plotSPRRDCSNV(snvs, cors, file.name, main.text, cs=c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, ylab.text="NBL SPR")
+   plotSPRRDCSNV(snvs, cors, file.name, main.text, cs=c(4, 13, 17, 19, 21, 22), xlab.text, unit=4.5, ylab.text="SCLC SPR")
 }

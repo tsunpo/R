@@ -32,6 +32,7 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.icgc.vcf <- file.path(wd.icgc, "snv_mnv", "Converted_Data")
 
+release <- readTable(file.path(wd.icgc, "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
 list <- readTable(file.path(wd.icgc, "Sclust_Mar_2017_S2703.txt"), header=T, rownames=T, sep="")
 samples <- readTable(file.path(wd.icgc, "Sclust_Mar_2017_final_summary.txt.gz"), header=T, rownames=F, sep="")
 rownames(samples) <- samples$samplename
@@ -45,9 +46,28 @@ writeTable(icgcs, file.path(wd.icgc, "icgc_t40_n2703.txt"), colnames=F, rownames
 # > dim(icgcs)
 # [1] 40  2
 
-for (s in 1:nrow(list)) {
-   system(paste0("gzip ", file.path(wd.icgc.vcf, paste0(rownames(list[s,]), ".consensus.20160830.somatic.snv_mnv.vcf"))))
+samples2 <- samples[0,]
+icgcs2   <- icgcs[0,]
+for (t in 1:nrow(icgcs)) {
+   BASE <- as.vector(icgcs[t,]$Var1)
+   samples.code <- subset(samples, cancer_type == BASE)
+   
+   bases <- release[grep(BASE, release$dcc_project_code),]
+   bases <- subset(bases, tumor_wgs_aliquot_id %in% samples.code$samplename)
+   
+   codes <- unique(bases$dcc_project_code)
+   for (b in 1:length(codes)) {
+      code <- codes[b]
+      bases.code <- subset(bases, dcc_project_code == code)
+      
+   }
 }
+writeTable(icgcs2, file.path(wd.icgc, "icgc_t48_n2703.txt"), colnames=F, rownames=F, sep="\t")
+readTable(samples2, file.path(wd.icgc, "Sclust_Mar_2017_final_summary_t48.txt.gz"), colnames=T, rownames=F, sep="")
+
+# for (s in 1:nrow(list)) {
+#    system(paste0("gzip ", file.path(wd.icgc.vcf, paste0(rownames(list[s,]), ".consensus.20160830.somatic.snv_mnv.vcf"))))
+# }
 
 # -----------------------------------------------------------------------------
 # Step 1: Load all mutations
@@ -201,6 +221,80 @@ for (c in 1:22) {
    }
 }
 save(muts, file=file.path(wd.asym.data, paste0(base, "_mut_snvs_s6_early.RData")))
+
+# -----------------------------------------------------------------------------
+# Step ?: Vocanoplot
+# Last Modified: 22/07/19
+# -----------------------------------------------------------------------------
+plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
+   #pvalue <- fdrToP(fdr, de)
+   #fdr <- pvalueToFDR(pvalue, de)
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+   genes <- de$external_gene_name
+   
+   de$log10P <- -log10(de$P)
+   xmax <- max(0.98)
+   ymax <- max(-log10(7.614703e-14))
+ 
+   pdf(file.de, height=8, width=3.5)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="SPR correlation [rho]", ylab="-log10(p-value)", col="purple", main=file.main[1])
+ 
+   abline(v=0, lty=5)
+   #text(xmax*-1 + 2*xmax/40, -log10(pvalue) + ymax/42, paste0("rho=±", rho), cex=0.85)
+ 
+   de.up   <- subset(de.sig, LOG2_FC > 0)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="purple")
+   de.down <- subset(de.sig, LOG2_FC < 0)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="purple")
+ 
+   for (g in 1:length(genes)) {
+      gene <- subset(de, external_gene_name == genes[g])
+
+      #if (gene$LOG2_FC > 0)
+               text(gene$LOG2_FC, gene$log10P, genes[g], col="black", adj=c(0, -0.5), cex=0.75)
+               #else
+               #text(gene$LOG2_FC, gene$log10P, genes[g], col="black", adj=c(1, -0.5), cex=0.75)
+
+   }
+ 
+   mtext(file.main[2], cex=1.2, line=0.3)
+   #legend("topright", legend=c("Inverse", "Positive"), col=c("dodgerblue", "red"), pch=19)
+   dev.off()
+}
+
+##
+s6 <- c("C>A/G>T", "C>G/G>C", "C>T/G>A", "T>A/A>T", "T>C/A>G", "T>G/A>C")
+for (s in 1:6) {
+   rhos.s1 <- toTable(0, 2, nrow(icgcs), c("rho", "P"))
+   rownames(rhos.s1) <- icgcs$Var1
+ 
+   for (t in 1:nrow(icgcs)) {
+      BASE <- as.vector(icgcs[t,]$Var1)
+      base <- tolower(BASE)
+  
+      wd.asym       <- file.path(wd.anlys, "asymmetries", paste0(base, "-asym-rt"))
+      wd.asym.data  <- file.path(wd.asym, "data")
+      wd.asym.plots <- file.path(wd.asym, "plots")
+  
+      load(file=file.path(wd.asym.data, paste0(base, "_mut_snvs_rho_s6.RData")))
+      rhos.s1$rho[t] <- rhos$rho[s]
+      rhos.s1$P[t]   <- rhos$P[s]
+   }
+   rhos.s1$external_gene_name <- rownames(rhos.s1)
+   #rhos.s1$BH <- qvalue(rhos.s1$P)$qvalue
+   #rhos.s1 <- rhos.s1[order(rhos.s1$P),]
+ 
+   ##
+   plot.main <- s6[s]
+   plot.de <- file.path(wd.anlys, "asymmetries", "volcanoplot_icgc_")
+   file.main <- c(plot.main, "SPR vs. Mutation rates")
+   file.de <- paste0(plot.de, unlist(strsplit(s6[s], "/"))[1], ".pdf")
+ 
+   rhos.s1$LOG2_FC <- rhos.s1$rho
+   plotVolcano(rhos.s1, pvalue=1e-4, NULL, file.de, file.main)
+}
+
 
 
 
