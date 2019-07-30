@@ -13,9 +13,10 @@ wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libr
 handbooks <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
-wd.src.guide <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
-load(file.path(wd.src.guide, "hg19.RData"))
-load(file.path(wd.src.guide, "hg19.1kb.gc.RData"))
+wd.src.ref <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+load(file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -53,8 +54,8 @@ for (c in 1:22) {
 
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_9.25"))   
-   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(), 7.25, 9.5, 3, 3)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Koren"))   
+   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(), 7.25, 9.5, 3, 3, isKoren=T)
 }
 # > 9.5 - 7.25
 # [1] 2.25

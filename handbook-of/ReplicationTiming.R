@@ -157,7 +157,7 @@ setSpline <- function(rpkms.chr.rt, bed.gc.chr, column) {
    return(rpkms.chr.rt[-gaps, c("BED", column, "SPLINE")])
 }
 
-plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale) {
+plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale, isKoren=F) {
    rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
    rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
    rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
@@ -194,16 +194,14 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
-   
+
    ## Plot smoothing splines
    bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt.RT),]   ## BUT HERE?
-   
    points(bed.gc.chr$START/1E6, rpkms.chr.rt.T$SPLINE, col=colours[1], pch=16, cex=0.2)
    points(bed.gc.chr$START/1E6, rpkms.chr.rt.N$SPLINE, col=colours[2], pch=16, cex=0.2)
    
    ## Plot legend and peaks
    legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
-
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
@@ -229,15 +227,23 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    for (c in 1:nrow(cytoBand.chr))
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
   
+   ## Plot Koren 2012
+   if (isKoren) {
+      lcls.rt.chr <- subset(lcls.rt, CHR == chr)
+      points(lcls.rt.chr$POS/1E6, lcls.rt.chr$RT, col="forestgreen", pch=16, cex=0.2)   
+   }
+   
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, rpkms.chr.rt.RT$SPLINE, col="black", pch=16, cex=0.2)
    abline(h=0, lty=5, lwd=1, col="black")
    
    ## Plot legend and peaks
-   legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
    legend("topleft", paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col="black")   
    legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col="black")
-   
+   legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+   if (isKoren)
+      legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T)
+    
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")

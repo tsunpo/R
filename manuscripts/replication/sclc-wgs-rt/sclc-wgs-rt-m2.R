@@ -16,6 +16,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+load(file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -57,8 +58,8 @@ for (c in 1:22) {
    
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
-   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=10, peaks=c(), 7.75, 9, 3, 3)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Koren"))
+   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=10, peaks=c(), 7.75, 9, 3, 3, isKoren=T)
    #plotRT(file.name, paste0(BASE, " M2/M1 read depth ratio"), chr, 44000000, 45000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=5, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)
 }
 # > 9 - 7.75
