@@ -37,7 +37,9 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples1 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+samples1 <- samples1[-grep("-", samples1)]
 samples0 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+samples0 <- samples0[-grep("-", samples0)]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -49,12 +51,12 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
  
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt.sum_", chr, "_", "T", "-", "N", "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
 
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Koren_alpha.f=0.25"))   
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt.sum_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_lightskyblue3-darkgreen"))   
    plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(), 7.25, 9.5, 3, 3, isKoren=T)
 }
 # > 9.5 - 7.25

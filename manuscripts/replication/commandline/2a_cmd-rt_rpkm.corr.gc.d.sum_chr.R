@@ -48,10 +48,12 @@ wd0.rt.data   <- file.path(wd0.rt, "data")
 #if (BSTRP != 0)
 #   wd1.rt.data <- file.path(wd1.rt, "data/bstrps", BSTRP)
 
-samples1 <- readTable(file.path(wd1.ngs, LIST1), header=T, rownames=T, sep="")
-samples1 <- subset(samples1, M2 == 1)[,1]
-samples0 <- readTable(file.path(wd0.ngs, LIST0), header=T, rownames=T, sep="")
-samples0 <- subset(samples0, M2 == 0)[,1]
+samples1 <- readTable(file.path(wd1.ngs, LIST1), header=F, rownames=F, sep="")
+samples1 <- samples1[-grep("-", samples1)]
+#samples1 <- subset(samples1, M2 == 1)[,1]
+samples0 <- readTable(file.path(wd0.ngs, LIST0), header=F, rownames=F, sep="")
+samples0 <- samples0[-grep("-", samples0)]
+#samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -59,15 +61,15 @@ n0 <- length(samples0)
    chr <- chrs[CHR]
 
    ## Read depth
-   #rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
-   #rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)   
+   rpkms.T.chr.d <- pipeGetDetectedRD(wd1.ngs.data, BASE1, chr, PAIR1)
+   rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE0, chr, PAIR0)   
    #rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    #rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    #rpkms.T.chr.d$BED <- rownames(rpkms.T.chr.d)   ## REMOVED 15/02/19; Already keep the first column "BED" in previous step; ## CHANGE 23/10/18: After mapply(median()) otherwise warnings due to $BED
    #rpkms.N.chr.d$BED <- rownames(rpkms.N.chr.d)
    
-   #writeTable(rpkms.T.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-   #writeTable(rpkms.N.chr.d[, c("BED", "MEDIAN")], gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkms.T.chr.d, gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", N, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(rpkms.N.chr.d, gzfile(file.path(wd1.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", N, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 
    ## Replication timing
    if (N != 0) {
@@ -79,8 +81,8 @@ n0 <- length(samples0)
       rpkms.T.chr.d <- readTable(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
       rpkms.N.chr.d <- readTable(file.path(wd0.rt.data, paste0(base0, "_rpkm.corr.gc.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    }
-   rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
-   rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   #rpkms.T.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) median(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   #rpkms.N.chr.d$MEDIAN <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) median(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    rpkms.T.chr.d$SUM <- mapply(x = 1:nrow(rpkms.T.chr.d), function(x) sum(as.numeric(rpkms.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    rpkms.N.chr.d$SUM <- mapply(x = 1:nrow(rpkms.N.chr.d), function(x) sum(as.numeric(rpkms.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
    
@@ -90,11 +92,11 @@ n0 <- length(samples0)
    
    rpkms.chr <- toTable(NA, 3, length(overlaps), c("T", "N", "RT"))
    rownames(rpkms.chr) <- overlaps
-   rpkms.chr$T  <- rpkms.T.chr.d.rt$MEDIAN
-   rpkms.chr$N  <- rpkms.N.chr.d.rt$MEDIAN
+   rpkms.chr$T  <- rpkms.T.chr.d.rt$SUM
+   rpkms.chr$N  <- rpkms.N.chr.d.rt$SUM
    rpkms.chr$RT <- mapply(x = 1:nrow(rpkms.chr), function(x) getLog2RDRatio(rpkms.chr[x,]$T, rpkms.chr[x,]$N, pseudocount=0.01))   ## CHANGED 11/02/19: Was pseudocount=0.01
    
    #plotRD(wd.rt.plots, samples[s], "_rpkm.corr.gc.d_", chr, PAIR, rpkms.chr[,s], bed.gc.chr, "png")
-   writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(outputRT(rpkms.chr), gzfile(file.path(wd1.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt.sum_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 #}
 

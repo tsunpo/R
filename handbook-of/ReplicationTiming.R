@@ -126,14 +126,14 @@ outputRT <- function(rpkms.chr) {
 # -----------------------------------------------------------------------------
 ## Colours (was "lightcoral", "skyblue3")
 ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.3)
-adjustcolor.blue <- adjustcolor("skyblue3", alpha.f=0.3)
-adjustcolor.gray <- adjustcolor("gray", alpha.f=0.3)
+adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.25)
+adjustcolor.blue <- adjustcolor("lightskyblue3", alpha.f=0.25)
+adjustcolor.gray <- adjustcolor("gray", alpha.f=0.25)
 
 setScaledRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
    rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + pseudocount)
    rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + pseudocount)
-
+   
    if (recaliRT == T)
       rpkms.chr.rt$RT <- rpkms.chr.rt$T - rpkms.chr.rt$N   ## ADD 24/02/19
 
@@ -321,23 +321,23 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    xlab.text <- "Chromosome"
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19)
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1.5, cex.main=1.6)
    lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
    points(cors$chr, cors$cor2, col=cols[2], pch=19)
    lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
    abline(h=0, lty=5)
  
    RT <- paste0(legends[1], "/", legends[2])
-   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.3)        
-   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.3)
+   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.6)        
+   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.6)
    
    if (!is.na(c)) {
-      text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.3, col=cols[1], pos=3)   ##, offset=1.3)
-      text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.3, col=cols[2], pos=3)
+      text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.6, col=cols[1], pos=3)   ##, offset=1.3)
+      text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.6, col=cols[2], pos=3)
    }
-   axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8))
+   axis(side=1, at=seq(2, 22, by=2), cex.axis=1.25)
+   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.4)
    dev.off()
 }
 
@@ -599,7 +599,7 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
 # Compare betweeen RT and LCL RT in sclc-wgs-rt.R
 # Last Modified: 03/06/19
 # -----------------------------------------------------------------------------
-plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA, size=5.1) {
+plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA, size=6) {
    cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
    n <- length(samples)
    cnt <- 0
@@ -613,8 +613,8 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
    }
  
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
-   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1])#, medcol="red")
-   axis(side=1, at=seq(2, 22, by=2))
+   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1], cex.lab=1.5, cex.axis=1.3, cex.main=1.6)#, medcol="red")
+   axis(side=1, at=seq(2, 22, by=2), cex.axis=1.2)
    abline(h=0, lty=5)
    mtext(main.text[2], cex=1.1, line=0.3) 
    dev.off()

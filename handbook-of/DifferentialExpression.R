@@ -221,12 +221,12 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    cols[which(trait.v == "NA")] <- "lightgray"
    trait.col[which(trait == "NA")] <- "lightgray"
-   xlab <- paste0("Principal component ", x, " (", pcaProportionofVariance(pca, x), "%)")
-   ylab <- paste0("Principal component ", y, " (", pcaProportionofVariance(pca, y), "%)")
+   xlab <- paste0("PC", x, " (", pcaProportionofVariance(pca, x), "%)")
+   ylab <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab, cex.lab=1.2, cex.axis=1.1, cex.main=1.2)
    idx <- which(trait != "NA")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
 
@@ -242,7 +242,8 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
       }
    
    for (l in 1:length(trait.v))
-      trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
+      trait.v[l] <- trait.v[l]
+      #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
    mtext(file.main[2], cex=1.2, line=0.3)
    if (is.na(legend.title))

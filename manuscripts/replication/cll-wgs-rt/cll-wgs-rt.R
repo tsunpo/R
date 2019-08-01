@@ -66,6 +66,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_s
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.6353611
 
+#load(file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_CLL-vs-LCL_spline_spearman")
 main.text <- c("CLL (n=96) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
@@ -110,6 +111,7 @@ test <- rpkms.T.chr.d.all
 pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("PCA_cll_chrs_spline_spearman.RData")))
 
+#load(file.path(wd.rt.data, paste0("PCA_cll_chrs_spline_spearman.RData")))
 file.main <- c("CLL (n=96) read depth profiles", "Overall correlation with LCL S/G1")
 trait <- as.numeric(samples.cll$Q4)
 trait[which(trait == 4)] <- "Q4 (-0.65 < r < 0.38)"

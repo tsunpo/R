@@ -61,11 +61,12 @@ for (c in 1:22) {
    cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
 }
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
-
 # > min(cors.samples[,-c(1:4)])   ## RT
 # [1] -0.8373368
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8643419
+
+#load(file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
 main.text <- c("NBL (n=56) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
@@ -110,6 +111,7 @@ test <- rpkms.T.chr.d.all
 pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("PCA_nbl_chrs_spline_spearman.RData")))
 
+#load(file.path(wd.rt.data, paste0("PCA_nbl_chrs_spline_spearman.RData")))
 file.main <- c("NBL (n=56) read depth profiles", "Overall correlation with LCL S/G1")
 trait <- as.numeric(samples.nbl$Q4)
 trait[which(trait == 4)] <- "Q4 (-0.36 < r < 0.69)"

@@ -212,6 +212,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8160865
 
+#load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
 main.text <- c("SCLC (n=101) read depth vs. LCL S/G1", "")
 ymin <- -0.8732989
@@ -228,7 +229,6 @@ writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, row
 # -0.6685098 -0.5999356 -0.5680808 -0.4611590  0.6598001
 
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_n51.txt"), colnames=T, rownames=F, sep="\t")
-
 #samples.sclc <- setSamplesQ4(wd.rt.data, overlaps)
 #writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n70.txt"), colnames=T, rownames=F, sep="\t")
 
@@ -259,6 +259,7 @@ test <- rpkms.T.chr.d.all
 pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_chrs_spline_spearman.RData")))
 
+#load(file.path(wd.rt.data, paste0("pca_sclc_chrs_spline_spearman.RData")))
 file.main <- c("SCLC (n=101) read depth profiles", "Overall correlation with LCL S/G1")
 trait <- as.numeric(samples.sclc$Q4)
 trait[which(trait == 4)] <- "Q4 (-0.46 < r < 0.66)"
