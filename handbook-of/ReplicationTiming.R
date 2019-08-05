@@ -2,81 +2,89 @@
 # Library      : Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 11/07/19; 05/03/19; 15/11/18
+# Last Modified: 01/08/19; 11/07/19; 05/03/19; 15/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Methods: Calculate ratio of raw sequencing reads between tumour and matched normal (in 1a_cmd-rt_bam.rpkm.R)
-# Last Modified: 15/11/18
+# Methods: Normalising raw sequencing reads (in cmd-rt_1a_rpkb.R)
+# Last Modified: 01/08/19
 # -----------------------------------------------------------------------------
-initRPKM <- function(bam, bed, pair) {
-   overlaps <- intersect(rownames(bam), rownames(bed))
-   bam.o <- bam[overlaps,]   ## ADD 23/06/17: Autosomal-only RPKMs
-   bed.o <- bed[overlaps,]
+initNRD <- function(rd, bed.gc, pair, method) {
+   overlaps <- intersect(rownames(rd), rownames(bed.gc))
+   rd.o  <- rd[overlaps,]
+   bed.o <- bed.gc[overlaps,]
    bed.o$LENGTH <- bed.o$END - bed.o$START + 1   ## ADD 18/11/18: E.g. P2 chr1 10001 11000 0.646000
-   
-   rpkm <- bam.o[,c("BED", paste0("BAM_", pair))]
-   TOTAL <- sum(as.numeric(rpkm$BAM))   ## BUG FIX 17/05/17: Warning message: In sum(rpkm$BAM) : integer overflow - use sum(as.numeric(.))
-   rpkm$RPKM <- rpkm$BAM / TOTAL * 1E6 * bed.o$LENGTH   ## ADD 15/11/18: Replace to "bed.o$LENGTH" from "1000"
  
-   return(rpkm)
+   nrd <- rd.o[,c("BED", paste0("RD_", pair))]    ## ADD 05/08/19 Normalised read depth (NRD)
+   colnames(nrd) <- c("BED", "RD")
+   
+   if (method == "RPKB") {               ## ADD 05/08/19: Reads per kilobase billion
+      TOTAL <- sum(as.numeric(nrd$RD))
+      nrd$NRD <- nrd$RD / (TOTAL / 1E9) / (bed.o$LENGTH / 1E3)   ## ADD 15/11/18: Replace to "bed.o$LENGTH" from "1000"
+   } else if (method == "MEAN") {
+      MEAN <- mean(as.numeric(nrd$RD))   ## ADD 03/08/19
+      nrd$NRD <- nrd$RD / MEAN
+   }
+   
+   return(nrd)
 }
 
 # -----------------------------------------------------------------------------
-# Methods: Calculate copy number-, GC-corrected read counts (in 1b_cmd-rt_bam.rpkm.corr.gc.R)
+# Methods: Calculate copy number-, GC-corrected read counts (in 1b_cmd-rt_bam.nrd.corr.gc.R)
 # Last Modified: 15/05/17
 # -----------------------------------------------------------------------------
-initRPKMCORRGC <- function(rpkm) {
-   colnames <- c("BED", "BAM", "RPKM", "Ratio", "RPKM_CORR", "RPKM_CORR_GC")
-   rpkm.corr.gc <- toTable(NA, length(colnames), nrow(rpkm), colnames)
-   rpkm.corr.gc[,1:3] <- rpkm
+initNRDGCCN <- function(nrd) {
+   colnames <- c("BED", "RD", "NRD", "NRD_GC", "CN", "NRD_GC_CN")
+   nrd.gc.cn <- toTable(NA, length(colnames), nrow(nrd), colnames)
+   nrd.gc.cn[,1:3]  <- nrd
  
-   return(rpkm.corr.gc)
+   return(nrd.gc.cn)
 }
 
-getBEDFromSegment <- function(bed.gc, seg.gc) {
+getBEDFromSegment <- function(bed.gc.o, seg.gc) {
    #bed.gc.chr <- subset(bed.gc, CHR == seg.gc$CHR)                       ## Using subset() takes ~15 MINS on 1,040 segments over 2,861,558 entries (S00022)
    #bed.gc.chr.end <- subset(bed.gc.chr, END > seg.gc$START)              ## Important! Not >= seg$START if e.g. P2 chr1 10000 11000 0.646000
    #bed.gc.chr.end.start <- subset(bed.gc.chr.end, START <= seg.gc$END)
-   bed.gc.chr <- bed.gc[which(bed.gc$CHR == seg.gc$CHR),]                 ## Using which() takes ~5 MINS on 1,040 segments over 2,861,558 entries (S00022)
+   bed.gc.chr <- bed.gc.o[which(bed.gc.o$CHR == seg.gc$CHR),]                 ## Using which() takes ~5 MINS on 1,040 segments over 2,861,558 entries (S00022)
    bed.gc.chr.end <- bed.gc.chr[which(bed.gc.chr$END >= seg.gc$START),]   ## Important! Not >= seg$START if e.g. P2 chr1 10000 11000 0.646000
    bed.gc.chr.end.start <- bed.gc.chr.end[which(bed.gc.chr.end$START <= seg.gc$END),]
  
    return(bed.gc.chr.end.start)
 }
 
-setRPKMCORR <- function(rpkm.corr.gc, segs.gc, bed.gc) {
+setNRDCN <- function(nrd.gc.cn, segs.gc, bed.gc.o) {
+   bed.gc.o$BED <- rownames(bed.gc.o)
+ 
    for (s in 1:nrow(segs.gc)) {
       seg.gc <- segs.gc[s,]
-      bed.gc.seg <- getBEDFromSegment(bed.gc, seg.gc)
-      bed.gc.seg.idx <- which(rpkm.corr.gc$BED %in% bed.gc.seg$BED)
+      bed.gc.seg <- getBEDFromSegment(bed.gc.o, seg.gc)
+      bed.gc.seg.idx <- which(nrd.gc.cn$BED %in% bed.gc.seg$BED)
   
-      rpkm.corr.gc$Ratio[bed.gc.seg.idx] <- seg.gc$Ratio
+      nrd.gc.cn$CN[bed.gc.seg.idx] <- seg.gc$CN
    }
 
-   return(rpkm.corr.gc[which(rpkm.corr.gc$Ratio != 0),])   ## ADD 15/05/17: No information from chrY in female (e.g. S00035)
-}                                                          ## 2852532 P2868190    0    0.0000000     0       NaN          NaN
-                                                           ## 2852533 P2868191    1    0.9901062     0       Inf          Inf
-## Main function (in 1b_cmd-rt_bam.rpkm.corr.gc.R)
-getRPKMCORRGC <- function(rpkm, segs, bed, PAIR, CORR) {
-   bed$BED  <- rownames(bed)                        ## To seed up?
-   overlaps <- intersect(rownames(rpkm), bed$BED)   ## ADD 24/06/17: Double-check if they have the same rows
-   rpkm.gc <- rpkm[overlaps,]
-   bed.gc  <- bed[overlaps,]
+   return(nrd.gc.cn[which(nrd.gc.cn$CN != 0),])   ## ADD 15/05/17: No information from chrY in female (e.g. S00035)
+}                                                        ## 2852532 P2868190    0    0.0000000     0       NaN          NaN
+                                                         ## 2852533 P2868191    1    0.9901062     0       Inf          Inf
+## Main function (in 1b_cmd-rt_rd.nrd.cn.R)
+getNRDGCCN <- function(nrd, segs, bed.gc, PAIR, CN) {
+   overlaps <- intersect(rownames(nrd), rownames(bed.gc))   ## ADD 24/06/17: Double-check if they have the same rows
+   nrd.o <- nrd[overlaps,]
+   bed.gc.o <- bed.gc[overlaps,]
    
-   gc.mean <- mean(bed.gc$GC)
-   rpkm.corr.gc <- initRPKMCORRGC(rpkm.gc)
-   if (CORR) {   ## ADD 02/07/17: No need to correct for copy numbers in the normals (e.g. LCLs)
-      segs.gc <- subset(segs, CHR %in% unique(bed.gc$CHR))   ## ADD 24/06/17: If bed.gc.au, remove chrXY from segs accordingly
+   nrd.gc.cn <- initNRDGCCN(nrd.o)
+   MEAN  <- mean(bed.gc.o$GC)
+   nrd.gc.cn$NRD_GC    <- nrd.gc.cn$NRD / (bed.gc.o$GC / MEAN)
+   nrd.gc.cn$NRD_GC_CN <- nrd.gc.cn$NRD_GC   ## ADD 02/07/17: No need to correct for copy numbers in the normals (e.g. LCLs)
+   
+   if (CN) {
+      segs.gc <- subset(segs, CHR %in% unique(bed.gc.o$CHR))   ## ADD 24/06/17: If bed.gc.au, remove chrXY from segs accordingly
     
-      rpkm.corr.gc <- setRPKMCORR(rpkm.corr.gc, segs.gc, bed.gc)
-      rpkm.corr.gc$RPKM_CORR    <- rpkm.corr.gc$RPKM / (rpkm.corr.gc$Ratio / 2)  
-      rpkm.corr.gc$RPKM_CORR_GC <- rpkm.corr.gc$RPKM_CORR / (bed.gc$GC / gc.mean)
-   } else {
-      rpkm.corr.gc$RPKM_CORR_GC <- rpkm.corr.gc$RPKM / (bed.gc$GC / gc.mean)
+      nrd.gc.cn <- setNRDCN(nrd.gc.cn, segs.gc, bed.gc.o)
+      nrd.gc.cn$NRD_GC_CN <- nrd.gc.cn$NRD_GC / (nrd.gc.cn$CN / 2) 
    }
-    
-   return(rpkm.corr.gc)
+   
+   return(nrd.gc.cn)
 }
 
 # -----------------------------------------------------------------------------
@@ -95,27 +103,27 @@ initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
 # Methods: Bootstraps (in 2a_cmd-rt_rpkm.corr.gc.d_bstrp.R)
 # Last Modified: 15/05/17
 # -----------------------------------------------------------------------------
-getDetectedRD <- function(rpkms) {   ## Find not dected (RPKM_CORR_GC = 0) windows in any of the samples 
-   return(mapply(x = 1:nrow(rpkms), function(x) !any(as.numeric(rpkms[x, -1]) == 0)))   ## ADD 15/02/19; To skip the first column "BED"
+getDetectedRD <- function(rds) {   ## Find not dected (RD_CN = 0) windows in any of the samples 
+   return(mapply(x = 1:nrow(rds), function(x) !any(as.numeric(rds[x, -1]) == 0)))   ## ADD 15/02/19; To skip the first column "BED"
 }
 
 ## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
-pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR) {
-   rpkms.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_rpkm.corr.gc_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
-   rpkms.chr.d <- rpkms.chr[getDetectedRD(rpkms.chr),]   ## ADD 13/06/17; getDetectedRD()
+pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
+   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr),]   ## ADD 13/06/17; getDetectedRD()
  
-   return(rpkms.chr.d)
+   return(nrds.chr.d)
 }
 
-getLog2RDRatio <- function(rpkms.T.chr, rpkms.N.chr, pseudocount) {
-   return(log2(as.numeric(rpkms.T.chr) + pseudocount) - log2(as.numeric(rpkms.N.chr) + pseudocount))
+getLog2RDRatio <- function(nrds.T.chr, nrds.N.chr, pseudocount) {
+   return(log2(as.numeric(nrds.T.chr) + pseudocount) - log2(as.numeric(nrds.N.chr) + pseudocount))
 }
 
-outputRT <- function(rpkms.chr) {
-   samples <- colnames(rpkms.chr)
-   rpkms.chr$BED <- rownames(rpkms.chr)
+outputRT <- function(nrds.chr) {
+   samples <- colnames(nrds.chr)
+   nrds.chr$BED <- rownames(nrds.chr)
  
-   return(rpkms.chr[,c("BED", samples)])
+   return(nrds.chr[,c("BED", samples)])
 }
 
 # -----------------------------------------------------------------------------
@@ -130,43 +138,44 @@ adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.25)
 adjustcolor.blue <- adjustcolor("lightskyblue3", alpha.f=0.25)
 adjustcolor.gray <- adjustcolor("gray", alpha.f=0.25)
 
-setScaledRT <- function(rpkms.chr.rt, pseudocount, recaliRT, scaledRT) {
-   rpkms.chr.rt$T <- log2(rpkms.chr.rt$T + pseudocount)
-   rpkms.chr.rt$N <- log2(rpkms.chr.rt$N + pseudocount)
+setScaledRT <- function(nrds.chr.rt, pseudocount, recaliRT, scaledRT) {
+   nrds.chr.rt$T <- log2(nrds.chr.rt$T + pseudocount)
+   nrds.chr.rt$N <- log2(nrds.chr.rt$N + pseudocount)
    
    if (recaliRT == T)
-      rpkms.chr.rt$RT <- rpkms.chr.rt$T - rpkms.chr.rt$N   ## ADD 24/02/19
+      nrds.chr.rt$RT <- nrds.chr.rt$T - nrds.chr.rt$N   ## ADD 24/02/19
 
    if (scaledRT == T)
-      rpkms.chr.rt$RT <- scale(rpkms.chr.rt$RT)               ## ADD 19/02/19
+      nrds.chr.rt$RT <- scale(nrds.chr.rt$RT)            ## ADD 19/02/19
    
-   return(rpkms.chr.rt)
+   return(nrds.chr.rt)
 }
 
-setSpline <- function(rpkms.chr.rt, bed.gc.chr, column) {
-   bed.gc.chr <- bed.gc.chr[rpkms.chr.rt$BED,]
+setSpline <- function(nrds.chr.rt, bed.gc.chr, column) {
+   bed.gc.chr <- bed.gc.chr[nrds.chr.rt$BED,]
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rpkms.chr.rt[, column])
-   rpkms.chr.rt$SPLINE <- spline$y
+   spline <- smooth.spline(x=bed.gc.chr$START, y=nrds.chr.rt[, column])
+   nrds.chr.rt$SPLINE <- spline$y
    #slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
-   #rpkms.chr.rt <- rpkms.chr.rt[-nrow(rpkms.chr.rt),]    ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
-   #rpkms.chr.rt$SLOPE <- slopes
+   #nrds.chr.rt <- nrds.chr.rt[-nrow(nrds.chr.rt),]    ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
+   #nrds.chr.rt$SLOPE <- slopes
  
    sizes <- diff(bed.gc.chr$START)
    gaps <- which(sizes != 1000)
-   return(rpkms.chr.rt[-gaps, c("BED", column, "SPLINE")])
+   return(nrds.chr.rt[-gaps, c("BED", column, "SPLINE")])
 }
 
-plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale, isKoren=F) {
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   #bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt.RT),]   ## NOT HERE?
+plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale, isKoren=F) {
+   nrds.chr.rt.T  <- setSpline(nrds.chr.rt, bed.gc.chr, "T")
+   nrds.chr.rt.N  <- setSpline(nrds.chr.rt, bed.gc.chr, "N")
+   nrds.chr.rt.RT <- setSpline(nrds.chr.rt, bed.gc.chr, "RT")
+   nrds.chr.rt.RT$SPLINE <- scale(nrds.chr.rt.RT$SPLINE)
+   #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.rt.RT),]   ## NOT HERE?
  
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {
-      start <- bed.gc.chr[rownames(rpkms.chr.rt)[1],]$START
+      start <- bed.gc.chr[rownames(nrds.chr.rt)[1],]$START
       if (start < 5000000) xmin <- 0
       else xmin <- start
    }
@@ -183,11 +192,11 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    par(mar=c(1,4,4,1))
    ylab.text <- "Read depth [log2]"
    if (is.na(ymin) || is.na(ymax)) {
-      rds <- c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE)
+      rds <- c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE)
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    } else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
-   #points(bed.gc.chr$START/1E6, rpkms.chr.rt, col=colours[1], cex=0.3)
+   #points(bed.gc.chr$START/1E6, nrds.chr.rt, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
    ## Plot cytobands (before smoothing spline)
@@ -196,9 +205,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
 
    ## Plot smoothing splines
-   bed.gc.chr <- bed.gc.chr[rownames(rpkms.chr.rt.RT),]   ## BUT HERE?
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt.T$SPLINE, col=colours[1], pch=16, cex=0.2)
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt.N$SPLINE, col=colours[2], pch=16, cex=0.2)
+   bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.rt.RT),]   ## BUT HERE?
+   points(bed.gc.chr$START/1E6, nrds.chr.rt.T$SPLINE, col=colours[1], pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, nrds.chr.rt.N$SPLINE, col=colours[2], pch=16, cex=0.2)
    
    ## Plot legend and peaks
    legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
@@ -212,12 +221,12 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    ylab.text <- "Replication timing"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
-   idx <- which(rpkms.chr.rt.RT$RT == 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col="lightgrey", cex=0.3)
-   idx <- which(rpkms.chr.rt.RT$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col=colours2[2], cex=0.3)
-   idx <- which(rpkms.chr.rt.RT$RT > 0)
-   points(bed.gc.chr[idx,]$START/1E6, rpkms.chr.rt.RT[idx,]$RT, col=colours2[1], cex=0.3)
+   idx <- which(nrds.chr.rt.RT$RT == 0)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col="lightgrey", cex=0.3)
+   idx <- which(nrds.chr.rt.RT$RT < 0)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=colours2[2], cex=0.3)
+   idx <- which(nrds.chr.rt.RT$RT > 0)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=colours2[1], cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
@@ -234,7 +243,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, rpkms.chr.rt, bed.gc.c
    }
    
    ## Plot smoothing spline
-   points(bed.gc.chr$START/1E6, rpkms.chr.rt.RT$SPLINE, col="black", pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, nrds.chr.rt.RT$SPLINE, col="black", pch=16, cex=0.2)
    abline(h=0, lty=5, lwd=1, col="black")
    
    ## Plot legend and peaks
@@ -267,10 +276,10 @@ getCor <- function(reads, timings, method) {
 }
 
 plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
-   #xmin <- min(rpkms.chr.rt.RT$SPLINE)
-   #xmax <- max(rpkms.chr.rt.RT$SPLINE)
-   #ymin <- min(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
-   #ymax <- max(c(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE))
+   #xmin <- min(nrds.chr.rt.RT$SPLINE)
+   #xmax <- max(nrds.chr.rt.RT$SPLINE)
+   #ymin <- min(c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE))
+   #ymax <- max(c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE))
    xlim <- c(min(timings), max(timings))
    ylim <- c(min(c(reads1, reads2)), max(c(reads1, reads2)))
    cor <- "rho"
@@ -338,34 +347,6 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    }
    axis(side=1, at=seq(2, 22, by=2), cex.axis=1.25)
    axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.4)
-   dev.off()
-}
-
-## TO-DO
-plotRD2vsRTALLREVERSED <- function(cors, file.name, main.text, ymin, ymax, cols, legends, c=NA) {
-   ylab.text <- "Spearman's rho"
-   xlab.text <- "Chromosome"
-   cors$cor1 <- cors$cor1 *-1
-   cors$cor2 <- cors$cor2 *-1
-   
-   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19)
-   lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
-   points(cors$chr, cors$cor2, col=cols[2], pch=19)
-   lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
-   abline(h=0, lty=5)
- 
-   RT <- paste0(legends[1], "/", legends[2])
-   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.3)        
-   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.3)
- 
-   if (!is.na(c)) {
-      text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.3, col=cols[1], pos=3)   ##, offset=1.3)
-      text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.3, col=cols[2], pos=3)
-   }
-   axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(0.6, 1, by=0.2), labels=c(1, 0.8, 0.6))
    dev.off()
 }
 
@@ -662,14 +643,14 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
 # =============================================================================
 read.peiflyne.cn.txt <- function(cn.file) {
    cn <- readTable(cn.file, header=F, rownames=T, sep="")
-   colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "BAM_T", "BAM_N", "V10", "INSERT_SIZE_T", "INSERT_SIZE_N")
+   colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "RD_T", "RD_N", "V10", "INSERT_SIZE_T", "INSERT_SIZE_N")
  
    return(cn)
 }
 
 read.peiflyne.cn.seg <- function(cn.file) {
    cn <- readTable(cn.file, header=F, rownames=F, sep="")
-   colnames(cn) <- c("SAMPLE", "CHR", "START", "END", "V5", "Ratio")
+   colnames(cn) <- c("SAMPLE", "CHR", "START", "END", "V5", "CN")
  
    return(cn)
 }

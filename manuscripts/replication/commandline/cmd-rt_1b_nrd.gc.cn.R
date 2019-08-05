@@ -3,8 +3,10 @@ args <- commandArgs(TRUE)
 BASE   <- args[1]   ## Cancer type
 SAMPLE <- args[2]   ## Sample ID
 PAIR   <- args[3]   ## T(umour) or N(ormal) pair
-CORR   <- as.logical(args[4])   ## T(rue) or F(alse) to correct CN
-base <- tolower(BASE)
+CN     <- as.logical(args[4])   ## T(rue) or F(alse) to correct CN
+METHOD <- args[5]
+base   <- tolower(BASE)
+method <- tolower(METHOD)
 
 # =============================================================================
 # Name: 1b_cmd-rt_bam.rpkm.corr.gc.R (commandline mode)
@@ -16,7 +18,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -40,12 +42,12 @@ wd.rt.data   <- file.path(wd.rt, "data")
    sample <- SAMPLE 
 
    ## INPUT: RPKM (from 1a) & SEQ
-   rpkm <- readTable(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR, ".bam.rpkm.txt.gz")), header=T, rownames=T, sep="")
+   nrd <- readTable(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR, ".", method, ".txt.gz")), header=T, rownames=T, sep="")
    segs <- NA
-   if (CORR)
+   if (CN)
       segs <- read.peiflyne.cn.seg(file.path(wd.ngs, "coverage", sample, paste0(sample, "_ANALYSIS/", sample, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
    
-   ## Calculate copy number-, GC-corrected read counts
-   rpkm.corr.gc <- getRPKMCORRGC(rpkm, segs, bed.gc, PAIR, CORR)   ## See ReplicationTiming.R
-   writeTable(rpkm.corr.gc, gzfile(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR,".bam.rpkm.corr.gc.txt.gz"))), colnames=T, rownames=F, sep="\t")
+   ## Correcte read counts fpr copy number
+   nrd.gc.cn <- getNRDGCCN(nrd, segs, bed.gc, PAIR, CN)   ## See ReplicationTiming.R
+   writeTable(nrd.gc.cn, gzfile(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR, ".", method, ".gc.cn.txt.gz"))), colnames=T, rownames=F, sep="\t")
 #}
