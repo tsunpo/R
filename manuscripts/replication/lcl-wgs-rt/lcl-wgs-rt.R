@@ -64,8 +64,8 @@ for (c in 1:22) {
  
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_nrd.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale-to-all_scale-spline"))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(), NA, NA, 3, 3, isKoren=T)
+   file.name <- file.path(wd.rt.plots, paste0("RT3_", base, "_rpkb.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale-to-all_scale-spline_RB1"))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(48877883, 49056026), NA, NA, 3, 3, isKoren=T)
 }
 
 # -----------------------------------------------------------------------------
@@ -144,7 +144,7 @@ rts <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
 for (c in 1:22) {
    chr <- chrs[c]
  
-   rts.chr <- readTable(file.path(wd.rt.data, paste0(base, "_nrd.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rts.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkb.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rts.chr <- setScaledRT(rts.chr, pseudocount=0.01, recaliRT=T, scaledRT=F)
    rts <- rbind(rts, rts.chr)
 }
@@ -159,7 +159,7 @@ for (c in 1:22) {
 
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_nrd.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale"))   
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkb.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale"))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(), NA, NA, 3, 3, isKoren=T)
 }
 # > 9.5 - 7.25
