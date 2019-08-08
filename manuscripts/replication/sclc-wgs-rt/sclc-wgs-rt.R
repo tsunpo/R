@@ -21,6 +21,7 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "SCLC"
@@ -41,6 +42,52 @@ samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownam
 #samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_B.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
+
+# -----------------------------------------------------------------------------
+# Plot RD and RT (see ReplicationTiming.R)
+# Last Modified: 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
+# -----------------------------------------------------------------------------
+nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
+ymax <- 0.6
+ymin <- 0.14
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   #nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=F)
+ 
+   #nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+   #nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+   #nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #ymax.chr <- max(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
+   #ymin.chr <- min(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
+   #if (ymax.chr > ymax)
+   #   ymax <- ymax.chr
+   #if (ymin.chr < ymin)
+   #   ymin <- ymin.chr
+ 
+   nrds <- rbind(nrds, nrds.chr)
+}
+nrds$RT <- scale(nrds$RT)
+save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-n_", method, ".RData")))
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+ 
+   ## Plot RT
+   main.text <- paste0(BASE, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") samples")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c("lightcoral", "lightskyblue3"), c("T", "N"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
+}
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
@@ -266,7 +313,7 @@ trait[which(trait == 4)] <- "Q4 (-0.46 < r < 0.66)"
 trait[which(trait == 3)] <- "Q3 (-0.57 < r < -0.46)"
 trait[which(trait == 2)] <- "Q2 (-0.60 < r < -0.57)"
 trait[which(trait == 1)] <- "Q1 (-0.67 < r < -0.60)"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightcoral", "lightskyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1

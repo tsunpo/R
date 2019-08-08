@@ -232,9 +232,10 @@ writeTable(lcl.rt, gzfile(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/met
 
 ###
 ##
-lcl.mean <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Woodfine 2004.txt"), header=T, rownames=F, sep="")
-lcl.mean$Chromosome <- paste0("chr", lcl.mean$Chromosome)
-rownames(lcl.mean) <- lcl.mean$Chromosome
+lcl.mean <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Woodfine 2004.txt"), header=T, rownames=T, sep="")
+lcl.mean <- subset(lcl.mean, Chromosome %in% 1:22)
+lcl.mean$Chromosome <- as.numeric(lcl.mean$Chromosome)
+lcl.mean <- lcl.mean[order(lcl.mean$Chromosome),]
 
 save(lcl.rt, lcl.mean, file=file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 

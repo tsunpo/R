@@ -132,50 +132,50 @@ outputRT <- function(nrds.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-setScaledRT <- function(nrds.chr.rt, pseudocount, recaliRT, scaledRT) {
-   nrds.chr.rt$T <- log2(nrds.chr.rt$T + pseudocount)
-   nrds.chr.rt$N <- log2(nrds.chr.rt$N + pseudocount)
+setScaledRT <- function(nrds.chr, pseudocount, recaliRT, scaledRT) {
+   nrds.chr$T <- log2(nrds.chr$T + pseudocount)
+   nrds.chr$N <- log2(nrds.chr$N + pseudocount)
    
    if (recaliRT == T)
-      nrds.chr.rt$RT <- nrds.chr.rt$T - nrds.chr.rt$N   ## ADD 24/02/19
+      nrds.chr$RT <- nrds.chr$T - nrds.chr$N   ## ADD 24/02/19
 
    if (scaledRT == T)
-      nrds.chr.rt$RT <- scale(nrds.chr.rt$RT)            ## ADD 19/02/19
+      nrds.chr$RT <- scale(nrds.chr$RT)            ## ADD 19/02/19
    
-   return(nrds.chr.rt)
+   return(nrds.chr)
 }
 
-setSpline <- function(nrds.chr.rt, bed.gc.chr, column) {
-   bed.gc.chr <- bed.gc.chr[nrds.chr.rt$BED,]
+setSpline <- function(nrds.chr, bed.gc.chr, column) {
+   bed.gc.chr <- bed.gc.chr[nrds.chr$BED,]
  
-   spline <- smooth.spline(x=bed.gc.chr$START, y=nrds.chr.rt[, column])
-   nrds.chr.rt$SPLINE <- spline$y
+   spline <- smooth.spline(x=bed.gc.chr$START, y=nrds.chr[, column])
+   nrds.chr$SPLINE <- spline$y
    #slopes <- diff(spline$y)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
-   #nrds.chr.rt <- nrds.chr.rt[-nrow(nrds.chr.rt),]    ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
-   #nrds.chr.rt$SLOPE <- slopes
+   #nrds.chr <- nrds.chr[-nrow(nrds.chr),]    ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
+   #nrds.chr$SLOPE <- slopes
  
    sizes <- diff(bed.gc.chr$START)
    gaps <- which(sizes != 1000)
-   return(nrds.chr.rt[-gaps, c("BED", column, "SPLINE")])
+   return(nrds.chr[-gaps, c("BED", column, "SPLINE")])
 }
 
-plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL) {
+plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL) {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
    adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.08)
    adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.08)
    adjustcolor.gray <- adjustcolor("gray", alpha.f=0.08)
  
-   nrds.chr.rt.T  <- setSpline(nrds.chr.rt, bed.gc.chr, "T")
-   nrds.chr.rt.N  <- setSpline(nrds.chr.rt, bed.gc.chr, "N")
-   nrds.chr.rt.RT <- setSpline(nrds.chr.rt, bed.gc.chr, "RT")
-   #nrds.chr.rt.RT$SPLINE <- scale(nrds.chr.rt.RT$SPLINE)
-   #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.rt.RT),]   ## NOT HERE?
+   nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+   nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
+   #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## NOT HERE?
  
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {
-      start <- bed.gc.chr[rownames(nrds.chr.rt)[1],]$START
+      start <- bed.gc.chr[rownames(nrds.chr)[1],]$START
       if (start < 5000000) xmin <- 0
       else xmin <- start
    }
@@ -192,11 +192,11 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
    par(mar=c(1,4,4,1))
    ylab.text <- "Read depth [RPKM]"
    if (is.null(ylim)) {
-      rds <- c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE)
+      rds <- c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    } else
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
-   #points(bed.gc.chr$START/1E6, nrds.chr.rt, col=colours[1], cex=0.3)
+   #points(bed.gc.chr$START/1E6, nrds.chr, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
    ## Plot cytobands (before smoothing spline)
@@ -205,9 +205,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
 
    ## Plot smoothing splines
-   bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.rt.RT),]   ## BUT HERE?
-   points(bed.gc.chr$START/1E6, nrds.chr.rt.T$SPLINE, col=colours[1], pch=16, cex=0.2)
-   points(bed.gc.chr$START/1E6, nrds.chr.rt.N$SPLINE, col=colours[2], pch=16, cex=0.2)
+   bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## BUT HERE?
+   points(bed.gc.chr$START/1E6, nrds.chr.T$SPLINE, col=colours[1], pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, nrds.chr.N$SPLINE, col=colours[2], pch=16, cex=0.2)
    
    ## Plot legend and peaks
    legend("bottomright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T)
@@ -221,12 +221,12 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
    ylab.text <- "Replication timing"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
-   idx <- which(nrds.chr.rt.RT$RT == 0)
-   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col="lightgrey", cex=0.3)
-   idx <- which(nrds.chr.rt.RT$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=adjustcolor.blue, cex=0.3)
-   idx <- which(nrds.chr.rt.RT$RT > 0)
-   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=adjustcolor.red, cex=0.3)
+   idx <- which(nrds.chr.RT$RT == 0)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col="lightgrey", cex=0.3)
+   idx <- which(nrds.chr.RT$RT < 0)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col=adjustcolor.blue, cex=0.3)
+   idx <- which(nrds.chr.RT$RT > 0)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col=adjustcolor.red, cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
    axis(side=2, at=seq(-2, 2, by=1), labels=c(-2, -1, 0, 1, 2))
@@ -241,7 +241,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
       points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col="forestgreen", pch=16, cex=0.2)
    
    ## Plot smoothing spline
-   points(bed.gc.chr$START/1E6, nrds.chr.rt.RT$SPLINE, col="black", pch=16, cex=0.2)
+   points(bed.gc.chr$START/1E6, nrds.chr.RT$SPLINE, col="black", pch=16, cex=0.2)
    abline(h=0, lty=5, lwd=1, col="black")
    
    ## Plot legend and peaks
@@ -274,10 +274,10 @@ getCor <- function(reads, timings, method) {
 }
 
 plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method, intercept=T) {
-   #xmin <- min(nrds.chr.rt.RT$SPLINE)
-   #xmax <- max(nrds.chr.rt.RT$SPLINE)
-   #ymin <- min(c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE))
-   #ymax <- max(c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE))
+   #xmin <- min(nrds.chr.RT$SPLINE)
+   #xmax <- max(nrds.chr.RT$SPLINE)
+   #ymin <- min(c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE))
+   #ymax <- max(c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE))
    xlim <- c(min(timings), max(timings))
    ylim <- c(min(c(reads1, reads2)), max(c(reads1, reads2)))
    cor <- "rho"
@@ -431,7 +431,10 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text
    dev.off()
 }
 
-plotSPRRDC <- function(cors, file.name, main.text, cs, xlab.text, unit, ylab.text="SPR") {
+plotSPRRDC <- function(cors, file.name, main.text, cs, xlab.text, unit, ylab.text="SPR", lcl.mean=NULL) {
+   if (!is.null(lcl.mean))
+      cors$cor <- mapply(x = 1:22, function(x) lcl.mean$Mean[x])
+      
    #ylab.text <- "SPR"
    #xlab.text <- "Read depth correlation [rho]"
    cols <- c("red", "blue", "black", "purple")

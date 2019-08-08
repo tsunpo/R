@@ -36,9 +36,9 @@ wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
 wd.ngs    <- file.path(wd, BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data")
 
-wd.anlys  <- file.path(wd, BASE, "analysis")
-wd.rt     <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
-wd.rt.data   <- file.path(wd.rt, "data")
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data <- file.path(wd.rt, "data")
 
 samples1 <- readTable(file.path(wd.ngs, LIST1), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, LIST0), header=F, rownames=F, sep="")

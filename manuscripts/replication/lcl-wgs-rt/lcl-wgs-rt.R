@@ -22,6 +22,7 @@ load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "LCL"
@@ -139,10 +140,15 @@ plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text=paste
 
 ## SPR vs Read depth correlation (RDC)
 file.name <- file.path(wd.rt.plots, "SPR-RDC_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = Mean S/G1 ratio")
-xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"))
+main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "")
+xlab.text <- "LCL read depth correlation [rho]"
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=NULL)
 
+## SPR vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "SPR-Woodfine_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio ")
+xlab.text <- "Woodfine et al 2004"
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=lcl.mean)
 
 
 
