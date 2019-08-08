@@ -18,9 +18,9 @@ initNRD <- function(rd, bed.gc, pair, method) {
    nrd <- rd.o[,c("BED", paste0("RD_", pair))]    ## ADD 05/08/19 Normalised read depth (NRD)
    colnames(nrd) <- c("BED", "RD")
    
-   if (method == "RPKB") {               ## ADD 05/08/19: Reads per kilobase billion
+   if (method == "RPKM") {               ## ADD 05/08/19: Reads per kilobase billion
       TOTAL <- sum(as.numeric(nrd$RD))
-      nrd$NRD <- nrd$RD / (TOTAL / 1E9) / (bed.o$LENGTH / 1E3)   ## ADD 15/11/18: Replace to "bed.o$LENGTH" from "1000"
+      nrd$NRD <- nrd$RD / (TOTAL / 1E6) / (bed.o$LENGTH / 1E3)   ## ADD 15/11/18: Replace to "bed.o$LENGTH" from "1000"
    } else if (method == "MEAN") {
       MEAN <- mean(as.numeric(nrd$RD))   ## ADD 03/08/19
       nrd$NRD <- nrd$RD / MEAN
@@ -132,12 +132,6 @@ outputRT <- function(nrds.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-## Colours (was "lightcoral", "skyblue3")
-## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-adjustcolor.red  <- adjustcolor("lightcoral", alpha.f=0.25)
-adjustcolor.blue <- adjustcolor("lightskyblue3", alpha.f=0.25)
-adjustcolor.gray <- adjustcolor("gray", alpha.f=0.25)
-
 setScaledRT <- function(nrds.chr.rt, pseudocount, recaliRT, scaledRT) {
    nrds.chr.rt$T <- log2(nrds.chr.rt$T + pseudocount)
    nrds.chr.rt$N <- log2(nrds.chr.rt$N + pseudocount)
@@ -165,11 +159,17 @@ setSpline <- function(nrds.chr.rt, bed.gc.chr, column) {
    return(nrds.chr.rt[-gaps, c("BED", column, "SPLINE")])
 }
 
-plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ymin=NA, ymax=NA, cutoff, scale, isKoren=F) {
+plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL) {
+   ## Colours (was "lightcoral", "skyblue3")
+   ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
+   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.08)
+   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.08)
+   adjustcolor.gray <- adjustcolor("gray", alpha.f=0.08)
+ 
    nrds.chr.rt.T  <- setSpline(nrds.chr.rt, bed.gc.chr, "T")
    nrds.chr.rt.N  <- setSpline(nrds.chr.rt, bed.gc.chr, "N")
    nrds.chr.rt.RT <- setSpline(nrds.chr.rt, bed.gc.chr, "RT")
-   nrds.chr.rt.RT$SPLINE <- scale(nrds.chr.rt.RT$SPLINE)
+   #nrds.chr.rt.RT$SPLINE <- scale(nrds.chr.rt.RT$SPLINE)
    #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.rt.RT),]   ## NOT HERE?
  
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
@@ -190,12 +190,12 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
    ## Initiate RD plot
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
    par(mar=c(1,4,4,1))
-   ylab.text <- "Read depth [log2]"
-   if (is.na(ymin) || is.na(ymax)) {
+   ylab.text <- "Read depth [RPKM]"
+   if (is.null(ylim)) {
       rds <- c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE)
       plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    } else
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(ymin, ymax), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
    #points(bed.gc.chr$START/1E6, nrds.chr.rt, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
@@ -220,16 +220,16 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
    par(mar=c(5.5,4,0,1))
    ylab.text <- "Replication timing"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-cutoff, cutoff), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n")
    idx <- which(nrds.chr.rt.RT$RT == 0)
    points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col="lightgrey", cex=0.3)
    idx <- which(nrds.chr.rt.RT$RT < 0)
-   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=colours2[2], cex=0.3)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=adjustcolor.blue, cex=0.3)
    idx <- which(nrds.chr.rt.RT$RT > 0)
-   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=colours2[1], cex=0.3)
+   points(bed.gc.chr[idx,]$START/1E6, nrds.chr.rt.RT[idx,]$RT, col=adjustcolor.red, cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
-   axis(side=2, at=seq(-scale, scale, by=scale), labels=c(-scale, 0, scale))
+   axis(side=2, at=seq(-2, 2, by=1), labels=c(-2, -1, 0, 1, 2))
   
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
@@ -237,20 +237,18 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr.rt, bed.gc.ch
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
   
    ## Plot Koren 2012
-   if (isKoren) {
-      lcls.rt.chr <- subset(lcls.rt, CHR == chr)
-      points(lcls.rt.chr$POS/1E6, lcls.rt.chr$RT, col="forestgreen", pch=16, cex=0.2)   
-   }
+   if (!is.null(lcl.rt.chr))
+      points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col="forestgreen", pch=16, cex=0.2)
    
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, nrds.chr.rt.RT$SPLINE, col="black", pch=16, cex=0.2)
    abline(h=0, lty=5, lwd=1, col="black")
    
    ## Plot legend and peaks
-   legend("topleft", paste0("Early: ", legends2[1], " > ", legends2[2]), bty="n", text.col="black")   
-   legend("bottomleft", paste0("Late:  ", legends2[1], " < ", legends2[2]), bty="n", text.col="black")
+   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[1])   
+   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[2])
    legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
-   if (isKoren)
+   if (!is.null(lcl.rt.chr))
       legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T)
     
    if (length(peaks) != 0)
@@ -275,7 +273,7 @@ getCor <- function(reads, timings, method) {
    }
 }
 
-plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
+plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method, intercept=T) {
    #xmin <- min(nrds.chr.rt.RT$SPLINE)
    #xmax <- max(nrds.chr.rt.RT$SPLINE)
    #ymin <- min(c(nrds.chr.rt.T$SPLINE, nrds.chr.rt.N$SPLINE))
@@ -304,14 +302,16 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    cor2 <- getCor(reads2, timings, method)
    intercept2 <- lm.fit2[[1]][1]
    
-   points(0, intercept1, col=colours[1], pch=19)
-   points(0, intercept2, col=colours[2], pch=19)
-   if (intercept1 > intercept2) {
-      text(0, intercept1, round0(intercept1, digits=3), cex=1.1, col=colours[1], pos=3)
-      text(0, intercept2, round0(intercept2, digits=3), cex=1.1, col=colours[2], pos=1)
-   } else {
-      text(0, intercept1, round0(intercept1, digits=3), cex=1.1, col=colours[1], pos=1)
-      text(0, intercept2, round0(intercept2, digits=3), cex=1.1, col=colours[2], pos=3)
+   if (intercept) {
+      points(0, intercept1, col=colours[1], pch=19)
+      points(0, intercept2, col=colours[2], pch=19)
+      if (intercept1 > intercept2) {
+         text(0, intercept1, round0(intercept1, digits=3), cex=1.1, col=colours[1], pos=3)
+         text(0, intercept2, round0(intercept2, digits=3), cex=1.1, col=colours[2], pos=1)
+      } else {
+         text(0, intercept1, round0(intercept1, digits=3), cex=1.1, col=colours[1], pos=1)
+         text(0, intercept2, round0(intercept2, digits=3), cex=1.1, col=colours[2], pos=3)
+      }
    }
    
    RT <- paste0(legends[1], "/", legends[2])
@@ -388,16 +388,15 @@ plotRDS <- function(cors, file.name, main.text, ymin, ymax, cols, legends, cs=NU
 
 ## S-phase progression rate (SPR)
 getYlim <- function(cors, unit) {
-   unit <- max(cors$skew)/unit
-   ymax <- max(cors$skew) + unit
+   unit <- max(cors$mean)/unit
+   ymax <- max(cors$mean) + unit
    
-   ymin <- ((ymax - cors$skew[2]) - cors$skew[2]) * -1
+   ymin <- ((ymax - cors$mean[2]) - cors$mean[2]) * -1
    
    return(c(ymin, ymax))
 }
 
-plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit) {
-   ylab.text <- "SPR"
+plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text="SPR") {
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
    ylim <- getYlim(cors, unit)
@@ -406,23 +405,23 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit) {
    #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
    plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
    
-   abline(h=cors$skew[2], lty=5)
-   lines(cors$skew, y=NULL, type="l", lwd=3, col=cols[3])
+   abline(h=cors$mean[2], lty=5)
+   lines(cors$mean, y=NULL, type="l", lwd=3, col=cols[3])
    
-   idx <- which(cors$skew > cors$skew[2])
-   points(cors$skew[idx] ~ cors$chr[idx], col=cols[1], pch=19)
-   idx <- which(cors$skew < cors$skew[2])
-   points(cors$skew[idx] ~ cors$chr[idx], col=cols[2], pch=19)
-   points(cors$skew[2] ~ cors$chr[2], col=cols[3], pch=19)
+   idx <- which(cors$mean > cors$mean[2])
+   points(cors$mean[idx] ~ cors$chr[idx], col=cols[1], pch=19)
+   idx <- which(cors$mean < cors$mean[2])
+   points(cors$mean[idx] ~ cors$chr[idx], col=cols[2], pch=19)
+   points(cors$mean[2] ~ cors$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2]+1.8, cors$skew[2], paste0("Chr2 (", round0(cors$skew[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
+   text(cors$chr[2]+1.8, cors$mean[2], paste0("Chr2 (", round0(cors$mean[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (cors$skew[c] > cors$skew[2])
-            text(cors$chr[c]+1.8, cors$skew[c], paste0("Chr", c, " (", round0(cors$skew[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
+         if (cors$mean[c] > cors$mean[2])
+            text(cors$chr[c]+1.8, cors$mean[c], paste0("Chr", c, " (", round0(cors$mean[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c]+1.8, cors$skew[c], paste0("Chr", c, " (", round0(cors$skew[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
+            text(cors$chr[c]+1.8, cors$mean[c], paste0("Chr", c, " (", round0(cors$mean[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   
    legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
@@ -443,31 +442,31 @@ plotSPRRDC <- function(cors, file.name, main.text, cs, xlab.text, unit, ylab.tex
    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    if (is.null(xlim))
-      plot(cors$skew ~ cors$cor, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+      plot(cors$mean ~ cors$cor, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
    else
-      plot(cors$skew ~ cors$cor, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+      plot(cors$mean ~ cors$cor, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
    
-   abline(h=cors$skew[2], lty=5)
-   lm.fit <- lm(cors$skew ~ cors$cor)
+   abline(h=cors$mean[2], lty=5)
+   lm.fit <- lm(cors$mean ~ cors$cor)
    abline(lm.fit, col=cols[4], lwd=3)
 
-   idx <- which(cors$skew > cors$skew[2])
-   points(cors$skew[idx] ~ cors$cor[idx], col=cols[1], pch=19)
-   idx <- which(cors$skew < cors$skew[2])
-   points(cors$skew[idx] ~ cors$cor[idx], col=cols[2], pch=19)
-   points(cors$skew[2] ~ cors$cor[2], col=cols[3], pch=19)
+   idx <- which(cors$mean > cors$mean[2])
+   points(cors$mean[idx] ~ cors$cor[idx], col=cols[1], pch=19)
+   idx <- which(cors$mean < cors$mean[2])
+   points(cors$mean[idx] ~ cors$cor[idx], col=cols[2], pch=19)
+   points(cors$mean[2] ~ cors$cor[2], col=cols[3], pch=19)
  
-   text(cors$cor[2], cors$skew[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   text(cors$cor[2], cors$mean[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (cors$skew[c] > cors$skew[2])
-            text(cors$cor[c], cors$skew[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
+         if (cors$mean[c] > cors$mean[2])
+            text(cors$cor[c], cors$mean[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$cor[c], cors$skew[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
+            text(cors$cor[c], cors$mean[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
       }
    
-   cor <- cor.test(cors$skew, cors$cor, method="spearman", exact=F)
+   cor <- cor.test(cors$mean, cors$cor, method="spearman", exact=F)
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
    legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   ## bty="n"

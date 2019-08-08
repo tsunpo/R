@@ -194,19 +194,19 @@ writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.5kb.bed.gz")), 
 # awk '!/e+/{print}' Koren-et-al-Table-S2.txt > Koren-et-al-Table-S2-clean.txt   ## Removed 2,786 duplicate entries; e.g. 1	1.211859e+008	0.244237
 # Last Modified: 30/07/19
 # -----------------------------------------------------------------------------
-lcls.rt <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean.txt"), header=F, rownames=F, sep="")
-colnames(lcls.rt) <- c("CHR", "POS", "RT")
-# > nrow(lcls.rt)
+lcl.rt <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean.txt"), header=F, rownames=F, sep="")
+colnames(lcl.rt) <- c("CHR", "POS", "RT")
+# > nrow(lcl.rt)
 # [1] 2383437
-lcls.rt <- lcls.rt[!is.na(lcls.rt$RT),]
-# > nrow(lcls.rt)
+lcl.rt <- lcl.rt[!is.na(lcl.rt$RT),]
+# > nrow(lcl.rt)
 # [1] 2375396   ## Removed 8,041 NAs
 
-lcls.rt$CHR <- paste0("chr", lcls.rt$CHR)
-rownames(lcls.rt) <- paste0(lcls.rt$CHR, ":", lcls.rt$POS, "-", lcls.rt$POS)
-lcls.rt$rownames <- rownames(lcls.rt)
+lcl.rt$CHR <- paste0("chr", lcl.rt$CHR)
+rownames(lcl.rt) <- paste0(lcl.rt$CHR, ":", lcl.rt$POS, "-", lcl.rt$POS)
+lcl.rt$rownames <- rownames(lcl.rt)
 
-liftover.in <- paste0(lcls.rt$CHR, ":", lcls.rt$POS, "-", lcls.rt$POS)
+liftover.in <- paste0(lcl.rt$CHR, ":", lcl.rt$POS, "-", lcl.rt$POS)
 writeTable(liftover.in, file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/liftover.txt"), colnames=F, rownames=F, sep="\t")
 
 liftover.out <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/hglft_genome_47d44_380.bed.zip"), header=F, rownames=F, sep="")
@@ -216,19 +216,27 @@ liftover.rm  <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/met
 # > length(liftover.rm)
 # [1] 85403
 
-lcls.rt.rm <- subset(lcls.rt, !(rownames %in% liftover.rm))
-# > nrow(lcls.rt.rm)
+lcl.rt.rm <- subset(lcl.rt, !(rownames %in% liftover.rm))
+# > nrow(lcl.rt.rm)
 # [1] 2289993
 
-lcls.rt.rm$CHR2 <- mapply(x = 1:length(liftover.out), function(x) unlist(strsplit(liftover.out[x], split=":"))[1])
-lcls.rt.rm$POS2 <- mapply(x = 1:length(liftover.out), function(x) unlist(strsplit(unlist(strsplit(liftover.out[x], split=":"))[2], split="-"))[1])
-#writeTable(lcls.rt.rm, file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean-liftover-hg19.txt"), colnames=F, rownames=F, sep="\t")
-lcls.rt <- lcls.rt.rm[,c("CHR2", "POS2", "RT")]
-colnames(lcls.rt) <- c("CHR", "POS", "RT")
-lcls.rt$POS <- as.numeric(lcls.rt$POS)
+lcl.rt.rm$CHR2 <- mapply(x = 1:length(liftover.out), function(x) unlist(strsplit(liftover.out[x], split=":"))[1])
+lcl.rt.rm$POS2 <- mapply(x = 1:length(liftover.out), function(x) unlist(strsplit(unlist(strsplit(liftover.out[x], split=":"))[2], split="-"))[1])
+#writeTable(lcl.rt.rm, file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean-liftover-hg19.txt"), colnames=F, rownames=F, sep="\t")
+lcl.rt <- lcl.rt.rm[,c("CHR2", "POS2", "RT")]
+colnames(lcl.rt) <- c("CHR", "POS", "RT")
+lcl.rt$POS <- as.numeric(lcl.rt$POS)
 
-save(lcls.rt, file=file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
-writeTable(lcls.rt, gzfile(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean-liftover-hg19.txt.gz")), colnames=F, rownames=F, sep="\t")
+#save(lcl.rt, file=file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
+writeTable(lcl.rt, gzfile(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean-liftover-hg19.txt.gz")), colnames=F, rownames=F, sep="\t")
+
+###
+##
+lcl.mean <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Woodfine 2004.txt"), header=T, rownames=F, sep="")
+lcl.mean$Chromosome <- paste0("chr", lcl.mean$Chromosome)
+rownames(lcl.mean) <- lcl.mean$Chromosome
+
+save(lcl.rt, lcl.mean, file=file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # File: hg19.ensembl.gene.txt (To test coverage on genes)

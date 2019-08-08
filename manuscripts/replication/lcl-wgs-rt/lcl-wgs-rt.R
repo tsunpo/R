@@ -16,7 +16,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
-load(file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
+load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -30,6 +30,7 @@ BASE0 <- "N"
 PAIR1 <- "S"
 PAIR0 <- "G1"
 base  <- tolower(BASE)
+method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -48,31 +49,46 @@ n0 <- length(samples0)
 # Last Modified: 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
-for (c in 1:22) {
-   chr <- chrs[c]
- 
-   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkb.gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=F)
-   nrds <- rbind(nrds, nrds.chr)
-}
-nrds$RT <- scale(nrds$RT)
-
+ymax <- 0.6
+ymin <- 0.14
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   #nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=F)
+   
+   #nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+   #nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+   #nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #ymax.chr <- max(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
+   #ymin.chr <- min(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
+   #if (ymax.chr > ymax)
+   #   ymax <- ymax.chr
+   #if (ymin.chr < ymin)
+   #   ymin <- ymin.chr
+   
+   nrds <- rbind(nrds, nrds.chr)
+}
+nrds$RT <- scale(nrds$RT)
+save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".RData")))
+
+for (c in c(17,13,2)) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
- 
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT3_", base, "_rpkb.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale-to-all_scale-spline_RB1"))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(48877883, 49056026), NA, NA, 3, 3, isKoren=T)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
 
 # -----------------------------------------------------------------------------
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 7, 22, c("chr", "length", "cor", "cor1", "cor2", "intercept1", "intercept2"))
+cors <- toTable(0, 8, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "intercept1", "intercept2"))
 cors$chr <- 1:22
 
 for (c in 1:22) {
@@ -85,17 +101,18 @@ for (c in 1:22) {
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
-   cors$length[c] <- nrow(nrds.chr.rt.RT)
- 
+   #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
+   cors$length[c] <- nrow(nrds.chr.RT)
+   cors$mean[c]   <- mean(nrds.chr.RT$SPLINE)
+   
    cor <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, method="spearman")
    cors$cor[c] <- cor
  
    main.text <- c(paste0("LCL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (S vs. G1)"))
    xlab.text <- "LCL S/G1"
-   ylab.text <- "LCL read depth [log2]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman_scale2"))
-   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
+   ylab.text <- "LCL read depth [RPKM]"
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman", intercept=F)
  
    cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
    cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
@@ -115,21 +132,16 @@ ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
-## Read depth skew (RDS)
-file.name <- file.path(wd.rt.plots, "RDS_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " read depth imbalance"), "Y-axis intercept")
-plotRDS(cors, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("S-phase intercept (S)", "G1-phase intercept (G1)"), c(2, 13, 17), digits=3)
-
 ## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "RDS-SPR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (S-G1)/(S+G1)")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5)
+file.name <- file.path(wd.rt.plots, "SPR_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = Mean S/G1 ratio")
+plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text=paste0(BASE, " SPR"))
 
 ## SPR vs Read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = (S-G1)/(S+G1)")
+file.name <- file.path(wd.rt.plots, "SPR-RDC_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = Mean S/G1 ratio")
 xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5)
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"))
 
 
 
@@ -144,7 +156,7 @@ rts <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
 for (c in 1:22) {
    chr <- chrs[c]
  
-   rts.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkb.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+   rts.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkb.gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
    rts.chr <- setScaledRT(rts.chr, pseudocount=0.01, recaliRT=T, scaledRT=F)
    rts <- rbind(rts, rts.chr)
 }
@@ -159,7 +171,7 @@ for (c in 1:22) {
 
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkb.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale"))   
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkb.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_scale"))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr.rt, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c(adjustcolor.red, adjustcolor.blue), c("S", "G1"), "png", width=10, peaks=c(), NA, NA, 3, 3, isKoren=T)
 }
 # > 9.5 - 7.25
