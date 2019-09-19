@@ -3,7 +3,7 @@
 # Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/sclc-wgs-rt-m2.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 24/04/19; 05/03/19; 25/02/19; 30/01/18
+# Last Modified: 09/08/19; 24/04/19; 05/03/19; 25/02/19; 30/01/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
@@ -16,18 +16,20 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
-load(file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
+load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "T"
 base <- tolower(BASE)
+method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -47,110 +49,145 @@ n0 <- length(samples0)
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
-# Last Modified: 14/02/19; 10/01/19; 31/08/18; 13/06/17
+# Last Modified: 09/08/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
+nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
+for (c in 1:22) {
+   chr <- chrs[c]
+   #bed.gc.chr <- subset(bed.gc, CHR == chr)   ## REMOVED 19/09/19
+   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+
+   nrds <- rbind(nrds, nrds.chr)
+}
+nrds$RT <- scale(nrds$RT)
+save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
+# > nrow(nrds)
+# [1] 2657164
+
+#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
+ymax <- 0.6
+ymin <- 0.14
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
-   
-   ## Plot RT
-   main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Koren"))
-   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=10, peaks=c(), 7.75, 9, 3, 3, isKoren=T)
-   #plotRT(file.name, paste0(BASE, " M2/M1 read depth ratio"), chr, 44000000, 45000000, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c(adjustcolor.red, adjustcolor.blue), c("M2", "M1"), "png", width=5, peaks=c(74393001, 85508001), 7.5, 9.25, 3, 3)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+ 
+   ## Plot RT (10 x 5)
+   main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
-# > 9 - 7.75
-# [1] 1.25
-# > 9.25 - 7.5
-# [1] 1.75
 
 # -----------------------------------------------------------------------------
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 31/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 7, 22, c("chr", "length", "cor", "cor1", "cor2", "intercept1", "intercept2"))
+cors <- toTable(0, 8, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "intercept1", "intercept2"))
 cors$chr <- 1:22
-
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
  
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   cors$length[c] <- nrow(rpkms.chr.rt.RT)
+   nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+   nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
+   cors$length[c] <- nrow(nrds.chr.RT)
+   cors$mean[c]   <- mean(nrds.chr.RT$SPLINE)
  
-   cor <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
+   cor <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, method="spearman")
    cors$cor[c] <- cor
-   
+ 
    main.text <- c(paste0("SCLC read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (M2 vs. M1)"))
    xlab.text <- "SCLC M2/M1"
-   ylab.text <- "SCLC read depth [log2]"
+   ylab.text <- "SCLC read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-M2-M1_chr", c, "_spline_spearman"))
-   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
  
-   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   
+   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+   cors$intercept1[c] <- lm(nrds.chr.T$SPLINE ~ nrds.chr.RT$SPLINE)[[1]][1]
+   cors$intercept2[c] <- lm(nrds.chr.N$SPLINE ~ nrds.chr.RT$SPLINE)[[1]][1]
+ 
    ## Read depth skew (RDS)
-   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
+   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)   
 }
 save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
-#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
-#file.name <- file.path(wd.rt.plots, "RD-vs-RT_SCLC_spline_spearman")
-#main.text <- paste0("SCLC read depths vs. SCLC M2/M1")
-#ymin <- 0.6
-#ymax <- 1
-#plotRD2vsRTALLREVERSED(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("M2", "M1"), c=2)
-
-## Read depth skew (RDS)
-file.name <- file.path(wd.rt.plots, "RDS_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " read depth imbalance"), "Y-axis intercept")
-plotRDS(cors, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("M2 tumour", "M1 tumour"), c(2, 13, 17), digits=3)
-
 ## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "RDS-SPR_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (M2-M1)/(M2+M1)")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5.5)
+file.name <- file.path(wd.rt.plots, "SPR_SCLC-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = Mean M2/M1 ratio")
+plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text=paste0(BASE, " SPR"))
 
 ## SPR vs Read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "RDS-SPR-vs-RDC_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = (M2-M1)/(M2+M1)")
-xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
+file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "")
+xlab.text <- "SCLC read depth correlation [rho]"
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=NULL)
+
+## SPR vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio ")
+xlab.text <- "Woodfine et al 2004"
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=lcl.mean)
 
 # -----------------------------------------------------------------------------
-# RT vs LCL S/G1
-# Last Modified: 11/07/19; 06/06/19
+# 
+# Last Modified: 12/08/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
-cors$chr <- 1:22
+nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+nrds.chr.RT.peak <- subset(nrds.chr.RT, SPLINE < -1.5)
+# > nrow(nrds.chr.RT.peak)
+# [1] 29
 
+min(bed.gc.chr[rownames((nrds.chr.RT.peak)),]$START)
+# [1] 44485001
+max(bed.gc.chr[rownames((nrds.chr.RT.peak)),]$END)
+# [1] 44597000
+
+#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
+ymax <- 0.6
+ymin <- 0.14
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
  
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
+   ## Plot RT (5 x 5)
+   main.text <- paste0(BASE, " M2/M1 read depth ratio")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, 43597000, 45597000, nrds.chr, bed.gc.chr, c("red", "blue"), c("M2", "M1"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
+}
+
+# -----------------------------------------------------------------------------
+# RT vs LCL S/G1
+# Last Modified: 09/08/19; 06/06/19
+# -----------------------------------------------------------------------------
+## LCL S/G1
+nrds.tmp <- nrds
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".RData")))
+nrds.lcl <- nrds
+nrds <- nrds.tmp
+
+cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
  
-   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
+   nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
  
    ## Keep only overlapping 1kb windows
-   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   overlaps <- intersect(nrds.chr.RT$BED, nrds.lcl.chr.RT$BED)
    cors$length[c] <- length(overlaps)
-   cors$cor[c] <- getCor(rpkms.chr.rt.RT[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, method="spearman")
+   cors$cor[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
 }
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 
@@ -162,6 +199,287 @@ main.text <- paste0("SCLC M2/M1 vs. LCL S/G1")
 ymin <- 0.25
 ymax <- 1.05
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
+
+# -----------------------------------------------------------------------------
+# SCLC M2/M1 vs SCLC Q4/Q1
+# Last Modified: 09/08/19; 11/07/19; 06/06/19
+# -----------------------------------------------------------------------------
+## SCLC Q4/Q1
+nrds.tmp <- nrds
+load(file.path(wd, "NBL/analysis/replication/nbl-wgs-rt-m2/data", paste0("nrds_nbl-t-t_", method, ".RData")))
+nrds.q4 <- nrds
+nrds <- nrds.tmp
+
+cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
+cors$chr <- 1:22
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+ 
+   nrds.q4.chr <- nrds.q4[intersect(nrds.q4$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
+   nrds.q4.chr.RT <- setSpline(nrds.q4.chr, bed.gc.chr, "RT")
+ 
+   ## Keep only overlapping 1kb windows
+   overlaps <- intersect(nrds.chr.RT$BED, nrds.q4.chr.RT$BED)
+   cors$length[c] <- length(overlaps)
+   cors$cor[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.q4.chr.RT[overlaps,]$SPLINE, method="spearman")
+}
+#save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-sclc-q4-q1_spline_spearman.RData")))
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-nbl-m2-m1_spline_spearman.RData")))
+#save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-sclc-t-n_spline_spearman.RData")))
+
+ylab.text <- "Spearman's rho"
+xlab.text <- "Chromosome"
+#file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-SCLC-Q4-Q1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-NBL-M2-M1_spline_spearman")
+#file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-SCLC-T-N_spline_spearman")
+main.text <- paste0("SCLC M2/M1 vs. NBL M2/M1")
+ymin <- 0.25
+ymax <- 1.05
+plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=3)
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 09/08/19; 06/06/19
+# -----------------------------------------------------------------------------
+getSplineRT <- function(nrds, bed.gc) {
+   nrds.RT <- toTable(0, 3, 0, c("BED", "RT", "SPLINE"))
+ 
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+      nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+  
+      nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+      nrds.RT <- rbind(nrds.RT, nrds.chr.RT)   
+   }
+ 
+   return(nrds.RT)
+}
+
+overlaps <- intersect(intersect(rownames(nrds.sclc), rownames(nrds.nbl)), rownames(nrds.cll))
+nrds.sclc.o <- nrds.sclc[overlaps,]
+nrds.nbl.o  <- nrds.nbl[overlaps,]
+nrds.cll.o  <- nrds.cll[overlaps,]
+length(overlaps)
+# [1] 2649168
+
+nrds.sclc.o.RT <- getSplineRT(nrds.sclc.o, bed.gc)
+nrds.nbl.o.RT  <- getSplineRT(nrds.nbl.o, bed.gc)
+nrds.cll.o.RT  <- getSplineRT(nrds.cll.o, bed.gc)
+nrow(nrds.sclc.o.RT)
+# [1] 2638822
+
+###
+##
+nrds.sclc.o.RT$SIGN <- nrds.sclc.o.RT$SPLINE * nrds.nbl.o.RT$SPLINE
+nrds.nbl.o.RT$SIGN <- nrds.sclc.o.RT$SPLINE * nrds.nbl.o.RT$SPLINE
+length(which(nrds.sclc.o.RT$SIGN > 0))
+length(which(nrds.nbl.o.RT$SIGN > 0))
+# [1] 2486865
+# > 2486865/2638822
+# [1] 0.9424148
+
+main.text <- c("", "")
+xlab.text <- "SCLC RT"
+ylab.text <- "NBL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_SCLC-vs-NBL_SPLINE_spline_spearman"))
+plotRTvsRT(nrds.sclc.o.RT$SPLINE, nrds.nbl.o.RT$SPLINE, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+###
+##
+nrds.sclc.o.RT$SIGN <- nrds.sclc.o.RT$SPLINE * nrds.cll.o.RT$SPLINE
+nrds.cll.o.RT$SIGN <- nrds.sclc.o.RT$SPLINE * nrds.cll.o.RT$SPLINE
+length(which(nrds.sclc.o.RT$SIGN > 0))
+length(which(nrds.cll.o.RT$SIGN > 0))
+# [1] 2359995
+# > 2359995/2638822
+# [1] 0.8943366
+
+main.text <- c("", "")
+xlab.text <- "SCLC RT"
+ylab.text <- "CLL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_SCLC-vs-CLL_SPLINE_spline_spearman"))
+plotRTvsRT(nrds.sclc.o.RT$SPLINE, nrds.cll.o.RT$SPLINE, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+###
+##
+nrds.nbl.o.RT$SIGN <- nrds.nbl.o.RT$SPLINE * nrds.cll.o.RT$SPLINE
+nrds.cll.o.RT$SIGN <- nrds.nbl.o.RT$SPLINE * nrds.cll.o.RT$SPLINE
+length(which(nrds.nbl.o.RT$SIGN > 0))
+length(which(nrds.cll.o.RT$SIGN > 0))
+# [1] 2307000
+# > 2307000/2638822
+# [1] 0.8742537
+
+main.text <- c("", "")
+xlab.text <- "CLL RT"
+ylab.text <- "NBL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_CLL-vs-NBL_SPLINE_spline_spearman"))
+plotRTvsRT(nrds.cll.o.RT$SPLINE, nrds.nbl.o.RT$SPLINE, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 09/08/19; 06/06/19
+# -----------------------------------------------------------------------------
+overlaps <- intersect(intersect(intersect(rownames(nrds.sclc), rownames(nrds.nbl)), rownames(nrds.cll)), rownames(nrds.lcl))
+nrds.sclc.o <- nrds.sclc[overlaps,]
+nrds.nbl.o  <- nrds.nbl[overlaps,]
+nrds.cll.o  <- nrds.cll[overlaps,]
+nrds.lcl.o  <- nrds.lcl[overlaps,]
+length(overlaps)
+# [1] 2576838
+
+nrds.sclc.o.RT <- getSplineRT(nrds.sclc.o, bed.gc)
+nrds.nbl.o.RT  <- getSplineRT(nrds.nbl.o, bed.gc)
+nrds.cll.o.RT  <- getSplineRT(nrds.cll.o, bed.gc)
+nrds.lcl.o.RT  <- getSplineRT(nrds.lcl.o, bed.gc)
+nrow(nrds.sclc.o.RT)
+# [1] 2527143
+
+###
+##
+nrds.sclc.o.RT$SIGN <- nrds.sclc.o.RT$SPLINE * nrds.lcl.o.RT$SPLINE
+nrds.lcl.o.RT$SIGN <- nrds.sclc.o.RT$SPLINE * nrds.lcl.o.RT$SPLINE
+length(which(nrds.sclc.o.RT$SIGN > 0))
+length(which(nrds.lcl.o.RT$SIGN > 0))
+# [1] 2023985
+# > 2023985/2527143
+# [1] 0.8008985
+
+###
+##
+nrds.nbl.o.RT$SIGN <- nrds.nbl.o.RT$SPLINE * nrds.lcl.o.RT$SPLINE
+nrds.lcl.o.RT$SIGN <- nrds.nbl.o.RT$SPLINE * nrds.lcl.o.RT$SPLINE
+length(which(nrds.nbl.o.RT$SIGN > 0))
+length(which(nrds.lcl.o.RT$SIGN > 0))
+# [1] 1983321
+# > 1983321/2527143
+# [1] 0.7848076
+
+###
+##
+nrds.cll.o.RT$SIGN <- nrds.cll.o.RT$SPLINE * nrds.lcl.o.RT$SPLINE
+nrds.lcl.o.RT$SIGN <- nrds.cll.o.RT$SPLINE * nrds.lcl.o.RT$SPLINE
+length(which(nrds.cll.o.RT$SIGN > 0))
+length(which(nrds.lcl.o.RT$SIGN > 0))
+# [1] 2009343
+# > 2009343/2527143
+# [1] 0.7951046
+
+main.text <- c("", "")
+xlab.text <- "CLL RT"
+ylab.text <- "NBL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_CLL-vs-NBL_SPLINE_spline_spearman"))
+plotRTvsRT(nrds.cll.o.RT$SPLINE, nrds.nbl.o.RT$SPLINE, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 09/08/19; 06/06/19
+# -----------------------------------------------------------------------------
+overlaps <- intersect(intersect(rownames(nrds.sclc), rownames(nrds.nbl)), rownames(nrds.cll))
+nrds.sclc.o <- nrds.sclc[overlaps,]
+nrds.nbl.o  <- nrds.nbl[overlaps,]
+nrds.cll.o  <- nrds.cll[overlaps,]
+length(overlaps)
+# [1] 2649168
+
+###
+##
+nrds.sclc.o$SIGN <- nrds.sclc.o$RT * nrds.nbl.o$RT
+nrds.nbl.o$SIGN <- nrds.sclc.o$RT * nrds.nbl.o$RT
+length(which(nrds.sclc.o$SIGN > 0))
+length(which(nrds.nbl.o$SIGN > 0))
+# [1] 2234688
+# > 2234688/2649168
+# [1] 0.8435433
+
+main.text <- c("", "")
+xlab.text <- "SCLC RT"
+ylab.text <- "NBL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_SCLC-vs-NBL_spline_spearman"))
+plotRTvsRT(nrds.sclc.o$RT, nrds.nbl.o$RT, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+###
+##
+nrds.sclc.o$SIGN <- nrds.sclc.o$RT * nrds.cll.o$RT
+nrds.cll.o$SIGN <- nrds.sclc.o$RT * nrds.cll.o$RT
+length(which(nrds.sclc.o$SIGN > 0))
+length(which(nrds.cll.o$SIGN > 0))
+# [1] 2052633
+# > 2052633/2649168
+# [1] 0.7748218
+
+main.text <- c("", "")
+xlab.text <- "SCLC RT"
+ylab.text <- "CLL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_SCLC-vs-CLL_spline_spearman"))
+plotRTvsRT(nrds.sclc.o$RT, nrds.cll.o$RT, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+##
+nrds.nbl.o$SIGN <- nrds.nbl.o$RT * nrds.cll.o$RT
+nrds.cll.o$SIGN <- nrds.nbl.o$RT * nrds.cll.o$RT
+length(which(nrds.nbl.o$SIGN > 0))
+length(which(nrds.cll.o$SIGN > 0))
+# [1] 2021435
+# > 2021435/2649168
+# [1] 0.7630452
+
+main.text <- c("", "")
+xlab.text <- "CLL RT"
+ylab.text <- "NBL RT"
+file.name <- file.path(wd.rt.plots, paste0("RT-vs-RT_CLL-vs-NBL_spline_spearman"))
+plotRTvsRT(nrds.cll.o$RT, nrds.nbl.o$RT, file.name, main.text, xlab.text, ylab.text, method="spearman")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 09/08/19; 06/06/19
+# -----------------------------------------------------------------------------
+overlaps <- intersect(intersect(intersect(rownames(nrds.sclc), rownames(nrds.nbl)), rownames(nrds.cll)), rownames(nrds.lcl))
+nrds.sclc.o <- nrds.sclc[overlaps,]
+nrds.nbl.o  <- nrds.nbl[overlaps,]
+nrds.cll.o  <- nrds.cll[overlaps,]
+nrds.lcl.o  <- nrds.lcl[overlaps,]
+length(overlaps)
+# [1] 2576838
+
+##
+nrds.sclc.o$SIGN <- nrds.sclc.o$RT * nrds.lcl.o$RT
+nrds.lcl.o$SIGN <- nrds.sclc.o$RT * nrds.lcl.o$RT
+length(which(nrds.sclc.o$SIGN > 0))
+length(which(nrds.lcl.o$SIGN > 0))
+# [1] 1657917
+# > 1657917/2576838
+# [1] 0.643392
+
+##
+nrds.nbl.o$SIGN <- nrds.nbl.o$RT * nrds.lcl.o$RT
+nrds.lcl.o$SIGN <- nrds.nbl.o$RT * nrds.lcl.o$RT
+length(which(nrds.nbl.o$SIGN > 0))
+length(which(nrds.lcl.o$SIGN > 0))
+# [1] 1618698
+# > 1618698/2576838
+# [1] 0.6281722
+
+##
+nrds.cll.o$SIGN <- nrds.cll.o$RT * nrds.lcl.o$RT
+nrds.lcl.o$SIGN <- nrds.cll.o$RT * nrds.lcl.o$RT
+length(which(nrds.cll.o$SIGN > 0))
+length(which(nrds.lcl.o$SIGN > 0))
+# [1] 1673260
+# > 1673260/2576838
+# [1] 0.6493462
+
+
 
 # -----------------------------------------------------------------------------
 # SCLC M2/M1 vs SCLC Q4/Q1

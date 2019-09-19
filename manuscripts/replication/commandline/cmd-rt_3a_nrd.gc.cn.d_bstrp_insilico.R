@@ -3,19 +3,19 @@ args <- commandArgs(TRUE)
 BASE <- args[1]   ## Cancer type
 PAIR <- args[2]   ## T(umour) or N(ormal)
 TXT  <- args[3]
-CHR  <- as.numeric(args[4])
-N    <- as.numeric(args[5])
-METHOD   <- args[6]
-RT       <- args[7]  ## NA or RATIO or LOG2; BUG 17/09/19
-INSILICO <- args[8]
-#BSTRP  <- as.numeric(args[8])
+#CHR  <- as.numeric(args[4])
+N    <- as.numeric(args[4])
+METHOD   <- args[5]
+RT       <- args[6]  ## NA or RATIO or LOG2; BUG 17/09/19
+INSILICO <- args[7]
+BSTRP  <- as.numeric(args[8])
 base   <- tolower(BASE)
 method <- tolower(METHOD)
 
 # =============================================================================
-# Name: 2c_cmd-rt_nrd.gc.cn.d_chr_insilico.R (commandline mode)
+# Name: 3a_cmd-rt_nrd.gc.cn.d_bstrp_insilico.R (adapted from 2c_cmd-rt_nrd.gc.cn.d_chr_insilico.R)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 23/04/19; 22/10/18
+# Last Modified: 18/09/19; 23/04/19; 22/10/18
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
@@ -40,6 +40,8 @@ wd.ngs.data <- file.path(wd.ngs, "data")
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt     <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data   <- file.path(wd.rt, "data")
+if (BSTRP != 0)
+   wd.rt.data <- file.path(wd.rt, "data/bstrps", BSTRP)
 
 samples  <- readTable(file.path(wd.ngs, TXT), header=T, rownames=T, sep="")
 samples1 <- samples[which(samples[, INSILICO] == 1),][,1]
@@ -48,12 +50,17 @@ samples1 <- gsub("-", ".", samples1)
 samples0 <- gsub("-", ".", samples0)
 n1 <- length(samples1)
 n0 <- length(samples0)
+if (BSTRP != 0) {
+   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
+   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
+}
 
-#for (c in 1:22) {
-   chr <- chrs[CHR]
+for (c in 1:22) {
+   #chr <- chrs[CHR]
+   chr <- chrs[c]
 
    ## Replication timing
-   nrds.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
+   nrds.chr.d <- readTable(file.path(wd.rt, "data", paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
    nrds.T.chr.d <- nrds.chr.d[,c("BED", samples1)]
    nrds.N.chr.d <- nrds.chr.d[,c("BED", samples0)]
 
@@ -61,7 +68,7 @@ n0 <- length(samples0)
    nrds.N.chr.d$MEDIAN <- mapply(x = 1:nrow(nrds.N.chr.d), function(x) median(as.numeric(nrds.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
 
    nrds.chr <- toTable(NA, 3, nrow(nrds.chr.d), c("T", "N", "RT"))
-   rownames(nrds.chr) <- rownames(nrds.chr.d)
+   rownames(nrds.chr) <- rownames(nrds.chr.d)   ## BUG 18/09/19
    nrds.chr$T  <- nrds.T.chr.d$MEDIAN
    nrds.chr$N  <- nrds.N.chr.d$MEDIAN
    if (RT == "RATIO") {
@@ -69,7 +76,6 @@ n0 <- length(samples0)
    } else if (RT == "LOG2") {
       nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) getLog2RDRatio(nrds.chr[x,]$T, nrds.chr[x,]$N, pseudocount=0))   ## CHANGED 11/02/19: Was pseudocount=0.01
    }
-
+   
    writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR, "-", PAIR, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-#}
-
+}

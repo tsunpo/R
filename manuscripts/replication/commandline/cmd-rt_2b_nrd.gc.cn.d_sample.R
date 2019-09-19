@@ -41,7 +41,7 @@ wd.rt.data <- file.path(wd.rt, "data")
 #samples <- toupper(gsub("-", "", samples))   ## ADD 03/07/17 for LCL (e.g. NA19240-2 to NA19240.2)   ## ADDED for NBL CCL
 #n <- length(samples)
 
-## nrds
+## LCL S/G1
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".RData")))
 
 nrds.T.chr.d.sample.T.all <- NULL

@@ -5,14 +5,15 @@ PAIR1 <- args[2]   ## T(umour) or S (phase)
 LIST1 <- args[3]
 PAIR0 <- args[4]   ## N(ormal) or B(lood) or G1 (phase)
 LIST0 <- args[5]
-CHR   <- as.numeric(args[6])
-METHOD <- args[7]
-RT     <- args[8]  ## NA or RATIO or LOG2
+#CHR   <- as.numeric(args[6])
+METHOD <- args[6]
+RT     <- args[7]  ## NA or RATIO or LOG2
+BSTRP  <- as.numeric(args[8])
 base   <- tolower(BASE)
 method <- tolower(METHOD)
 
 # =============================================================================
-# Name: cmd-rt_2a_nrd.gc.cn.d_chr.R (commandline mode)
+# Name: cmd-rt_3a_nrd.gc.cn.d_bstrp.R (adopted from cmd-rt_2a_nrd.gc.cn.d_chr.R)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 23/04/19; 22/10/18
 # =============================================================================
@@ -39,6 +40,8 @@ wd.ngs.data <- file.path(wd.ngs, "data")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data")
+if (BSTRP != 0)
+   wd.rt.data <- file.path(wd.rt, "data/bstrps", BSTRP)
 
 samples1 <- readTable(file.path(wd.ngs, LIST1), header=F, rownames=F, sep="")
 samples0 <- readTable(file.path(wd.ngs, LIST0), header=F, rownames=F, sep="")
@@ -46,10 +49,15 @@ samples1 <- gsub("-", ".", samples1)
 samples0 <- gsub("-", ".", samples0)
 n1 <- length(samples1)
 n0 <- length(samples0)
+if (BSTRP != 0) {
+   samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
+   samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
+}
 
-#for (c in 1:22) {
-   chr <- chrs[CHR]
-
+for (c in 1:22) {
+   #chr <- chrs[CHR]
+   chr <- chrs[c]
+   
    ## Read depth
    nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)[, c("BED", samples1)]   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
    nrds.N.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR0, method)[, c("BED", samples0)]
@@ -77,5 +85,5 @@ n0 <- length(samples0)
 
       writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
    }
-#}
+}
 

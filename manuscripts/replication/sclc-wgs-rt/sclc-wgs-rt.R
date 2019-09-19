@@ -16,6 +16,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -28,6 +29,7 @@ BASE  <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "N"
 base  <- tolower(BASE)
+method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -48,29 +50,19 @@ n0 <- length(samples0)
 # Last Modified: 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
-ymax <- 0.6
-ymin <- 0.14
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   #nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=F)
- 
-   #nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
-   #nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
-   #nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   #ymax.chr <- max(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
-   #ymin.chr <- min(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
-   #if (ymax.chr > ymax)
-   #   ymax <- ymax.chr
-   #if (ymin.chr < ymin)
-   #   ymin <- ymin.chr
- 
+
    nrds <- rbind(nrds, nrds.chr)
 }
 nrds$RT <- scale(nrds$RT)
 save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-n_", method, ".RData")))
 
+#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-n_", method, ".RData")))
+ymax <- 0.6
+ymin <- 0.14
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -83,146 +75,86 @@ for (c in 1:22) {
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c("lightcoral", "lightskyblue3"), c("T", "N"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
 
-
-
-
-
-
-
 # -----------------------------------------------------------------------------
-# Plot RD and RT (see ReplicationTiming.R)
-# Last Modified: 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
-# -----------------------------------------------------------------------------
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T)
-
-   ## Plot RT
-   main.text <- paste0(BASE, " T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") samples")
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0))
-   plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=10, peaks=c(), 7.75, 9, 3, 3)
-}
-# > 9 - 7.75
-# [1] 1.25
-
-# -----------------------------------------------------------------------------
-# Plot RT for individual genes (see ReplicationTiming.R)
-# Last Modified: 26/04/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
-# -----------------------------------------------------------------------------
-genes <- c("RP11-141C7.3", "E2F3", "KNTC1", "DDX55", "ATXN2L", "AC009060.1", "PHKG2", "EIF2B5", "BRD9")
-
-plotWholeChr <- T
-ranges <- c(50000, 500000, 5000000)
-for (g in 1:length(genes)) {
-   gene  <- getGene(genes[g])
-   chr   <- gene$chromosome_name
-   start <- gene$start_position
-   end   <- gene$end_position
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base1, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-
-   ## RD & RT 
-   main.text <- paste0(BASE, "T/N read depth ratio between tumour (n=", n1, ") and normal (n=", n0, ") samples")
-   file.name <- file.path(wd.rt.plots, "genes", paste0("RT_", base, "_rpkm.corr.gc.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
-   if (plotWholeChr)
-      plotRT(file.name, main.text, chr, NA, NA, rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("Tumour", "Normal"), c(adjustcolor.gray, adjustcolor.gray), c("T", "N"), "png", width=10, peaks=c(start, end), 7.75, 9, 3, 3)
- 
-   for (r in 1:length(ranges))
-      plotRT(file.name, paste0(BASE, " T/N read depth ratio"), chr, start-ranges[r],	end+ranges[r], rpkms.chr.rt, bed.gc.chr, c("red", "blue"), c("T", "N"), c(adjustcolor.red, adjustcolor.blue), c("T", "N"), "png", width=5, peaks=c(start, end), 7.75, 9, 3, 3)
-}
-
-# -----------------------------------------------------------------------------
-# SCLC RD vs T/N (RDS and SPR)
+# RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 31/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 6, 22, c("chr", "length", "cor1", "cor2", "intercept1", "intercept2"))
+cors <- toTable(0, 8, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "intercept1", "intercept2"))
 cors$chr <- 1:22
-
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
  
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.T  <- setSpline(rpkms.chr.rt, bed.gc.chr, "T")
-   rpkms.chr.rt.N  <- setSpline(rpkms.chr.rt, bed.gc.chr, "N")
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
-   cors$length[c] <- nrow(rpkms.chr.rt.RT)
-   
-   cor <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, method="spearman")
+   nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+   nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
+   cors$length[c] <- nrow(nrds.chr.RT)
+   cors$mean[c]   <- mean(nrds.chr.RT$SPLINE)
+ 
+   cor <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, method="spearman")
    cors$cor[c] <- cor
  
-   main.text <- c(paste0("SCLC read depths vs. SCLC T/N (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (T vs. N)"))
+   main.text <- c(paste0("SCLC read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (T vs. N)"))
    xlab.text <- "SCLC T/N"
-   ylab.text <- "SCLC read depth [log2]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-T-N_chr", c, "_spearman_spline"))
-   plotRD2vsRT(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), method="spearman")
+   ylab.text <- "SCLC read depth [RPKM]"
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-T-N_chr", c, "_spline_spearman"))
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), method="spearman")
  
-   cors$cor1[c] <- getCor(rpkms.chr.rt.T$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(rpkms.chr.rt.N$SPLINE, rpkms.chr.rt.RT$SPLINE, method="spearman")
-   cors$intercept1[c] <- lm(rpkms.chr.rt.T$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   cors$intercept2[c] <- lm(rpkms.chr.rt.N$SPLINE ~ rpkms.chr.rt.RT$SPLINE)[[1]][1]
-   
+   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+   cors$intercept1[c] <- lm(nrds.chr.T$SPLINE ~ nrds.chr.RT$SPLINE)[[1]][1]
+   cors$intercept2[c] <- lm(nrds.chr.N$SPLINE ~ nrds.chr.RT$SPLINE)[[1]][1]
+ 
    ## Read depth skew (RDS)
-   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
+   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)   
 }
 save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
 writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
-#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
-#file.name <- file.path(wd.rt.plots, "RD-vs-RT_SCLC_spline_spearman")
-#main.text <- paste0("SCLC read depths vs. SCLC M2/M1")
-#ymin <- 0.6
-#ymax <- 1
-#plotRD2vsRTALLREVERSED(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("M2", "M1"), c=2)
-
-## Read depth skew (RDS)
-file.name <- file.path(wd.rt.plots, "RDS_SCLC-T-N_spline_spearman")
-main.text <- c(paste0(BASE, " read depth imbalance"), "Y-axis intercept")
-plotRDS(cors, file.name, main.text, ymin=8, ymax=9, cols=c("red", "blue"), c("Tumour", "Normal"), c(2, 13, 17), digits=3)
-
 ## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "RDS-SPR_SCLC-T-N_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (T-N)/(T+N)")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5.5)
+file.name <- file.path(wd.rt.plots, "SPR_SCLC-T-N_spline_spearman")
+main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = Mean T/N ratio")
+plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text=paste0(BASE, " SPR"))
 
 ## SPR vs Read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "RDS-SPR-RDC_SCLC-T-N_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "SPR = (T-N)/(T+N)")
-xlab.text <- "Read depth correlation [rho]"
-plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5.5)
+file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-T-N_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "")
+xlab.text <- "SCLC read depth correlation [rho]"
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=NULL)
+
+## SPR vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-T-N_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio ")
+xlab.text <- "Woodfine et al 2004"
+plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=lcl.mean)
 
 # -----------------------------------------------------------------------------
 # SCLC T/N vs LCL S/G1
 # Last Modified: 27/05/19
 # -----------------------------------------------------------------------------
+## LCL S/G1
+nrds.tmp <- nrds
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".RData")))
+nrds.lcl <- nrds
+nrds <- nrds.tmp
+
 cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
 cors$chr <- 1:22
-
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
-   rpkms.chr.rt <- readTable(file.path(wd.rt.data, paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt <- setScaledRT(rpkms.chr.rt, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.RT <- setSpline(rpkms.chr.rt, bed.gc.chr, "RT")
- 
-   rpkms.chr.rt.lcl <-readTable(paste0("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.corr.gc.d.rt_", chr, "_LCL-LCL_n7-7.txt.gz"), header=T, rownames=T, sep="\t")
-   rpkms.chr.rt.lcl <- setScaledRT(rpkms.chr.rt.lcl, pseudocount=0.01, recaliRT=T, scaledRT=T) 
-   rpkms.chr.rt.lcl.RT <- setSpline(rpkms.chr.rt.lcl, bed.gc.chr, "RT")
- 
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
+   nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
+   
    ## Keep only overlapping 1kb windows
-   overlaps <- intersect(rpkms.chr.rt.RT$BED, rpkms.chr.rt.lcl.RT$BED)
+   overlaps <- intersect(nrds.chr.RT$BED, nrds.lcl.chr.RT$BED)
    cors$length[c] <- length(overlaps)
-   cors$cor[c] <- getCor(rpkms.chr.rt.RT[overlaps,]$SPLINE, rpkms.chr.rt.lcl.RT[overlaps,]$SPLINE, method="spearman")
+   cors$cor[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
 }
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-t-n-vs-lcl-s-g1_spline_spearman.RData")))
 
@@ -255,15 +187,15 @@ for (c in 1:22) {
 }
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
-# [1] -0.8451255
+# [1] -0.8466193
 # > max(cors.samples[,-c(1:4)])
-# [1] 0.8160865
+# [1] 0.8112673
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
 main.text <- c("SCLC (n=101) read depth vs. LCL S/G1", "")
-ymin <- -0.8732989
-ymax <- 0.8643419
+ymin <- -0.8789273
+ymax <- 0.8433154
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
@@ -273,7 +205,7 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 samples.sclc <- setSamplesQ4(wd.rt.data, samples1)
 writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
 # 0%        25%        50%        75%       100% 
-# -0.6685098 -0.5999356 -0.5680808 -0.4611590  0.6598001
+# -0.7504529 -0.6907507 -0.6546286 -0.5624756  0.6811825
 
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_n51.txt"), colnames=T, rownames=F, sep="\t")
 #samples.sclc <- setSamplesQ4(wd.rt.data, overlaps)
@@ -284,35 +216,35 @@ writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_n51
 # Last Modified: 04/06/19; 21/04/19
 # -----------------------------------------------------------------------------
 ## Copy from 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
-rpkms.T.chr.d.all <- NULL
+nrds.T.chr.d.all <- NULL
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
  
    ## Read depth
-   rpkms.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1)
-   #rpkms.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE, chr, PAIR0) 
-   #overlaps <- intersect(rpkms.T.chr.d$BED, rpkms.N.chr.d$BED)
+   nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
+   #nrds.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE, chr, PAIR0) 
+   #overlaps <- intersect(nrds.T.chr.d$BED, nrds.N.chr.d$BED)
  
-   test <- rpkms.T.chr.d[, samples.sclc$SAMPLE_ID]
-   if (is.null(rpkms.T.chr.d.all)) {
-      rpkms.T.chr.d.all <- test
+   test <- nrds.T.chr.d[, samples.sclc$SAMPLE_ID]
+   if (is.null(nrds.T.chr.d.all)) {
+      nrds.T.chr.d.all <- test
    } else
-      rpkms.T.chr.d.all <- rbind(rpkms.T.chr.d.all, test)
+      nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, test)
 }
 
 ##
-test <- rpkms.T.chr.d.all
+test <- nrds.T.chr.d.all
 pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_chrs_spline_spearman.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_sclc_chrs_spline_spearman.RData")))
-file.main <- c("SCLC (n=101) read depth profiles", "Overall correlation with LCL S/G1")
+file.main <- c("SCLC (n=101) read depth profiles", "")
 trait <- as.numeric(samples.sclc$Q4)
-trait[which(trait == 4)] <- "Q4 (-0.46 < r < 0.66)"
-trait[which(trait == 3)] <- "Q3 (-0.57 < r < -0.46)"
-trait[which(trait == 2)] <- "Q2 (-0.60 < r < -0.57)"
-trait[which(trait == 1)] <- "Q1 (-0.67 < r < -0.60)"
+trait[which(trait == 4)] <- "Q4"   ##(-0.56 < rho < 0.68)"
+trait[which(trait == 3)] <- "Q3"   ##(-0.65 < rho < -0.56)"
+trait[which(trait == 2)] <- "Q2"   ##(-0.69 < rho < -0.65)"
+trait[which(trait == 1)] <- "Q1"   ##(-0.75 < rho < -0.69)"
 plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightcoral", "lightskyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
@@ -330,12 +262,12 @@ n.sclc <- nrow(samples.sclc)
 n.nbl  <- nrow(samples.nbl)
 n.cll  <- nrow(samples.cll)
 
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.cll+n.sclc+n.nbl, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR)
-samples$Q4 <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
+samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 
 #install.packages('beeswarm')
 library(beeswarm)
@@ -343,7 +275,7 @@ library(beeswarm)
 pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll.pdf"), height=6, width=6)
 ymax <- max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC (n=101)", "NBL (n=56)", "CLL (n=96)"), ylim=c(ymin, ymax), ylab="Spearman's rho", main="Overall correlation with LCL S/G1")
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="Spearman's rho", main="Overall correlation with LCL S/G1", cex.lab=1.5, cex.axis=1.4, cex.main=1.6)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
@@ -351,9 +283,14 @@ beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="skyblue3", pch=16, ad
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, add=T)
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"))
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"), cex=1.5)
 mtext("", cex=1.2, line=0.3) 
 dev.off()
+
+
+
+
+
 
 
 

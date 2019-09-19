@@ -1,16 +1,16 @@
 # =============================================================================
-# Manuscript   : Using mutational strand asymmetry to study replication-transcription conflicts through space and time
-# Chapter II   : Reconstruction of tissue-specific replicaiton timing profile in tumours
+# Manuscript   : 
+# Chapter II   : 
 # Name         : manuscripts/replicaiton/sclc-wgs-rt-bstrps.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 12/11/18
+# Last Modified: 11/09/19; 12/11/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Common.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "Bootstrapping.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -23,19 +23,16 @@ load(file.path(wd.src.ref, "hg19.RData"))
 BASE <- "SCLC"
 base <- tolower(BASE)
 bstrps       <- 1000
-origin.upper <- 510   ## 500-505, 505-510 breaks
-origin.lower <- 490   ## 490-495, 495-500 breaks
-origin.break <- 1     ## 2 breaks each centering 500
+origin.upper <- 525   ## 500-505, 505-510, 510-515, 515-520, 520-525 breaks
+origin.lower <- 475   ## 475-480, 480-485, 485-490, 490-495, 495-500 breaks
+origin.break <- 5     ## 5 breaks each centering 500
 
-#wd <- "/projects/cangen/tyang2/"             ## tyang2@cheops
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@local
+wd <- "/projects/cangen/tyang2/"             ## tyang2@cheops
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@local
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps/LENGTH+TPM+AS+SLOPE")
-wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
-wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
+wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
 # -----------------------------------------------------------------------------
 # Distributions in bootstrapped data
@@ -44,18 +41,22 @@ wd.de.plots <- file.path(wd.de, "plots")
 bed.gc.rt <- NULL
 for (c in 1:22) {
    chr <- chrs[c]
- 
+
    load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
    if (is.null(bed.gc.rt))
       bed.gc.rt <- bed.gc.rt.chr
    bed.gc.rt <- rbind(bed.gc.rt, bed.gc.rt.chr)
 
    file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, "_", chr, ".pdf"))
-   plotBootstrapsHist(bed.gc.rt.chr, file.name, paste0("Chr", c), BASE, 100, origin.break)   ## See ReplicationTiming.R
+   main.text <- paste0("Chr", c, " (", BASE, ")")
+   xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
+   plotBootstrapsHist(bed.gc.rt.chr, file.name, main.text, xlab.text, 100, origin.break)   ## See ReplicationTiming.R
 }
 #save(bed.gc.rt, file=file.path(wd.rt.data, paste0("bed.gc.rt_", base,"_bstrps", bstrps, ".RData")))
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_bed.gc.rt_bstrps", bstrps, ".pdf"))
-plotBootstrapsHist(bed.gc.rt, file.name, "Chr1-22", BASE, 200, origin.break)                 ## See ReplicationTiming.R
+main.text <- paste0("Chr1-22 (", BASE, ")")
+xlab.text <- c("Number of right-leading counts", "(out of 1,000 bootstraps)")
+plotBootstrapsHist(bed.gc.rt, file.name, main.text, xlab.text, 200, origin.break)                 ## See ReplicationTiming.R
 
 # -----------------------------------------------------------------------------
 # Plot RO and RT from bootstrapped data

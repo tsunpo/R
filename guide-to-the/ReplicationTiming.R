@@ -355,22 +355,6 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    dev.off()
 }
 
-plotRTvsRT <- function(timings1, timings2, file.name, main.text, xlab.text, ylab.text, method) {
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   #pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(x=timings1, y=timings2, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=adjustcolor("black", alpha.f=0.20))
-   abline(v=0, lty=5)
-   abline(h=0, lty=5)
-   
-   lm.fit <- lm(timings1 ~ timings2)
-   abline(lm.fit, col="black", lwd=3)
-   #cor <- cor.test(timings1, timings2, method="spearman", exact=F)
-
-   #legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col="black", bty="n", cex=1.1)
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
 ## Read depth skew (RDS)
 ## Regression Analysis: How to Interpret the Constant (Y Intercept)
 ## https://blog.minitab.com/blog/adventures-in-statistics-2/regression-analysis-how-to-interpret-the-constant-y-intercept
@@ -408,11 +392,11 @@ plotRDS <- function(cors, file.name, main.text, ymin, ymax, cols, legends, cs=NU
 }
 
 ## S-phase progression rate (SPR)
-getYlim <- function(means, unit) {
-   unit <- max(means)/unit
-   ymax <- max(means) + unit
+getYlim <- function(cors, unit) {
+   unit <- max(cors$mean)/unit
+   ymax <- max(cors$mean) + unit
    
-   ymin <- ((ymax - means[2]) - means[2]) * -1
+   ymin <- ((ymax - cors$mean[2]) - cors$mean[2]) * -1
    
    return(c(ymin, ymax))
 }
@@ -420,7 +404,7 @@ getYlim <- function(means, unit) {
 plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text="SPR") {
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
-   ylim <- getYlim(cors$mean, unit)
+   ylim <- getYlim(cors, unit)
 
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
@@ -452,40 +436,45 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text
    dev.off()
 }
 
-plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
+plotSPRRDC <- function(cors, file.name, main.text, cs, xlab.text, unit, ylab.text="SPR", lcl.mean=NULL) {
+   if (!is.null(lcl.mean))
+      cors$cor <- mapply(x = 1:22, function(x) lcl.mean$Mean[x])
+      
+   #ylab.text <- "SPR"
+   #xlab.text <- "Read depth correlation [rho]"
    cols <- c("red", "blue", "black", "purple")
-   ylim <- getYlim(means, unit)
+   ylim <- getYlim(cors, unit)
 
-   unit <- (max(cors) - min(cors))/20
-   xlim <- c(min(cors) - unit, max(cors) + unit)
+   unit <- (max(cors$cor) - min(cors$cor))/20
+   xlim <- c(min(cors$cor) - unit, max(cors$cor) + unit)
    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    if (is.null(xlim))
-      plot(means ~ cors, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+      plot(cors$mean ~ cors$cor, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
    else
-      plot(means ~ cors, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
-
-   abline(h=means[2], lty=5)
-   lm.fit <- lm(means ~ cors)
+      plot(cors$mean ~ cors$cor, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
+   
+   abline(h=cors$mean[2], lty=5)
+   lm.fit <- lm(cors$mean ~ cors$cor)
    abline(lm.fit, col=cols[4], lwd=3)
 
-   idx <- which(means > means[2])
-   points(means[idx] ~ cors[idx], col=cols[1], pch=19)
-   idx <- which(means < means[2])
-   points(means[idx] ~ cors[idx], col=cols[2], pch=19)
-   points(means[2] ~ cors[2], col=cols[3], pch=19)
+   idx <- which(cors$mean > cors$mean[2])
+   points(cors$mean[idx] ~ cors$cor[idx], col=cols[1], pch=19)
+   idx <- which(cors$mean < cors$mean[2])
+   points(cors$mean[idx] ~ cors$cor[idx], col=cols[2], pch=19)
+   points(cors$mean[2] ~ cors$cor[2], col=cols[3], pch=19)
  
-   text(cors[2], means[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   text(cors$cor[2], cors$mean[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (means[c] > means[2])
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
+         if (cors$mean[c] > cors$mean[2])
+            text(cors$cor[c], cors$mean[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
+            text(cors$cor[c], cors$mean[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
       }
    
-   cor <- cor.test(means, cors, method="spearman", exact=F)
+   cor <- cor.test(cors$mean, cors$cor, method="spearman", exact=F)
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
    legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   ## bty="n"
@@ -503,46 +492,6 @@ plotSPRRDCSNV <- function(snvs, cors, file.name, main.text, cs, xlab.text, unit,
    colnames(snvs) <- c("chr", "cor", "skew")
    
    plotSPRRDC(snvs, file.name, main.text, cs, xlab.text, unit, ylab.text) 
-}
-
-plotSRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text, position) {
-   cols <- c("black", "black", "black", "purple")
-
-   unit <- (max(means) - min(means))/10
-   ylim <- c(min(means) - unit, max(means) + unit)
-   
-   unit <- (max(cors) - min(cors))/20
-   xlim <- c(min(cors) - unit, max(cors) + unit)
- 
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(means ~ cors, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
- 
-   lm.fit <- lm(means ~ cors)
-   abline(lm.fit, col=cols[4], lwd=3)
- 
-   idx <- which(means > means[2])
-   points(means[idx] ~ cors[idx], col=cols[1], pch=19)
-   idx <- which(means < means[2])
-   points(means[idx] ~ cors[idx], col=cols[2], pch=19)
-   points(means[2] ~ cors[2], col=cols[3], pch=19)
- 
-   text(cors[2], means[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
-   if (!is.null(cs))
-      for (c in 1:length(cs)) {
-         c <- cs[c]
-         if (means[c] > means[2])
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
-         else
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
-      }
- 
-   cor <- cor.test(means, cors, method="spearman", exact=F)
-
-   legend(position, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.1)
-   #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
-   #axis(side=1, at=seq(2, 22, by=2))
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
 }
 
 # -----------------------------------------------------------------------------
@@ -638,7 +587,7 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
 # Compare betweeen RT and LCL RT in sclc-wgs-rt.R
 # Last Modified: 03/06/19
 # -----------------------------------------------------------------------------
-plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA) {
+plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA, size=6) {
    cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
    n <- length(samples)
    cnt <- 0
@@ -651,7 +600,7 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
       cnt <- cnt + 1
    }
  
-   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   pdf(paste0(file.name, ".pdf"), height=size, width=size)
    boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1], cex.lab=1.5, cex.axis=1.3, cex.main=1.6)#, medcol="red")
    axis(side=1, at=seq(2, 22, by=2), cex.axis=1.2)
    abline(h=0, lty=5)

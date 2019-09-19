@@ -4,6 +4,13 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19
 # =============================================================================
+source("http://bioconductor.org/biocLite.R")
+biocLite("rhdf5")
+
+install.packages("devtools", method="curl")
+
+options(download.file.method="curl")
+devtools::install_github("pachterlab/sleuth")
 
 # -----------------------------------------------------------------------------
 # Methods: Transcript-level TPM estimates using sleuth
@@ -226,7 +233,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab, cex.lab=1.2, cex.axis=1.1, cex.main=1.2)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab, cex.lab=1.5, cex.axis=1.4, cex.main=1.6)
    idx <- which(trait != "NA")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
 
@@ -247,9 +254,9 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    mtext(file.main[2], cex=1.2, line=0.3)
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=16, cex=1)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=16, cex=1.5)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1) 
+      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.5) 
    dev.off()
 }
 
