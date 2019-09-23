@@ -63,6 +63,7 @@ nrds$RT <- scale(nrds$RT)
 save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
 # > nrow(nrds)
 # [1] 2657164
+nrds.sclc <- nrds
 
 #load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
 ymax <- 0.6
@@ -259,17 +260,28 @@ getSplineRT <- function(nrds, bed.gc) {
    return(nrds.RT)
 }
 
-overlaps <- intersect(intersect(rownames(nrds.sclc), rownames(nrds.nbl)), rownames(nrds.cll))
-nrds.sclc.o <- nrds.sclc[overlaps,]
-nrds.nbl.o  <- nrds.nbl[overlaps,]
-nrds.cll.o  <- nrds.cll[overlaps,]
-length(overlaps)
-# [1] 2649168
+nrds.sclc.RT <- getSplineRT(nrds.sclc, bed.gc)
+nrds.nbl.RT  <- getSplineRT(nrds.nbl,  bed.gc)
+nrds.cll.RT  <- getSplineRT(nrds.cll,  bed.gc)
 
-nrds.sclc.o.RT <- getSplineRT(nrds.sclc.o, bed.gc)
-nrds.nbl.o.RT  <- getSplineRT(nrds.nbl.o, bed.gc)
-nrds.cll.o.RT  <- getSplineRT(nrds.cll.o, bed.gc)
-nrow(nrds.sclc.o.RT)
+overlaps <- intersect(intersect(rownames(nrds.sclc.RT), rownames(nrds.nbl.RT)), rownames(nrds.cll.RT))
+nrds.sclc.RT.o <- nrds.sclc.RT[overlaps,]
+nrds.nbl.RT.o  <- nrds.nbl.RT[overlaps,]
+nrds.cll.RT.o  <- nrds.cll.RT[overlaps,]
+length(overlaps)
+# [1] 2638820
+
+
+
+
+
+
+
+
+#nrds.sclc.o.RT <- getSplineRT(nrds.sclc.o, bed.gc)
+#nrds.nbl.o.RT  <- getSplineRT(nrds.nbl.o, bed.gc)
+#nrds.cll.o.RT  <- getSplineRT(nrds.cll.o, bed.gc)
+#nrow(nrds.sclc.o.RT)
 # [1] 2638822
 
 ###

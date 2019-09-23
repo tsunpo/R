@@ -6,22 +6,46 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Read in bootstrapped data (in 3b)
-# Last Modified: 17/09/19; 31/10/18
+# Read in bootstrapping data (in 3b)
+# Last Modified: 20/09/19; 31/10/18
 # -----------------------------------------------------------------------------
-loadBEDGCRT <- function(wd.rt.data, b, type) {
-   load(file.path(wd.rt.data, b, paste0(type, "_ensGene.rt.RData")))
-   bed.gc.rt <- bed.gc.rt[!is.na(bed.gc.rt$SLOPE),]
+getBSTRPS <- function(nrds.RT, colname, b) {
+   nrds.RT <- nrds.RT[, c("BED", colname)]
+   colnames(nrds.RT)[2] <- paste0(colname, "_", b)
  
-   return(bed.gc.rt)
+   return(nrds.RT)
 }
 
-getBEDGCRT <- function(bed.gc.rt, colname, b) {
-   bed.gc.rt$BED <- rownames(bed.gc.rt)
-   bed.gc.rt <- bed.gc.rt[, c("BED", colname)]
-   colnames(bed.gc.rt)[1+b] <- paste0(colname, "_", b)
+# -----------------------------------------------------------------------------
+# Determine RFD from bootstrapping data (in 3b)
+# Last Modified: 20/09/19; 31/10/18
+# -----------------------------------------------------------------------------
+getPOS <- function(nrds.RT) {
+   return(as.numeric(length(which(nrds.RT > 0))))
+}
+
+getNEG <- function(nrds.RT) {
+ return(as.numeric(length(which(nrds.RT < 0))))
+}
+
+getRFD <- function(nrds.RT) {
+   return((nrds.RT$POS - nrds.RT$NEG)/(nrds.RT$POS + nrds.RT$NEG))
+}
+
+pipeBootstrapping <- function(nrds.RT, bstrps) {
+   nrds.RT$POS <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getPOS(nrds.RT[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+   nrds.RT$NEG <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getNEG(nrds.RT[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+   nrds.RT$RFD <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getRFD(nrds.RT[x,])))
  
-   return(bed.gc.rt)
+   return(nrds.RT)
+}
+
+getBootstrapping <- function(nrds.RT, origin.lower, origin.upper) {
+   nrds.RT.l   <- subset(nrds.RT,   POS >= origin.lower)
+   nrds.RT.l.u <- subset(nrds.RT.l, POS <= origin.upper)
+   
+   diff <- setdiff(rownames(nrds.RT), rownames(nrds.RT.l.u))
+   return(nrds.RT[diff,])
 }
 
 # -----------------------------------------------------------------------------
@@ -37,7 +61,7 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, b
    cols <- rep("steelblue1", breaks)
    cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
    cols[(breaks/2 - origin.break + 1):(breaks/2 + origin.break)] <- "red"
-   h <- hist(bed.gc.rt.chr$RIGHT_LEADING, breaks=breaks) 
+   h <- hist(bed.gc.rt.chr$NEG, breaks=breaks) 
    ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
    h$counts <- h$counts/1000                                        ## Change frequency scale to x1000 in row 1
    
@@ -55,7 +79,7 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, b
    plot(h, main=main.text, ylab="Frequency (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n")
    
    par(mar=c(5.5,4,0,1))
-   hist(bed.gc.rt.chr$RIGHT_LEADING, main="" , ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
+   hist(bed.gc.rt.chr$NEG, main="" , ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
    if (ymax < 1000)
       axis(side=2, at=seq(0, ymax, by=250))
    else if (ymax < 3000)
