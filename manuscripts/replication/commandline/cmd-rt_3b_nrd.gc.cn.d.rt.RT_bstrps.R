@@ -45,4 +45,4 @@ for (b in 2:BSTRPS) {
    colnames(nrds.RT.BSTRPS)[1+b] <- colnames(nrds.RT.BSTRP)[2]
 }
 nrds.RT.BSTRPS <- nrds.RT.BSTRPS[,-1]
-save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.SPLINE.", COLUMN, ".RData")))
+save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.", COLUMN, ".BSTRPS.RData")))

@@ -61,7 +61,8 @@ for (c in 1:22) {
 nrds$RT <- scale(nrds$RT)
 save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".RData")))
 # > nrow(nrds)
-# [1] 2582940
+# [1] 2582940 - 22
+nrds.lcl <- nrds
 
 #load(file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".RData")))
 ymax <- 0.6

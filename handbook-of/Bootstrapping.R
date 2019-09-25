@@ -58,10 +58,11 @@ getBootstrapping <- function(nrds.RT, origin.lower, origin.upper) {
 ## https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
 ## https://stackoverflow.com/questions/15717545/set-the-intervals-of-x-axis-using-r
 plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, breaks, origin.break) {
-   cols <- rep("steelblue1", breaks)
-   cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
-   cols[(breaks/2 - origin.break + 1):(breaks/2 + origin.break)] <- "red"
-   h <- hist(bed.gc.rt.chr$NEG, breaks=breaks) 
+   cols <- rep("lightskyblue3", breaks)
+   cols[(breaks/2 + origin.break):breaks] <- "lightcoral"
+   cols[(breaks/2 - origin.break + 1):(breaks/2 + origin.break)] <- "white"
+   
+   h <- hist(bed.gc.rt.chr$POS, breaks=breaks)
    ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
    h$counts <- h$counts/1000                                        ## Change frequency scale to x1000 in row 1
    
@@ -69,24 +70,24 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, b
    #par(mfrow=c(2,1))
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    ylim <- sort(c(h$counts[1], h$counts[breaks]), decreasing=F)     ## Min and max frequencies in row 1 (in x1000 scale)
-   if (ylim[1] > 500)                                               ## Round up to the nearest power of 10 (in x1000 scale)
+   if (ylim[1] > 500) {                                             ## Round up to the nearest power of 10 (in x1000 scale)
       ylim[1] <- floor(ylim[1]/100)*100
-   else if (ylim[1] > 10)
+   } else if (ylim[1] > 10) {
       ylim[1] <- floor(ylim[1]/10)*10
-   else
+   } else
       ylim[1] <- floor(ylim[1])
    par(mar=c(1,4,4,1))
    plot(h, main=main.text, ylab="Frequency (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n")
    
    par(mar=c(5.5,4,0,1))
-   hist(bed.gc.rt.chr$NEG, main="" , ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
-   if (ymax < 1000)
+   hist(bed.gc.rt.chr$POS, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
+   if (ymax < 1000) {
       axis(side=2, at=seq(0, ymax, by=250))
-   else if (ymax < 3000)
+   } else if (ymax < 3000) {
       axis(side=2, at=seq(0, ymax, by=500))
-   else if (ymax > 50000)
+   } else if (ymax > 50000) {
       axis(side=2, at=seq(0, ymax, by=10000))
-   else
+   } else
       axis(side=2, at=seq(0, ymax, by=1000))
    axis(side=1, at=seq(0, 1000, by=250))
    mtext(paste0("Distribution of 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1.2, line=6.3)

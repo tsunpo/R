@@ -20,12 +20,12 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Variations in bootstrapped data (Ensembl genes)
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-BASE <- "SCLC"
+BASE <- "LCL"
 base <- tolower(BASE)
 bstrps       <- 1000
-origin.upper <- 750   ## 500-505, 505-510, 510-515, 515-520, 520-525 breaks
-origin.lower <- 250   ## 475-480, 480-485, 485-490, 490-495, 495-500 breaks
-origin.break <- 50     ## 5 breaks each centering 500
+origin.upper <- 875   ## 500-505, 505-510, 510-515, 515-520, 520-525 breaks
+origin.lower <- 125   ## 475-480, 480-485, 485-490, 490-495, 495-500 breaks
+origin.break <- 75     ## 5 breaks each centering 500
 
 #wd <- "/projects/cangen/tyang2/"             ## tyang2@cheops
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@local
@@ -119,49 +119,83 @@ length(which(nrds.cll.RT.o$SIGN > 0))
 nrds.RT.BSTRPS.sclc.b <- getBootstrapping(nrds.RT.BSTRPS.sclc, origin.lower, origin.upper)
 nrds.RT.BSTRPS.nbl.b  <- getBootstrapping(nrds.RT.BSTRPS.nbl,  origin.lower, origin.upper)
 nrds.RT.BSTRPS.cll.b  <- getBootstrapping(nrds.RT.BSTRPS.cll,  origin.lower, origin.upper)
+nrds.RT.BSTRPS.lcl.b  <- getBootstrapping(nrds.RT.BSTRPS.lcl,  origin.lower, origin.upper)
 nrow(nrds.RT.BSTRPS.sclc.b)
-# [1] 2517859
-# > 2517859/2650083
-# [1] 0.9501057
+# [1] 2260674
+# > 2260674/2650083
+# [1] 0.8530578
 nrow(nrds.RT.BSTRPS.nbl.b)
-# [1] 2492311
-# > 2492311/2652467
-# [1] 0.93962
+# [1] 2147625
+# > 2147625/2652467
+# [1] 0.8096708
 nrow(nrds.RT.BSTRPS.cll.b)
-# [1] 2433418
-# > 2433418/2644419
-# [1] 0.9202089
+# [1] 2287991
+# > 2287991/2644419
+# [1] 
+nrow(nrds.RT.BSTRPS.lcl.b)
+# [1] 2323532
+# > 2323532/2534909
+# [1] 0.9166136
 
-overlaps <- intersect(intersect(rownames(nrds.RT.BSTRPS.sclc.b), rownames(nrds.RT.BSTRPS.nbl.b)), rownames(nrds.RT.BSTRPS.cll.b))
+overlaps <- intersect(intersect(intersect(rownames(nrds.RT.BSTRPS.sclc.b), rownames(nrds.RT.BSTRPS.nbl.b)), rownames(nrds.RT.BSTRPS.cll.b)), rownames(nrds.RT.BSTRPS.lcl.b))
 length(overlaps)
-# [1] 2221573
+# [1] 1458172
 
 ###
 ##
 nrds.sclc.RT.o <- nrds.sclc.RT[overlaps,]
 nrds.nbl.RT.o <- nrds.nbl.RT[overlaps,]
 nrds.cll.RT.o <- nrds.cll.RT[overlaps,]
+nrds.lcl.RT.o <- nrds.lcl.RT[overlaps,]
+
+##
+nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.lcl.RT.o$SPLINE
+length(which(nrds.sclc.RT.o$SIGN > 0))
+# [1] 1578309
+
+nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SPLINE * nrds.lcl.RT.o$SPLINE
+length(which(nrds.nbl.RT.o$SIGN > 0))
+# [1] 1562328
+
+nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SPLINE * nrds.lcl.RT.o$SPLINE
+length(which(nrds.cll.RT.o$SIGN > 0))
+# [1] 1573794
+
+
+
+
+
+
+
+
+
+###
+##
+nrds.sclc.RT.o <- nrds.sclc.RT[overlaps,]
+nrds.nbl.RT.o <- nrds.nbl.RT[overlaps,]
+nrds.cll.RT.o <- nrds.cll.RT[overlaps,]
+nrds.lcl.RT.o <- nrds.lcl.RT[overlaps,]
 
 ##
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.nbl.RT.o$SPLINE
 nrds.nbl.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.nbl.RT.o$SPLINE
 length(which(nrds.sclc.RT.o$SIGN > 0))
 length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 2148346
+# [1] 1678276
 
 ##
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.cll.RT.o$SPLINE
 nrds.cll.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.cll.RT.o$SPLINE
 length(which(nrds.sclc.RT.o$SIGN > 0))
 length(which(nrds.cll.RT.o$SIGN > 0))
-# [1] 2080295
+# [1] 1661164
 
 ##
 nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SPLINE * nrds.cll.RT.o$SPLINE
 nrds.cll.RT.o$SIGN <- nrds.nbl.RT.o$SPLINE * nrds.cll.RT.o$SPLINE
 length(which(nrds.nbl.RT.o$SIGN > 0))
 length(which(nrds.cll.RT.o$SIGN > 0))
-# [1] 2040348
+# [1] 1654629
 
 
 

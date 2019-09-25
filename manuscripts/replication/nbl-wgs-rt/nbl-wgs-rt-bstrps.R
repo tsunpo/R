@@ -42,19 +42,19 @@ nrds.RT.BSTRPS <- NULL
 for (c in 1:22) {
    chr <- chrs[c]
 
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SPLINE_", chr, ".RData")))
    if (is.null(nrds.RT.BSTRPS))
       nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
    else
       nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
 
-   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_nrds.RT.BSTRPS_", chr, ".pdf"))
+   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SPLINE_BSTRPS_", chr, ".pdf"))
    main.text <- paste0("Chr", c, " (", BASE, ")")
    xlab.text <- c("Number of early replication counts", "(out of 1,000 bootstrappings)")
-   plotBootstrapsHist(nrds.RT.BSTRPS.chr, file.name, main.text, xlab.text, 200, origin.break)
+   #plotBootstrapsHist(nrds.RT.BSTRPS.chr, file.name, main.text, xlab.text, 200, origin.break)
 }
-save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_nrds.RT.BSTRPS.pdf"))
+save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SPLINE.RData")))
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SPLINE_BSTRPS.pdf"))
 main.text <- paste0("Chr1-22 (", BASE, ")")
 xlab.text <- c("Number of early replication counts", "(out of 1,000 bootstrappings)")
 plotBootstrapsHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 200, origin.break)
