@@ -121,7 +121,7 @@ writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_sp
 ## Mean replication timing ratio (MRTR)
 ylab.text <- "Mean M2/M1 ratio"
 file.name <- file.path(wd.rt.plots, "MRTR_CLL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = Mean M2/M1 ratio")
+main.text <- c(paste0(BASE, " mean replication timing ratio (MRTR)"), "")
 plotMRTR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## MRTR vs Read depth correlation
