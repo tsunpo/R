@@ -126,45 +126,24 @@ ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
-## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "SPR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate (SPR)"), "")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text="Mean S/G1 ratio")
+## Mean replication timing ratio (MRTR)
+ylab.text <- "Mean S/G1 ratio"
+file.name <- file.path(wd.rt.plots, "MRTR_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " mean replication timing ratio (MRTR)"), "")
+plotMRTR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
-## SPR vs Read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "SPR-RDC_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depths correlation"), "")
+## MRTR vs Read depth correlation
+file.name <- file.path(wd.rt.plots, "MRTR-RDC_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " MRTR vs. Read depths correlation"), "")
 xlab.text <- "S vs. G1 [rho]"
-plotSPRRDC(cors$mean, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text="Mean S/G1 ratio")
+plotMRTRRDC(cors$mean, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
-## SPR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "SPR-Woodfine_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "")
-xlab.text <- "Mean replication timing ratio"
-plotSPRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text="Mean S/G1 ratio")
+## MRTR vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "MRTR-Woodfine_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " MRTR vs. Woodfine MRTR"), "")
+xlab.text <- "Woodfine et al. 2004"
+plotMRTRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
-## S read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "SPR-S_LCL-S-G1_spline_spearman")
-main.text <- c("S-phase read correlation", "")
-xlab.text <- "S vs. S/G1 [rho]"
-plotSPRRDC(cors$mean, cors$cor1, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text="Mean S/G1 ratio")
-
-file.name <- file.path(wd.rt.plots, "SPR-G1_LCL-S-G1_spline_spearman")
-main.text <- c("G1-phase read correlation", "")
-xlab.text <- "G1 vs. S/G1 [rho]"
-plotSPRRDC(cors$mean, cors$cor2, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text="Mean S/G1 ratio")
-
-###
-## S read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "SG1-S_LCL-S-G1_spline_spearman")
-main.text <- c("S-phase read correlation", "")
-xlab.text <- "S vs. G1 [rho]"
-plotSRDC(cors$cor1, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text="S vs. S/G1 [rho]", "bottomleft")
-
-file.name <- file.path(wd.rt.plots, "SG1-G1_LCL-S-G1_spline_spearman")
-main.text <- c("G1-phase read correlation", "")
-xlab.text <- "S vs. G1 [rho]"
-plotSRDC(cors$cor2, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text="G1 vs. S/G1 [rho]", "topleft")
 
 
 

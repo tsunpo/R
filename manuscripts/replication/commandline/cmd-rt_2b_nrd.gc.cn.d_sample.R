@@ -54,10 +54,15 @@ for (c in 1:22) {
    
    ## Read depth
    nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR, method)
-   colnames(nrds.T.chr.d) <- toupper(gsub("\\.", "", colnames(nrds.T.chr.d)))
+   colnames(nrds.T.chr.d) <- gsub("\\.", "", colnames(nrds.T.chr.d))   ## ADD 05/10/19
+   colnames(nrds.T.chr.d) <- toupper(colnames(nrds.T.chr.d))           ## ADD 05/10/19
    #nrds.T.chr.d <- nrds.T.chr.d[, c("BED", samples1)]   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
 
    ## Individual read depth
+   SAMPLE <- gsub("-", "", SAMPLE)     ## ADD 05/10/19
+   SAMPLE <- gsub("\\.", "", SAMPLE)   ## ADD 05/10/19
+   SAMPLE <- toupper(SAMPLE)           ## ADD 05/10/19
+   
    nrds.T.chr.d.sample <- nrds.T.chr.d[,c("BED", SAMPLE)]
    colnames(nrds.T.chr.d.sample) <- c("BED", "T")
    #nrds.T.chr.d.sample$T <- log2(nrds.T.chr.d.sample$T + 0.01)

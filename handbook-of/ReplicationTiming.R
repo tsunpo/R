@@ -250,7 +250,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[1])   
    legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[2])
    if (!is.na(xmin) && !is.na(xmax))
-      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
    else
       legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T)
    if (!is.null(lcl.rt.chr))
@@ -371,43 +371,10 @@ plotRTvsRT <- function(timings1, timings2, file.name, main.text, xlab.text, ylab
    dev.off()
 }
 
-## Read depth skew (RDS)
-## Regression Analysis: How to Interpret the Constant (Y Intercept)
-## https://blog.minitab.com/blog/adventures-in-statistics-2/regression-analysis-how-to-interpret-the-constant-y-intercept
-plotRDS <- function(cors, file.name, main.text, ymin, ymax, cols, legends, cs=NULL, digits) {
-   ylab.text <- "Constant"
-   xlab.text <- "Chromosome"  
- 
-   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$intercept1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col=cols[1], xaxt="n", pch=19)
-   lines(cors$intercept1, y=NULL, type="l", lwd=3, col=cols[1])
-   points(cors$chr, cors$intercept2, col=cols[2], pch=19)
-   lines(cors$intercept2, y=NULL, type="l", lwd=3, col=cols[2])
-   #abline(h=0, lty=5)
- 
-   legend("topleft", legends[1], text.col=cols[1], pch=16, col=cols[1])        
-   legend("bottomleft", legends[2], text.col=cols[2], pch=16, col=cols[2])
- 
-   if (!is.null(cs)) {
-      for (c in 1:length(cs)) {
-         c <- cs[c]
-         if (cors$intercept1[c] > cors$intercept2[c]) {
-            text(cors$chr[c], cors$intercept1[c], round0(cors$intercept1[c], digits=digits), cex=1.1, col=cols[1], pos=3)
-            text(cors$chr[c], cors$intercept2[c], round0(cors$intercept2[c], digits=digits), cex=1.1, col=cols[2], pos=1)
-         } else {
-            text(cors$chr[c], cors$intercept1[c], round0(cors$intercept1[c], digits=digits), cex=1.1, col=cols[1], pos=1)
-            text(cors$chr[c], cors$intercept2[c], round0(cors$intercept2[c], digits=digits), cex=1.1, col=cols[2], pos=3)
-         }
-      }
-   }
-   axis(side=1, at=seq(2, 22, by=2))
-   #axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8))
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
-## S-phase progression rate (SPR)
+# -----------------------------------------------------------------------------
+# Mean replication timing ratio (MRTR)
+# Last Modified: 06/10/19
+# -----------------------------------------------------------------------------
 getYlim <- function(means, unit) {
    unit <- max(means)/unit
    ymax <- max(means) + unit
@@ -417,7 +384,7 @@ getYlim <- function(means, unit) {
    return(c(ymin, ymax))
 }
 
-plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text="SPR") {
+plotMRTR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
    ylim <- getYlim(cors$mean, unit)
@@ -452,7 +419,7 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text
    dev.off()
 }
 
-plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
+plotMRTRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
    cols <- c("red", "blue", "black", "purple")
    ylim <- getYlim(means, unit)
 
@@ -492,53 +459,6 @@ plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, y
    legend(legends[2], "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
    
    legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.1)
-   #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
-   #axis(side=1, at=seq(2, 22, by=2))
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
-plotSPRRDCSNV <- function(snvs, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
-   snvs <- cbind(snvs, cors[, "skew"])
-   colnames(snvs) <- c("chr", "cor", "skew")
-   
-   plotSPRRDC(snvs, file.name, main.text, cs, xlab.text, unit, ylab.text) 
-}
-
-plotSRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text, position) {
-   cols <- c("black", "black", "black", "purple")
-
-   unit <- (max(means) - min(means))/10
-   ylim <- c(min(means) - unit, max(means) + unit)
-   
-   unit <- (max(cors) - min(cors))/20
-   xlim <- c(min(cors) - unit, max(cors) + unit)
- 
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(means ~ cors, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
- 
-   lm.fit <- lm(means ~ cors)
-   abline(lm.fit, col=cols[4], lwd=3)
- 
-   idx <- which(means > means[2])
-   points(means[idx] ~ cors[idx], col=cols[1], pch=19)
-   idx <- which(means < means[2])
-   points(means[idx] ~ cors[idx], col=cols[2], pch=19)
-   points(means[2] ~ cors[2], col=cols[3], pch=19)
- 
-   text(cors[2], means[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
-   if (!is.null(cs))
-      for (c in 1:length(cs)) {
-         c <- cs[c]
-         if (means[c] > means[2])
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
-         else
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
-      }
- 
-   cor <- cor.test(means, cors, method="spearman", exact=F)
-
-   legend(position, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.1)
    #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
    #axis(side=1, at=seq(2, 22, by=2))
    mtext(main.text[2], cex=1.2, line=0.3)

@@ -119,22 +119,23 @@ for (c in 1:22) {
 save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
-## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "SPR_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = Mean M2/M1 ratio")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text=paste0(BASE, " SPR"))
+## Mean replication timing ratio (MRTR)
+ylab.text <- "Mean M2/M1 ratio"
+file.name <- file.path(wd.rt.plots, "MRTR_NBL-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " mean replication timing ratio (MRTR)"), "")
+plotMRTR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
-## SPR vs Read depth correlation (RDC)
-file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depth correlation"), "")
-xlab.text <- "NBL read depth correlation [rho]"
-plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=NULL)
+## MRTR vs Read depth correlation
+file.name <- file.path(wd.rt.plots, "MRTR-RDC_NBL-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " MRTR vs. Read depths correlation"), "")
+xlab.text <- "M2 vs. M1 [rho]"
+plotMRTRRDC(cors$mean, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
-## SPR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "SPR-Woodfine_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio ")
-xlab.text <- "Woodfine et al 2004"
-plotSPRRDC(cors, file.name, main.text, c(4, 13, 17, 19, 21, 22), xlab.text, unit=5, ylab.text=paste0(BASE, " SPR"), lcl.mean=lcl.mean)
+## MRTR vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "MRTR-Woodfine_NBL-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " MRTR vs. Woodfine MRTR"), "")
+xlab.text <- "Woodfine et al. 2004"
+plotMRTRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 # -----------------------------------------------------------------------------
 # RT vs LCL S/G1

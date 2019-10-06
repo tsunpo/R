@@ -30,12 +30,51 @@ wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.meta  <- file.path(wd, BASE, "metadata", "George 2015")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base1, "-wgs-rt"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
 phenos  <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, rownames=T, sep="\t")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 27/09/19
+# -----------------------------------------------------------------------------
+phenos.surv <- survSCLC(phenos, samples, isCensored=T)
+
+test <- toTable(0, 4, 4, c("Q4", "Q3", "Q2", "Q1"))
+rownames(test) <- c("IV", "III", "II", "I")
+
+test[1, 1] <- nrow(subset(subset(phenos.surv, Q4 == 4), Stage == 4))
+test[1, 2] <- nrow(subset(subset(phenos.surv, Q4 == 3), Stage == 4))
+test[1, 3] <- nrow(subset(subset(phenos.surv, Q4 == 2), Stage == 4))
+test[1, 4] <- nrow(subset(subset(phenos.surv, Q4 == 1), Stage == 4))
+test[2, 1] <- nrow(subset(subset(phenos.surv, Q4 == 4), Stage == 3))
+test[2, 2] <- nrow(subset(subset(phenos.surv, Q4 == 3), Stage == 3))
+test[2, 3] <- nrow(subset(subset(phenos.surv, Q4 == 2), Stage == 3))
+test[2, 4] <- nrow(subset(subset(phenos.surv, Q4 == 1), Stage == 3))
+test[3, 1] <- nrow(subset(subset(phenos.surv, Q4 == 4), Stage == 2))
+test[3, 2] <- nrow(subset(subset(phenos.surv, Q4 == 3), Stage == 2))
+test[3, 3] <- nrow(subset(subset(phenos.surv, Q4 == 2), Stage == 2))
+test[3, 4] <- nrow(subset(subset(phenos.surv, Q4 == 1), Stage == 2))
+test[4, 1] <- nrow(subset(subset(phenos.surv, Q4 == 4), Stage == 1))
+test[4, 2] <- nrow(subset(subset(phenos.surv, Q4 == 3), Stage == 1))
+test[4, 3] <- nrow(subset(subset(phenos.surv, Q4 == 2), Stage == 1))
+test[4, 4] <- nrow(subset(subset(phenos.surv, Q4 == 1), Stage == 1))
+fisher.test(test)[[1]]
+# [1] 0.7301972
+
+## UICC stage
+test <- toTable(0, 2, 2, c("M2", "M1"))
+rownames(test) <- c("II", "I")
+
+test[1, 1] <- nrow(subset(subset(phenos.surv, M2 == 1), Stage == 2))
+test[1, 2] <- nrow(subset(subset(phenos.surv, M2 == 0), Stage == 2))
+test[2, 1] <- nrow(subset(subset(phenos.surv, M2 == 1), Stage == 1))
+test[2, 2] <- nrow(subset(subset(phenos.surv, M2 == 0), Stage == 1))
+fisher.test(test)[[1]]
+# [1] 0.4043607
 
 # -----------------------------------------------------------------------------
 # Cox regression model

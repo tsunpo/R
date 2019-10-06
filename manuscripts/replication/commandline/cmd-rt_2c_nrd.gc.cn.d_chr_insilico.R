@@ -54,6 +54,8 @@ n0 <- length(samples0)
 
    ## Replication timing
    nrds.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
+   colnames(nrds.chr.d) <- gsub("\\.", "", colnames(nrds.chr.d))   ## ADD 05/10/19
+   colnames(nrds.chr.d) <- toupper(colnames(nrds.chr.d))           ## ADD 05/10/19
    nrds.T.chr.d <- nrds.chr.d[,c("BED", samples1)]
    nrds.N.chr.d <- nrds.chr.d[,c("BED", samples0)]
 
