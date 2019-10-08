@@ -83,7 +83,7 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 8, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "intercept1", "intercept2"))
+cors <- toTable(0, 7, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "spr"))
 cors$chr <- 1:22
 for (c in 1:22) {
    chr <- chrs[c]
@@ -99,6 +99,10 @@ for (c in 1:22) {
    cors$length[c] <- nrow(nrds.chr.RT)
    cors$mean[c]   <- mean(nrds.chr.RT$SPLINE)
    
+   e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
+   l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
+   cors$spr[c] <- (e - l)/(e + l)
+   
    cor <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, method="spearman")
    cors$cor[c] <- cor
  
@@ -110,11 +114,6 @@ for (c in 1:22) {
  
    cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
    cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   cors$intercept1[c] <- lm(nrds.chr.T$SPLINE ~ nrds.chr.RT$SPLINE)[[1]][1]
-   cors$intercept2[c] <- lm(nrds.chr.N$SPLINE ~ nrds.chr.RT$SPLINE)[[1]][1]
- 
-   ## Read depth skew (RDS)
-   cors$skew <- (cors$intercept1 - cors$intercept2) / (cors$intercept1 + cors$intercept2)
 }
 save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
@@ -126,6 +125,31 @@ ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
+## S-phase progression rate (SPR)
+ylab.text <- "SPR"
+file.name <- file.path(wd.rt.plots, "SPR_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (E-L)/(E+L)")
+plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
+
+## SPR vs Read depth correlation
+file.name <- file.path(wd.rt.plots, "SPR-RDC_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Read depths correlation"), "")
+xlab.text <- "S vs. G1 [rho]"
+plotSPRRDC(cors$spr, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## SPR vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "SPR-Woodfine_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio")
+xlab.text <- "Woodfine et al. 2004"
+plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## SPR vs. Mean replication timing ratio (MRTR)
+file.name <- file.path(wd.rt.plots, "SPR-MRTR_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " SPR vs. MRTR"), "")
+xlab.text <- "Mean replication timing ratio"
+plotSPRRDC(cors$mean, cors$spr, file.name, main.text, c(13, 17, 22), xlab.text, unit=5, ylab.text)
+
+###
 ## Mean replication timing ratio (MRTR)
 ylab.text <- "Mean S/G1 ratio"
 file.name <- file.path(wd.rt.plots, "MRTR_LCL-S-G1_spline_spearman")
@@ -142,7 +166,13 @@ plotMRTRRDC(cors$mean, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xla
 file.name <- file.path(wd.rt.plots, "MRTR-Woodfine_LCL-S-G1_spline_spearman")
 main.text <- c(paste0(BASE, " MRTR vs. Woodfine MRTR"), "")
 xlab.text <- "Woodfine et al. 2004"
-plotMRTRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotMRTRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## MRTR vs S phase progression rates
+file.name <- file.path(wd.rt.plots, "MRTR-SPR_LCL-S-G1_spline_spearman")
+main.text <- c(paste0(BASE, " MRTR vs. S phase progression rates (SPR)"), "")
+xlab.text <- "SPR = (E-L)/(E+L)"
+plotMRTRRDC(cors$mean, cors$spr, file.name, main.text, c(13, 17, 22), xlab.text, unit=5, ylab.text)
 
 
 

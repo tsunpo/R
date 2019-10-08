@@ -341,7 +341,7 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    points(cors$chr, cors$cor2, col=cols[2], pch=19)
    lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
    abline(h=0, lty=5)
- 
+   
    RT <- paste0(legends[1], "/", legends[2])
    legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.6)        
    legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.6)
@@ -352,6 +352,38 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    }
    axis(side=1, at=seq(2, 22, by=2), cex.axis=1.25)
    axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.4)
+   dev.off()
+}
+
+plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends, c=NA, isRT=F) {
+   ylab.text <- "Spearman's rho"
+   xlab.text <- "Chromosome"
+ 
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1, cex.main=1.2)
+   lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
+   points(cors$chr, cors$cor2, col=cols[2], pch=19)
+   lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
+   if (isRT) {
+      points(cors$chr, cors$cor, col="black", pch=19)
+      lines(cors$cor, y=NULL, type="l", lwd=3, col="black")
+   }
+   abline(h=0, lty=5)
+ 
+   RT <- "S/G1"
+   #legend("topright", c(paste0(legends[3], " vs. ", RT), paste0("      ", legends[1], " vs. ", RT)), text.col=c(cols[3], cols[1]), bty="n", cex=1.1) 
+   #legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.1) 
+   legend("topright", paste0(legends[3], " vs. ", RT), text.col=cols[3], bty="n", cex=1.1) 
+   legend("bottomright", c(paste0(legends[1], " vs. ", RT), paste0(legends[2], " vs. ", RT)), text.col=c(cols[1], cols[2]), bty="n", cex=1.1)        
+   ##legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.1)
+ 
+   if (!is.na(c)) {
+      text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.1, col=cols[1], pos=3)   ##, offset=1.3)
+      text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.1, col=cols[2], pos=3)
+   }
+   axis(side=1, at=seq(2, 22, by=2), cex.axis=1)
+   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1)
    dev.off()
 }
 
@@ -372,6 +404,49 @@ plotRTvsRT <- function(timings1, timings2, file.name, main.text, xlab.text, ylab
 }
 
 # -----------------------------------------------------------------------------
+# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
+# Last Modified: 05/03/19
+# -----------------------------------------------------------------------------
+plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA, pos) {
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col, xaxt="n", yaxt="n", pch=19)
+   lines(cors$cor, y=NULL, type="l", lwd=3, col=col)
+   abline(h=0, lty=5)
+ 
+   if (!is.na(c))
+      text(cors[c,]$chr, cors[c,]$cor, round0(cors[c,]$cor, digits=2), cex=1.1, col=col, pos=pos)
+   axis(side=1, at=seq(2, 22, by=2))
+   axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
+# Last Modified: 03/06/19
+# -----------------------------------------------------------------------------
+plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA) {
+   cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
+   n <- length(samples)
+   cnt <- 0
+   for (c in 1:22) {
+      start <- n * cnt + 1
+      end   <- n * (cnt + 1)
+      cors.samples.plot[start:end, 1] <- c
+      cors.samples.plot[start:end, 2] <- as.numeric(cors.samples[c, samples])
+  
+      cnt <- cnt + 1
+   }
+ 
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1], cex.lab=1.5, cex.axis=1.3, cex.main=1.6)#, medcol="red")
+   axis(side=1, at=seq(2, 22, by=2), cex.axis=1.2)
+   abline(h=0, lty=5)
+   mtext(main.text[2], cex=1.1, line=0.3) 
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
 # Mean replication timing ratio (MRTR)
 # Last Modified: 06/10/19
 # -----------------------------------------------------------------------------
@@ -384,32 +459,33 @@ getYlim <- function(means, unit) {
    return(c(ymin, ymax))
 }
 
-plotMRTR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
+plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
-   ylim <- getYlim(cors$mean, unit)
-
+   #ylim <- getYlim(cors$spr, unit)
+   ylim <- c(-1, 1)
+    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
    plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19)
    
-   abline(h=cors$mean[2], lty=5)
-   lines(cors$mean, y=NULL, type="l", lwd=3, col=cols[3])
+   abline(h=cors$spr[2], lty=5)
+   lines(cors$spr, y=NULL, type="l", lwd=3, col=cols[3])
    
-   idx <- which(cors$mean > cors$mean[2])
-   points(cors$mean[idx] ~ cors$chr[idx], col=cols[1], pch=19)
-   idx <- which(cors$mean < cors$mean[2])
-   points(cors$mean[idx] ~ cors$chr[idx], col=cols[2], pch=19)
-   points(cors$mean[2] ~ cors$chr[2], col=cols[3], pch=19)
+   idx <- which(cors$spr > cors$spr[2])
+   points(cors$spr[idx] ~ cors$chr[idx], col=cols[1], pch=19)
+   idx <- which(cors$spr < cors$spr[2])
+   points(cors$spr[idx] ~ cors$chr[idx], col=cols[2], pch=19)
+   points(cors$spr[2] ~ cors$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2]+1.8, cors$mean[2], paste0("Chr2 (", round0(cors$mean[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
+   text(cors$chr[2]+1.8, cors$spr[2], paste0("Chr2 (", round0(cors$spr[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (cors$mean[c] > cors$mean[2])
-            text(cors$chr[c]+1.8, cors$mean[c], paste0("Chr", c, " (", round0(cors$mean[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
+         if (cors$spr[c] > cors$spr[2])
+            text(cors$chr[c]+1.8, cors$spr[c], paste0("Chr", c, " (", round0(cors$spr[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c]+1.8, cors$mean[c], paste0("Chr", c, " (", round0(cors$mean[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
+            text(cors$chr[c]+1.8, cors$spr[c], paste0("Chr", c, " (", round0(cors$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   
    legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
@@ -419,10 +495,11 @@ plotMRTR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.tex
    dev.off()
 }
 
-plotMRTRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
+plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
    cols <- c("red", "blue", "black", "purple")
-   ylim <- getYlim(means, unit)
-
+   #ylim <- getYlim(cors$spr, unit)
+   ylim <- c(-1, 1)
+   
    unit <- (max(cors) - min(cors))/20
    xlim <- c(min(cors) - unit, max(cors) + unit)
    
@@ -462,120 +539,6 @@ plotMRTRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, 
    #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
    #axis(side=1, at=seq(2, 22, by=2))
    mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 07/07/19
-# -----------------------------------------------------------------------------
-plotMUTLength <- function(cors, muts, file.name, main.text, cs=NULL, xlab.text) {
-   ylab.text <- "Chromosome length"
-   cols <- c("red", "blue", "black", "purple")
-   
-   unit <- (max(cors$cor) - min(cors$cor))/20
-   xlim <- c(min(cors$cor) - unit, max(cors$cor) + unit)
-   
-   unit <- (max(muts$LENGTH) - min(muts$LENGTH))/15
-   ymin <- min(muts$LENGTH) - unit
-   ymax <- max(muts$LENGTH) + unit
-    
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   if (is.null(xlim))
-      plot(muts$LENGTH ~ cors$cor, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
-   else
-      plot(muts$LENGTH ~ cors$cor, ylim=c(ymin, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
- 
-   lm.fit <- lm(muts$LENGTH ~ cors$cor)
-   abline(lm.fit, col=cols[4], lwd=3)
- 
-   points(muts$LENGTH ~ cors$cor, col=cols[3], pch=19)
- 
-   text(cors$cor[2], muts$LENGTH[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
-   if (!is.null(cs))
-      for (c in 1:length(cs)) {
-         c <- cs[c]
-         text(cors$cor[c], muts$LENGTH[c], paste0("Chr", c), cex=1.1, col=cols[3], pos=3)
-      }
-
-   legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
-   #axis(side=1, at=seq(2, 22, by=2))
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
-plotSNVLength <- function(snvs, muts, file.name, main.text, cs=NULL, xlab.text) {
-   ylab.text <- "Chromosome length"
-   cols <- c("red", "blue", "black", "purple")
- 
-   unit <- (max(snvs) - min(snvs))/20
-   xlim <- c(min(snvs) - unit, max(snvs) + unit)
- 
-   unit <- (max(muts$LENGTH) - min(muts$LENGTH))/15
-   ymin <- min(muts$LENGTH) - unit
-   ymax <- max(muts$LENGTH) + unit
- 
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(muts$LENGTH ~ snvs, ylim=c(ymin, ymax), xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19)
- 
-   lm.fit <- lm(muts$LENGTH ~ snvs)
-   abline(lm.fit, col=cols[4], lwd=3)
- 
-   points(muts$LENGTH ~ snvs, col=cols[3], pch=19)
- 
-   text(snvs[2], muts$LENGTH[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
-   if (!is.null(cs))
-      for (c in 1:length(cs)) {
-         c <- cs[c]
-         text(snvs[c], muts$LENGTH[c], paste0("Chr", c), cex=1.1, col=cols[3], pos=3)
-      }
- 
-   legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
-   #axis(side=1, at=seq(2, 22, by=2))
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
-# -----------------------------------------------------------------------------
-# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
-# Last Modified: 05/03/19
-# -----------------------------------------------------------------------------
-plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA, pos) {
-   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col, xaxt="n", yaxt="n", pch=19)
-   lines(cors$cor, y=NULL, type="l", lwd=3, col=col)
-   abline(h=0, lty=5)
-
-   if (!is.na(c))
-      text(cors[c,]$chr, cors[c,]$cor, round0(cors[c,]$cor, digits=2), cex=1.1, col=col, pos=pos)
-   axis(side=1, at=seq(2, 22, by=2))
-   axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
-   dev.off()
-}
-
-# -----------------------------------------------------------------------------
-# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
-# Last Modified: 03/06/19
-# -----------------------------------------------------------------------------
-plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA) {
-   cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
-   n <- length(samples)
-   cnt <- 0
-   for (c in 1:22) {
-      start <- n * cnt + 1
-      end   <- n * (cnt + 1)
-      cors.samples.plot[start:end, 1] <- c
-      cors.samples.plot[start:end, 2] <- as.numeric(cors.samples[c, samples])
-  
-      cnt <- cnt + 1
-   }
- 
-   pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1], cex.lab=1.5, cex.axis=1.3, cex.main=1.6)#, medcol="red")
-   axis(side=1, at=seq(2, 22, by=2), cex.axis=1.2)
-   abline(h=0, lty=5)
-   mtext(main.text[2], cex=1.1, line=0.3) 
    dev.off()
 }
 
