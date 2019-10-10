@@ -173,7 +173,9 @@ writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownam
 # 0%        25%        50%        75%       100% 
 # -0.8005515 -0.7701020 -0.7577076 -0.7466137  0.5436926 
 
-writeTable(subset(samples.cll, Q4 %in% c(4,1)), file.path(wd.ngs, "cll_wgs_n48.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.cll, Q4 %in% c(4,1)), file.path(wd.ngs, "cll_wgs_q4_n48.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.cll, Q4 %in% c(3,1)), file.path(wd.ngs, "cll_wgs_q3_n48.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.cll, Q4 %in% c(2,1)), file.path(wd.ngs, "cll_wgs_q2_n48.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA

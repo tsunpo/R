@@ -207,7 +207,9 @@ writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, row
 # 0%        25%        50%        75%       100% 
 # -0.7504529 -0.6907507 -0.6546286 -0.5624756  0.6811825
 
-writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_n51.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_n51.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(subset(samples.sclc, Q4 %in% c(2,1)), file.path(wd.ngs, "sclc_wgs_q2_n51.txt"), colnames=T, rownames=F, sep="\t")
 #samples.sclc <- setSamplesQ4(wd.rt.data, overlaps)
 #writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n70.txt"), colnames=T, rownames=F, sep="\t")
 

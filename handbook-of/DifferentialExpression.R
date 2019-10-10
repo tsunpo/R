@@ -4,13 +4,6 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19
 # =============================================================================
-source("http://bioconductor.org/biocLite.R")
-biocLite("rhdf5")
-
-install.packages("devtools", method="curl")
-
-options(download.file.method="curl")
-devtools::install_github("pachterlab/sleuth")
 
 # -----------------------------------------------------------------------------
 # Methods: Transcript-level TPM estimates using sleuth

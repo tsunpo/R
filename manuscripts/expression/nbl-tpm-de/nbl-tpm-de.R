@@ -35,22 +35,14 @@ wd.de.plots <- file.path(wd.de, "plots")
 
 samples.wgs <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="\t")
 samples.rna     <- readTable(file.path(wd.rna, "nbl_rna_n54.list"), header=F, rownames=2, sep="\t")
-overlaps <- intersect(samples$V2, samples.wgs$SAMPLE_ID)
-samples <- cbind(samples[overlaps,], samples.wgs[overlaps,])
-samples$RT <- samples.wgs[overlaps,]$RT
-samples$RT <- as.factor(samples$RT)
-rownames(samples) <- samples$V1
-
-##
-samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.cm2"), header=T, rownames=T, sep="")[,-1]
-samples.rna <- readTable(file.path(wd.rna, "nbl_rna_n54.list"), header=F, rownames=T, sep="")
-rownames(samples.rna) <- samples.rna$V2
-overlaps <- intersect(samples.rna$V2, rownames(samples))
-samples <- cbind(samples.rna[overlaps,], samples[overlaps,])
+overlaps <- intersect(samples.rna$V2, samples.wgs$SAMPLE_ID)
+samples <- cbind(samples.rna[overlaps,], samples.wgs[overlaps,])
+samples$Q4 <- as.factor(samples$Q4)
+samples$M2 <- as.factor(samples$M2)
 rownames(samples) <- samples$V1
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-tpm.gene <- tpm.gene[, samples$V1]
+tpm.gene <- tpm.gene[, rownames(samples)]
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # > dim(tpm.gene.log2)
 # [1] 18764    53
@@ -61,9 +53,9 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Wilcox/U/Students/ttest
 ## FDR : Q/BH
-## D.E.: RT (44) vs WT (10) as factor
-argv      <- data.frame(predictor="Q2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_cm2_wilcox_q_n53")
+## D.E.: M2 as factor
+argv      <- data.frame(predictor="M2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_m2_wilcox_q_n53")
 file.main <- paste0("RT (n=36) vs WT (n=34) in ", BASE)
 
 de <- c()
@@ -74,7 +66,7 @@ for (c in 1:22) {
  
    argv <- data.frame(predictor=paste0("chr", c), predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
    de.chr <- differentialAnalysis(tpm.gene.log2.chr, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-   colnames(de.chr)[3:4] <- c("CM2_WT", "CM2")
+   colnames(de.chr)[3:4] <- c("M2_WT", "M2")
    de <- rbind(de, de.chr)
 }
 de$FDR <- testFDR(de$P, argv$test.fdr)

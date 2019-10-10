@@ -5,12 +5,12 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 09/08/19; 24/04/19; 05/03/19; 25/02/19; 30/01/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -22,9 +22,9 @@ load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "NBL"
 PAIR1 <- "T"
 PAIR0 <- "T"
@@ -59,13 +59,14 @@ for (c in 1:22) {
 
    nrds <- rbind(nrds, nrds.chr)
 }
+nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
 nrds$RT <- scale(nrds$RT)
-save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
+save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".log2.RData")))
 # > nrow(nrds)
-# [1] 2659570
+# [1] 2657164
 nrds.nbl <- nrds
 
-#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
+#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".log2.RData")))
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
@@ -76,7 +77,7 @@ for (c in 1:22) {
  
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("M2 tumour", "M1 tumour"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
 
@@ -84,7 +85,7 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 09/08/19; 31/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 7, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "spr"))
+cors <- toTable(0, 6, 22, c("chr", "length", "cor", "cor1", "cor2", "spr"))
 cors$chr <- 1:22
 
 for (c in 1:22) {
@@ -97,8 +98,7 @@ for (c in 1:22) {
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
    #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
    cors$length[c] <- nrow(nrds.chr.RT)
-   cors$mean[c]   <- mean(nrds.chr.RT$SPLINE)
- 
+
    e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
    l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
    cors$spr[c] <- (e - l)/(e + l)
@@ -121,45 +121,20 @@ writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_sp
 ## S-phase progression rate (SPR)
 ylab.text <- "SPR"
 file.name <- file.path(wd.rt.plots, "SPR_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (E-L)/(E+L)")
+main.text <- c(paste0(BASE, " M2/M1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
 plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Read depths correlation"), "")
+main.text <- c(paste0(BASE, " M2/M1 SPR vs. Read depths correlation"), "SPR = (E-L)/(E+L)")
 xlab.text <- "M2 vs. M1 [rho]"
 plotSPRRDC(cors$spr, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio")
+main.text <- c(paste0(BASE, " M2/M1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
 xlab.text <- "Woodfine et al. 2004"
 plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-## SPR vs Mean replication timing ratio (MRTR)
-file.name <- file.path(wd.rt.plots, "SPR-MRTR_NBL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. MRTR"), "")
-xlab.text <- "Mean replication timing ratio"
-plotSPRRDC(cors$spr, cors$mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-###
-## Mean replication timing ratio (MRTR)
-ylab.text <- "Mean M2/M1 ratio"
-file.name <- file.path(wd.rt.plots, "MRTR_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " mean replication timing ratio (MRTR)"), "")
-plotMRTR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
-
-## MRTR vs Read depth correlation
-file.name <- file.path(wd.rt.plots, "MRTR-RDC_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " MRTR vs. Read depths correlation"), "")
-xlab.text <- "M2 vs. M1 [rho]"
-plotMRTRRDC(cors$mean, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-## MRTR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "MRTR-Woodfine_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " MRTR vs. Woodfine MRTR"), "")
-xlab.text <- "Woodfine et al. 2004"
-plotMRTRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 # -----------------------------------------------------------------------------
 # RT vs LCL S/G1
