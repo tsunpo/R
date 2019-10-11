@@ -42,7 +42,7 @@ wd.rt.data <- file.path(wd.rt, "data")
 #n <- length(samples)
 
 ## LCL S/G1
-load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".RData")))
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".log2s.RData")))
 
 nrds.T.chr.d.sample.T.all <- NULL
 nrds.chr.RT.all <- NULL

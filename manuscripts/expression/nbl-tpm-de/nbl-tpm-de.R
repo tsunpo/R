@@ -48,48 +48,16 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 # [1] 18764    53
 
 # -----------------------------------------------------------------------------
-# D.E. using non-parametric test (CM2)
-# Last Modified: 19/05/19
-# -----------------------------------------------------------------------------
-## Test: Wilcoxon/Wilcox/U/Students/ttest
-## FDR : Q/BH
-## D.E.: M2 as factor
-argv      <- data.frame(predictor="M2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_m2_wilcox_q_n53")
-file.main <- paste0("RT (n=36) vs WT (n=34) in ", BASE)
-
-de <- c()
-for (c in 1:22) {
-   samples[,c] <- as.factor(samples[,c])
-   ensGene.chr <- subset(ensGene, chromosome_name == paste0("chr", c))
-   tpm.gene.log2.chr <- tpm.gene.log2[intersect(rownames(tpm.gene.log2), rownames(ensGene.chr)),]
- 
-   argv <- data.frame(predictor=paste0("chr", c), predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-   de.chr <- differentialAnalysis(tpm.gene.log2.chr, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-   colnames(de.chr)[3:4] <- c("M2_WT", "M2")
-   de <- rbind(de, de.chr)
-}
-de$FDR <- testFDR(de$P, argv$test.fdr)
-de <- de[order(de$P),]
-
-## Ensembl gene annotations
-annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)
-
-save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; 35 RT vs 36 WT)
-# Last Modified: 22/05/18
+# Wilcoxon rank sum test (non-parametric; 25 M2 vs 28 M1)
+# Last Modified: 11/10/19
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
-## DE  : RB1_MUT (1) vs RB1_WT (0) as factor
-argv      <- data.frame(predictor="RT", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-r5p47_rt_wilcox_q_n53")
-file.main <- paste0("RT (n=26) vs WT (n=27) in ", BASE)
+## DE  : M2 as factor
+argv      <- data.frame(predictor="M2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_m2-m1_wilcox_q_n53")
+file.main <- paste0("RT (n=25) vs WT (n=28) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -99,6 +67,69 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; 14 Q4 vs 14 Q1)
+# Last Modified: 11/10/19
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : Q4 as factor
+samples <- subset(samples, Q4 %in% c(4,1))
+tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+# > dim(tpm.gene.log2)
+# [1] 18764    28
+
+argv      <- data.frame(predictor="Q4", predictor.wt=1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_q4-q1_wilcox_q_n25")
+file.main <- paste0("Q4 (n=14) vs Q1 (n=14) in ", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; 11 Q3 vs 14 Q1)
+# Last Modified: 11/10/19
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : Q4 as factor
+samples <- subset(samples, Q4 %in% c(3,1))
+tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+# > dim(tpm.gene.log2)
+# [1] 18764    25
+
+argv      <- data.frame(predictor="Q4", predictor.wt=1, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_q3-q1_wilcox_q_n25")
+file.main <- paste0("Q3 (n=11) vs Q1 (n=14) in ", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC

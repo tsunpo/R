@@ -5,12 +5,12 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 16/06/19; 25/02/19; 16/05/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
+wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
+#wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
 
 wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
-handbooks <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks <- c("Commons.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
@@ -22,9 +22,9 @@ load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "LCL"
 BASE1 <- "T"
 BASE0 <- "N"
@@ -49,22 +49,13 @@ n0 <- length(samples0)
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 07/08/19; 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   #nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=F)
-   
-   nrds <- rbind(nrds, nrds.chr)
-}
-nrds$RT <- scale(nrds$RT)
-save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".RData")))
+nrds <- getLog2ScaledRT(wd.rt.data, base, method, BASE1, BASE0, chrs, bed.gc)
+save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".log2s.RData")))
 # > nrow(nrds)
 # [1] 2582940 - 22
 nrds.lcl <- nrds
 
-#load(file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".RData")))
+#load(file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".log2s.RData")))
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
@@ -75,7 +66,7 @@ for (c in 1:22) {
    
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
 
@@ -83,7 +74,7 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 7, 22, c("chr", "length", "cor", "cor1", "cor2", "mean", "spr"))
+cors <- toTable(0, 6, 22, c("chr", "cor", "cor1", "cor2", "size", "spr"))
 cors$chr <- 1:22
 for (c in 1:22) {
    chr <- chrs[c]
@@ -95,25 +86,21 @@ for (c in 1:22) {
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
-   cors$length[c] <- nrow(nrds.chr.RT)
-   cors$mean[c]   <- mean(nrds.chr.RT$SPLINE)
+
+   cors$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")
+   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
    
+   cors$size[c] <- nrow(nrds.chr.RT)
    e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
    l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
    cors$spr[c] <- (e - l)/(e + l)
    
-   cor <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, method="spearman")
-   cors$cor[c] <- cor
- 
-   main.text <- c(paste0("LCL read depths correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (S vs. G1)"))
-   xlab.text <- "LCL S/G1"
-   ylab.text <- "LCL read depth [RPKM]"
+   main.text <- c(paste0("LCL read depths correlation (", "Chr", c, ")"), paste0("rho = ", round0(cors$cor[c], digits=2), " (S vs. G1)"))
+   xlab.text <- "S/G1 read depth ratio [log2]"
+   ylab.text <- "Read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman", intercept=F)
- 
-   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
 }
 save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
@@ -139,40 +126,9 @@ plotSPRRDC(cors$spr, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. Woodfine 2004"), "Mean replication timing ratio")
-xlab.text <- "Woodfine et al. 2004"
-plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-## SPR vs. Mean replication timing ratio (MRTR)
-file.name <- file.path(wd.rt.plots, "SPR-MRTR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " SPR vs. MRTR"), "")
+main.text <- c(paste0(BASE, " SPR vs. Woodfine et al. 2004"), "")
 xlab.text <- "Mean replication timing ratio"
-plotSPRRDC(cors$mean, cors$spr, file.name, main.text, c(13, 17, 22), xlab.text, unit=5, ylab.text)
-
-###
-## Mean replication timing ratio (MRTR)
-ylab.text <- "Mean S/G1 ratio"
-file.name <- file.path(wd.rt.plots, "MRTR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " mean replication timing ratio (MRTR)"), "")
-plotMRTR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
-
-## MRTR vs Read depth correlation
-file.name <- file.path(wd.rt.plots, "MRTR-RDC_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " MRTR vs. Read depths correlation"), "")
-xlab.text <- "S vs. G1 [rho]"
-plotMRTRRDC(cors$mean, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-## MRTR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "MRTR-Woodfine_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " MRTR vs. Woodfine MRTR"), "")
-xlab.text <- "Woodfine et al. 2004"
-plotMRTRRDC(cors$mean, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-## MRTR vs S phase progression rates
-file.name <- file.path(wd.rt.plots, "MRTR-SPR_LCL-S-G1_spline_spearman")
-main.text <- c(paste0(BASE, " MRTR vs. S phase progression rates (SPR)"), "")
-xlab.text <- "SPR = (E-L)/(E+L)"
-plotMRTRRDC(cors$mean, cors$spr, file.name, main.text, c(13, 17, 22), xlab.text, unit=5, ylab.text)
+plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 
 

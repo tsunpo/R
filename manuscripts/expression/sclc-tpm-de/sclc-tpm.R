@@ -23,9 +23,9 @@ load(file.path(wd.src.ref, "hg19.RData"))
 BASE <- "SCLC"
 base <- tolower(BASE)
 
-wd <- "/projects/cangen/tyang2"                ## tyang2@cheops
-#wd <- "/ngs/cangen/tyang2"                    ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
 wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
 
@@ -72,6 +72,7 @@ save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tp
 ## Gene-level TPMs without filtering
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
 # > nrow(tpm.gene)
 # [1] 34908
 

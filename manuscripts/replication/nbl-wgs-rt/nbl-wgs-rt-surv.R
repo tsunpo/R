@@ -36,6 +36,10 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
 phenos  <- readTable(file.path(wd.meta, "NB_WGS_Mutations_Overview.txt"), header=T, rownames=T, sep="")
+q4 <- rownames(subset(samples, Q4 == 4))
+q3 <- rownames(subset(samples, Q4 == 3))
+q2 <- rownames(subset(samples, Q4 == 2))
+q1 <- rownames(subset(samples, Q4 == 1))
 
 # -----------------------------------------------------------------------------
 # 
@@ -52,6 +56,21 @@ test[2, 2] <- nrow(subset(phenos[c(q2,q1),], risk == "low"))
 fisher.test(test)[[1]]
 # [1] 4.382596e-07
 
+## Risk group (Q2 vs. Q1)
+test <- toTable(0, 2, 2, c("Q2", "Q1"))
+rownames(test) <- c("High", "Low")
+
+test[1, 1] <- nrow(subset(phenos[q2,], risk == "high"))
+test[1, 2] <- nrow(subset(phenos[q1,], risk == "high"))
+test[2, 1] <- nrow(subset(phenos[q2,], risk == "low"))
+test[2, 2] <- nrow(subset(phenos[q1,], risk == "low"))
+# > test
+# Q2 Q1
+# High  9  2
+# Low   5 12
+fisher.test(test)[[1]]
+# [1] 0.01830664
+
 ## MYCN amp
 test <- toTable(0, 2, 2, c("M2", "M1"))
 rownames(test) <- c("MYCN_amp", "MYCN")
@@ -67,7 +86,7 @@ test[2, 2] <- nrow(subset(phenos[c(q2,q1),], MYCN_amp == 0))
 # > fisher.test(test)[[1]]
 # [1] 0.01159974
 
-## MYCN amp
+## MYCN amp (Q4 vs. Q3)
 test <- toTable(0, 2, 2, c("Q4", "Q3"))
 rownames(test) <- c("MYCN_amp", "MYCN")
 
