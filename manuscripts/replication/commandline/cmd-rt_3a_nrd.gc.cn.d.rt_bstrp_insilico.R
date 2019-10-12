@@ -6,9 +6,8 @@ TXT  <- args[3]
 #CHR  <- as.numeric(args[4])
 N    <- as.numeric(args[4])
 METHOD   <- args[5]
-RT       <- args[6]  ## NA or RATIO or LOG2; BUG 17/09/19
-INSILICO <- args[7]
-BSTRP  <- as.numeric(args[8])
+INSILICO <- args[6]
+BSTRP  <- as.numeric(args[7])
 base   <- tolower(BASE)
 method <- tolower(METHOD)
 
@@ -73,11 +72,7 @@ for (c in 1:22) {
    rownames(nrds.chr) <- rownames(nrds.chr.d)   ## BUG 18/09/19
    nrds.chr$T  <- nrds.T.chr.d$MEDIAN
    nrds.chr$N  <- nrds.N.chr.d$MEDIAN
-   if (RT == "RATIO") {
-      nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
-   } else if (RT == "LOG2") {
-      nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) getLog2RDRatio(nrds.chr[x,]$T, nrds.chr[x,]$N, pseudocount=0))   ## CHANGED 11/02/19: Was pseudocount=0.01
-   }
+   nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
    
    writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR, "-", PAIR, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 }

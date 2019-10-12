@@ -6,14 +6,13 @@ TXT  <- args[3]
 CHR  <- as.numeric(args[4])
 N    <- as.numeric(args[5])
 METHOD   <- args[6]
-RT       <- args[7]  ## NA or RATIO or LOG2; BUG 17/09/19
-INSILICO <- args[8]
+INSILICO <- args[7]
 #BSTRP  <- as.numeric(args[8])
 base   <- tolower(BASE)
 method <- tolower(METHOD)
 
 # =============================================================================
-# Name: 2c_cmd-rt_nrd.gc.cn.d_chr_insilico.R (commandline mode)
+# Name: 2c_cmd-rt_nrd.gc.cn.d.rt_chr_insilico.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 23/04/19; 22/10/18
 # =============================================================================
@@ -66,11 +65,7 @@ n0 <- length(samples0)
    rownames(nrds.chr) <- rownames(nrds.chr.d)
    nrds.chr$T  <- nrds.T.chr.d$MEDIAN
    nrds.chr$N  <- nrds.N.chr.d$MEDIAN
-   if (RT == "RATIO") {
-      nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
-   } else if (RT == "LOG2") {
-      nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) getLog2RDRatio(nrds.chr[x,]$T, nrds.chr[x,]$N, pseudocount=0))   ## CHANGED 11/02/19: Was pseudocount=0.01
-   }
+   nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
 
    writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR, "-", PAIR, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 #}

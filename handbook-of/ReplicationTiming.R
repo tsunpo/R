@@ -115,10 +115,6 @@ pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
    return(nrds.chr.d)
 }
 
-getLog2RDRatio <- function(nrds.T.chr, nrds.N.chr, pseudocount) {
-   return(log2(as.numeric(nrds.T.chr) + pseudocount) - log2(as.numeric(nrds.N.chr) + pseudocount))
-}
-
 outputRT <- function(nrds.chr) {
    samples <- colnames(nrds.chr)
    nrds.chr$BED <- rownames(nrds.chr)
@@ -132,26 +128,12 @@ outputRT <- function(nrds.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-setScaledRT <- function(nrds.chr, pseudocount, recaliRT, scaledRT) {
-   nrds.chr$T <- log2(nrds.chr$T + pseudocount)
-   nrds.chr$N <- log2(nrds.chr$N + pseudocount)
-   
-   if (recaliRT == T)
-      nrds.chr$RT <- nrds.chr$T - nrds.chr$N   ## ADD 24/02/19
-
-   if (scaledRT == T)
-      nrds.chr$RT <- scale(nrds.chr$RT)            ## ADD 19/02/19
-   
-   return(nrds.chr)
-}
-
-getLog2ScaledRT <- function(wd.rt.data, base, method, BASE1, BASE0, chrs, bed.gc) {
+getLog2ScaledRT <- function(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, bed.gc) {
    nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
       nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-      #nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=F)
   
       nrds <- rbind(nrds, nrds.chr)
    }
@@ -294,7 +276,7 @@ getCor <- function(reads, timings, method) {
    }
 }
 
-plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method, intercept=F) {
+plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
    #xmin <- min(nrds.chr.RT$SPLINE)
    #xmax <- max(nrds.chr.RT$SPLINE)
    #ymin <- min(c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE))
@@ -316,25 +298,11 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    lm.fit1 <- lm(reads1 ~ timings)
    abline(lm.fit1, col=colours[1], lwd=3)
    cor1 <- getCor(reads1, timings, method)
-   intercept1 <- lm.fit1[[1]][1]
 
    lm.fit2 <- lm(reads2 ~ timings)
    abline(lm.fit2, col=colours[2], lwd=3)
    cor2 <- getCor(reads2, timings, method)
-   intercept2 <- lm.fit2[[1]][1]
-   
-   if (intercept) {
-      points(0, intercept1, col=colours[1], pch=19)
-      points(0, intercept2, col=colours[2], pch=19)
-      if (intercept1 > intercept2) {
-         text(0, intercept1, round0(intercept1, digits=3), cex=1.1, col=colours[1], pos=3)
-         text(0, intercept2, round0(intercept2, digits=3), cex=1.1, col=colours[2], pos=1)
-      } else {
-         text(0, intercept1, round0(intercept1, digits=3), cex=1.1, col=colours[1], pos=1)
-         text(0, intercept2, round0(intercept2, digits=3), cex=1.1, col=colours[2], pos=3)
-      }
-   }
-   
+
    RT <- paste0(legends[1], "/", legends[2])
    if (cor1 < 0 && cor2 < 0) {
       legend("bottomright", c(paste0(cor, " = ", round0(cor1, digits=2), " (", legends[1], " vs. ", RT, ")"), paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, bty="n", cex=1.2)
