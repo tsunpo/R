@@ -221,14 +221,14 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    cols[which(trait.v == "NA")] <- "lightgray"
    trait.col[which(trait == "NA")] <- "lightgray"
-   xlab <- paste0("PC", x, " (", pcaProportionofVariance(pca, x), "%)")
-   ylab <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
+   xlab.txt <- paste0("PC", x, " (", pcaProportionofVariance(pca, x), "%)")
+   ylab.txt <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab, cex.lab=1.5, cex.axis=1.4, cex.main=1.6)
+   #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.lab=1.7, cex.axis=1.5, cex.main=1.8)
    idx <- which(trait != "NA")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab, ylab=ylab)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
 
    if (!is.null(samples))
       for (s in 1:length(samples)) {
@@ -241,15 +241,16 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
             text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=0.75)
       }
    
+   mtext(file.main[2], cex=1.2, line=0.3)
    for (l in 1:length(trait.v))
       trait.v[l] <- trait.v[l]
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
-   mtext(file.main[2], cex=1.2, line=0.3)
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=16, cex=1.5)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=16, cex=1.7)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.5) 
+      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.7)
+   mtext(ylab.txt, side=2, line=2.85, cex=1.7)
    dev.off()
 }
 

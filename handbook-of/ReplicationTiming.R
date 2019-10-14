@@ -288,7 +288,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
 
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], cex.lab=1.2, cex.axis=1.1)
+   plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], cex.lab=1.2, cex.axis=1.1, cex.main=1.25)
    abline(v=0, lty=5)
    
    lm.fit1 <- lm(reads1 ~ timings)
@@ -323,12 +323,12 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    abline(h=0, lty=5)
    
    RT <- paste0(legends[1], "/", legends[2])
-   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.8)        
-   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.8)
+   legend("topright", paste0(legends[1], " vs. ", RT), text.col=cols[1], bty="n", cex=1.75)        
+   legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.75)
    
    if (!is.na(c)) {
-      text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.8, col=cols[1], pos=3)   ##, offset=1.3)
-      text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.8, col=cols[2], pos=3)
+      text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.75, col=cols[1], pos=3)   ##, offset=1.3)
+      text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.75, col=cols[2], pos=3)
    }
    axis(side=1, at=seq(2, 22, by=4), cex.axis=1.5)
    axis(side=1, at=seq(4, 20, by=4), cex.axis=1.5)
@@ -480,7 +480,7 @@ plotSPR <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
     
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(sprs$skew ~ sprs$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, cex.lab=1.2, cex.axis=1.1)
+   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, cex.lab=1.2, cex.axis=1.1, cex.main=1.25)
    
    abline(h=sprs$spr[2], lty=5)
    lines(sprs$spr, y=NULL, type="l", lwd=3, col=cols[3])
@@ -523,7 +523,7 @@ plotSPRRDC <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, y
    if (is.null(xlim))
       plot(sprs ~ means, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2)
    else
-      plot(sprs ~ means, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2, cex.axis=1.1)
+      plot(sprs ~ means, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2, cex.axis=1.1, cex.main=1.25)
 
    abline(h=sprs[2], lty=5)
    lm.fit <- lm(sprs ~ means)

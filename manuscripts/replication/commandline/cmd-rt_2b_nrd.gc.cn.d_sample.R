@@ -9,7 +9,7 @@ base   <- tolower(BASE)
 method <- tolower(METHOD)
 
 # =============================================================================
-# Name: 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
+# Name: cmd-rt_2a_nrd.gc.cn.d_sample.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 22/10/18
 # =============================================================================
@@ -42,7 +42,7 @@ wd.rt.data <- file.path(wd.rt, "data")
 #n <- length(samples)
 
 ## LCL S/G1
-load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".log2s.RData")))
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
 
 nrds.T.chr.d.sample.T.all <- NULL
 nrds.chr.RT.all <- NULL

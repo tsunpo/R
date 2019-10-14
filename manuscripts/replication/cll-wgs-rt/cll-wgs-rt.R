@@ -3,14 +3,14 @@
 # Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/cll-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 26/02/19
+# Last Modified: 14/10/19; 26/02/19
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -26,8 +26,8 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "CLL"
-PAIR1 <- "N"
-PAIR0 <- "T"
+PAIR1 <- "T"
+PAIR0 <- "N"
 base  <- tolower(BASE)
 method <- "rpkm"
 
@@ -81,61 +81,56 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.cll <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownames=F, sep="\t")
+#writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7952126 -0.7638682 -0.7514207 -0.7399593  0.5381444 
 
 writeTable(subset(samples.cll, Q4 %in% c(4,1)), file.path(wd.ngs, "cll_wgs_q4_n48.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.cll, Q4 %in% c(3,1)), file.path(wd.ngs, "cll_wgs_q3_n48.txt"), colnames=T, rownames=F, sep="\t")
 
-
-
-
-
-
 # -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 04/06/19; 21/04/19
 # -----------------------------------------------------------------------------
-## Copy from 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
-nrds.T.chr.d.all <- NULL
-for (c in 1:22) {
+## Refer to cmd-rt_2a_nrd.gc.cn.d_sample.R (commandline mode)
+nrds.T.chr.d.all <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+for (c in 2:22) {
    chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
+
    ## Read depth
-   nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
-   #nrds.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE, chr, PAIR0) 
-   #overlaps <- intersect(nrds.T.chr.d$BED, nrds.N.chr.d$BED)
- 
-   test <- nrds.T.chr.d[, samples.cll$SAMPLE_ID]
-   if (is.null(nrds.T.chr.d.all)) {
-      nrds.T.chr.d.all <- test
-   } else
-      nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, test)
+   #nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
+   nrds.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+   
+   nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, nrds.T.chr.d)
 }
 
 ## Q4
-test <- nrds.T.chr.d.all
+test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
 pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_cll_chrs_spline_spearman.RData")))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_cll_chrs.RData")))
 
-#load(file.path(wd.rt.data, paste0("PCA_cll_chrs_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("pca_cll_chrs.RData")))
 file.main <- c("CLL (n=96) read depth profiles", "")
 trait <- as.numeric(samples.cll$Q4)
-trait[which(trait == 4)] <- "Q4"   ##(-0.75 < rho < 0.54)"
-trait[which(trait == 3)] <- "Q3"   ##(-0.76 < rho < -0.75)"
-trait[which(trait == 2)] <- "Q2"   ##(-0.77 < rho < -0.76)"
-trait[which(trait == 1)] <- "Q1"   ##(-0.80 < rho < -0.77)"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_CLL_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=-1, flip.y=1, legend.title=NA)
+trait[which(trait == 4)] <- "Q4"
+trait[which(trait == 3)] <- "Q3"
+trait[which(trait == 2)] <- "Q2"
+trait[which(trait == 1)] <- "Q1"
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_CLL_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=-1, flip.y=1, legend.title=NA)
+
+
+
+
+
+
+
+
+
+
 
 ## SG1
 #trait <- samples.cll.sg1$SG1
 #plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_cll_T_chrs_spline_spearman_SG1", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=-1, flip.y=1, legend.title="Consist. CM in all chrs")
-
-
-
-
 
 # -----------------------------------------------------------------------------
 # Find S-like and G1-like tumour samples

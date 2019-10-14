@@ -3,14 +3,14 @@
 # Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/sclc-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 05/03/19; 25/02/19; 30/01/18
+# Last Modified: 14/10/19; 05/03/19; 25/02/19; 30/01/18
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -177,53 +177,42 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.sclc <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
+#writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7438588 -0.6840244 -0.6474195 -0.5555826  0.6806205 
 
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_n51.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")
 
-
-
-
-
-
 # -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 04/06/19; 21/04/19
 # -----------------------------------------------------------------------------
-## Copy from 2a_cmd-rt_rpkm.corr.gc.d_sample.R (commandline mode)
-nrds.T.chr.d.all <- NULL
-for (c in 1:22) {
+## Refer to cmd-rt_2a_nrd.gc.cn.d_sample.R (commandline mode)
+nrds.T.chr.d.all <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+for (c in 2:22) {
    chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
  
    ## Read depth
-   nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
-   #nrds.N.chr.d <- pipeGetDetectedRD(wd0.ngs.data, BASE, chr, PAIR0) 
-   #overlaps <- intersect(nrds.T.chr.d$BED, nrds.N.chr.d$BED)
+   #nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
+   nrds.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
  
-   test <- nrds.T.chr.d[, samples.sclc$SAMPLE_ID]
-   if (is.null(nrds.T.chr.d.all)) {
-      nrds.T.chr.d.all <- test
-   } else
-      nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, test)
+   nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, nrds.T.chr.d)
 }
 
 ##
-test <- nrds.T.chr.d.all
+test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
 pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_chrs_spline_spearman.RData")))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
 
-#load(file.path(wd.rt.data, paste0("pca_sclc_chrs_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
 file.main <- c("SCLC (n=101) read depth profiles", "")
 trait <- as.numeric(samples.sclc$Q4)
-trait[which(trait == 4)] <- "Q4"   ##(-0.56 < rho < 0.68)"
-trait[which(trait == 3)] <- "Q3"   ##(-0.65 < rho < -0.56)"
-trait[which(trait == 2)] <- "Q2"   ##(-0.69 < rho < -0.65)"
-trait[which(trait == 1)] <- "Q1"   ##(-0.75 < rho < -0.69)"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs_spline_spearman", size=6, file.main, "bottomright", c("red", "lightcoral", "lightskyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+trait[which(trait == 4)] <- "Q4"
+trait[which(trait == 3)] <- "Q3"
+trait[which(trait == 2)] <- "Q2"
+trait[which(trait == 1)] <- "Q1"
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "lightskyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1
@@ -233,9 +222,9 @@ plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs_spline_spearman", size=
 # Beeswarm plots
 # Last Modified: 21/04/19
 # -----------------------------------------------------------------------------
-samples.sclc <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/ngs/WGS/sclc_wgs_n101.txt", header=T, rownames=T, sep="")
-samples.nbl  <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1.txt", header=T, rownames=T, sep="")
-samples.cll  <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/CLL/ngs/WGS/cll_wgs_n96.txt", header=T, rownames=T, sep="")
+samples.sclc <- readTable("/projects/cangen/tyang2/SCLC/ngs/WGS/sclc_wgs_n101.txt", header=T, rownames=T, sep="")
+samples.nbl  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1.txt", header=T, rownames=T, sep="")
+samples.cll  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96.txt", header=T, rownames=T, sep="")
 n.sclc <- nrow(samples.sclc)
 n.nbl  <- nrow(samples.nbl)
 n.cll  <- nrow(samples.cll)
@@ -253,7 +242,7 @@ library(beeswarm)
 pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll.pdf"), height=6, width=6)
 ymax <- max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="Spearman's rho", main="Overall correlation with LCL S/G1", cex.lab=1.5, cex.axis=1.4, cex.main=1.6)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="Spearman's rho", main="Overall correlation with LCL S/G1", cex.lab=1.7, cex.axis=1.6, cex.main=1.8)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
@@ -261,7 +250,7 @@ beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="skyblue3", pch=16, ad
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, add=T)
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"), cex=1.5)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"), cex=1.7)
 mtext("", cex=1.2, line=0.3) 
 dev.off()
 
