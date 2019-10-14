@@ -58,7 +58,6 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2659570
 nrds.sclc.q3 <- nrds
 
-#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".log2.RData")))
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
@@ -80,6 +79,7 @@ for (c in 1:22) {
 sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q3-q1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q3-q1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q3-q1_spline_spearman.RData")))
 
 for (c in 1:22) {
    chr <- chrs[c]

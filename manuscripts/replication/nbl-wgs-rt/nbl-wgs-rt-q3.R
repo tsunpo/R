@@ -80,6 +80,7 @@ for (c in 1:22) {
 sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q3-q1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q3-q1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q3-q1_spline_spearman.RData")))
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -105,7 +106,7 @@ plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-Q3-Q1_spline_spearman")
-main.text <- c(paste0(BASE, " Q3/Q1 SPR vs. Read depths correlation"), "SPR = (E-L)/(E+L)")
+main.text <- c(paste0(BASE, " Q3/Q1 SPR vs. Read depths correlation"), "")
 xlab.text <- "Q3 vs. Q1 [rho]"
 plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 

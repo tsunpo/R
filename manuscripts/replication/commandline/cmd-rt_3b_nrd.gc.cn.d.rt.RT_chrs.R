@@ -10,7 +10,7 @@ base   <- tolower(BASE)
 method <- "rpkm"
 
 # =============================================================================
-# Name: cmd-rt_3b_nrd.gc.cs.d.rt_bstrps_bed.R (commandline mode)
+# Name: cmd-rt_3b_nrd.gc.cs.d.rt.RT_chrs.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 18/09/19; 22/10/18
 # =============================================================================
@@ -19,7 +19,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -38,18 +38,8 @@ wd.rt.data  <- file.path(wd.rt, "data/bstrps", BSTRP)
 # -----------------------------------------------------------------------------
 # Adapted from sclc-wgs-rt-m2.R
 # -----------------------------------------------------------------------------
-nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
-for (c in 1:22) {
-   chr <- chrs[c]
-   #bed.gc.chr <- subset(bed.gc, CHR == chr)   ## REMOVED 19/09/19
-   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", NUM1, "-", NUM0, ".txt.gz")), header=T, rownames=T, sep="\t")
+nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, NUM1, NUM0, chrs, bed.gc)
 
-   nrds <- rbind(nrds, nrds.chr)
-}
-nrds$RT <- scale(nrds$RT)
-#save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
-
-#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
 nrds.RT <- toTable(0, 4, 0, c("BED", "RT", "SPLINE", "SLOPE"))
 for (c in 1:22) {
    chr <- chrs[c]
@@ -65,7 +55,7 @@ for (c in 1:22) {
    overlaps <- intersect(rownames(nrds.chr.RT), rownames(bed.gc.chr))
    bed.gc.chr <- bed.gc.chr[overlaps,]
    
-   slopes <- diff(nrds.chr.RT$SPLINE)/diff(bed.gc.chr$START/1E6)   ## TODO; ADD 31/10/18
+   slopes <- diff(nrds.chr.RT$SPLINE)/diff(bed.gc.chr$START/1E6)   ## ADD 31/10/18
    nrds.chr.RT$SLOPE <- NA
    nrds.chr.RT <- nrds.chr.RT[1:length(slopes),]
    nrds.chr.RT$SLOPE <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.rt), as no slope for the last 1KB window 

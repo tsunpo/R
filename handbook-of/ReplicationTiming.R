@@ -330,7 +330,8 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
       text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.8, col=cols[1], pos=3)   ##, offset=1.3)
       text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.8, col=cols[2], pos=3)
    }
-   axis(side=1, at=seq(2, 22, by=2), cex.axis=1.25)
+   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.5)
+   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.5)
    axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.5)
    mtext(ylab.text, side=2, line=2.85, cex=1.7)
    dev.off()
@@ -363,8 +364,9 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
       text(c, cors$cor1[c], round0(cors$cor1[c], digits=2), cex=1.1, col=cols[1], pos=3)   ##, offset=1.3)
       text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.1, col=cols[2], pos=3)
    }
-   axis(side=1, at=seq(2, 22, by=2), cex.axis=1)
-   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1)
+   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.1)
+   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.1)
+   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.1)
    dev.off()
 }
 
@@ -431,7 +433,9 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="", xlab="Chromosome", outline=T, xaxt="n", yaxt="n", main=main.text[1], cex.lab=1.7, cex.main=1.8)#, medcol="red")
-   axis(side=1, at=seq(2, 22, by=2), cex.axis=1.2)
+   
+   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.5)
+   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.5)
    axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.5)
    abline(h=0, lty=5)
    mtext("Spearman's rho", side=2, line=2.8, cex=1.7)
@@ -443,8 +447,8 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
 # Last Modified: 06/10/19
 # -----------------------------------------------------------------------------
 getSPR <- function(nrds, bed.gc) {
-   cors <- toTable(0, 7, 22, c("chr", "cor", "cor1", "cor2", "e", "l", "spr"))
-   cors$chr <- 1:22
+   sprs <- toTable(0, 7, 22, c("chr", "cor", "cor1", "cor2", "e", "l", "spr"))
+   sprs$chr <- 1:22
    
    for (c in 1:22) {
       chr <- chrs[c]
@@ -454,94 +458,94 @@ getSPR <- function(nrds, bed.gc) {
       nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
       nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
   
-      cors$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")
-      cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-      cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+      sprs$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")
+      sprs$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+      sprs$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
   
       e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
       l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
-      cors$e[c] <- e
-      cors$l[c] <- l
-      cors$spr[c] <- (e - l)/(e + l)
+      sprs$e[c] <- e
+      sprs$l[c] <- l
+      sprs$spr[c] <- (e - l)/(e + l)
    }
    
-   return(cors)
+   return(sprs)
 }
 
-plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
+plotSPR <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
-   #ylim <- getYlim(cors$spr, unit)
+   #ylim <- getYlim(sprs$spr, unit)
    ylim <- c(-1, 1)
     
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
+   #plot(sprs$skew ~ sprs$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
    plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, cex.lab=1.2, cex.axis=1.1)
    
-   abline(h=cors$spr[2], lty=5)
-   lines(cors$spr, y=NULL, type="l", lwd=3, col=cols[3])
+   abline(h=sprs$spr[2], lty=5)
+   lines(sprs$spr, y=NULL, type="l", lwd=3, col=cols[3])
    
-   idx <- which(cors$spr > cors$spr[2])
-   points(cors$spr[idx] ~ cors$chr[idx], col=cols[1], pch=19)
-   idx <- which(cors$spr < cors$spr[2])
-   points(cors$spr[idx] ~ cors$chr[idx], col=cols[2], pch=19)
-   points(cors$spr[2] ~ cors$chr[2], col=cols[3], pch=19)
+   idx <- which(sprs$spr > sprs$spr[2])
+   points(sprs$spr[idx] ~ sprs$chr[idx], col=cols[1], pch=19)
+   idx <- which(sprs$spr < sprs$spr[2])
+   points(sprs$spr[idx] ~ sprs$chr[idx], col=cols[2], pch=19)
+   points(sprs$spr[2] ~ sprs$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2], cors$spr[2], paste0("Chr", 2), cex=1.2, col=cols[3], pos=3)
-   #text(cors$chr[2]+1.8, cors$spr[2], paste0("Chr2 (", round0(cors$spr[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
+   text(sprs$chr[2], sprs$spr[2], paste0("Chr", 2), cex=1.2, col=cols[3], pos=3)
+   #text(sprs$chr[2]+1.8, sprs$spr[2], paste0("Chr2 (", round0(sprs$spr[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (cors$spr[c] > cors$spr[2])
-            text(cors$chr[c], cors$spr[c], paste0("Chr", c), cex=1.2, col=cols[1], pos=3)
-            #text(cors$chr[c]+1.8, cors$spr[c], paste0("Chr", c, " (", round0(cors$spr[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
+         if (sprs$spr[c] > sprs$spr[2])
+            text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), cex=1.2, col=cols[1], pos=3)
+            #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c], cors$spr[c], paste0("Chr", c), cex=1.2, col=cols[2], pos=1)
-            #text(cors$chr[c]+1.8, cors$spr[c], paste0("Chr", c, " (", round0(cors$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
+            text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), cex=1.2, col=cols[2], pos=1)
+            #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1], cex=1.05)   
    legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2], cex=1.05)
 
-   axis(side=1, at=seq(2, 22, by=2), cex.axis=1)
+   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.1)
+   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.1)
    mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
 
-plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, ylab.text) {
+plotSPRRDC <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, ylab.text) {
    cols <- c("red", "blue", "black", "purple")
-   #ylim <- getYlim(cors$spr, unit)
    ylim <- c(-1, 1)
    
-   unit <- (max(cors) - min(cors))/20
-   xlim <- c(min(cors) - unit, max(cors) + unit)
+   unit <- (max(means) - min(means))/15
+   xlim <- c(min(means) - unit, max(means) + unit)
    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    if (is.null(xlim))
-      plot(means ~ cors, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2)
+      plot(sprs ~ means, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2)
    else
-      plot(means ~ cors, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2, cex.axis=1.1)
+      plot(sprs ~ means, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2, cex.axis=1.1)
 
-   abline(h=means[2], lty=5)
-   lm.fit <- lm(means ~ cors)
+   abline(h=sprs[2], lty=5)
+   lm.fit <- lm(sprs ~ means)
    abline(lm.fit, col=cols[4], lwd=3)
 
-   idx <- which(means > means[2])
-   points(means[idx] ~ cors[idx], col=cols[1], pch=19)
-   idx <- which(means < means[2])
-   points(means[idx] ~ cors[idx], col=cols[2], pch=19)
-   points(means[2] ~ cors[2], col=cols[3], pch=19)
+   idx <- which(sprs > sprs[2])
+   points(sprs[idx] ~ means[idx], col=cols[1], pch=19)
+   idx <- which(sprs < sprs[2])
+   points(sprs[idx] ~ means[idx], col=cols[2], pch=19)
+   points(sprs[2] ~ means[2], col=cols[3], pch=19)
  
-   text(cors[2], means[2], paste0("Chr", 2), cex=1.2, col=cols[3], pos=3)
+   text(means[2], sprs[2], paste0("Chr", 2), cex=1.2, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
-         if (means[c] > means[2])
-            text(cors[c], means[c], paste0("Chr", c), cex=1.2, col=cols[1], pos=3)
+         if (sprs[c] > sprs[2])
+            text(means[c], sprs[c], paste0("Chr", c), cex=1.2, col=cols[1], pos=3)
          else
-            text(cors[c], means[c], paste0("Chr", c), cex=1.2, col=cols[2], pos=1)
+            text(means[c], sprs[c], paste0("Chr", c), cex=1.2, col=cols[2], pos=1)
       }
    
-   cor <- cor.test(means, cors, method="spearman", exact=F)
+   cor <- cor.test(sprs, means, method="spearman", exact=F)
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
    legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1], cex=1.05)   ## bty="n"
