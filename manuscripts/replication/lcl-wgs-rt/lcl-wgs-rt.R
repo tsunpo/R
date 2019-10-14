@@ -50,12 +50,12 @@ n0 <- length(samples0)
 # Last Modified: 07/08/19; 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, bed.gc)
-save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".log2s.RData")))
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
 # > nrow(nrds)
 # [1] 2582940 - 22
-
-#load(file=file.path(wd.rt.data, paste0("nrds_", base, "-s-g1_", method, ".log2s.RData")))
 nrds.lcl <- nrds
+
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
@@ -74,41 +74,26 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 7, 22, c("chr", "cor", "cor1", "cor2", "e", "l", "spr"))
-cors$chr <- 1:22
+cors <- getSPR(nrds, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
-   cors$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")
-   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   
-   e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
-   l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
-   cors$e[c] <- e
-   cors$l[c] <- l
-   cors$spr[c] <- (e - l)/(e + l)
-   
    main.text <- c(paste0("LCL read depths correlation (", "Chr", c, ")"), paste0("rho = ", round0(cors$cor[c], digits=2), " (S vs. G1)"))
    xlab.text <- "S/G1 read depth ratio [log2]"
    ylab.text <- "Read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
-writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
-
-#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
-main.text <- paste0("LCL read depths vs. LCL S/G1")
-ymin <- -0.8
-ymax <- 0.8
-plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
 ## S-phase progression rate (SPR)
 ylab.text <- "SPR"
@@ -127,6 +112,13 @@ file.name <- file.path(wd.rt.plots, "SPR-Woodfine_LCL-S-G1_spline_spearman")
 main.text <- c(paste0(BASE, " SPR vs. Woodfine et al. 2004"), "")
 xlab.text <- "Mean replication timing ratio"
 plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## Fighte 2C
+file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
+main.text <- paste0("LCL read depths vs. LCL S/G1")
+ymin <- -0.8
+ymax <- 0.8
+plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
 
 

@@ -49,12 +49,13 @@ n0 <- length(samples0)
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, chrs, bed.gc)
-save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-n_", method, ".log2s.RData")))
+nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc)
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "t-n", ".RData")))
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "t-n", ".RData")))
 # > nrow(nrds)
 # [1] 2656170 - 22
+nrds.sclc <- nrds
 
-#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-n_", method, ".log2s.RData")))
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
@@ -73,87 +74,57 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 31/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 7, 22, c("chr", "cor", "cor1", "cor2", "e", "l", "spr"))
-cors$chr <- 1:22
+sprs <- getSPR(nrds, bed.gc)
+save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
+writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
+
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   #nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_rpkb.gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-   #nrds.chr <- setScaledRT(nrds.chr, pseudocount=0, recaliRT=T, scaledRT=T)
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   
-   cors$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")
-   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   
-   e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
-   l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
-   cors$e[c] <- e
-   cors$l[c] <- l
-   cors$spr[c] <- (e - l)/(e + l)
-   
-   main.text <- c(paste0("SCLC read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cors$cor[c], digits=2), " (T vs. N)"))
+ 
+   main.text <- c(paste0("SCLC read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (T vs. N)"))
    xlab.text <- "T/N read depth ratio [log2]"
    ylab.text <- "Read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-T-N_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("T", "N"), method="spearman")
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.RData")))
-writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-t-n_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
 ## S-phase progression rate (SPR)
 ylab.text <- "SPR"
 file.name <- file.path(wd.rt.plots, "SPR_SCLC-T-N_spline_spearman")
 main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (E-L)/(E+L)")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
+plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-T-N_spline_spearman")
 main.text <- c(paste0(BASE, " SPR vs. Read depths correlation"), "")
 xlab.text <- "T vs. N [rho]"
-plotSPRRDC(cors$spr, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-T-N_spline_spearman")
 main.text <- c(paste0(BASE, " SPR vs. Woodfine et al. 2004"), "")
 xlab.text <- "Mean replication timing ratio"
-plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-
-
-
-
+plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 # -----------------------------------------------------------------------------
-# SCLC T/N vs LCL S/G1
+# RT vs LCL S/G1
 # Last Modified: 27/05/19
 # -----------------------------------------------------------------------------
-## LCL S/G1
 nrds.tmp <- nrds
-load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".RData")))
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
 nrds.lcl <- nrds
 nrds <- nrds.tmp
 
-cors <- toTable(0, 3, 22, c("chr", "length", "cor"))
-cors$chr <- 1:22
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   
-   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
-   nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
-   
-   ## Keep only overlapping 1kb windows
-   overlaps <- intersect(nrds.chr.RT$BED, nrds.lcl.chr.RT$BED)
-   cors$length[c] <- length(overlaps)
-   cors$cor[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
-}
+cors <- getRTvsRT(nrds, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-t-n-vs-lcl-s-g1_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-t-n-vs-lcl-s-g1_spline_spearman.RData")))
 
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
@@ -162,6 +133,12 @@ main.text <- paste0("SCLC T/N vs. LCL S/G1")
 ymin <- 0.25
 ymax <- 1.05
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
+
+##
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-T-N-vs-LCL-S-G1_spline_spearman")
+ymin <- -1.1
+ymax <- 1.1
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("T", "N", "T/N"), c=NA, isRT=T)
 
 # -----------------------------------------------------------------------------
 # SCLC T vs LCL S/G1
@@ -184,15 +161,15 @@ for (c in 1:22) {
 }
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
-# [1] -0.8466193
+# [1] -0.8457817
 # > max(cors.samples[,-c(1:4)])
-# [1] 0.8112673
+# [1] 0.8088429
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
-main.text <- c("SCLC (n=101) read depth vs. LCL S/G1", "")
-ymin <- -0.8789273
-ymax <- 0.8433154
+main.text <- c("SCLC read depth vs. LCL S/G1", "")
+ymin <- -0.8773492
+ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
@@ -201,14 +178,11 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # -----------------------------------------------------------------------------
 samples.sclc <- setSamplesQ4(wd.rt.data, samples1)
 writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
-# 0%        25%        50%        75%       100% 
-# -0.7504529 -0.6907507 -0.6546286 -0.5624756  0.6811825
+#         0%        25%        50%        75%       100% 
+# -0.7438588 -0.6840244 -0.6474195 -0.5555826  0.6806205 
 
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_n51.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")
-writeTable(subset(samples.sclc, Q4 %in% c(2,1)), file.path(wd.ngs, "sclc_wgs_q2_n51.txt"), colnames=T, rownames=F, sep="\t")
-#samples.sclc <- setSamplesQ4(wd.rt.data, overlaps)
-#writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n70.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA

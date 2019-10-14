@@ -71,9 +71,9 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_s
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
-main.text <- c("NBL (n=56) read depth vs. LCL S/G1", "")
-ymin <- -0.8789273
-ymax <- 0.8433154
+main.text <- c("NBL read depth vs. LCL S/G1", "")
+ymin <- -0.8773492
+ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
@@ -82,12 +82,11 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # -----------------------------------------------------------------------------
 samples.nbl <- setSamplesQ4(wd.rt.data, samples1)
 writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rownames=F, sep="\t")
-# 0%        25%        50%        75%       100% 
-# -0.7746278 -0.7463514 -0.7266363 -0.4510040  0.7710559 
+#         0%        25%        50%        75%       100% 
+# -0.7684906 -0.7397140 -0.7200663 -0.4456056  0.7665285
 
 writeTable(subset(samples.nbl, Q4 %in% c(4,1)), file.path(wd.ngs, "nbl_wgs_n28_q4.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.nbl, Q4 %in% c(3,1)), file.path(wd.ngs, "nbl_wgs_n28_q3.txt"), colnames=T, rownames=F, sep="\t")
-writeTable(subset(samples.nbl, Q4 %in% c(2,1)), file.path(wd.ngs, "nbl_wgs_n28_q2.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA

@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Chromosome replication timing of the human genome
-# Name         : manuscripts/replication/nbl-wgs-rt-m2.R
+# Name         : manuscripts/replication/nbl-wgs-rt-q4.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 09/08/19; 24/04/19; 05/03/19; 25/02/19; 30/01/18
 # =============================================================================
@@ -51,22 +51,13 @@ n0 <- length(samples0)
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 09/08/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
-for (c in 1:22) {
-   chr <- chrs[c]
-   #bed.gc.chr <- subset(bed.gc, CHR == chr)   ## REMOVED 19/09/19
-   nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-
-   nrds <- rbind(nrds, nrds.chr)
-}
-nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
-nrds$RT <- scale(nrds$RT)
-save(nrds, file=file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".log2.RData")))
+nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc)
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "q4-q1", ".RData")))
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "q4-q1", ".RData")))
 # > nrow(nrds)
 # [1] 2659570
-nrds.nbl <- nrds
+nrds.nbl.q4 <- nrds
 
-#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".log2.RData")))
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
@@ -77,7 +68,7 @@ for (c in 1:22) {
  
    ## Plot RT
    main.text <- paste0(BASE, " Q4/Q1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("Q4 tumour", "Q1 tumour"), c("lightcoral", "lightskyblue3"), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
 
@@ -85,90 +76,58 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 09/08/19; 31/05/19
 # -----------------------------------------------------------------------------
-cors <- toTable(0, 6, 22, c("chr", "length", "cor", "cor1", "cor2", "spr"))
-cors$chr <- 1:22
+sprs <- getSPR(nrds, bed.gc)
+save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.RData")))
+writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.RData")))
 
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
- 
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
-   cors$length[c] <- nrow(nrds.chr.RT)
 
-   e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
-   l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
-   cors$spr[c] <- (e - l)/(e + l)
-   
-   cor <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, method="spearman")
-   cors$cor[c] <- cor
- 
-   main.text <- c(paste0("NBL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(cor, digits=2), " (Q4 vs. Q1)"))
+   main.text <- c(paste0("NBL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (Q4 vs. Q1)"))
    xlab.text <- "NBL Q4/Q1"
    ylab.text <- "NBL read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-Q4-Q1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("Q4", "Q1"), method="spearman")
- 
-   cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
 }
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.RData")))
-writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 
 ## S-phase progression rate (SPR)
 ylab.text <- "SPR"
 file.name <- file.path(wd.rt.plots, "SPR_NBL-Q4-Q1_spline_spearman")
 main.text <- c(paste0(BASE, " Q4/Q1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
+plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-Q4-Q1_spline_spearman")
-main.text <- c(paste0(BASE, " Q4/Q1 SPR vs. Read depths correlation"), "SPR = (E-L)/(E+L)")
+main.text <- c(paste0(BASE, " Q4/Q1 SPR vs. Read depths correlation"), "")
 xlab.text <- "Q4 vs. Q1 [rho]"
-plotSPRRDC(cors$spr, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_NBL-Q4-Q1_spline_spearman")
 main.text <- c(paste0(BASE, " Q4/Q1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
 xlab.text <- "Woodfine et al. 2004"
-plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 # -----------------------------------------------------------------------------
 # RT vs LCL S/G1
 # Last Modified: 09/08/19; 06/06/19
 # -----------------------------------------------------------------------------
-## LCL S/G1
 nrds.tmp <- nrds
-load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data", paste0("nrds_lcl-s-g1_", method, ".RData")))
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
 nrds.lcl <- nrds
 nrds <- nrds.tmp
 
-cors <- toTable(0, 5, 22, c("chr", "length", "cor", "cor1", "cor2"))
-cors$chr <- 1:22
-for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
-   nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
-   
-   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
-   nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
- 
-   ## Keep only overlapping 1kb windows
-   overlaps <- intersect(nrds.chr.RT$BED, nrds.lcl.chr.RT$BED)
-   cors$length[c] <- length(overlaps)
-   cors$cor[c]  <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
-   cors$cor1[c] <- getCor(nrds.chr.T[overlaps,]$SPLINE,  nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
-   cors$cor2[c] <- getCor(nrds.chr.N[overlaps,]$SPLINE,  nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
-}
+cors <- getRTvsRT(nrds, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
 
-#load(file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
 file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")

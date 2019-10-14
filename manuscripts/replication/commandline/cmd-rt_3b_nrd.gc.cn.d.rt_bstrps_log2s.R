@@ -64,4 +64,4 @@ for (c in 1:22) {
    
    nrds.RT <- rbind(nrds.RT, nrds.chr.RT)
 }
-save(nrds.RT, file=file.path(wd.rt.data, paste0(base, "_nrds.gc.cn.d.rt.RT.RData")))
+save(nrds.RT, file=file.path(wd.rt.data, paste0(base, "_", method, "nrds.gc.cn.d.rt.RT.RData")))

@@ -193,9 +193,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ylab.text <- "Read depth [RPKM]"
    if (is.null(ylim)) {
       rds <- c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n", cex.lab=1.08, cex.axis=1.05)
    } else
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n")
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n", cex.lab=1.08, cex.axis=1.05)
    #points(bed.gc.chr$START/1E6, nrds.chr, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
@@ -210,7 +210,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    points(bed.gc.chr$START/1E6, nrds.chr.N$SPLINE, col=colours[2], pch=16, cex=0.2)
    
    ## Plot legend and peaks
-   legend("topright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T, cex=1.1)
+   legend("topright", legends, col=colours, lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
@@ -220,7 +220,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    par(mar=c(5.5,4,0,1))
    ylab.text <- "Replication timing"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main="", yaxt="n", cex.lab=1)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main="", yaxt="n", cex.lab=1.08, cex.axis=1.05)
    idx <- which(nrds.chr.RT$RT == 0)
    points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col="lightgrey", cex=0.3)
    idx <- which(nrds.chr.RT$RT < 0)
@@ -229,8 +229,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col=adjustcolor.red, cex=0.3)
    
    abline(h=0, lwd=0.5, col="lightgrey")
-   axis(side=2, at=seq(-2, 2, by=1), labels=c(-2, -1, 0, 1, 2))
-   mtext(xlab.text, side=1, line=3, cex=1.1)
+   axis(side=2, at=seq(-2, 2, by=1), labels=c(-2, -1, 0, 1, 2), cex.axis=1.05)
+   mtext(xlab.text, side=1, line=3, cex=1.15)
    
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
@@ -246,14 +246,14 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    abline(h=0, lty=5, lwd=1, col="black")
    
    ## Plot legend and peaks
-   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[1], cex=1.1)   
-   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[2], cex=1.1)
+   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[1], cex=1.15)   
+   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.7, pch=1, col=colours2[2], cex=1.15)
    if (!is.na(xmin) && !is.na(xmax))
-      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.1)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    else
-      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.1)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (!is.null(lcl.rt.chr))
-      legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T, cex=1.1)
+      legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
@@ -277,10 +277,6 @@ getCor <- function(reads, timings, method) {
 }
 
 plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
-   #xmin <- min(nrds.chr.RT$SPLINE)
-   #xmax <- max(nrds.chr.RT$SPLINE)
-   #ymin <- min(c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE))
-   #ymax <- max(c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE))
    xlim <- c(min(timings), max(timings))
    ylim <- c(min(c(reads1, reads2)), max(c(reads1, reads2)))
    cor <- "rho"
@@ -292,7 +288,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
 
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], cex.lab=1.2)
+   plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], cex.lab=1.2, cex.axis=1.1)
    abline(v=0, lty=5)
    
    lm.fit1 <- lm(reads1 ~ timings)
@@ -320,7 +316,7 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1.7, cex.main=1.8)
+   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab="", xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1.7, cex.main=1.8)
    lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
    points(cors$chr, cors$cor2, col=cols[2], pch=19)
    lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
@@ -335,7 +331,8 @@ plotRD2vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
       text(c, cors$cor2[c], round0(cors$cor2[c], digits=2), cex=1.8, col=cols[2], pos=3)
    }
    axis(side=1, at=seq(2, 22, by=2), cex.axis=1.25)
-   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.6)
+   axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.5)
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
    dev.off()
 }
 
@@ -345,7 +342,7 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1, cex.main=1.2)
+   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1.2, cex.main=1.2)
    lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
    points(cors$chr, cors$cor2, col=cols[2], pch=19)
    lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
@@ -358,8 +355,8 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    RT <- "S/G1"
    #legend("topright", c(paste0(legends[3], " vs. ", RT), paste0("      ", legends[1], " vs. ", RT)), text.col=c(cols[3], cols[1]), bty="n", cex=1.1) 
    #legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.1) 
-   legend("topright", paste0(legends[3], " vs. ", RT), text.col=cols[3], bty="n", cex=1.1) 
-   legend("bottomright", c(paste0(legends[1], " vs. ", RT), paste0(legends[2], " vs. ", RT)), text.col=c(cols[1], cols[2]), bty="n", cex=1.1)        
+   legend("topright", paste0(legends[3], " vs. ", RT), text.col=cols[3], bty="n", cex=1.2) 
+   legend("bottomright", c(paste0(legends[1], " vs. ", RT), paste0(legends[2], " vs. ", RT)), text.col=c(cols[1], cols[2]), bty="n", cex=1.2)        
    ##legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.1)
  
    if (!is.na(c)) {
@@ -371,35 +368,45 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    dev.off()
 }
 
-plotRTvsRT <- function(timings1, timings2, file.name, main.text, xlab.text, ylab.text, method) {
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   #pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(x=timings1, y=timings2, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=adjustcolor("black", alpha.f=0.20))
-   abline(v=0, lty=5)
-   abline(h=0, lty=5)
-   
-   lm.fit <- lm(timings1 ~ timings2)
-   abline(lm.fit, col="black", lwd=3)
-   #cor <- cor.test(timings1, timings2, method="spearman", exact=F)
-
-   #legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col="black", bty="n", cex=1.1)
-   mtext(main.text[2], cex=1.2, line=0.3)
-   dev.off()
-}
-
 # -----------------------------------------------------------------------------
 # Compare betweeen RT and LCL RT in sclc-wgs-rt.R
 # Last Modified: 05/03/19
 # -----------------------------------------------------------------------------
+getRTvsRT <- function(nrds, nrds.lcl, bed.gc) {
+   cors <- toTable(0, 5, 22, c("chr", "length", "cor", "cor1", "cor2"))
+   cors$chr <- 1:22
+   
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+      nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+      nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+      nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+      nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+  
+      nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
+      nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
+  
+      ## Keep only overlapping 1kb windows
+      overlaps <- intersect(nrds.chr.RT$BED, nrds.lcl.chr.RT$BED)
+      cors$length[c] <- length(overlaps)
+      cors$cor[c]  <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
+      cors$cor1[c] <- getCor(nrds.chr.T[overlaps,]$SPLINE,  nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
+      cors$cor2[c] <- getCor(nrds.chr.N[overlaps,]$SPLINE,  nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
+   }
+   
+   return(cors)
+}
+
 plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col, c=NA, pos) {
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col, xaxt="n", yaxt="n", pch=19)
+   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=col, xaxt="n", yaxt="n", pch=19, cex.lab=1.2)
    lines(cors$cor, y=NULL, type="l", lwd=3, col=col)
    abline(h=0, lty=5)
  
    if (!is.na(c))
-      text(cors[c,]$chr, cors[c,]$cor, round0(cors[c,]$cor, digits=2), cex=1.1, col=col, pos=pos)
+      text(cors[c,]$chr, cors[c,]$cor, round0(cors[c,]$cor, digits=2), cex=1.2, col=col, pos=pos)
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
    dev.off()
@@ -423,10 +430,11 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
    }
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="Chromosome", outline=T, xaxt="n", main=main.text[1], cex.lab=1.5, cex.axis=1.3, cex.main=1.6)#, medcol="red")
+   boxplot(cor ~ chr, data=cors.samples.plot, ylim=c(ymin, ymax), ylab="", xlab="Chromosome", outline=T, xaxt="n", yaxt="n", main=main.text[1], cex.lab=1.7, cex.main=1.8)#, medcol="red")
    axis(side=1, at=seq(2, 22, by=2), cex.axis=1.2)
+   axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.5)
    abline(h=0, lty=5)
-   mtext(main.text[2], cex=1.1, line=0.3) 
+   mtext("Spearman's rho", side=2, line=2.8, cex=1.7)
    dev.off()
 }
 
@@ -434,13 +442,30 @@ plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ym
 # Mean replication timing ratio (MRTR)
 # Last Modified: 06/10/19
 # -----------------------------------------------------------------------------
-getYlim <- function(means, unit) {
-   unit <- max(means)/unit
-   ymax <- max(means) + unit
+getSPR <- function(nrds, bed.gc) {
+   cors <- toTable(0, 7, 22, c("chr", "cor", "cor1", "cor2", "e", "l", "spr"))
+   cors$chr <- 1:22
    
-   ymin <- ((ymax - means[2]) - means[2]) * -1
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+      nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+      nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+      nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+      nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+  
+      cors$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")
+      cors$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+      cors$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")
+  
+      e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
+      l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
+      cors$e[c] <- e
+      cors$l[c] <- l
+      cors$spr[c] <- (e - l)/(e + l)
+   }
    
-   return(c(ymin, ymax))
+   return(cors)
 }
 
 plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
@@ -451,7 +476,7 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text
     
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(cors$skew ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, cex.lab=1.2)
+   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", pch=19, cex.lab=1.2, cex.axis=1.1)
    
    abline(h=cors$spr[2], lty=5)
    lines(cors$spr, y=NULL, type="l", lwd=3, col=cols[3])
@@ -462,20 +487,20 @@ plotSPR <- function(cors, file.name, main.text, cs=NULL, digits, unit, ylab.text
    points(cors$spr[idx] ~ cors$chr[idx], col=cols[2], pch=19)
    points(cors$spr[2] ~ cors$chr[2], col=cols[3], pch=19)
  
-   text(cors$chr[2], cors$spr[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   text(cors$chr[2], cors$spr[2], paste0("Chr", 2), cex=1.2, col=cols[3], pos=3)
    #text(cors$chr[2]+1.8, cors$spr[2], paste0("Chr2 (", round0(cors$spr[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
          if (cors$spr[c] > cors$spr[2])
-            text(cors$chr[c], cors$spr[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
+            text(cors$chr[c], cors$spr[c], paste0("Chr", c), cex=1.2, col=cols[1], pos=3)
             #text(cors$chr[c]+1.8, cors$spr[c], paste0("Chr", c, " (", round0(cors$spr[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(cors$chr[c], cors$spr[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
+            text(cors$chr[c], cors$spr[c], paste0("Chr", c), cex=1.2, col=cols[2], pos=1)
             #text(cors$chr[c]+1.8, cors$spr[c], paste0("Chr", c, " (", round0(cors$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
-   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   
-   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
+   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1], cex=1.05)   
+   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=16, col=cols[2], cex=1.05)
 
    axis(side=1, at=seq(2, 22, by=2), cex.axis=1)
    mtext(main.text[2], cex=1.2, line=0.3)
@@ -494,7 +519,7 @@ plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, y
    if (is.null(xlim))
       plot(means ~ cors, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2)
    else
-      plot(means ~ cors, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2)
+      plot(means ~ cors, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="black", pch=19, cex.lab=1.2, cex.axis=1.1)
 
    abline(h=means[2], lty=5)
    lm.fit <- lm(means ~ cors)
@@ -506,23 +531,23 @@ plotSPRRDC <- function(means, cors, file.name, main.text, cs, xlab.text, unit, y
    points(means[idx] ~ cors[idx], col=cols[2], pch=19)
    points(means[2] ~ cors[2], col=cols[3], pch=19)
  
-   text(cors[2], means[2], paste0("Chr", 2), cex=1.1, col=cols[3], pos=3)
+   text(cors[2], means[2], paste0("Chr", 2), cex=1.2, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
          if (means[c] > means[2])
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[1], pos=3)
+            text(cors[c], means[c], paste0("Chr", c), cex=1.2, col=cols[1], pos=3)
          else
-            text(cors[c], means[c], paste0("Chr", c), cex=1.1, col=cols[2], pos=1)
+            text(cors[c], means[c], paste0("Chr", c), cex=1.2, col=cols[2], pos=1)
       }
    
    cor <- cor.test(means, cors, method="spearman", exact=F)
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
-   legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1])   ## bty="n"
-   legend(legends[2], "Later than chr2", text.col=cols[2], pch=16, col=cols[2])
+   legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=16, col=cols[1], cex=1.05)   ## bty="n"
+   legend(legends[2], "Later than chr2", text.col=cols[2], pch=16, col=cols[2], cex=1.05)
    
-   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.1)
+   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.2)
    #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
    #axis(side=1, at=seq(2, 22, by=2))
    mtext(main.text[2], cex=1.2, line=0.3)

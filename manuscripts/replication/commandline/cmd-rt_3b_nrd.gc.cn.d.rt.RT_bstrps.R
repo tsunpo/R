@@ -33,10 +33,10 @@ wd.anlys   <- file.path(wd, "analysis")
 wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data/bstrps")
 
-load(file.path(wd.rt.data, 1, paste0(base, "_rpkm.gc.cn.d.rt.RT.RData")))
+load(file.path(wd.rt.data, 1, paste0(base, "_", method, ".gc.cn.d.rt.RT.RData")))
 nrds.RT.BSTRPS <- getBSTRPS(nrds.RT, COLUMN, 1)
 for (b in 2:BSTRPS) {
-   load(file.path(wd.rt.data, b, paste0(base, "_rpkm.gc.cn.d.rt.RT.RData")))
+   load(file.path(wd.rt.data, b, paste0(base, "_", method, ".gc.cn.d.rt.RT.RData")))
    nrds.RT.BSTRP <- getBSTRPS(nrds.RT, COLUMN, b)
   
    #overlaps <- intersect(rownames(nrds.RT.BSTRPS), rownames(nrds.RT.BSTRP))
