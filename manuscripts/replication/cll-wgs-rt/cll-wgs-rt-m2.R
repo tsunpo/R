@@ -126,7 +126,7 @@ nrds <- nrds.tmp
 
 cors <- getRTvsRT(nrds, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
-#load(file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"

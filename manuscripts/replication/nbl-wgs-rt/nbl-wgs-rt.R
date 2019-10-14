@@ -88,6 +88,11 @@ writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rown
 writeTable(subset(samples.nbl, Q4 %in% c(4,1)), file.path(wd.ngs, "nbl_wgs_n28_q4.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.nbl, Q4 %in% c(3,1)), file.path(wd.ngs, "nbl_wgs_n28_q3.txt"), colnames=T, rownames=F, sep="\t")
 
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 04/06/19; 21/04/19

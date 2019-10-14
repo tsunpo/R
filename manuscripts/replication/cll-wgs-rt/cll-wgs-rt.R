@@ -88,6 +88,11 @@ writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownam
 writeTable(subset(samples.cll, Q4 %in% c(4,1)), file.path(wd.ngs, "cll_wgs_q4_n48.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.cll, Q4 %in% c(3,1)), file.path(wd.ngs, "cll_wgs_q3_n48.txt"), colnames=T, rownames=F, sep="\t")
 
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 04/06/19; 21/04/19

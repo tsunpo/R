@@ -74,9 +74,9 @@ for (c in 1:22) {
 # RD vs RT (RDS and SPR)
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
-cors <- getSPR(nrds, bed.gc)
-save(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
-writeTable(cors, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+sprs <- getSPR(nrds, bed.gc)
+save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 
 for (c in 1:22) {
@@ -88,7 +88,7 @@ for (c in 1:22) {
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
-   main.text <- c(paste0("LCL read depths correlation (", "Chr", c, ")"), paste0("rho = ", round0(cors$cor[c], digits=2), " (S vs. G1)"))
+   main.text <- c(paste0("LCL read depths correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
    xlab.text <- "S/G1 read depth ratio [log2]"
    ylab.text <- "Read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
@@ -99,26 +99,26 @@ for (c in 1:22) {
 ylab.text <- "SPR"
 file.name <- file.path(wd.rt.plots, "SPR_LCL-S-G1_spline_spearman")
 main.text <- c(paste0(BASE, " S-phase progression rate"), "SPR = (E-L)/(E+L)")
-plotSPR(cors, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
+plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 file.name <- file.path(wd.rt.plots, "SPR-RDC_LCL-S-G1_spline_spearman")
 main.text <- c(paste0(BASE, " SPR vs. Read depths correlation"), "")
 xlab.text <- "S vs. G1 [rho]"
-plotSPRRDC(cors$spr, cors$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_LCL-S-G1_spline_spearman")
 main.text <- c(paste0(BASE, " SPR vs. Woodfine et al. 2004"), "")
 xlab.text <- "Mean replication timing ratio"
-plotSPRRDC(cors$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## Fighte 2C
 file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
 main.text <- paste0("LCL read depths vs. LCL S/G1")
 ymin <- -0.8
 ymax <- 0.8
-plotRD2vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
+plotRD2vsRTALL(sprs, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
 
 

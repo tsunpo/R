@@ -119,7 +119,6 @@ plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xla
 # RT vs LCL S/G1
 # Last Modified: 09/08/19; 06/06/19
 # -----------------------------------------------------------------------------
-## LCL S/G1
 nrds.tmp <- nrds
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
 nrds.lcl <- nrds
@@ -127,7 +126,7 @@ nrds <- nrds.tmp
 
 cors <- getRTvsRT(nrds, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q3-q1-vs-lcl-s-g1_spline_spearman.RData")))
-#load(file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q3-q1-vs-lcl-s-g1_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q3-q1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
@@ -142,6 +141,11 @@ file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-Q3-Q1-vs-LCL-S-G1_spline_spea
 ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("Q3", "Q1", "Q3/Q1"), c=NA, isRT=T)
+
+
+
+
+
 
 
 
