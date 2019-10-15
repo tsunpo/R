@@ -242,7 +242,7 @@ library(beeswarm)
 pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll.pdf"), height=6, width=6)
 ymax <- max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="Spearman's rho", main="Overall correlation with LCL S/G1", cex.lab=1.7, cex.axis=1.6, cex.main=1.8)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL S/G1", yaxt="n", cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
@@ -251,7 +251,10 @@ beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
 
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"), cex=1.7)
-mtext("", cex=1.2, line=0.3) 
+
+axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
+mtext("Spearman's rho", side=2, line=2.8, cex=1.7)
+mtext("", cex=1.2, line=0.3)
 dev.off()
 
 
