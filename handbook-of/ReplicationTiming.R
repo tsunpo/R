@@ -128,12 +128,12 @@ outputRT <- function(nrds.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-getLog2ScaledRT <- function(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, bed.gc) {
+getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc) {
    nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
-      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
   
       nrds <- rbind(nrds, nrds.chr)
    }
@@ -344,7 +344,7 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1.2, cex.main=1.2)
+   plot(cors$cor1 ~ cors$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.lab=1.2, cex.main=1.25)
    lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[1])
    points(cors$chr, cors$cor2, col=cols[2], pch=19)
    lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[2])
