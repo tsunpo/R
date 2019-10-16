@@ -1,6 +1,6 @@
 # =============================================================================
-# Library      : Bootstrapping
-# Name         : handbook-of/Bootstrapping.R
+# Library      : Bootstrap
+# Name         : handbook-of/Bootstrap.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 13/09/19; 05/04/19; 21/02/19
 # =============================================================================
@@ -20,16 +20,16 @@ getBSTRPS <- function(nrds.RT, colname, b) {
 # Determine RFD from bootstrapping data (in 3b)
 # Last Modified: 20/09/19; 31/10/18
 # -----------------------------------------------------------------------------
-getPOS <- function(nrds.RT) {
+getPOS <- function(nrds.RT) {   ## Left leading with a positive slope
    return(as.numeric(length(which(nrds.RT > 0))))
 }
 
-getNEG <- function(nrds.RT) {
- return(as.numeric(length(which(nrds.RT < 0))))
+getNEG <- function(nrds.RT) {   ## Right leading with a negative slope
+   return(as.numeric(length(which(nrds.RT < 0))))
 }
 
-getRFD <- function(nrds.RT) {
-   return((nrds.RT$POS - nrds.RT$NEG)/(nrds.RT$POS + nrds.RT$NEG))
+getRFD <- function(nrds.RT) {   ## (R-L)/(R+L)
+   return((nrds.RT$NEG - nrds.RT$POS)/(nrds.RT$NEG + nrds.RT$POS))
 }
 
 pipeBootstrapping <- function(nrds.RT, bstrps) {
@@ -57,16 +57,16 @@ getBootstrapping <- function(nrds.RT, origin.lower, origin.upper) {
 ## https://www.statmethods.net/advgraphs/layout.html
 ## https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
 ## https://stackoverflow.com/questions/15717545/set-the-intervals-of-x-axis-using-r
-plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, breaks, origin.break) {
-   cols <- rep("lightskyblue3", breaks)
-   cols[(breaks/2 + origin.break):breaks] <- "lightcoral"
-   cols[(breaks/2 - origin.break + 1):(breaks/2 + origin.break)] <- "white"
+plotBootstrapsHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, breaks, origin.break) {
+   cols <- rep("steelblue1", breaks)
+   cols[(breaks/2 + origin.break):breaks] <- "sandybrown"
+   cols[(breaks/2 - origin.break + 1):(breaks/2 + origin.break)] <- "red"
    
-   h <- hist(bed.gc.rt.chr$POS, breaks=breaks)
+   h <- hist(nrds.RT.BSTRPS$NEG, breaks=breaks)
    ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
    h$counts <- h$counts/1000                                        ## Change frequency scale to x1000 in row 1
    
-   pdf(file.name, height=6, width=6)
+   pdf(file.name, height=5, width=5)
    #par(mfrow=c(2,1))
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    ylim <- sort(c(h$counts[1], h$counts[breaks]), decreasing=F)     ## Min and max frequencies in row 1 (in x1000 scale)
@@ -76,11 +76,11 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, b
       ylim[1] <- floor(ylim[1]/10)*10
    } else
       ylim[1] <- floor(ylim[1])
-   par(mar=c(1,4,4,1))
-   plot(h, main=main.text, ylab="Frequency (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n")
+   par(mar=c(1,4,3.6,1))
+   plot(h, main=main.text, ylab="Freq. (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    
-   par(mar=c(5.5,4,0,1))
-   hist(bed.gc.rt.chr$POS, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F)
+   par(mar=c(5,4,0,1))
+   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    if (ymax < 1000) {
       axis(side=2, at=seq(0, ymax, by=250))
    } else if (ymax < 3000) {
@@ -90,7 +90,7 @@ plotBootstrapsHist <- function(bed.gc.rt.chr, file.name, main.text, xlab.text, b
    } else
       axis(side=2, at=seq(0, ymax, by=1000))
    axis(side=1, at=seq(0, 1000, by=250))
-   mtext(paste0("Distribution of 1kb windows (n=", separator(nrow(bed.gc.rt.chr)), ")"), cex=1.2, line=6.3)
+   mtext(paste0("Chr1-22 (1-kbs)"), line=4.8, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()
 }
 

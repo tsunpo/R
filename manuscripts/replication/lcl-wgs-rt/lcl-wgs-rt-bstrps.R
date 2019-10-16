@@ -23,9 +23,9 @@ load(file.path(wd.src.ref, "hg19.RData"))
 BASE <- "LCL"
 base <- tolower(BASE)
 bstrps       <- 1000
-origin.upper <- 750   ## 500-505, 505-510, 510-515, 515-520, 520-525 breaks
-origin.lower <- 250   ## 475-480, 480-485, 485-490, 490-495, 495-500 breaks
-origin.break <- 50     ## 5 breaks each centering 500
+origin.upper <- 510   ## 500-510 breaks
+origin.lower <- 490   ## 490-500 breaks
+origin.break <- 1     ## 1 breaks each centering 500
 
 #wd <- "/projects/cangen/tyang2/"             ## tyang2@cheops
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@local
@@ -42,22 +42,19 @@ nrds.RT.BSTRPS <- NULL
 for (c in 1:22) {
    chr <- chrs[c]
 
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SPLINE_", chr, ".RData")))
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
    if (is.null(nrds.RT.BSTRPS))
       nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
    else
       nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
-
-   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_nrds_SPLINE_BSTRPS_", chr, ".pdf"))
-   main.text <- paste0("Chr", c, " (", BASE, ")")
-   xlab.text <- c("Number of early replication counts", "(out of 1,000 bootstrappings)")
-   #plotBootstrapsHist(nrds.RT.BSTRPS.chr, file.name, main.text, xlab.text, 200, origin.break)
 }
-save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SPLINE.RData")))
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SPLINE_BSTRPS.pdf"))
+nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
+save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_BSTRPS.pdf"))
 main.text <- paste0("Chr1-22 (", BASE, ")")
-xlab.text <- c("Number of early replication counts", "(out of 1,000 bootstrappings)")
-plotBootstrapsHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 200, origin.break)
+xlab.text <- c("Number of right-leading (R) counts", "(out of 1,000 bootstrappings)")
+plotBootstrapsHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, origin.break)
 # > nrow(nrds.RT.BSTRPS)
 # [1] 2534909
 nrds.RT.BSTRPS.lcl <- nrds.RT.BSTRPS

@@ -355,8 +355,8 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
    abline(h=0, lty=5)
  
    RT <- "S/G1"
-   #legend("topright", c(paste0(legends[3], " vs. ", RT), paste0("      ", legends[1], " vs. ", RT)), text.col=c(cols[3], cols[1]), bty="n", cex=1.1) 
-   #legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.1) 
+   #legend("topright", c(paste0(legends[3], " vs. ", RT), paste0("      ", legends[1], " vs. ", RT)), text.col=c(cols[3], cols[1]), bty="n", cex=1.2) 
+   #legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.2)
    legend("topright", paste0(legends[3], " vs. ", RT), text.col=cols[3], bty="n", cex=1.2) 
    legend("bottomright", c(paste0(legends[1], " vs. ", RT), paste0(legends[2], " vs. ", RT)), text.col=c(cols[1], cols[2]), bty="n", cex=1.2)        
    ##legend("bottomright", paste0(legends[2], " vs. ", RT), text.col=cols[2], bty="n", cex=1.1)

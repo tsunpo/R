@@ -58,7 +58,6 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2659570
 nrds.cll.q3 <- nrds
 
-#load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".log2.RData")))
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {
