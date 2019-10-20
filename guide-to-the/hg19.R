@@ -256,6 +256,6 @@ for (c in 2:22) {
    load(file=file.path(wd.src.ref, paste0("hg19.ensGene.bed.1kb.chr", c, ".RData")))
    ensGene.bed <- rbind(ensGene.bed, ensGene.bed.chr)
 }
-ensGene.bed <- ensGene.bed[rownames(ensGene),]
+ensGene.bed <- ensGene.bed[rownames(ensGene), c("TSS", "TTS")]
 
 save(ensGene.bed, file=file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
