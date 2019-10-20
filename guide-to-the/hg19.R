@@ -154,10 +154,10 @@ bed$START <- bed$START + 1   ## ADD 18/11/18 e.g. P2 chr1 10001 11000 0.646000
 bed <- bed[,-1]
 
 bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
-save(bed.gc, file=file.path(wd.src.ref, "hg19.1kb.bed.gc.RData"))
+save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # > nrow(bed.gc)   ## Based on human-genome.1kb-grid.bed
 # [1] 2861558
-# > nrow(bed.gc)   ## Based on full coverage (as shown below)
+# > nrow(bed.gc)   ## Based on my coverage (as shown below hg19.bed.1kb.gz)
 # [1] 2861589
 
 # -----------------------------------------------------------------------------
@@ -185,9 +185,9 @@ for (c in 1:length(chrs)) {
 }
 bed$BED <- mapply(x = 1:nrow(bed), function(x) paste0("P", x))
 
-#save(bed, file=file.path(wd.src.ref, "hg19.1kb.bed.RData"))
-#writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.1kb.bed.gz")), colnames=F, rownames=F, sep="\t")
-writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.5kb.bed.gz")), colnames=F, rownames=F, sep="\t")
+#save(bed, file=file.path(wd.src.ref, "hg19.bed.1kb.RData"))
+#writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.bed.1kb.gz")), colnames=F, rownames=F, sep="\t")
+writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.bed.5kb.gz")), colnames=F, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # File: Koren-et-al-Table-S2.zip (Koren 2012)
@@ -237,10 +237,46 @@ lcl.mean <- subset(lcl.mean, Chromosome %in% 1:22)
 lcl.mean$Chromosome <- as.numeric(lcl.mean$Chromosome)
 lcl.mean <- lcl.mean[order(lcl.mean$Chromosome),]
 
-save(lcl.rt, lcl.mean, file=file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
+save(lcl.rt, lcl.mean, file=file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # File: hg19.ensembl.gene.txt (To test coverage on genes)
 # Last Modified: 07/04/19
 # -----------------------------------------------------------------------------
 writeTable(ensGene[,c("chromosome_name", "start_position", "end_position", "ensembl_gene_id")], file.path(wd.reference, "collections/hg19.ensembl.gene.txt"), colnames=F, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Add BED information for the ensGenes
+# Last Modified: 20/10/19
+# -----------------------------------------------------------------------------
+getPosTSS <- function(ensGene.g) {
+   if (ensGene.g$strand > 0)
+      return(ensGene.g$start_position)
+   else
+      return(ensGene.g$end_position)
+}
+
+getPosTTS <- function(ensGene.g) {
+   if (ensGene.g$strand > 0)
+      return(ensGene.g$end_position)
+   else
+      return(ensGene.g$start_position)
+}
+
+getEnsGeneBED <- function(chr, pos, bed.gc) {
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   bed.gc.chr.start <- subset(bed.gc.chr, pos >= START)
+   bed.gc.chr.start.end <- subset(bed.gc.chr.start, pos <= END)    ## ADD "=" 19/11/18
+ 
+   return(rownames(bed.gc.chr.start.end))
+}
+
+ensGene.bed <- toTable(NA, 4, nrow(ensGene), c("TS", "TT", "TSS", "TTS"))
+rownames(ensGene.bed) <- rownames(ensGene)
+ensGene.bed$TS <- mapply(x = 1:nrow(ensGene), function(x) getPosTSS(ensGene[x,]))
+ensGene.bed$TT <- mapply(x = 1:nrow(ensGene), function(x) getPosTTS(ensGene[x,]))
+ensGene.bed$TSS <- mapply(x = 1:nrow(ensGene), function(x) getEnsGeneBED(ensGene$chromosome_name[x], ensGene$TS[x,], bed.gc))
+ensGene.bed$TTS <- mapply(x = 1:nrow(ensGene), function(x) getEnsGeneBED(ensGene$chromosome_name[x], ensGene$TT[x,], bed.gc))
+
+save(ensGene.bed, file=file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
