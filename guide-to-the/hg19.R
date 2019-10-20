@@ -154,14 +154,14 @@ bed$START <- bed$START + 1   ## ADD 18/11/18 e.g. P2 chr1 10001 11000 0.646000
 bed <- bed[,-1]
 
 bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
-save(bed.gc, file=file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+save(bed.gc, file=file.path(wd.src.ref, "hg19.1kb.bed.gc.RData"))
 # > nrow(bed.gc)   ## Based on human-genome.1kb-grid.bed
 # [1] 2861558
 # > nrow(bed.gc)   ## Based on full coverage (as shown below)
 # [1] 2861589
 
 # -----------------------------------------------------------------------------
-# File: hg19.1kb.bed (To test full coverage)
+# File: hg19.5kb.bed.gz (To create fixed-size 1-kb/5-kb partition windows)
 # Last Modified: 17/11/18
 # -----------------------------------------------------------------------------
 colnames <- c("CHR", "START", "END")
@@ -185,7 +185,7 @@ for (c in 1:length(chrs)) {
 }
 bed$BED <- mapply(x = 1:nrow(bed), function(x) paste0("P", x))
 
-#save(bed, file=file.path(wd.src.ref, "hg19.1kb.RData"))
+#save(bed, file=file.path(wd.src.ref, "hg19.1kb.bed.RData"))
 #writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.1kb.bed.gz")), colnames=F, rownames=F, sep="\t")
 writeTable(bed, gzfile(file.path(wd.reference, "collections/hg19.5kb.bed.gz")), colnames=F, rownames=F, sep="\t")
 

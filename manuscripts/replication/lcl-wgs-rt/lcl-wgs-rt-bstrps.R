@@ -5,37 +5,49 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/09/19; 12/11/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Bootstrapping.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "Bootstrap.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.bed.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Variations in bootstrapped data (Ensembl genes)
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
+wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "LCL"
+PAIR1 <- "S"
+PAIR0 <- "G1"
 base <- tolower(BASE)
-bstrps       <- 1000
-origin.upper <- 510   ## 500-510 breaks
-origin.lower <- 490   ## 490-500 breaks
-origin.break <- 1     ## 1 breaks each centering 500
+method <- "rpkm"
+bstrps        <- 1000
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 1 breaks each centering 500
 
-#wd <- "/projects/cangen/tyang2/"             ## tyang2@cheops
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@local
+wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
+
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
+samples1 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "lcl_wgs_n7.list"), header=F, rownames=F, sep="")
+n1 <- length(samples1)
+n0 <- length(samples0)
+
 # -----------------------------------------------------------------------------
-# Distributions in bootstrapped data
+# Bootstrap distribution
 # Last Modified: 02/11/18
 # -----------------------------------------------------------------------------
 nrds.RT.BSTRPS <- NULL
@@ -47,43 +59,72 @@ for (c in 1:22) {
       nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
    else
       nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
+   
+   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_", chr, ".pdf"))
+   main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr", c, " (1-kbs)"))
+   xlab.text <- "Number of right-leading resamplings"
+   #plotBootstrapHist(nrds.RT.BSTRPS.chr, file.name, main.text, xlab.text, 100, boundary.break)
 }
 nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_BSTRPS.pdf"))
-main.text <- paste0("Chr1-22 (", BASE, ")")
-xlab.text <- c("Number of right-leading (R) counts", "(out of 1,000 bootstrappings)")
-plotBootstrapsHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, origin.break)
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
+xlab.text <- "Number of right-leading resamplings"
+plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 # > nrow(nrds.RT.BSTRPS)
 # [1] 2534909
 nrds.RT.BSTRPS.lcl <- nrds.RT.BSTRPS
 
 # -----------------------------------------------------------------------------
+# Plot RFD from bootstrap data
+# Last Modified: 04/11/18
+# -----------------------------------------------------------------------------
+#load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+load(file.path(wd.rt, "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   
+   ## RFD   
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
+   nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
+
+   ## Chr12
+   file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_test"))
+   plotBootstrapRFD(file.name, BASE, chr, 39500000, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+   plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+
+   ## Chr2
+   file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+   #plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+   #plotBootstrapRFD(file.name, BASE, chr,  37000000,  40000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+   #plotBootstrapRFD(file.name, BASE, chr, 215000000, 220000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+   plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+   
+   
+   ## Chr13
+   file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+   plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+   
+}
+
+# -----------------------------------------------------------------------------
 # 
 # Last Modified: 22/09/19
 # -----------------------------------------------------------------------------
-overlaps <- intersect(intersect(intersect(rownames(nrds.RT.BSTRPS.sclc), rownames(nrds.RT.BSTRPS.nbl)), rownames(nrds.RT.BSTRPS.cll)), rownames(nrds.RT.BSTRPS.lcl))
+boundary.upper <- 950   ## RFD > +0.9
+boundary.lower <-  50   ## RFD < -0.9
+
+nrds.RT.BSTRPS.lcl.b <- getBootstrapRFD(nrds.RT.BSTRPS.lcl, boundary.lower, boundary.upper)
+nrow(nrds.RT.BSTRPS.lcl.b)
+# [1] 1623822
+
+overlaps <- intersect(intersect(intersect(rownames(nrds.RT.BSTRPS.sclc.b), rownames(nrds.RT.BSTRPS.nbl.b)), rownames(nrds.RT.BSTRPS.cll.b)), rownames(nrds.RT.BSTRPS.lcl.b))
 # > length(overlaps)
-# [1] 2527121
-
-#nrds.RT.BSTRPS.sclc.o <- nrds.RT.BSTRPS.sclc[overlaps,]
-#nrds.RT.BSTRPS.nbl.o  <- nrds.RT.BSTRPS.nbl[overlaps,]
-#nrds.RT.BSTRPS.cll.o  <- nrds.RT.BSTRPS.cll[overlaps,]
-
-###
-##
-#nrds.sclc.RT <- getSplineRT(nrds.sclc, bed.gc)
-#nrds.nbl.RT  <- getSplineRT(nrds.nbl, bed.gc)
-#nrds.cll.RT  <- getSplineRT(nrds.cll, bed.gc)
-nrds.lcl.RT  <- getSplineRT(nrds.lcl, bed.gc)
-#nrow(nrds.sclc.RT)
-#nrow(nrds.nbl.RT)
-nrow(nrds.cll.RT)
-nrow(nrds.lcl.RT)
-# > [1] 2534931
-# > 2534931 - 22
-# [1] 2534909
+# [1] 1023775
 
 ###
 ##
@@ -97,26 +138,26 @@ nrow(nrds.cll.RT.o)
 nrow(nrds.lcl.RT.o)
 
 ##
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.lcl.RT.o$SPLINE
+nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE
 length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 2020801
+# [1] 890010
 
-nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SPLINE * nrds.lcl.RT.o$SPLINE
+nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE
 length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 1956935
+# [1] 888453
 
-nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SPLINE * nrds.lcl.RT.o$SPLINE
+nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE
 length(which(nrds.cll.RT.o$SIGN > 0))
-# [1] 2001159
+# [1] 881127
 
 # -----------------------------------------------------------------------------
 # SPLINE
 # Last Modified: 24/09/19
 # -----------------------------------------------------------------------------
-nrds.RT.BSTRPS.sclc.b <- getBootstrapping(nrds.RT.BSTRPS.sclc, origin.lower, origin.upper)
-nrds.RT.BSTRPS.nbl.b  <- getBootstrapping(nrds.RT.BSTRPS.nbl,  origin.lower, origin.upper)
-nrds.RT.BSTRPS.cll.b  <- getBootstrapping(nrds.RT.BSTRPS.cll,  origin.lower, origin.upper)
-nrds.RT.BSTRPS.lcl.b  <- getBootstrapping(nrds.RT.BSTRPS.lcl,  origin.lower, origin.upper)
+nrds.RT.BSTRPS.sclc.b <- getBootstrapping(nrds.RT.BSTRPS.sclc, boundary.lower, boundary.upper)
+nrds.RT.BSTRPS.nbl.b  <- getBootstrapping(nrds.RT.BSTRPS.nbl,  boundary.lower, boundary.upper)
+nrds.RT.BSTRPS.cll.b  <- getBootstrapping(nrds.RT.BSTRPS.cll,  boundary.lower, boundary.upper)
+nrds.RT.BSTRPS.lcl.b  <- getBootstrapping(nrds.RT.BSTRPS.lcl,  boundary.lower, boundary.upper)
 nrow(nrds.RT.BSTRPS.sclc.b)
 # [1] 2517859
 # > 2517859/2650083
@@ -187,9 +228,9 @@ length(which(nrds.cll.RT.o$SIGN > 0))
 # SLOPE
 # Last Modified: 22/09/19
 # -----------------------------------------------------------------------------
-nrds.RT.BSTRPS.sclc.b <- getBootstrapping(nrds.RT.BSTRPS.sclc, origin.lower, origin.upper)
-nrds.RT.BSTRPS.nbl.b  <- getBootstrapping(nrds.RT.BSTRPS.nbl,  origin.lower, origin.upper)
-nrds.RT.BSTRPS.cll.b  <- getBootstrapping(nrds.RT.BSTRPS.cll,  origin.lower, origin.upper)
+nrds.RT.BSTRPS.sclc.b <- getBootstrapping(nrds.RT.BSTRPS.sclc, boundary.lower, boundary.upper)
+nrds.RT.BSTRPS.nbl.b  <- getBootstrapping(nrds.RT.BSTRPS.nbl,  boundary.lower, boundary.upper)
+nrds.RT.BSTRPS.cll.b  <- getBootstrapping(nrds.RT.BSTRPS.cll,  boundary.lower, boundary.upper)
 nrow(nrds.RT.BSTRPS.sclc.b)
 # [1] 2630835 (0.9927368)
 nrow(nrds.RT.BSTRPS.nbl.b)
@@ -215,26 +256,26 @@ for (c in 1:22) {
    ## Replication fork directionality (RFD)  
    load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
    bed.gc.rt.chr$RFD <- mapply(x = 1:nrow(bed.gc.rt.chr), function(x) as.numeric(getRFD(bed.gc.rt.chr[x, ])))   ## ADD 05/12/18
-   right.idx  <- which(bed.gc.rt.chr$RIGHT_LEADING > origin.upper)
-   left.idx   <- which(bed.gc.rt.chr$RIGHT_LEADING < origin.lower)
-   origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
+   right.idx  <- which(bed.gc.rt.chr$RIGHT_LEADING > boundary.upper)
+   left.idx   <- which(bed.gc.rt.chr$RIGHT_LEADING < boundary.lower)
+   boundary.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
    
-   bed.gc.chr.sub <- subset(bed.gc.chr[origin.idx,], START > 85000000)
+   bed.gc.chr.sub <- subset(bed.gc.chr[boundary.idx,], START > 85000000)
    bed.gc.chr.sub <- subset(bed.gc.chr.sub, START < 87500000)
    rpkms.chr.rt[rownames(bed.gc.rt.chr[rownames(bed.gc.chr.sub),]),]
    
    start <- 128747680 - 500000
    end   <- 128753674 + 500000
    file.name <- file.path(wd.rt.plots, paste0(base, "_RFD_bstrps1000_", chr))
-   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")      ## see ReplicationTiming.R
+   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, boundary.idx, "png")      ## see ReplicationTiming.R
    
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
    rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
    
    file.name  <- file.path(wd.rt.plots, paste0(base, "_RT_bstrps1000_", chr))
-   plotBootstrapsRT(file.name, BASE, chr, start, end, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
+   plotBootstrapsRT(file.name, BASE, chr, start, end, rt.chr, bed.gc.chr, right.idx, left.idx, boundary.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
 }
 
 # -----------------------------------------------------------------------------
@@ -252,10 +293,10 @@ ensGene.rt.tx <- getEnsGeneTxRFD(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.
 
 ##
 file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_RFD_TSS+TTS_pc1e2"))
-plotEnsGeneTxRFD(file.name, BASE, ensGene.rt.tx, origin.upper, "png")
+plotEnsGeneTxRFD(file.name, BASE, ensGene.rt.tx, boundary.upper, "png")
 
-#leading.ratio <- log2(origin.upper/500)
-leading.ratio <- (origin.upper - (1000 - origin.upper))/1000
+#leading.ratio <- log2(boundary.upper/500)
+leading.ratio <- (boundary.upper - (1000 - boundary.upper))/1000
 sclc.tx.right.0 <- rownames(subset(ensGene.rt.tx, RFD_TSS >  leading.ratio))
 sclc.tx.left.0  <- rownames(subset(ensGene.rt.tx, RFD_TSS < -leading.ratio))
 sclc.tx.5050    <- setdiff(rownames(ensGene.rt.tx), c(sclc.tx.right.0, sclc.tx.left.0))
@@ -280,7 +321,7 @@ sclc.tx.inconsist.right <- rownames(subset(ensGene.rt.tx[sclc.tx.inconsist,], RF
 sclc.tx.inconsist.left  <- rownames(subset(ensGene.rt.tx[sclc.tx.inconsist,], RFD_TSS < -leading.ratio))
 testWbyEnsGeneRTTx(ensGene.rt.tx, sclc.tx.inconsist, sclc.tx.consist)
 # [1] 0.01322831
-## ADD 20/11/18: How many origins are inconsistent (which will be visulised in the boxplot later)
+## ADD 20/11/18: How many boundarys are inconsistent (which will be visulised in the boxplot later)
 # > 8494+8432+1056+96   ## Right + Left + Inconsistent + 50/50
 # [1] 18078
 
@@ -302,7 +343,7 @@ abline(v=0, lty=5, lwd=0.85, col="black")
 text( 0.5,  0.5, paste0("94.04% (", separator(length(sclc.tx.consist.right)), ")"), cex=1, col="black")
 text(-0.5, -0.5, paste0("94.21% (", separator(length(sclc.tx.consist.left)), ")"), cex=1, col="black") 
 
-#legend("bottom", c("Left-leading in SCLC", paste0("L/R (n=", length(sclc.tx.origin.o.c), ") in SCLC"), "Right-leading in SCLC"), col=c("steelblue1", "red", "sandybrown"), pch=1, cex=0.8, horiz=T)
+#legend("bottom", c("Left-leading in SCLC", paste0("L/R (n=", length(sclc.tx.boundary.o.c), ") in SCLC"), "Right-leading in SCLC"), col=c("steelblue1", "red", "sandybrown"), pch=1, cex=0.8, horiz=T)
 mtext(paste0("Consistent and inconsistent genes (n=", separator(length(sclc.tx)), ")"), cex=1, line=0.4)
 dev.off()
 
@@ -872,7 +913,7 @@ text(0,  0.5, paste0("32.29% (", separator(length(sclc.tx.5050.right)), ")"), ce
 text(0, -0.5, paste0("36.46% (", separator(length(sclc.tx.5050.left)), ")"), cex=0.85, col="black") 
 text(0,    0, paste0("31.25% (", separator(length(sclc.tx.5050.5050)), ")"), cex=0.85, col="black") 
 
-#legend("bottom", c("Left-leading in SCLC", paste0("L/R (n=", length(sclc.tx.origin.o.c), ") in SCLC"), "Right-leading in SCLC"), col=c("steelblue1", "red", "sandybrown"), pch=1, cex=0.8, horiz=T)
+#legend("bottom", c("Left-leading in SCLC", paste0("L/R (n=", length(sclc.tx.boundary.o.c), ") in SCLC"), "Right-leading in SCLC"), col=c("steelblue1", "red", "sandybrown"), pch=1, cex=0.8, horiz=T)
 mtext(paste0("R/L-leading genes (n=", separator(length(sclc.tx.5050)), ")"), cex=1, line=0.4)
 dev.off()
 
@@ -892,22 +933,22 @@ for (g in 1:length(sclc.tx.5050.5050)) {
    ## Replication fork directionality (RFD)  
    load(file=file.path(wd.rt.data, paste0("bed.gc.rt_", base, "_bstrps", bstrps, "_", chr, ".RData")))
    bed.gc.rt.chr$RFD <- mapply(x = 1:nrow(bed.gc.rt.chr), function(x) as.numeric(getRFD(bed.gc.rt.chr[x, ])))   ## ADD 05/12/18
-   right.idx  <- which(bed.gc.rt.chr$RIGHT_LEADING > origin.upper)
-   left.idx   <- which(bed.gc.rt.chr$RIGHT_LEADING < origin.lower)
-   origin.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
+   right.idx  <- which(bed.gc.rt.chr$RIGHT_LEADING > boundary.upper)
+   left.idx   <- which(bed.gc.rt.chr$RIGHT_LEADING < boundary.lower)
+   boundary.idx <- setdiff(c(1:nrow(bed.gc.rt.chr)), c(right.idx, left.idx))
    bed.gc.chr <- bed.gc[rownames(bed.gc.rt.chr),]
  
    start <- gene$start_position - 500000
    end <- gene$end_position + 500000
    file.name <- file.path(wd.rt.plots.5050, paste0(base, "_RFD_bstrps1000_", chr))
-   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, origin.idx, "png")       ## see ReplicationTiming.R
+   plotBootstrapsRFD(file.name, BASE, chr, start, end, bed.gc.chr, bed.gc.rt.chr, right.idx, left.idx, boundary.idx, "png")       ## see ReplicationTiming.R
  
    ## Replication timing
    rt.chr <- readTable(file.path(wd.rt, "data", paste0(base, "_rpkm.corr.gc.d.rt_", chr, "_", BASE, "-", BASE, "_n101-92.txt.gz")), header=T, rownames=T, sep="\t") 
    rt.chr <- rt.chr[rownames(bed.gc.rt.chr),]
  
    file.name  <- file.path(wd.rt.plots.5050, paste0(base, "_RT_bstrps1000_", chr))
-   plotBootstrapsRT(file.name, gene=gene$external_gene_name, BASE, chr, start, end, rt.chr, bed.gc.chr, right.idx, left.idx, origin.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
+   plotBootstrapsRT(file.name, gene=gene$external_gene_name, BASE, chr, start, end, rt.chr, bed.gc.chr, right.idx, left.idx, boundary.idx, ymax=0.15, "png")   ## see ReplicationTiming.R
 }
 
 
@@ -1291,20 +1332,20 @@ cor.test(ensGene.rt.tx[sclc.tx.50.50,]$MEDIAN, log10(ensGene.rt.tx[sclc.tx.50.50
 
 ##
 file.name <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.tx_bstrps1000_Start+End.png"))
-plotEnsGeneRTTxRO(file.name, ensGene.rt.tx, origin.upper, "png")
+plotEnsGeneRTTxRO(file.name, ensGene.rt.tx, boundary.upper, "png")
 
 sclc.tx.right  <- rownames(subset(ensGene.rt.start.sclc, RIGHT_LEADING > cutoff.upper))
 sclc.tx.left   <- rownames(subset(ensGene.rt.start.sclc, RIGHT_LEADING < cutoff.lower))
-sclc.tx.origin <- setdiff(rownames(ensGene.rt.start.sclc), c(sclc.tx.right, sclc.tx.left))
+sclc.tx.boundary <- setdiff(rownames(ensGene.rt.start.sclc), c(sclc.tx.right, sclc.tx.left))
 sclc.tx.inconsist <- rownames(subset(ensGene.rt.start.sclc, SIGN < 0))
 ## ADD 20/11/18: Remove inconsistent genes
-sclc.tx.inconsist <- setdiff(sclc.tx.inconsist, sclc.tx.origin)
+sclc.tx.inconsist <- setdiff(sclc.tx.inconsist, sclc.tx.boundary)
 sclc.tx.right     <- setdiff(sclc.tx.right, sclc.tx.inconsist)
 sclc.tx.left      <- setdiff(sclc.tx.left,  sclc.tx.inconsist)
-## ADD 20/11/18: How many origins are inconsistent (which will be visulised in the boxplot later)
-length(intersect(sclc.tx.origin, sclc.tx.inconsist))
+## ADD 20/11/18: How many boundarys are inconsistent (which will be visulised in the boxplot later)
+length(intersect(sclc.tx.boundary, sclc.tx.inconsist))
 # [1] 45
-# > 8486+8442+1098+97-45   ## Right+Left+Inconsistent+Origin-Overlaps
+# > 8486+8442+1098+97-45   ## Right+Left+Inconsistent+boundary-Overlaps
 # [1] 18078
 
 file.name  <- file.path(wd.rt.plots, paste0(base, "_ensGene.rt.start.tx_bstrps1000_Start+End.png"))
@@ -1318,8 +1359,8 @@ cols <- rep("steelblue1", nrow(ensGene.rt.start.sclc))
 plot(  MEDIAN ~ RATIO, data=ensGene.rt.start.sclc, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols)
 points(MEDIAN ~ RATIO, data=ensGene.rt.start.sclc[sclc.tx.right,],     col="sandybrown")
 points(MEDIAN ~ RATIO, data=ensGene.rt.start.sclc[sclc.tx.inconsist,], col="purple1")
-points(MEDIAN ~ RATIO, data=ensGene.rt.start.sclc[sclc.tx.origin,],    col="red")
-legend("top", c("Left-leading", paste0("L/R (n=", separator(length(sclc.tx.origin)), ")"), "Inconsistent", "Right-leading"), col=c("steelblue1", "red", "purple1", "sandybrown"), pch=1, cex=0.75, horiz=T)
+points(MEDIAN ~ RATIO, data=ensGene.rt.start.sclc[sclc.tx.boundary,],    col="red")
+legend("top", c("Left-leading", paste0("L/R (n=", separator(length(sclc.tx.boundary)), ")"), "Inconsistent", "Right-leading"), col=c("steelblue1", "red", "purple1", "sandybrown"), pch=1, cex=0.75, horiz=T)
 mtext(mtext.text, cex=1, line=0.5)
 dev.off()
 
@@ -1338,7 +1379,7 @@ xlab.text <- "Replication time"
 ylab.text <- "log2(TPM+1)"
 ymin <- min(ensGene.rt.start.sclc$MEDIAN)
 ymax <- max(ensGene.rt.start.sclc$MEDIAN)
-overlaps <- intersect(sclc.tx.inconsist, sclc.tx.origin)
+overlaps <- intersect(sclc.tx.inconsist, sclc.tx.boundary)
 names <- c(paste0("Consistent (n=", separator(length(sclc.tx.consist)),")"), paste0("Inconsistent (n=", separator(length(sclc.tx.inconsist)),")"))
 
 pdf(file.name, height=6, width=3.5)   #, units="in", res=300)
@@ -1365,7 +1406,7 @@ xlab.text <- "Replication time"
 ylab.text <- "log2(TPM+1)"
 ymin <- min(ensGene.rt.start.sclc$MEDIAN)
 ymax <- max(ensGene.rt.start.sclc$MEDIAN)
-overlaps <- intersect(sclc.tx.inconsist, sclc.tx.origin)
+overlaps <- intersect(sclc.tx.inconsist, sclc.tx.boundary)
 names <- c(paste0("L (n=", separator(length(sclc.tx.inconsist.left)),")"), paste0("R (n=", separator(length(sclc.tx.inconsist.right)),")"))
 
 pdf(file.name, height=6, width=3.5)   #, units="in", res=300)

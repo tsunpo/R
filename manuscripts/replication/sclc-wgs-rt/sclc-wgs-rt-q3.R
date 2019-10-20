@@ -15,7 +15,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
-load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.bed.gc.RData"))
 load(file.path(wd.src.ref, "hg19.rt.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------

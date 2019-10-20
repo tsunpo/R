@@ -8,7 +8,7 @@ base   <- tolower(BASE)
 method <- "rpkm"
 
 # =============================================================================
-# Name: cmd-rt_3b_nrd.gc.cn.d.rt.RT_bstrps.R (commandline mode)
+# Name: cmd-rt_3c_nrd.gc.cn.d.rt.RT_bstrps.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/09/19; 01/11/18
 # =============================================================================
@@ -22,7 +22,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
-load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.bed.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Read in bootstrapped data (in 3a)

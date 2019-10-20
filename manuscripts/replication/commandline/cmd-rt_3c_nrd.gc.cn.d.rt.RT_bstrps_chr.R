@@ -8,7 +8,7 @@ base   <- tolower(BASE)
 method <- "rpkm"
 
 # =============================================================================
-# Name: cmd-rt_3b_nrd.gc.cn.d.rt.RT_bstrps_chr.R (commandline mode)
+# Name: cmd-rt_3c_nrd.gc.cn.d.rt.RT_bstrps_chr.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/09/19; 01/11/18
 # =============================================================================
@@ -22,7 +22,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
-load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
+load(file.path(wd.src.ref, "hg19.1kb.bed.gc.RData"))
 
 # -----------------------------------------------------------------------------
 # Determine replication timing from bootstrapping data (in 2c and 2d)
@@ -42,7 +42,7 @@ load(file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.", COL
    nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS[overlaps,]
    rm(nrds.RT.BSTRPS)   ## ADD 01/11/18
    
-   nrds.RT.BSTRPS.chr <- pipeBootstrapping(nrds.RT.BSTRPS.chr, BSTRPS)
+   nrds.RT.BSTRPS.chr <- pipeBootstrap(nrds.RT.BSTRPS.chr, BSTRPS)
 
    nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[,c("POS", "NEG", "RFD")]
    save(nrds.RT.BSTRPS.chr, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.", COLUMN, "_chr", CHR, ".RData")))
