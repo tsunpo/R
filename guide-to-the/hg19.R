@@ -249,34 +249,13 @@ writeTable(ensGene[,c("chromosome_name", "start_position", "end_position", "ense
 # Add BED information for the ensGenes
 # Last Modified: 20/10/19
 # -----------------------------------------------------------------------------
-getPosTSS <- function(ensGene.g) {
-   if (ensGene.g$strand > 0)
-      return(ensGene.g$start_position)
-   else
-      return(ensGene.g$end_position)
-}
+load(file=file.path(wd.src.ref, paste0("hg19.ensGene.bed.1kb.chr", 1, ".RData")))
+ensGene.bed <- ensGene.bed.chr
 
-getPosTTS <- function(ensGene.g) {
-   if (ensGene.g$strand > 0)
-      return(ensGene.g$end_position)
-   else
-      return(ensGene.g$start_position)
+for (c in 2:22) {
+   load(file=file.path(wd.src.ref, paste0("hg19.ensGene.bed.1kb.chr", c, ".RData")))
+   ensGene.bed <- rbind(ensGene.bed, ensGene.bed.chr)
 }
-
-getEnsGeneBED <- function(chr, pos, bed.gc) {
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
- 
-   bed.gc.chr.start <- subset(bed.gc.chr, pos >= START)
-   bed.gc.chr.start.end <- subset(bed.gc.chr.start, pos <= END)    ## ADD "=" 19/11/18
- 
-   return(rownames(bed.gc.chr.start.end))
-}
-
-ensGene.bed <- toTable(NA, 4, nrow(ensGene), c("TS", "TT", "TSS", "TTS"))
-rownames(ensGene.bed) <- rownames(ensGene)
-ensGene.bed$TS <- mapply(x = 1:nrow(ensGene), function(x) getPosTSS(ensGene[x,]))
-ensGene.bed$TT <- mapply(x = 1:nrow(ensGene), function(x) getPosTTS(ensGene[x,]))
-ensGene.bed$TSS <- mapply(x = 1:nrow(ensGene), function(x) getEnsGeneBED(ensGene$chromosome_name[x], ensGene$TS[x,], bed.gc))
-ensGene.bed$TTS <- mapply(x = 1:nrow(ensGene), function(x) getEnsGeneBED(ensGene$chromosome_name[x], ensGene$TT[x,], bed.gc))
+ensGene.bed <- ensGene.bed[rownames(ensGene),]
 
 save(ensGene.bed, file=file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
