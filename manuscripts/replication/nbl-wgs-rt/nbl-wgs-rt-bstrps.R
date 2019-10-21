@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Bootstrap.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -18,7 +18,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 
 # -----------------------------------------------------------------------------
-# Variations in bootstrapped data (Ensembl genes)
+# 
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
@@ -33,6 +33,8 @@ bstrps        <- 1000
 boundary.upper <- 520   ## 500-520 breaks
 boundary.lower <- 480   ## 480-500 breaks
 boundary.break <- 2     ## 1 breaks each centering 500
+n1 <- 28
+n0 <- 28
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -41,30 +43,12 @@ wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
-n1 <- 28
-n0 <- 28
-
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
 # Last Modified: 02/11/18
 # -----------------------------------------------------------------------------
-nrds.RT.BSTRPS <- NULL
-for (c in 1:22) {
-   chr <- chrs[c]
- 
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
-   if (is.null(nrds.RT.BSTRPS))
-      nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
-   else
-      nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
- 
-   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_", chr, ".pdf"))
-   main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr", c, " (1-kbs)"))
-   xlab.text <- "Number of right-leading resamplings"
-   plotBootstrapHist(nrds.RT.BSTRPS.chr, file.name, main.text, xlab.text, 100, boundary.break)
-}
-nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
-save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+nrds.RFD <- getBootstrapRFD(base)
+save(nrds.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.rfd.RData")))
 
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
@@ -72,14 +56,22 @@ xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 # > nrow(nrds.RT.BSTRPS)
 # [1] 2652467
-nrds.RT.BSTRPS.nbl <- nrds.RT.BSTRPS
 
 # -----------------------------------------------------------------------------
 # Plot RFD from bootstrap data
 # Last Modified: 04/11/18
 # -----------------------------------------------------------------------------
-#load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+#load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.rfd.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+nrds.RT <- setSplineByChrs(nrds, bed.gc, "RT")
+
+nrds.RT.RFD <- getCombindedRTRFD(nrds.RT, nrds.RFD)
+nrds.RT.RFD.nbl <- nrds.RT.RFD
+# > nrow(nrds.RT.RFD.nbl)
+# [1] 2652467
+
+
+
 
 for (c in 1:22) {
    chr <- chrs[c]

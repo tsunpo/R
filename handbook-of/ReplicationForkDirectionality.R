@@ -1,12 +1,12 @@
 # =============================================================================
-# Library      : Bootstrap
-# Name         : handbook-of/Bootstrap.R
+# Library      : Replication Fork Directionality
+# Name         : handbook-of/ReplicationForkDirectionality.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 13/09/19; 05/04/19; 21/02/19
+# Last Modified: 21/10/19; 13/09/19; 05/04/19; 21/02/19
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Read in bootstrapping data (in 3b)
+# Read in bootstrap data (in 3b)
 # Last Modified: 20/09/19; 31/10/18
 # -----------------------------------------------------------------------------
 getBSTRPS <- function(nrds.RT, colname, b) {
@@ -17,7 +17,7 @@ getBSTRPS <- function(nrds.RT, colname, b) {
 }
 
 # -----------------------------------------------------------------------------
-# Determine RFD from bootstrapping data (in 3b)
+# Determine RFD from bootstrap data (in 3b)
 # Last Modified: 20/09/19; 31/10/18
 # -----------------------------------------------------------------------------
 getPOS <- function(nrds.RT) {   ## Left leadings are with a positive slope
@@ -32,14 +32,36 @@ getRFD <- function(nrds.RT) {   ## (R-L)/(R+L)
    return((nrds.RT$NEG - nrds.RT$POS)/(nrds.RT$NEG + nrds.RT$POS))
 }
 
-pipeBootstrap <- function(nrds.RFD, bstrps) {
-   nrds.RFD$POS <- mapply(x = 1:nrow(nrds.RFD), function(x) as.numeric(getPOS(nrds.RFD[x, 1:bstrps])))   ## BUG FIX: 01/11/18
-   nrds.RFD$NEG <- mapply(x = 1:nrow(nrds.RFD), function(x) as.numeric(getNEG(nrds.RFD[x, 1:bstrps])))   ## BUG FIX: 01/11/18
-   nrds.RFD$RFD <- mapply(x = 1:nrow(nrds.RFD), function(x) as.numeric(getRFD(nrds.RFD[x,])))
+pipeBootstrapRFD <- function(nrds.RT, bstrps) {
+   nrds.RFD$POS <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getPOS(nrds.RT[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+   nrds.RFD$NEG <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getNEG(nrds.RT[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+   nrds.RFD$RFD <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getRFD(nrds.RT[x,])))
  
    return(nrds.RFD)
 }
 
+getBootstrapRFD <- function(base) {
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", "chr1", ".RData")))
+   nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
+   for (c in 2:22) {
+      chr <- chrs[c]
+
+      load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
+      nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
+   }
+   nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
+ 
+   return(nrds.RT.BSTRPS)
+}
+
+getCombindedRTRFD <- function(nrds.RT, nrds.RFD) {
+   return(cbind(nrds.RT, nrds.RFD[rownames(nrds.RT),]))
+}
+
+# -----------------------------------------------------------------------------
+# Determine TTR and CTR
+# Last Modified: 20/09/19; 31/10/18
+# -----------------------------------------------------------------------------
 getBootstrapCTR <- function(nrds.RFD, boundary.lower, boundary.upper) {
    nrds.RFD.l   <- subset(nrds.RFD,   NEG > boundary.lower)
    nrds.RFD.l.u <- subset(nrds.RFD.l, NEG < boundary.upper)
@@ -244,40 +266,3 @@ nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
 file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
 
-
-
-
-
-plotBootstrapsRT <- function(file.name, BASE, chr, xmin, xmax, rt.chr, bed.gc.chr, right.idx, left.idx, boundary.idx, ymax, ext, gene="") {
-   main.text <- paste0("Read depth (CN-, GC-corrected) ratio (T/N) in ", BASE)
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate (Mb)")
-   if (gene != "")
-      xlab.text <- paste0(xlab.text, " near ", gene)
-   ylab.text <- "Replication timing (log2)"
-   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
-   if (is.na(xmin)) xmin <- 0
-   if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
-
-   ## Initiate plot
-   if (ext == "pdf") {
-      pdf(paste0(file.name, ".pdf"), height=4, width=10)
-   } else if (ext == "png")
-      png(paste0(file.name, ".png"), height=4, width=10, units="in", res=300)   ## ADD 16/05/17: res=300
-   plot(NULL, ylim=c(-ymax, ymax), xlim=c(xmin/1E6, xmax/1E6), xlab=xlab.text, ylab=ylab.text, main=main.text)
-   points(bed.gc.chr$START/1E6, rt.chr$RT, col="gray", cex=0.3)
-   abline(h=0, lwd=0.5, col="lightgrey")
- 
-   ## Plot right-/left-leading positions
-   spline <- smooth.spline(x=bed.gc.chr$START, y=rt.chr$RT)
-   points(spline$x[left.idx]/1E6,   spline$y[left.idx], col="steelblue1", pch=16, cex=0.4)
-   points(spline$x[right.idx]/1E6,  spline$y[right.idx], col="sandybrown", pch=16, cex=0.4)
-   points(spline$x[boundary.idx]/1E6, spline$y[boundary.idx], col="red", pch=16, cex=0.4)
- 
-   ## Plot cytobands and legend
-   cytoBand.chr <- subset(cytoBand, chrom == chr)
-   for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
- 
-   legend("bottomright", c("Left-leading", "Left / Right", "Right-leading"), col=c("steelblue1", "red", "sandybrown"), pch=16, cex=0.8, horiz=T)
-   dev.off()
-}

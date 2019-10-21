@@ -227,7 +227,7 @@ lcl.rt <- lcl.rt.rm[,c("CHR2", "POS2", "RT")]
 colnames(lcl.rt) <- c("CHR", "POS", "RT")
 lcl.rt$POS <- as.numeric(lcl.rt$POS)
 
-#save(lcl.rt, file=file.path(wd.src.ref, "hg19.rt.lcl.koren.RData"))
+#save(lcl.rt, file=file.path(wd.src.ref, "hg19.lcl.koren.RData"))
 writeTable(lcl.rt, gzfile(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/metadata/Koren 2012/Koren-et-al-Table-S2-clean-liftover-hg19.txt.gz")), colnames=F, rownames=F, sep="\t")
 
 ###
