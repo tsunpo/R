@@ -20,42 +20,43 @@ getBSTRPS <- function(nrds.RT, colname, b) {
 # Determine RFD from bootstrap data (in 3b)
 # Last Modified: 20/09/19; 31/10/18
 # -----------------------------------------------------------------------------
-getPOS <- function(nrds.RT) {   ## Left leadings are with a positive slope
-   return(as.numeric(length(which(nrds.RT > 0))))
+getPOS <- function(nrds.RT.BSTRPS) {   ## Left leadings are with a positive slope
+   return(as.numeric(length(which(nrds.RT.BSTRPS > 0))))
 }
 
-getNEG <- function(nrds.RT) {   ## Right leadings are with a negative slope
-   return(as.numeric(length(which(nrds.RT < 0))))
+getNEG <- function(nrds.RT.BSTRPS) {   ## Right leadings are with a negative slope
+   return(as.numeric(length(which(nrds.RT.BSTRPS < 0))))
 }
 
-getRFD <- function(nrds.RT) {   ## (R-L)/(R+L)
-   return((nrds.RT$NEG - nrds.RT$POS)/(nrds.RT$NEG + nrds.RT$POS))
+getRFD <- function(nrds.RT.BSTRPS) {   ## (R-L)/(R+L)
+   return((nrds.RT.BSTRPS$NEG - nrds.RT.BSTRPS$POS)/(nrds.RT.BSTRPS$NEG + nrds.RT.BSTRPS$POS))
 }
 
-pipeBootstrapRFD <- function(nrds.RT, bstrps) {
-   nrds.RFD$POS <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getPOS(nrds.RT[x, 1:bstrps])))   ## BUG FIX: 01/11/18
-   nrds.RFD$NEG <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getNEG(nrds.RT[x, 1:bstrps])))   ## BUG FIX: 01/11/18
-   nrds.RFD$RFD <- mapply(x = 1:nrow(nrds.RT), function(x) as.numeric(getRFD(nrds.RT[x,])))
- 
-   return(nrds.RFD)
+pipeBootstrap <- function(nrds.RT.BSTRPS, bstrps) {
+   nrds.RT.BSTRPS$POS <- mapply(x = 1:nrow(nrds.RT.BSTRPS), function(x) as.numeric(getPOS(nrds.RT.BSTRPS[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+   nrds.RT.BSTRPS$NEG <- mapply(x = 1:nrow(nrds.RT.BSTRPS), function(x) as.numeric(getNEG(nrds.RT.BSTRPS[x, 1:bstrps])))   ## BUG FIX: 01/11/18
+
+   return(nrds.RT.BSTRPS)
 }
 
-getBootstrapRFD <- function(base) {
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", "chr1", ".RData")))
+getBootstrap <- function(base, column) {
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.", column, "_", "chr1", ".RData")))
    nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
    for (c in 2:22) {
       chr <- chrs[c]
 
-      load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
+      load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.", column, "_", chr, ".RData")))
       nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
    }
-   nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
- 
+   
    return(nrds.RT.BSTRPS)
 }
 
-getCombindedRTRFD <- function(nrds.RT, nrds.RFD) {
-   return(cbind(nrds.RT, nrds.RFD[rownames(nrds.RT),]))
+getRTRFD <- function(nrds.RT, nrds.RT.BSTRPS) {
+   nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
+   colnames(nrds.RT.BSTRPS) <- c("L", "R", "RFD")
+   
+   return(cbind(nrds.RT, nrds.RT.BSTRPS))   ## CHANGE FROM nrds.RT.BSTRPS[rownames(nrds.RT),]
 }
 
 # -----------------------------------------------------------------------------

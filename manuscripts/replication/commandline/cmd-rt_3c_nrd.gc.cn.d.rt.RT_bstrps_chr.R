@@ -42,8 +42,8 @@ load(file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.", COL
    nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS[overlaps,]
    rm(nrds.RT.BSTRPS)   ## ADD 01/11/18
    
-   nrds.RT.BSTRPS.chr <- pipeBootstrapRFD(nrds.RT.BSTRPS.chr, BSTRPS)
+   nrds.RT.BSTRPS.chr <- pipeBootstrap(nrds.RT.BSTRPS.chr, BSTRPS)
 
-   nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[,c("POS", "NEG", "RFD")]
+   nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[,c("POS", "NEG")]
    save(nrds.RT.BSTRPS.chr, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.", COLUMN, "_chr", CHR, ".RData")))
 #}

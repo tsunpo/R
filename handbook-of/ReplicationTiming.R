@@ -161,22 +161,23 @@ setSpline <- function(nrds.chr, bed.gc.chr, column) {
    return(nrds.chr.o[-gaps, c("BED", column, "SPLINE", "SLOPE")])
 }
 
-setSplineByChrs <- function(nrds, bed.gc, column) {
-   nrds.chr.RT <- NULL
+getRT <- function(nrds, bed.gc) {
+   nrds.RT <- NULL
    
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
       nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
       
-      nrds.chr.RT.chr <- setSpline(nrds.chr, bed.gc.chr, column)
-      if (is.null(nrds.chr.RT))
-         nrds.chr.RT <- nrds.chr.RT.chr
+      nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+      nrds.chr.RT <- cbind(nrds.chr[rownames(nrds.chr.RT),], nrds.chr.RT[, c("SPLINE", "SLOPE")])
+      if (is.null(nrds.RT))
+         nrds.RT <- nrds.chr.RT
       else
-         nrds.chr.RT <- rbind(nrds.chr.RT, nrds.chr.RT.chr)
+         nrds.RT <- rbind(nrds.RT, nrds.chr.RT)
    }
    
-   return(nrds.chr.RT)
+   return(nrds.RT)
 }
 
 plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL) {

@@ -48,25 +48,29 @@ wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 # Bootstrap distribution
 # Last Modified: 02/11/18
 # -----------------------------------------------------------------------------
-nrds.RFD <- getBootstrapRFD(base)
-save(nrds.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.rfd.RData")))
+nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
+save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+# > nrow(nrds.RT.BSTRPS)
+# [1] 2650083
 
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm.gc.cn.d.rt.rfd.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break)
-# > nrow(nrds.RFD)
-# [1] 2650083
 
 # -----------------------------------------------------------------------------
-# Plot RFD from bootstrap data
-# Last Modified: 04/11/18
+# Create RT + RFD data
+# Last Modified: 22/10/1
 # -----------------------------------------------------------------------------
-#load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.rfd.RData")))
+#load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-nrds.RT <- setSplineByChrs(nrds, bed.gc, "RT")
+nrds.RT <- getRT(nrds, bed.gc)
+# > nrow(nrds.RT)
+# [1] 
 
-nrds.RT.RFD <- getCombindedRTRFD(nrds.RT, nrds.RFD)
+nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
+save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
+writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.RFD.sclc <- nrds.RT.RFD
 # > nrow(nrds.RT.RFD.sclc)
 # [1] 2650083
@@ -75,6 +79,13 @@ nrds.RT.RFD.sclc <- nrds.RT.RFD
 
 
 
+
+
+
+# -----------------------------------------------------------------------------
+# Plot bootstrap RFD data
+# Last Modified: 04/11/18
+# -----------------------------------------------------------------------------
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -108,9 +119,9 @@ for (c in 1:22) {
 boundary.upper <- 950   ## RFD > +0.9
 boundary.lower <-  50   ## RFD < -0.9
 
-nrds.RFD.sclc.b <- getBootstrapRFD(nrds.RFD.sclc, boundary.lower, boundary.upper)
-nrds.RFD.nbl.b  <- getBootstrapRFD(nrds.RFD.nbl,  boundary.lower, boundary.upper)
-nrds.RFD.cll.b  <- getBootstrapRFD(nrds.RFD.cll,  boundary.lower, boundary.upper)
+nrds.RT.RFD.sclc.b <- getBootstrapRFD(nrds.RT.RFD.sclc, boundary.lower, boundary.upper)
+nrds.RT.RFD.nbl.b  <- getBootstrapRFD(nrds.RT.RFD.nbl,  boundary.lower, boundary.upper)
+nrds.RT.RFD.cll.b  <- getBootstrapRFD(nrds.RT.RFD.cll,  boundary.lower, boundary.upper)
 nrow(nrds.RFD.sclc.b)
 # [1] 2139658
 # > 2139658/2650083
