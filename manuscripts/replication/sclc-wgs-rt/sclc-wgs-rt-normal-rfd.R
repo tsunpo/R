@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter II   : 
-# Name         : manuscripts/replicaiton/sclc-wgs-rt-bstrps.R
+# Name         : manuscripts/replicaiton/sclc-wgs-rt-normal-rfd.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/09/19; 12/11/18
 # =============================================================================
@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R", "DifferentialExpression.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -40,7 +40,7 @@ n0 <- 51
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
@@ -51,10 +51,10 @@ wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 # > nrow(nrds.RT.BSTRPS)
-# [1] 2650083
+# [1] 2651861
 
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm.gc.cn.d.rt.rfd.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "-normal_rpkm.gc.cn.d.rt.rfd.pdf"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break)
 
@@ -63,24 +63,107 @@ plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break
 # Last Modified: 22/10/1
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
-load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
-# [1] 
+# [1] 2651883
 
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.sclc <- nrds.RT.RFD
-# > nrow(nrds.RT.RFD.sclc)
-# [1] 2650083
+nrds.RT.RFD.sclc.tn <- nrds.RT.RFD
+# > nrow(nrds.RT.RFD.sclc.tn)
+# [1] 2651861
 
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; T vs N)
+# Last Modified: 22/10/19
+# -----------------------------------------------------------------------------
+nrds.RT.RFD.sclc.c.e <- nrds.RT.RFD.sclc[overlaps.c.e,]
+# > nrow(nrds.RT.RFD.sclc.c.e)
+# [1] 40451
 
+test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
+test$T2 <- nrds.RT.RFD.nbl.c.e$T
+test$T3 <- nrds.RT.RFD.cll.c.e$T
+test$T4 <- nrds.RT.RFD.lcl.c.e$T
 
+test$N  <- nrds.RT.RFD.sclc.c.e$N
+test$N2 <- nrds.RT.RFD.nbl.c.e$N
+test$N3 <- nrds.RT.RFD.cll.c.e$N
+test$N4 <- nrds.RT.RFD.lcl.c.e$N
 
+test$P <- mapply(x = 1:nrow(test), function(x) testU(log2(as.numeric(test[x, 2:5])), log2(as.numeric(test[x, 6:9]))))
+test$FDR <- qvalue(test$P)$qvalue
+test <- test[order(test$P),]
 
+##
+test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
+test$RT2 <- nrds.RT.RFD.nbl.c.e$RT
+test$RT3 <- nrds.RT.RFD.cll.c.e$RT
+test$RT4 <- nrds.RT.RFD.lcl.c.e$RT
+test$MEAN   <- mapply(x = 1:nrow(test), function(x) mean(as.numeric(test[x, 2:5])))
+test$MEDIAN <- mapply(x = 1:nrow(test), function(x) median(as.numeric(test[x, 2:5])))
+test <- test[order(test$MEAN, decreasing=T),]
+test.fc2.5.mean <- subset(test, MEAN >= 2.5)
+nrow(test.fc2.5.mean)
+# [1] 44
+table.mean <- as.data.frame(table(bed.gc[rownames(test.fc2.5.mean),]$CHR))
+table.mean <- table.mean[order(table.mean$Freq, decreasing=T),]
+# > table.mean
+# Var1 Freq
+# 5  chr17    8
+# 6  chr19    8
+# 1   chr1    6
+# 4  chr16    4
+# 8   chr4    4
+# 10  chr7    4
+# 3  chr15    3
+# 7  chr20    2
+# 9   chr5    2
+# 11  chr8    2
+# 2  chr10    1
 
+beds.mean <- rownames(test.fc2.5.mean)
+chr17s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr17"))
+chr19s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr19"))
+chr1s.mean  <- rownames(subset(bed.gc[beds.mean,], CHR == "chr1"))
 
+bed.gc.chr <- bed.gc[chr1s.mean,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
+
+##
+test <- test[order(test$MEDIAN, decreasing=T),]
+test.fc2.5.median <- subset(test, MEDIAN >= 2.5)
+# > nrow(test.fc2.5.median)
+# [1] 20
+table.median <- as.data.frame(table(bed.gc[rownames(test.fc2.5.median),]$CHR))
+table.median <- table.median[order(table.median$Freq, decreasing=T),]
+# > table.median
+# Var1 Freq
+# 5 chr19    4
+# 1  chr1    3
+# 4 chr17    3
+# 7  chr4    3
+# 8  chr7    2
+# 9  chr8    2
+# 2 chr10    1
+# 3 chr15    1
+# 6 chr20    1
+
+beds.median <- rownames(test.fc2.5.median)
+chr17s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr17"))
+chr19s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr19"))
+chr1s.median  <- rownames(subset(bed.gc[beds.median,], CHR == "chr1"))
+
+bed.gc.chr <- bed.gc[chr19s.median,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
+
+bed.gc.chr <- bed.gc[chr1s.median,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
@@ -114,227 +197,177 @@ for (c in 1:22) {
 
 # -----------------------------------------------------------------------------
 # |RFD| ≥ 0.9
-# Last Modified: 24/09/19
+# Last Modified: 27/10/19; 24/09/19
 # -----------------------------------------------------------------------------
 boundary.upper <- 950   ## RFD > +0.9
 boundary.lower <-  50   ## RFD < -0.9
 
-nrds.RT.RFD.sclc.b <- getBootstrapRFD(nrds.RT.RFD.sclc, boundary.lower, boundary.upper)
-nrds.RT.RFD.nbl.b  <- getBootstrapRFD(nrds.RT.RFD.nbl,  boundary.lower, boundary.upper)
-nrds.RT.RFD.cll.b  <- getBootstrapRFD(nrds.RT.RFD.cll,  boundary.lower, boundary.upper)
-nrow(nrds.RFD.sclc.b)
-# [1] 2139658
-# > 2139658/2650083
-# [1] 0.8073928
-nrow(nrds.RFD.nbl.b)
-# [1] 2039315
-# > 2039315/2652467
-# [1] 0.7688371
-nrow(nrds.RFD.cll.b)
-# [1] 1995843
-# > 1995843/2644419
-# [1] 0.7547378
+nrds.RT.RFD.sclc.tn.t <- getBootstrapTTR(nrds.RT.RFD.sclc.tn, boundary.lower, boundary.upper)
+nrds.RT.RFD.nbl.wb.t  <- getBootstrapTTR(nrds.RT.RFD.nbl.wb,  boundary.lower, boundary.upper)
+nrds.RT.RFD.cll.wb.t  <- getBootstrapTTR(nrds.RT.RFD.cll.wb,  boundary.lower, boundary.upper)
+nrow(nrds.RT.RFD.sclc.tn.t)
+# [1] 2329222
+# > 2329222/2651861
+# [1] 0.8783349
+nrow(nrds.RT.RFD.nbl.wb.t)
+# [1] 1235100
+# > 1235100/2651759
+# [1] 0.4657663
+nrow(nrds.RT.RFD.cll.wb.t)
+# [1] 1940738
+# > 1940738/2647228
+# [1] 0.7331208
 
-overlaps.t <- intersect(intersect(rownames(nrds.RFD.sclc.b), rownames(nrds.RFD.nbl.b)), rownames(nrds.RFD.cll.b))
+overlaps.t <- intersect(rownames(nrds.RT.RFD.sclc.tn.t), rownames(nrds.RT.RFD.cll.wb.t))
 length(overlaps.t)
-# [1] 1492924
+# [1] 1821067
 
-###
-##
-nrds.sclc.RT <- setSplineByChrs(nrds.sclc.m2, bed.gc, "RT")
-nrds.nbl.RT  <- setSplineByChrs(nrds.nbl.m2, bed.gc, "RT")
-nrds.cll.RT  <- setSplineByChrs(nrds.cll.m2, bed.gc, "RT")
-nrds.lcl.RT  <- setSplineByChrs(nrds.lcl, bed.gc, "RT")
-
-nrds.sclc.RT.o <- nrds.sclc.RT[overlaps.t,]
-nrds.nbl.RT.o <- nrds.nbl.RT[overlaps.t,]
-nrds.cll.RT.o <- nrds.cll.RT[overlaps.t,]
-
-##
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.nbl.RT.o$SLOPE
-length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 1477132
-
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.cll.RT.o$SLOPE
-length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 1443716
-
-nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SLOPE * nrds.cll.RT.o$SLOPE
-length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 1435114
-
-##
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.nbl.RT.o$SPLINE
-length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 1401546
-
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SPLINE * nrds.cll.RT.o$SPLINE
-length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 1327483
-
-nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SPLINE * nrds.cll.RT.o$SPLINE
-length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 1298917
 
 # -----------------------------------------------------------------------------
 # ALL TTR
-# Last Modified: 22/09/19
+# Last Modified: 27/10/19; 22/09/19
 # -----------------------------------------------------------------------------
-overlaps.t <- intersect(intersect(intersect(rownames(nrds.sclc.RT.RFD.b), rownames(nrds.nbl.RT.RFD.b)), rownames(nrds.cll.RT.RFD.b)), rownames(nrds.lcl.RT.RFD.b))
+overlaps.t <- intersect(intersect(rownames(nrds.RT.RFD.sclc.t), rownames(nrds.RT.RFD.cll.t)), rownames(nrds.RT.RFD.lcl.t))
 length(overlaps.t)
-# [1] 
+# [1] 1203540
 
-nrds.sclc.RT.o <- nrds.sclc.RT.RFD.c.e[overlaps.t,]
-nrds.nbl.RT.o <- nrds.nbl.RT.RFD.c.e[overlaps.t,]
-nrds.cll.RT.o <- nrds.cll.RT.RFD.c.e[overlaps.t,]
-nrds.lcl.RT.o <- nrds.lcl.RT.RFD.c.e[overlaps.t,]
+nrds.sclc.RT.o <- nrds.RT.RFD.sclc.t[overlaps.t,]
+nrds.cll.RT.o <- nrds.RT.RFD.cll.t[overlaps.t,]
+nrds.lcl.RT.o <- nrds.RT.RFD.lcl.t[overlaps.t,]
 
 ##
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE
 length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 20003
-
-nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE
-length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 20411
+# [1] 1007295
 
 nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE
 length(which(nrds.cll.RT.o$SIGN > 0))
-# [1] 19024
+# [1] 999191
 
+# -----------------------------------------------------------------------------
+# ALL TTR (between T and TN)
+# Last Modified: 27/10/19; 22/09/19
+# -----------------------------------------------------------------------------
+overlaps.t <- intersect(rownames(nrds.RT.RFD.sclc.t), rownames(nrds.RT.RFD.sclc.tn.t))
+length(overlaps.t)
+# [1] 2057751
+
+nrds.sclc.RT.o    <- nrds.RT.RFD.sclc.t[overlaps.t,]
+nrds.sclc.tn.RT.o <- nrds.RT.RFD.sclc.tn.t[overlaps.t,]
+
+##
+nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.sclc.tn.RT.o$SLOPE
+length(which(nrds.sclc.RT.o$SIGN > 0))
+# [1] 2049463
 
 # -----------------------------------------------------------------------------
 # |RFD| < 0.9
 # Last Modified: 19/10/19
 # -----------------------------------------------------------------------------
-
-
-nrds.sclc.RT <- setSplineByChrs(nrds.sclc.m2, bed.gc, "RT")
-nrds.nbl.RT  <- setSplineByChrs(nrds.nbl.m2, bed.gc, "RT")
-nrds.cll.RT  <- setSplineByChrs(nrds.cll.m2, bed.gc, "RT")
-nrds.lcl.RT  <- setSplineByChrs(nrds.lcl, bed.gc, "RT")
-
-nrds.sclc.RT.RFD <- getCombindedRTRFD(nrds.sclc.RT, nrds.RFD.sclc)
-nrds.nbl.RT.RFD  <- getCombindedRTRFD(nrds.nbl.RT,  nrds.RFD.nbl)
-nrds.cll.RT.RFD  <- getCombindedRTRFD(nrds.cll.RT,  nrds.RFD.cll)
-nrds.lcl.RT.RFD  <- getCombindedRTRFD(nrds.lcl.RT,  nrds.RFD.lcl)
-
-###
-##
 boundary.upper <- 950   ## RFD < +0.9
 boundary.lower <-  50   ## RFD > -0.9
 
-nrds.sclc.RT.RFD.c <- getBootstrapCTR(nrds.sclc.RT.RFD, boundary.lower, boundary.upper)
-nrds.nbl.RT.RFD.c  <- getBootstrapCTR(nrds.nbl.RT.RFD,  boundary.lower, boundary.upper)
-nrds.cll.RT.RFD.c  <- getBootstrapCTR(nrds.cll.RT.RFD,  boundary.lower, boundary.upper)
-nrds.lcl.RT.RFD.c  <- getBootstrapCTR(nrds.lcl.RT.RFD,  boundary.lower, boundary.upper)
-nrow(nrds.sclc.RT.RFD.c)
-# [1] 510425
-# > 510425/2650083
-# [1] 0.1926072
-nrow(nrds.nbl.RT.RFD.c)
-# [1] 613152
-# > 613152/2652467
-# [1] 0.2311629
-nrow(nrds.cll.RT.RFD.c)
-# [1] 648576
-# > 648576/2644419
-# [1] 0.2452622
-nrow(nrds.lcl.RT.RFD.c)
-# [1] 911087
-# 911087/2534909
-# [1] 0.3594161
+nrds.RT.RFD.sclc.tn.c <- getBootstrapCTR(nrds.RT.RFD.sclc.tn, boundary.lower, boundary.upper)
+nrds.RT.RFD.cll.wb.c  <- getBootstrapCTR(nrds.RT.RFD.cll.wb,  boundary.lower, boundary.upper)
+nrow(nrds.RT.RFD.sclc.tn.c)
+# [1] 322639
+nrow(nrds.RT.RFD.cll.wb.c)
+# [1] 706490
 
-nrds.sclc.RT.RFD.c.e <- subset(nrds.sclc.RT.RFD.c, SPLINE >= 0)
-nrds.sclc.RT.RFD.c.l <- subset(nrds.sclc.RT.RFD.c, SPLINE < 0)
-nrow(nrds.sclc.RT.RFD.c.e)
-# [1] 279030
-nrow(nrds.sclc.RT.RFD.c.l)
-# [1] 231395
+nrds.RT.RFD.sclc.tn.c.e <- subset(nrds.RT.RFD.sclc.tn.c, SPLINE >= 0)
+nrds.RT.RFD.sclc.tn.c.l <- subset(nrds.RT.RFD.sclc.tn.c, SPLINE < 0)
+nrow(nrds.RT.RFD.sclc.tn.c.e)
+# [1] 197549
+nrow(nrds.RT.RFD.sclc.tn.c.l)
+# [1] 125090
 
-nrds.nbl.RT.RFD.c.e <- subset(nrds.nbl.RT.RFD.c, SPLINE >= 0)
-nrds.nbl.RT.RFD.c.l <- subset(nrds.nbl.RT.RFD.c, SPLINE < 0)
-nrow(nrds.nbl.RT.RFD.c.e)
-# [1] 344005
-nrow(nrds.nbl.RT.RFD.c.l)
-# [1] 269147
-
-nrds.cll.RT.RFD.c.e <- subset(nrds.cll.RT.RFD.c, SPLINE >= 0)
-nrds.cll.RT.RFD.c.l <- subset(nrds.cll.RT.RFD.c, SPLINE < 0)
-nrow(nrds.cll.RT.RFD.c.e)
-# [1] 301730
-nrow(nrds.cll.RT.RFD.c.l)
-# [1] 346846
-
-nrds.lcl.RT.RFD.c.e <- subset(nrds.lcl.RT.RFD.c, SPLINE >= 0)
-nrds.lcl.RT.RFD.c.l <- subset(nrds.lcl.RT.RFD.c, SPLINE < 0)
-nrow(nrds.lcl.RT.RFD.c.e)
-# [1] 587853
-nrow(nrds.lcl.RT.RFD.c.l)
-# [1] 323234
+nrds.RT.RFD.cll.wb.c.e <- subset(nrds.RT.RFD.cll.wb.c, SPLINE >= 0)
+nrds.RT.RFD.cll.wb.c.l <- subset(nrds.RT.RFD.cll.wb.c, SPLINE < 0)
+nrow(nrds.RT.RFD.cll.wb.c.e)
+# [1] 296428
+nrow(nrds.RT.RFD.cll.wb.c.l)
+# [1] 410062
 
 # -----------------------------------------------------------------------------
 # CTR (E)
 # Last Modified: 19/10/19
 # -----------------------------------------------------------------------------
-overlaps.c.e <- intersect(intersect(rownames(nrds.sclc.RT.RFD.c.e), rownames(nrds.nbl.RT.RFD.c.e)), rownames(nrds.cll.RT.RFD.c.e))
+overlaps.c.e <- intersect(rownames(nrds.RT.RFD.sclc.c.e), rownames(nrds.RT.RFD.cll.c.e))
 length(overlaps.c.e)
-# [1] 67787
+# [1] 113786
 
-nrds.sclc.RT.o <- nrds.sclc.RT.RFD.c.e[overlaps.c.e,]
-nrds.nbl.RT.o <- nrds.nbl.RT.RFD.c.e[overlaps.c.e,]
-nrds.cll.RT.o <- nrds.cll.RT.RFD.c.e[overlaps.c.e,]
+nrds.sclc.RT.o <- nrds.RT.RFD.sclc.c.e[overlaps.c.e,]
+nrds.cll.RT.o <- nrds.RT.RFD.cll.c.e[overlaps.c.e,]
 
 ##
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.nbl.RT.o$SLOPE
-length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 35818
-
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.cll.RT.o$SLOPE
 length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 38297
+# [1] 67471
 
-nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SLOPE * nrds.cll.RT.o$SLOPE
-length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 31164
+# -----------------------------------------------------------------------------
+# CTR (E) (between T and TN)
+# Last Modified: 27/10/19; 22/09/19
+# -----------------------------------------------------------------------------
+overlaps.c.e <- intersect(rownames(nrds.RT.RFD.sclc.c.e), rownames(nrds.RT.RFD.sclc.tn.c.e))
+length(overlaps.c.e)
+# [1] 139592
+
+nrds.sclc.RT.o    <- nrds.RT.RFD.sclc.c.e[overlaps.c.e,]
+nrds.sclc.tn.RT.o <- nrds.RT.RFD.sclc.tn.c.e[overlaps.c.e,]
+
+##
+nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.sclc.tn.RT.o$SLOPE
+length(which(nrds.sclc.RT.o$SIGN > 0))
+# [1] 84579
 
 # -----------------------------------------------------------------------------
 # CTR (L)
 # Last Modified: 19/10/19
 # -----------------------------------------------------------------------------
-overlaps.c.l <- intersect(intersect(rownames(nrds.sclc.RT.RFD.c.l), rownames(nrds.nbl.RT.RFD.c.l)), rownames(nrds.cll.RT.RFD.c.l))
+overlaps.c.l <- intersect(rownames(nrds.RT.RFD.sclc.c.l), rownames(nrds.RT.RFD.cll.c.l))
 length(overlaps.c.l)
-# [1] 52349
+# [1] 71202
 
-nrds.sclc.RT.o <- nrds.sclc.RT.RFD.c.l[overlaps.c.l,]
-nrds.nbl.RT.o <- nrds.nbl.RT.RFD.c.l[overlaps.c.l,]
-nrds.cll.RT.o <- nrds.cll.RT.RFD.c.l[overlaps.c.l,]
+nrds.sclc.RT.o <- nrds.RT.RFD.sclc.c.l[overlaps.c.l,]
+nrds.cll.RT.o <- nrds.RT.RFD.cll.c.l[overlaps.c.l,]
 
 ##
-nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.nbl.RT.o$SLOPE
-length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 30755
-
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.cll.RT.o$SLOPE
 length(which(nrds.sclc.RT.o$SIGN > 0))
-# [1] 28320
+# [1] 35857
 
-nrds.nbl.RT.o$SIGN <- nrds.nbl.RT.o$SLOPE * nrds.cll.RT.o$SLOPE
-length(which(nrds.nbl.RT.o$SIGN > 0))
-# [1] 
+# -----------------------------------------------------------------------------
+# CTR (L) (between T and TN)
+# Last Modified: 27/10/19; 22/09/19
+# -----------------------------------------------------------------------------
+overlaps.c.l <- intersect(rownames(nrds.RT.RFD.sclc.c.l), rownames(nrds.RT.RFD.sclc.tn.c.l))
+length(overlaps.c.l)
+# [1] 92507
+
+nrds.sclc.RT.o    <- nrds.RT.RFD.sclc.c.l[overlaps.c.l,]
+nrds.sclc.tn.RT.o <- nrds.RT.RFD.sclc.tn.c.l[overlaps.c.l,]
+
+##
+nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.sclc.tn.RT.o$SLOPE
+length(which(nrds.sclc.RT.o$SIGN > 0))
+# [1] 55142
+
+
+
 
 # -----------------------------------------------------------------------------
 # ALL CTR (E)
 # Last Modified: 22/09/19
 # -----------------------------------------------------------------------------
-overlaps <- intersect(intersect(intersect(rownames(nrds.sclc.RT.RFD.c.e), rownames(nrds.nbl.RT.RFD.c.e)), rownames(nrds.cll.RT.RFD.c.e)), rownames(nrds.lcl.RT.RFD.c.e))
-length(overlaps)
+overlaps.c.e <- intersect(intersect(intersect(rownames(nrds.RT.RFD.sclc.c.e), rownames(nrds.RT.RFD.nbl.c.e)), rownames(nrds.RT.RFD.cll.c.e)), rownames(nrds.RT.RFD.lcl.c.e))
+length(overlaps.c.e)
+writeTable(overlaps.c.e, gzfile(file.path(wd.src.ref, "overlaps.c.e_n40451.txt.gz")), colnames=F, rownames=F, sep="\t")
 # [1] 40451
 
-nrds.sclc.RT.o <- nrds.sclc.RT.RFD.c.e[overlaps,]
-nrds.nbl.RT.o <- nrds.nbl.RT.RFD.c.e[overlaps,]
-nrds.cll.RT.o <- nrds.cll.RT.RFD.c.e[overlaps,]
-nrds.lcl.RT.o <- nrds.lcl.RT.RFD.c.e[overlaps,]
+nrds.RT.RFD.c.e <- nrds.RT.RFD.sclc.c.e[overlaps.c.e,]
+nrds.RT.nbl.o <- nrds.RT.RFD.nbl.c.e[overlaps,]
+nrds.RT.cll.o <- nrds.RT.RFD.cll.c.e[overlaps,]
+nrds.RT.lcl.o <- nrds.RT.RFD.lcl.c.e[overlaps,]
 
 ##
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.lcl.RT.o$SLOPE

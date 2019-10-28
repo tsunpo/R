@@ -110,7 +110,7 @@ boundary.upper <- 500   ## 500-520 breaks
 boundary.lower <- 500   ## 480-500 breaks
 boundary.break <- 0   ## 1 breaks each centering 500
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD=0.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), "")   #paste0("Chr1-22 (1-kbs)"))
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
@@ -169,7 +169,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
    
    ## Plot legend
    ##if (width == 10)
-      legend("topright", c("Left\u2212leading", "Right\u2212leading  "), col=c("steelblue1", "sandybrown"), bty="n", pt.cex=1, lty=c(1, 1), lwd=c(3, 3), pch=c(NA, NA), horiz=T, cex=1.2)
+      legend("topright", c("Left-leading", "Right-leading   "), col=c("steelblue1", "sandybrown"), bty="n", pt.cex=1, lty=c(1, 1), lwd=c(3, 3), pch=c(NA, NA), horiz=T, cex=1.2)
       #legend("topright", c("Left-leading", "Boundary", "Right-leading"), col=c("steelblue1", "red", "sandybrown"), bty="n", pt.cex=1, lty=c(1, NA, 1), lwd=c(2, NA, 2), pch=c(NA, 16, NA), cex=1.15, horiz=T)
    ##else
       ##legend("topright", c("TTR (L)",  "TTR (R)"), col=c("steelblue1", "gray", "sandybrown"), bty="n", pt.cex=1, lty=c(1, NA, NA, 1), lwd=c(2, NA, NA, 2), pch=c(NA, 16, 16, NA), cex=1.15, horiz=T)

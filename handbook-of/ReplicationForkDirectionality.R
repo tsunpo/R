@@ -55,8 +55,9 @@ getBootstrap <- function(base, column) {
 getRTRFD <- function(nrds.RT, nrds.RT.BSTRPS) {
    nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
    colnames(nrds.RT.BSTRPS) <- c("L", "R", "RFD")
+   overlaps <- intersect(rownames(nrds.RT), rownames(nrds.RT.BSTRPS))
    
-   return(cbind(nrds.RT, nrds.RT.BSTRPS))   ## CHANGE FROM nrds.RT.BSTRPS[rownames(nrds.RT),]
+   return(cbind(nrds.RT[overlaps,], nrds.RT.BSTRPS[overlaps,]))   ## CHANGE FROM nrds.RT.BSTRPS[rownames(nrds.RT),]
 }
 
 # -----------------------------------------------------------------------------
@@ -64,8 +65,8 @@ getRTRFD <- function(nrds.RT, nrds.RT.BSTRPS) {
 # Last Modified: 20/09/19; 31/10/18
 # -----------------------------------------------------------------------------
 getBootstrapCTR <- function(nrds.RFD, boundary.lower, boundary.upper) {
-   nrds.RFD.l   <- subset(nrds.RFD,   NEG > boundary.lower)
-   nrds.RFD.l.u <- subset(nrds.RFD.l, NEG < boundary.upper)
+   nrds.RFD.l   <- subset(nrds.RFD,   R > boundary.lower)
+   nrds.RFD.l.u <- subset(nrds.RFD.l, R < boundary.upper)
  
    return(nrds.RFD.l.u)
 }
@@ -141,7 +142,7 @@ boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 1 breaks each centering 500
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_white.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), "")   #paste0("Chr1-22 (1-kbs)"))
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 

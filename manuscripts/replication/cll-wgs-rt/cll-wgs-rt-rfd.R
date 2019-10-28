@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter II   : 
-# Name         : manuscripts/replicaiton/sclc-wgs-rt-bstrps.R
+# Name         : manuscripts/replicaiton/cll-wgs-rt-rfd.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/09/19; 12/11/18
 # =============================================================================
@@ -10,12 +10,13 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R", "DifferentialExpression.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
+load(file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
 
 # -----------------------------------------------------------------------------
 # 
@@ -24,17 +25,17 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "NBL"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
+BASE <- "CLL"
 base <- tolower(BASE)
 method <- "rpkm"
+PAIR1 <- "M2"
+PAIR0 <- "M1"
 bstrps        <- 1000
 boundary.upper <- 520   ## 500-520 breaks
 boundary.lower <- 480   ## 480-500 breaks
 boundary.break <- 2     ## 1 breaks each centering 500
-n1 <- 28
-n0 <- 28
+n1 <- 48
+n0 <- 48
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -49,13 +50,13 @@ wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 # -----------------------------------------------------------------------------
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+# > nrow(nrds.RT.BSTRPS)
+# [1] 2644419
 
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
-# > nrow(nrds.RT.BSTRPS)
-# [1] 2652467
 
 # -----------------------------------------------------------------------------
 # Create RT + RFD data
@@ -65,14 +66,26 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
-# [1] 2652467
+# [1] 2644419
 
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.nbl <- nrds.RT.RFD
-# > nrow(nrds.RT.RFD.nbl)
-# [1] 2652467
+nrds.RT.RFD.cll <- nrds.RT.RFD
+# > nrow(nrds.RT.RFD.cll)
+# [1] 2644419
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; T vs N)
+# Last Modified: 22/10/19
+# -----------------------------------------------------------------------------
+nrds.RT.RFD.cll.c.e <- nrds.RT.RFD.cll[overlaps.c.e,]
+# > nrow(nrds.RT.RFD.cll.c.e)
+# [1] 40451
+
+nrds.RT.RFD.cll.c.e$P <- testU(nrds.RT.RFD.cll.c.e$T, nrds.RT.RFD.cll.c.e$N)
+
+
 
 
 
@@ -85,31 +98,30 @@ nrds.RT.RFD.nbl <- nrds.RT.RFD
 # Last Modified: 04/11/18
 # -----------------------------------------------------------------------------
 for (c in 1:22) {
-   chr <- chrs[c]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+ chr <- chrs[c]
+ bed.gc.chr <- subset(bed.gc, CHR == chr)
+ nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
  
-   ## RFD   
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
-   nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
-
-   ## Chr12
-   file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
-   plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
-   plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+ ## RFD   
+ load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
+ nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
  
-   ## Chr2
-   file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
-   plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
-   plotBootstrapRFD(file.name, BASE, chr,  37000000,  40000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
-   plotBootstrapRFD(file.name, BASE, chr, 215000000, 220000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
-   plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
-   
-   ## Chr13
-   file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
-   plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+ ## Chr13
+ file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+ plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+ 
+ ## Chr12
+ file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+ plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+ plotBootstrapRFD(file.name, BASE, chr,  97500000, 102500000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+ 
+ ## Chr2
+ file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+ plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
+ plotBootstrapRFD(file.name, BASE, chr,  37000000,  40000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+ plotBootstrapRFD(file.name, BASE, chr, 215000000, 220000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
+ plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
 }
-
 
 
 
@@ -128,19 +140,19 @@ for (c in 1:22) {
       nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
    else
       nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
+
+   file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SPLINE_BSTRPS_", chr, ".pdf"))
+   main.text <- paste0("Chr", c, " (", BASE, ")")
+   xlab.text <- c("Number of early replication counts", "(out of 1,000 bootstrappings)")
+   plotBootstrapsHist(nrds.RT.BSTRPS.chr, file.name, main.text, xlab.text, 200, boundary.break)
 }
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SPLINE.RData")))
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SPLINE_BSTRPS.pdf"))
 main.text <- paste0("Chr1-22 (", BASE, ")")
 xlab.text <- c("Number of early replication counts", "(out of 1,000 bootstrappings)")
-plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 200, boundary.break)
+plotBootstrapsHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 200, boundary.break)
 # > nrow(nrds.RT.BSTRPS)
-# [1] 2652467
-
-
-
-
-
+# [1] 2644419
 
 
 
