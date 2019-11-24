@@ -3,7 +3,7 @@
 # Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/nbl-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 14/10/19; 25/02/19
+# Last Modified: 24/10/19; 14/10/19; 25/02/19
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
@@ -26,28 +26,27 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "NBL"
-PAIR1 <- "T"
-PAIR0 <- "N"
+PAIR1 <- "N"
 base  <- tolower(BASE)
 method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal56"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-wd.ngs.data <- file.path(wd.ngs, "data")
+#wd.ngs.data <- file.path(wd.ngs, "data")
+wd.ngs.data <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"), "data")
 samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
-n0 <- length(samples0)
+## samples1 are modified to the normals in this script
 
 # -----------------------------------------------------------------------------
-# NBL T vs LCL S/G1
+# NBL N vs LCL S/G1
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
-# Last Modified: 05/06/19; 20/04/19; 06/03/19
+# Last Modified: 24/10/19; 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
 cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
 cors.samples$chr <- 1:22
@@ -65,87 +64,110 @@ for (c in 1:22) {
 }
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
-# [1] -0.8354356
+# [1] -0.8496598
 # > max(cors.samples[,-c(1:4)])
-# [1] 0.8392611
+# [1] 0.7961729
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
-main.text <- c("NBL read depth vs. LCL S/G1", "")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-N-vs-LCL_spline_spearman")
+main.text <- c("NBL (N) read depth vs. LCL S/G1", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
-# Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
+# Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.nbl <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1_N.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
-# -0.7684906 -0.7397140 -0.7200663 -0.4456056  0.7665285
-
-writeTable(subset(samples.nbl, Q4 %in% c(4,1)), file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), colnames=T, rownames=F, sep="\t")
-writeTable(subset(samples.nbl, Q4 %in% c(3,1)), file.path(wd.ngs, "nbl_wgs_q3_n28.txt"), colnames=T, rownames=F, sep="\t")
-
-## Random 50/50
-m2.14 <- sort(rownames(subset(samples.nbl, M2 == 1))[sample(1:28, round(28/2), replace=F)])
-m1.14 <- sort(rownames(subset(samples.nbl, M2 == 0))[sample(1:28, round(28/2), replace=F)])
-
-random1 <- sort(c(m2.14, m1.14))
-writeTable(samples.nbl[random1,], file.path(wd.ngs, "nbl_wgs_n56-random1.txt"), colnames=T, rownames=F, sep="\t")
-
-random2 <- sort(setdiff(rownames(samples.nbl), random1))
-writeTable(samples.nbl[random2,], file.path(wd.ngs, "nbl_wgs_n56-random2.txt"), colnames=T, rownames=F, sep="\t")
-
-## Random 14/14
-m2 <- sort(rownames(subset(samples.nbl, M2 == 1)))
-m1 <- sort(rownames(subset(samples.nbl, M2 == 0)))
-
-m2.7 <- sort(m2[sample(1:28, round(28/4), replace=F)])
-m1.7 <- sort(m1[sample(1:28, round(28/4), replace=F)])
-random3 <- sort(c(m2.7, m1.7))
-writeTable(samples.nbl[random3,], file.path(wd.ngs, "nbl_wgs_n56-random3.txt"), colnames=T, rownames=F, sep="\t")
-
-m2 <- sort(setdiff(m2, m2.7))
-m1 <- sort(setdiff(m1, m1.7))
-
-m2.7 <- sort(m2[sample(1:21, round(28/4), replace=F)])
-m1.7 <- sort(m1[sample(1:21, round(28/4), replace=F)])
-random4 <- sort(c(m2.7, m1.7))
-writeTable(samples.nbl[random4,], file.path(wd.ngs, "nbl_wgs_n56-random4.txt"), colnames=T, rownames=F, sep="\t")
+# -0.7788625 -0.7618046 -0.7357533 -0.5147924  0.7063812 
 
 # -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 04/06/19; 21/04/19
 # -----------------------------------------------------------------------------
 ## Refer to cmd-rt_2a_nrd.gc.cn.d_sample.R (commandline mode)
-nrds.T.chr.d.all <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+nrds.T.chr.d.all <- readTable(file.path(wd.ngs.data, paste0(base, "_", method, ".gc.cn.d_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
 for (c in 2:22) {
    chr <- chrs[c]
  
    ## Read depth
    #nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
-   nrds.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+   nrds.T.chr.d <- readTable(file.path(wd.ngs.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
  
    nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, nrds.T.chr.d)
 }
 
 ##
-test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
+test <- nrds.T.chr.d.all[, samples1]   ## BUG 2019/10/14: Remove column BED
 pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl_chrs.RData")))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl-n_chrs.RData")))
 
-#load(file.path(wd.rt.data, paste0("pca_nbl_chrs.RData")))
-file.main <- c("NBL (n=56) read depth profiles", "")
+#load(file.path(wd.rt.data, paste0("pca_nbl-n_chrs.RData")))
+file.main <- c("NBL N (n=56) read depth profiles", "")
 trait <- as.numeric(samples.nbl$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL-N_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=-1, legend.title=NA)
 
 
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# PCA; Remove 15 outliers
+# Last Modified: 30/10/19
+# -----------------------------------------------------------------------------
+load(file.path(wd.rt.data, paste0("pca_nbl-wb_chrs.RData")))
+
+samples <- rownames(pca.de$x)
+idx <- which(pca.de$x[,1] > 0)
+samples <- samples[-idx]
+
+samples.nbl <- setSamplesQ4(wd.rt.data, samples)
+writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n41_WB.txt"), colnames=T, rownames=F, sep="\t")
+#         0%        25%        50%        75%       100% 
+# -0.7788625 -0.7647042 -0.7523822 -0.7301969 -0.6577686 
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 04/06/19; 21/04/19
+# -----------------------------------------------------------------------------
+## Refer to cmd-rt_2a_nrd.gc.cn.d_sample.R (commandline mode)
+nrds.T.chr.d.all <- readTable(file.path(wd.ngs.data, paste0(base, "_", method, ".gc.cn.d_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+for (c in 2:22) {
+   chr <- chrs[c]
+ 
+   ## Read depth
+   #nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
+   nrds.T.chr.d <- readTable(file.path(wd.ngs.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+ 
+   nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, nrds.T.chr.d)
+}
+
+##
+test <- nrds.T.chr.d.all[, rownames(samples.nbl)]   ## BUG 2019/10/14: Remove column BED
+pca.de <- getPCA(t(test))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl-wb41_chrs.RData")))
+
+#load(file.path(wd.rt.data, paste0("pca_nbl-wb_chrs_n41.RData")))
+file.main <- c("NBL WB (n=41) read depth profiles", "")
+trait <- as.numeric(samples.nbl$Q4)
+trait[which(trait == 4)] <- "Q4"
+trait[which(trait == 3)] <- "Q3"
+trait[which(trait == 2)] <- "Q2"
+trait[which(trait == 1)] <- "Q1"
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL-WB41_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=-1, legend.title=NA)
 
 
 

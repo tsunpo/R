@@ -2,10 +2,12 @@
 args <- commandArgs(TRUE)
 BASE   <- args[1]   ## Cancer type
 BSTRPS <- as.numeric(args[2])
-COLUMN <- args[3]
-CHR    <- as.numeric(args[4])
+CV     <- args[3]
+COLUMN <- args[4]
+CHR    <- as.numeric(args[5])
 base   <- tolower(BASE)
 method <- "rpkm"
+cv     <- tolower(CV)
 
 # =============================================================================
 # Name: cmd-rt_3c_nrd.gc.cn.d.rt.RT_bstrps_chr.R (commandline mode)
@@ -32,6 +34,8 @@ wd <- file.path("/projects/cangen/tyang2", BASE)   ## tyang2@cheops
 wd.anlys   <- file.path(wd, "analysis")
 wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data/bstrps")
+if (CV != "NA")
+   wd.rt.data <- file.path(wd.rt, "data", cv)
 
 load(file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.", COLUMN, ".BSTRPS.RData")))
 #for (c in 1:22) {

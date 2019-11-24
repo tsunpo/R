@@ -261,6 +261,22 @@ length(which(nrds.sclc.RT.o$SIGN > 0))
 # [1] 2049463
 
 # -----------------------------------------------------------------------------
+# ALL TTR (between CLL T and CLL WB)
+# Last Modified: 31/10/19; 22/09/19
+# -----------------------------------------------------------------------------
+overlaps.t <- intersect(rownames(nrds.RT.RFD.cll.t), rownames(nrds.RT.RFD.cll.wb.t))
+length(overlaps.t)
+# [1] 1779418
+
+nrds.cll.RT.o    <- nrds.RT.RFD.cll.t[overlaps.t,]
+nrds.cll.wb.RT.o <- nrds.RT.RFD.cll.wb.t[overlaps.t,]
+
+##
+nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SLOPE * nrds.cll.wb.RT.o$SLOPE
+length(which(nrds.cll.RT.o$SIGN > 0))
+# [1] 1775525
+
+# -----------------------------------------------------------------------------
 # |RFD| < 0.9
 # Last Modified: 19/10/19
 # -----------------------------------------------------------------------------
@@ -321,6 +337,23 @@ length(which(nrds.sclc.RT.o$SIGN > 0))
 # [1] 84579
 
 # -----------------------------------------------------------------------------
+# CTR (E) (between CLL T and CLL WB)
+# Last Modified: 31/10/19; 22/09/19
+# -----------------------------------------------------------------------------
+overlaps.c.e <- intersect(rownames(nrds.RT.RFD.cll.c.e), rownames(nrds.RT.RFD.cll.wb.c.e))
+length(overlaps.c.e)
+# [1] 210134
+
+nrds.cll.RT.o    <- nrds.RT.RFD.cll.c.e[overlaps.c.e,]
+nrds.cll.wb.RT.o <- nrds.RT.RFD.cll.wb.c.e[overlaps.c.e,]
+
+##
+nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SLOPE * nrds.cll.wb.RT.o$SLOPE
+length(which(nrds.cll.RT.o$SIGN > 0))
+# [1] 135889
+
+
+# -----------------------------------------------------------------------------
 # CTR (L)
 # Last Modified: 19/10/19
 # -----------------------------------------------------------------------------
@@ -351,6 +384,24 @@ nrds.sclc.tn.RT.o <- nrds.RT.RFD.sclc.tn.c.l[overlaps.c.l,]
 nrds.sclc.RT.o$SIGN <- nrds.sclc.RT.o$SLOPE * nrds.sclc.tn.RT.o$SLOPE
 length(which(nrds.sclc.RT.o$SIGN > 0))
 # [1] 55142
+
+# -----------------------------------------------------------------------------
+# CTR (E) (between CLL T and CLL WB)
+# Last Modified: 31/10/19; 22/09/19
+# -----------------------------------------------------------------------------
+overlaps.c.l <- intersect(rownames(nrds.RT.RFD.cll.c.l), rownames(nrds.RT.RFD.cll.wb.c.l))
+length(overlaps.c.l)
+# [1] 259883
+
+nrds.cll.RT.o    <- nrds.RT.RFD.cll.c.l[overlaps.c.l,]
+nrds.cll.wb.RT.o <- nrds.RT.RFD.cll.wb.c.l[overlaps.c.l,]
+
+##
+nrds.cll.RT.o$SIGN <- nrds.cll.RT.o$SLOPE * nrds.cll.wb.RT.o$SLOPE
+length(which(nrds.cll.RT.o$SIGN > 0))
+# [1] 167039
+
+
 
 
 

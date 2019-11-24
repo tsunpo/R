@@ -40,8 +40,8 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs.data <- file.path(wd.ngs, "data")
 samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
-#samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_B.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_TN.list"), header=F, rownames=F, sep="")
+#samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_WB.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -174,7 +174,7 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
-# Last Modified: 16/06/19; 04/06/19; 06/03/19
+# Last Modified: 18/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.sclc <- setSamplesQ4(wd.rt.data, samples1)
 writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
@@ -183,6 +183,33 @@ writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, row
 
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_n51.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")
+
+## Random 50/51
+m2.25 <- sort(rownames(subset(samples.sclc, M2 == 1))[sample(1:50, round(50/2), replace=F)])
+m1.26 <- sort(rownames(subset(samples.sclc, M2 == 0))[sample(1:51, round(51/2), replace=F)])
+
+random51 <- sort(c(m2.25, m1.26))
+writeTable(samples.sclc[random51,], file.path(wd.ngs, "sclc_wgs_n101-random51.txt"), colnames=T, rownames=F, sep="\t")
+
+random50 <- sort(setdiff(rownames(samples.sclc), random51))
+writeTable(samples.sclc[random50,], file.path(wd.ngs, "sclc_wgs_n101-random50.txt"), colnames=T, rownames=F, sep="\t")
+
+## Random 25/25
+m2 <- sort(rownames(subset(samples.sclc, M2 == 1)))
+m1 <- sort(rownames(subset(samples.sclc, M2 == 0)))
+
+m2.12 <- sort(m2[sample(1:50, round(50/4), replace=F)])
+m1.13 <- sort(m1[sample(1:51, round(51/4), replace=F)])
+random3 <- sort(c(m2.12, m1.13))
+writeTable(samples.sclc[random3,], file.path(wd.ngs, "sclc_wgs_n101-random3.txt"), colnames=T, rownames=F, sep="\t")
+
+m2 <- sort(setdiff(m2, m2.12))
+m1 <- sort(setdiff(m1, m1.13))
+
+m2.12 <- sort(m2[sample(1:38, round(50/4), replace=F)])
+m1.13 <- sort(m1[sample(1:38, round(51/4), replace=F)])
+random4 <- sort(c(m2.12, m1.13))
+writeTable(samples.sclc[random4,], file.path(wd.ngs, "sclc_wgs_n101-random4.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA

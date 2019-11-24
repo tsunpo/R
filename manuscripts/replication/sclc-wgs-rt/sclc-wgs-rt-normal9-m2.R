@@ -1,7 +1,7 @@
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Chromosome replication timing of the human genome
-# Name         : manuscripts/replication/nbl-wgs-rt-m2.R
+# Name         : manuscripts/replication/sclc-wgs-rt-m2.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 09/08/19; 24/04/19; 05/03/19; 25/02/19; 30/01/18
 # =============================================================================
@@ -25,7 +25,7 @@ load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE  <- "NBL"
+BASE  <- "SCLC"
 PAIR1 <- "N"
 PAIR0 <- "N"
 base <- tolower(BASE)
@@ -34,13 +34,13 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal9"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n15_CT.txt"), header=T, rownames=T, sep="")   ## M2/M1
+samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_WB.txt"), header=T, rownames=T, sep="")
 samples1 <- subset(samples1, M2 == 1)[,1]
-samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n15_CT.txt"), header=T, rownames=T, sep="")
+samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_WB.txt"), header=T, rownames=T, sep="")
 samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
@@ -53,8 +53,8 @@ nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, be
 save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 # nrow(nrds)
-# [1] 2658864
-nrds.nbl.m2 <- nrds
+# [1] 2658679
+nrds.sclc.m2 <- nrds
 
 ymax <- 0.6
 ymin <- 0.14
@@ -65,14 +65,14 @@ for (c in 1:22) {
    lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
  
    ## Plot RT
-   main.text <- paste0(BASE, " (CT) M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") ctDNAs")  
+   main.text <- paste0(BASE, " (WB) M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") whole bloods")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("M2 normal", "M1 normal"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
 }
 
 # -----------------------------------------------------------------------------
 # RD vs RT (RDS and SPR)
-# Last Modified: 09/08/19; 31/05/19
+# Last Modified: 11/07/19; 31/05/19
 # -----------------------------------------------------------------------------
 sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
@@ -88,28 +88,28 @@ for (c in 1:22) {
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
-   main.text <- c(paste0("NBL (CT) read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (M2 vs. M1)"))
-   xlab.text <- "NBL (CT) M2/M1"
-   ylab.text <- "NBL (CT) read depth [RPKM]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-M2-M1_chr", c, "_spline_spearman"))
+   main.text <- c(paste0("SCLC (WB) read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (M2 vs. M1)"))
+   xlab.text <- "SCLC (WB) M2/M1"
+   ylab.text <- "SCLC (WB) read depth [RPKM]"
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_SCLC-M2-M1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
 }
 
 ## S-phase progression rate (SPR)
 ylab.text <- "SPR"
-file.name <- file.path(wd.rt.plots, "SPR_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " (CT) M2/M1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
+file.name <- file.path(wd.rt.plots, "SPR_SCLC-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " (WB) M2/M1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
 plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
-file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " (CT) M2/M1 SPR vs. Read depths correlation"), "")
+file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " (WB) M2/M1 SPR vs. Read depths correlation"), "")
 xlab.text <- "M2 vs. M1 [rho]"
 plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "SPR-Woodfine_NBL-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " (CT) M2/M1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
+file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-M2-M1_spline_spearman")
+main.text <- c(paste0(BASE, " (WB) M2/M1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
 xlab.text <- "Woodfine et al. 2004"
 plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
@@ -128,14 +128,14 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s
 
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman_test")
-main.text <- paste0("NBL (CT) M2/M1 vs. LCL S/G1")
+file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman_test")
+main.text <- paste0("SCLC (WB) M2/M1 vs. LCL S/G1")
 ymin <- 0.25
 ymax <- 1.05
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
 
 ##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman")
 ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)

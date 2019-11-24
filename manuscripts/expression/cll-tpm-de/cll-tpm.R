@@ -18,7 +18,8 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                     ## tyang2@gauss
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
 base <- tolower(BASE)

@@ -3,13 +3,15 @@ args <- commandArgs(TRUE)
 BASE <- args[1]   ## Cancer type
 PAIR <- args[2]   ## T(umour) or N(ormal)
 TXT  <- args[3]
-#CHR  <- as.numeric(args[4])
+#CHR <- as.numeric(args[4])
 N    <- as.numeric(args[4])
 METHOD   <- args[5]
 INSILICO <- args[6]
 BSTRP  <- as.numeric(args[7])
+CV     <- args[8]
 base   <- tolower(BASE)
 method <- tolower(METHOD)
+cv     <- tolower(CV)
 
 # =============================================================================
 # Name: 3a_cmd-rt_nrd.gc.cn.d_bstrp_insilico.R (adapted from 2c_cmd-rt_nrd.gc.cn.d_chr_insilico.R)
@@ -41,6 +43,8 @@ wd.rt     <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data   <- file.path(wd.rt, "data")
 if (BSTRP != 0)
    wd.rt.data <- file.path(wd.rt, "data/bstrps", BSTRP)
+if (CV != "NA")
+   wd.rt.data <- file.path(wd.rt, "data", cv, BSTRP)
 
 samples  <- readTable(file.path(wd.ngs, TXT), header=T, rownames=T, sep="")
 samples1 <- samples[which(samples[, INSILICO] == 1),][,1]
@@ -52,6 +56,12 @@ n0 <- length(samples0)
 if (BSTRP != 0) {
    samples1 <- samples1[sort(sample(1:n1, n1, replace=T))]
    samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
+}
+if (CV == "LHOCV") {   ## Leave-half-out cross-validation
+   samples1 <- samples1[sort(sample(1:n1, round(n1/2), replace=F))]
+   samples0 <- samples0[sort(sample(1:n0, round(n0/2), replace=F))]
+   n1 <- round(n1/2)
+   n0 <- round(n0/2)
 }
 
 for (c in 1:22) {
@@ -76,3 +86,23 @@ for (c in 1:22) {
    
    writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR, "-", PAIR, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 }
+
+# -----------------------------------------------------------------------------
+# Adapted from sclc-wgs-rt-m2.R
+# -----------------------------------------------------------------------------
+nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR, PAIR, n1, n0, chrs, bed.gc)
+
+nrds.RT <- toTable(0, 4, 0, c("BED", "RT", "SPLINE", "SLOPE"))
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## Read in replicaiton time
+   overlaps <- intersect(rownames(nrds), rownames(bed.gc.chr))
+   nrds.chr <- nrds[overlaps,]
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+
+   nrds.RT <- rbind(nrds.RT, nrds.chr.RT)
+}
+save(nrds.RT, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.RData")))
+

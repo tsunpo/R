@@ -132,7 +132,7 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    #abline(v=500, lty=5, lwd=1, col="black")
    abline(v=950, lty=5, lwd=1, col="black")
    abline(v=50,  lty=5, lwd=1, col="black")
-   text(500, ymax*4/5, "|RFD| > 0.9 (75.5%)", cex=1.2, col="black") 
+   text(500, ymax*4/5, "|RFD| > 0.9 (80.7%)", cex=1.2, col="black") 
    
    mtext(main.text[2], line=4.8, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()
@@ -142,7 +142,7 @@ boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 1 breaks each centering 500
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_white.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), "")   #paste0("Chr1-22 (1-kbs)"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), "Chr1-22 (1-kbs)")   #paste0("Chr1-22 (1-kbs)"))
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
@@ -167,7 +167,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
    lates <- rownames(subset(nrds.chr.RT[boundaries,], SPLINE < 0))
    
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
-   else main.text <- paste0(BASE, " bootstrap RFD")
+   else main.text <- paste0(BASE, " (WB) bootstrap RFD")
 
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {
@@ -267,4 +267,3 @@ load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, 
 nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
 file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
-

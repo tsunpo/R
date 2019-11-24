@@ -9,7 +9,7 @@ wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Common.R", "DifferentialExpression.R")
+handbooks  <- c("Commons.R", "DifferentialExpression.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -18,11 +18,12 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "NBL"
 base <- tolower(BASE)
 
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias--fusion")
 

@@ -128,7 +128,7 @@ outputRT <- function(nrds.chr) {
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
-getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc) {
+getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc, isFlip=F) {
    nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
    for (c in 1:22) {
       chr <- chrs[c]
@@ -136,6 +136,9 @@ getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs
       nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
   
       nrds <- rbind(nrds, nrds.chr)
+   }
+   if (isFlip) {
+      nrds$RT <- nrds$N / nrds$T
    }
    nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
    nrds$RT <- scale(nrds$RT)
@@ -151,10 +154,12 @@ setSpline <- function(nrds.chr, bed.gc.chr, column) {
    spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, column])
    nrds.chr.o$SPLINE <- spline$y
    
+   ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
    slopes <- diff(spline$y)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
    nrds.chr.o$SLOPE <- NA
-   nrds.chr.o <- nrds.chr.o[1:length(slopes),]   ## length(slopes) is 1 less than nrow(bed.gc.chr), as no slope for the last 1kb window
-   nrds.chr.o$SLOPE <- slopes
+   nrds.chr.o$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.o), as no slope for the last 1kb window
+   #nrds.chr.o <- nrds.chr.o[1:length(slopes),]   ## REMOVED 24/11/19
+   #nrds.chr.o$SLOPE <- slopes
    
    sizes <- diff(bed.gc.chr.o$START)
    gaps <- which(sizes != 1000)
@@ -214,9 +219,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ylab.text <- "Read depth [RPKM]"
    if (is.null(ylim)) {
       rds <- c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab="", ylab=ylab.text, main=main.text, xaxt="n", cex.axis=1.1, cex.lab=1.2)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab="", ylab=ylab.text, main=main.text, xaxt="n", cex.axis=1.05, cex.lab=1.08)
    } else
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab="", ylab=ylab.text, main=main.text, xaxt="n", cex.axis=1.1, cex.lab=1.2)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab="", ylab=ylab.text, main=main.text, xaxt="n", cex.axis=1.05, cex.lab=1.08)
    #points(bed.gc.chr$START/1E6, nrds.chr, col=colours[1], cex=0.3)
    abline(h=0, lwd=0.5, col="lightgrey")
  
@@ -241,7 +246,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    par(mar=c(5.5,4,0,1))
    ylab.text <- "RT [log2]"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.05, cex.lab=1.08, cex.main=1.2)
    idx <- which(nrds.chr.RT$RT == 0)
    points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col="lightgrey", cex=0.3)
    idx <- which(nrds.chr.RT$RT < 0)
@@ -261,17 +266,18 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, nrds.chr.RT$SPLINE, col="black", pch=16, cex=0.2)
    abline(h=0, lty=5, lwd=1, col="black")
-   axis(side=2, at=seq(-2, 2, by=1), labels=c("\u22122", "\u22121", 0, 1, 2), cex.axis=1.1)
+   axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.08)
+   axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.08)
    
    ## Plot legend and peaks
-   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pch=1, col=colours2[1], cex=1.2)   
-   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pch=1, col=colours2[2], cex=1.2)
+   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pch=1, col=colours2[1], cex=1.15)   
+   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pch=1, col=colours2[2], cex=1.15)
    if (!is.na(xmin) && !is.na(xmax))
-      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.2)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    else
-      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.2)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (!is.null(lcl.rt.chr))
-      legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T, cex=1.2)
+      legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")

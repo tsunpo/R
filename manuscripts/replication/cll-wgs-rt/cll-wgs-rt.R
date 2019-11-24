@@ -78,7 +78,7 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
-# Last Modified: 16/06/19; 04/06/19; 06/03/19
+# Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.cll <- setSamplesQ4(wd.rt.data, samples1)
 writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownames=F, sep="\t")
@@ -87,6 +87,16 @@ writeTable(samples.cll, file.path(wd.ngs, "cll_wgs_n96.txt"), colnames=T, rownam
 
 writeTable(subset(samples.cll, Q4 %in% c(4,1)), file.path(wd.ngs, "cll_wgs_q4_n48.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.cll, Q4 %in% c(3,1)), file.path(wd.ngs, "cll_wgs_q3_n48.txt"), colnames=T, rownames=F, sep="\t")
+
+## Random 50/50
+m2.24 <- sort(rownames(subset(samples.cll, M2 == 1))[sample(1:48, round(48/2), replace=F)])
+m1.24 <- sort(rownames(subset(samples.cll, M2 == 0))[sample(1:48, round(48/2), replace=F)])
+
+random1 <- sort(c(m2.24, m1.24))
+writeTable(samples.cll[random1,], file.path(wd.ngs, "cll_wgs_n96-random1.txt"), colnames=T, rownames=F, sep="\t")
+
+random2 <- sort(setdiff(rownames(samples.cll), random1))
+writeTable(samples.cll[random2,], file.path(wd.ngs, "cll_wgs_n96-random2.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA

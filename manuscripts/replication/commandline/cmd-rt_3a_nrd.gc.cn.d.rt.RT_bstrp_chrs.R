@@ -80,3 +80,22 @@ for (c in 1:22) {
 
    writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
 }
+
+# -----------------------------------------------------------------------------
+# Adapted from sclc-wgs-rt-m2.R
+# -----------------------------------------------------------------------------
+nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc)
+
+nrds.RT <- toTable(0, 4, 0, c("BED", "RT", "SPLINE", "SLOPE"))
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+ 
+   ## Read in replicaiton time
+   overlaps <- intersect(rownames(nrds), rownames(bed.gc.chr))
+   nrds.chr <- nrds[overlaps,]
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+
+   nrds.RT <- rbind(nrds.RT, nrds.chr.RT)
+}
+save(nrds.RT, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.RT.RData")))

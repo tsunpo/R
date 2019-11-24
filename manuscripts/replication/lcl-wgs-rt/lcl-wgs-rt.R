@@ -120,6 +120,10 @@ ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(sprs, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
+# -----------------------------------------------------------------------------
+# Mapping replication origins
+# Last Modified: 22/10/19
+# -----------------------------------------------------------------------------
 
 
 

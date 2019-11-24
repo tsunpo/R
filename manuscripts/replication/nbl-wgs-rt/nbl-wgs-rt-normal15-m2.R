@@ -34,7 +34,7 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal15"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 

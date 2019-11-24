@@ -6,8 +6,10 @@ PAIR0 <- args[3]   ## N(ormal) or B(lood) or G1 (phase)
 NUM1  <- as.numeric(args[4])
 NUM0  <- as.numeric(args[5])
 BSTRP <- as.numeric(args[6])
+CV    <- args[7]
 base   <- tolower(BASE)
 method <- "rpkm"
+cv     <- tolower(CV)
 
 # =============================================================================
 # Name: cmd-rt_3b_nrd.gc.cs.d.rt.RT_chrs.R (commandline mode)
@@ -34,6 +36,8 @@ wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps", BSTRP)
+if (CV != "NA")
+   wd.rt.data <- file.path(wd.rt, "data", cv, BSTRP)
 
 # -----------------------------------------------------------------------------
 # Adapted from sclc-wgs-rt-m2.R
