@@ -26,16 +26,8 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
-bstrps        <- 1000
-boundary.upper <- 520   ## 500-520 breaks
-boundary.lower <- 480   ## 480-500 breaks
-boundary.break <- 2     ## 1 breaks each centering 500
-n1 <- 50
-n0 <- 51
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -66,7 +58,7 @@ plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
-# [1] 
+# [1] 2650083
 
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
@@ -74,96 +66,6 @@ writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d
 nrds.RT.RFD.sclc <- nrds.RT.RFD
 # > nrow(nrds.RT.RFD.sclc)
 # [1] 2650083
-
-# -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; T vs N)
-# Last Modified: 22/10/19
-# -----------------------------------------------------------------------------
-nrds.RT.RFD.sclc.c.e <- nrds.RT.RFD.sclc[overlaps.c.e,]
-# > nrow(nrds.RT.RFD.sclc.c.e)
-# [1] 40451
-
-test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
-test$T2 <- nrds.RT.RFD.nbl.c.e$T
-test$T3 <- nrds.RT.RFD.cll.c.e$T
-test$T4 <- nrds.RT.RFD.lcl.c.e$T
-
-test$N  <- nrds.RT.RFD.sclc.c.e$N
-test$N2 <- nrds.RT.RFD.nbl.c.e$N
-test$N3 <- nrds.RT.RFD.cll.c.e$N
-test$N4 <- nrds.RT.RFD.lcl.c.e$N
-
-test$P <- mapply(x = 1:nrow(test), function(x) testU(log2(as.numeric(test[x, 2:5])), log2(as.numeric(test[x, 6:9]))))
-test$FDR <- qvalue(test$P)$qvalue
-test <- test[order(test$P),]
-
-##
-test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
-test$RT2 <- nrds.RT.RFD.nbl.c.e$RT
-test$RT3 <- nrds.RT.RFD.cll.c.e$RT
-test$RT4 <- nrds.RT.RFD.lcl.c.e$RT
-test$MEAN   <- mapply(x = 1:nrow(test), function(x) mean(as.numeric(test[x, 2:5])))
-test$MEDIAN <- mapply(x = 1:nrow(test), function(x) median(as.numeric(test[x, 2:5])))
-test <- test[order(test$MEAN, decreasing=T),]
-test.fc2.5.mean <- subset(test, MEAN >= 2.5)
-nrow(test.fc2.5.mean)
-# [1] 44
-table.mean <- as.data.frame(table(bed.gc[rownames(test.fc2.5.mean),]$CHR))
-table.mean <- table.mean[order(table.mean$Freq, decreasing=T),]
-# > table.mean
-# Var1 Freq
-# 5  chr17    8
-# 6  chr19    8
-# 1   chr1    6
-# 4  chr16    4
-# 8   chr4    4
-# 10  chr7    4
-# 3  chr15    3
-# 7  chr20    2
-# 9   chr5    2
-# 11  chr8    2
-# 2  chr10    1
-
-beds.mean <- rownames(test.fc2.5.mean)
-chr17s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr17"))
-chr19s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr19"))
-chr1s.mean  <- rownames(subset(bed.gc[beds.mean,], CHR == "chr1"))
-
-bed.gc.chr <- bed.gc[chr1s.mean,]
-bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
-bed.gc.chr
-
-##
-test <- test[order(test$MEDIAN, decreasing=T),]
-test.fc2.5.median <- subset(test, MEDIAN >= 2.5)
-# > nrow(test.fc2.5.median)
-# [1] 20
-table.median <- as.data.frame(table(bed.gc[rownames(test.fc2.5.median),]$CHR))
-table.median <- table.median[order(table.median$Freq, decreasing=T),]
-# > table.median
-# Var1 Freq
-# 5 chr19    4
-# 1  chr1    3
-# 4 chr17    3
-# 7  chr4    3
-# 8  chr7    2
-# 9  chr8    2
-# 2 chr10    1
-# 3 chr15    1
-# 6 chr20    1
-
-beds.median <- rownames(test.fc2.5.median)
-chr17s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr17"))
-chr19s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr19"))
-chr1s.median  <- rownames(subset(bed.gc[beds.median,], CHR == "chr1"))
-
-bed.gc.chr <- bed.gc[chr19s.median,]
-bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
-bed.gc.chr
-
-bed.gc.chr <- bed.gc[chr1s.median,]
-bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
-bed.gc.chr
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
@@ -194,6 +96,69 @@ for (c in 1:22) {
    file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
    plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
 }
+
+# -----------------------------------------------------------------------------
+# Report (between T and TN)
+# Last Modified: 24/11/19
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## RFD > +0.9
+boundary.lower <-  50   ## RFD < -0.9
+
+report.sclc.vs.nbl <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc, nrds.RT.RFD.nbl, "SCLC", "NBL")
+writeTable(report.sclc.vs.nbl, file.path(wd.rt.data, paste0("rfd_SCLC_vs_NBL.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.vs.cll <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc, nrds.RT.RFD.cll, "SCLC", "CLL")
+writeTable(report.sclc.vs.cll, file.path(wd.rt.data, paste0("rfd_SCLC_vs_CLL.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.vs.cll  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.nbl,  nrds.RT.RFD.cll, "NBL",  "CLL")
+writeTable(report.nbl.vs.cll, file.path(wd.rt.data, paste0("rfd_NBL_vs_CLL.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Plot report (between TN, T and CL)
+# Last Modified: 27/11/19
+# -----------------------------------------------------------------------------
+save(report.sclc.vs.nbl, report.sclc.vs.cll, report.nbl.vs.cll, report.sclc.tn.vs.sclc, report.sclc.tn.vs.nbl, report.sclc.tn.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("rfds_ALL.RData")))
+
+report.rfds <- list(getReportRFD(report.sclc.tn.vs.sclc, "SCLC-TN"), getReportRFD(report.sclc.tn.vs.sclc, "SCLC"), getReportRFD(report.sclc.tn.vs.nbl, "NBL"), getReportRFD(report.sclc.tn.vs.cll, "CLL"), getReportRFD(report.nbl.cl.vs.lcl, "NBL-CL"), getReportRFD(report.nbl.cl.vs.lcl, "LCL"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_E-L.pdf"))
+plotReportRFD(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL", "NBL-CL", "LCL"), file.name, "Bootstrap RFD distribution")
+
+# -----------------------------------------------------------------------------
+# Report (between random1 and random2)
+# Last Modified: 24/11/19
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## RFD > +0.9
+boundary.lower <-  50   ## RFD < -0.9
+
+report.sclc.tn.1.2 <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn.1, nrds.RT.RFD.sclc.tn.2, "SCLC-TN-R1", "SCLC-TN-R2")
+writeTable(report.sclc.tn.1.2, file.path(wd.rt.data, paste0("rfd_R1_vs_R2_SCLC-TN.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.1.2 <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.1, nrds.RT.RFD.sclc.2, "SCLC-R1", "SCLC-R2")
+writeTable(report.sclc.1.2, file.path(wd.rt.data, paste0("rfd_R1_vs_R2_SCLC.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.1.2 <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.nbl.1, nrds.RT.RFD.nbl.2, "NBL-R1", "NBL-R2")
+writeTable(report.nbl.1.2, file.path(wd.rt.data, paste0("rfd_R1_vs_R2_NBL.txt")), colnames=T, rownames=F, sep="\t")
+
+report.cll.1.2 <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.cll.1, nrds.RT.RFD.cll.2, "CLL-R1", "CLL-R2")
+writeTable(report.cll.1.2, file.path(wd.rt.data, paste0("rfd_R1_vs_R2_CLL.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Plot report (between TN and T)
+# Last Modified: 28/11/19
+# -----------------------------------------------------------------------------
+save(report.sclc.tn.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=file.path(wd.rt.data, paste0("rfds_ALL_random12.RData")))
+
+report.rfds <- list(getReportRFD12(report.sclc.tn.1.2, "SCLC-TN-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_random12_E-L.pdf"))
+plotReportRFD12(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # |RFD| ≥ 0.9
@@ -446,6 +411,95 @@ length(which(nrds.cll.RT.o$SIGN > 0))
 
 
 
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; T vs N)
+# Last Modified: 22/10/19
+# -----------------------------------------------------------------------------
+nrds.RT.RFD.sclc.c.e <- nrds.RT.RFD.sclc[overlaps.c.e,]
+# > nrow(nrds.RT.RFD.sclc.c.e)
+# [1] 40451
+
+test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
+test$T2 <- nrds.RT.RFD.nbl.c.e$T
+test$T3 <- nrds.RT.RFD.cll.c.e$T
+test$T4 <- nrds.RT.RFD.lcl.c.e$T
+
+test$N  <- nrds.RT.RFD.sclc.c.e$N
+test$N2 <- nrds.RT.RFD.nbl.c.e$N
+test$N3 <- nrds.RT.RFD.cll.c.e$N
+test$N4 <- nrds.RT.RFD.lcl.c.e$N
+
+test$P <- mapply(x = 1:nrow(test), function(x) testU(log2(as.numeric(test[x, 2:5])), log2(as.numeric(test[x, 6:9]))))
+test$FDR <- qvalue(test$P)$qvalue
+test <- test[order(test$P),]
+
+##
+test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
+test$RT2 <- nrds.RT.RFD.nbl.c.e$RT
+test$RT3 <- nrds.RT.RFD.cll.c.e$RT
+test$RT4 <- nrds.RT.RFD.lcl.c.e$RT
+test$MEAN   <- mapply(x = 1:nrow(test), function(x) mean(as.numeric(test[x, 2:5])))
+test$MEDIAN <- mapply(x = 1:nrow(test), function(x) median(as.numeric(test[x, 2:5])))
+test <- test[order(test$MEAN, decreasing=T),]
+test.fc2.5.mean <- subset(test, MEAN >= 2.5)
+nrow(test.fc2.5.mean)
+# [1] 44
+table.mean <- as.data.frame(table(bed.gc[rownames(test.fc2.5.mean),]$CHR))
+table.mean <- table.mean[order(table.mean$Freq, decreasing=T),]
+# > table.mean
+# Var1 Freq
+# 5  chr17    8
+# 6  chr19    8
+# 1   chr1    6
+# 4  chr16    4
+# 8   chr4    4
+# 10  chr7    4
+# 3  chr15    3
+# 7  chr20    2
+# 9   chr5    2
+# 11  chr8    2
+# 2  chr10    1
+
+beds.mean <- rownames(test.fc2.5.mean)
+chr17s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr17"))
+chr19s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr19"))
+chr1s.mean  <- rownames(subset(bed.gc[beds.mean,], CHR == "chr1"))
+
+bed.gc.chr <- bed.gc[chr1s.mean,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
+
+##
+test <- test[order(test$MEDIAN, decreasing=T),]
+test.fc2.5.median <- subset(test, MEDIAN >= 2.5)
+# > nrow(test.fc2.5.median)
+# [1] 20
+table.median <- as.data.frame(table(bed.gc[rownames(test.fc2.5.median),]$CHR))
+table.median <- table.median[order(table.median$Freq, decreasing=T),]
+# > table.median
+# Var1 Freq
+# 5 chr19    4
+# 1  chr1    3
+# 4 chr17    3
+# 7  chr4    3
+# 8  chr7    2
+# 9  chr8    2
+# 2 chr10    1
+# 3 chr15    1
+# 6 chr20    1
+
+beds.median <- rownames(test.fc2.5.median)
+chr17s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr17"))
+chr19s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr19"))
+chr1s.median  <- rownames(subset(bed.gc[beds.median,], CHR == "chr1"))
+
+bed.gc.chr <- bed.gc[chr19s.median,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
+
+bed.gc.chr <- bed.gc[chr1s.median,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
 
 # -----------------------------------------------------------------------------
 # 

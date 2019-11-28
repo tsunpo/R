@@ -78,6 +78,241 @@ getBootstrapTTR <- function(nrds.RFD, boundary.lower, boundary.upper) {
    return(nrds.RFD[diff,])
 }
 
+getBootstrapReport <- function(boundary.upper, boundary.lower, nrds.RT.RFD.1, nrds.RT.RFD.2, name.1, name.2) {
+   colnames <- c("RFD", "SAMPLES", name.1, name.2, "Overlapping_N", "Overlapping_P", "RFD_N", "RFD_P", "Mappable")
+   report <- toTable(NA, length(colnames), 6, colnames)
+   
+   ###
+   ## |RFD| ≥ 0.9
+   nrds.RT.RFD.1.t <- getBootstrapTTR(nrds.RT.RFD.1, boundary.lower, boundary.upper)
+   nrds.RT.RFD.2.t <- getBootstrapTTR(nrds.RT.RFD.2, boundary.lower, boundary.upper)
+   
+   ## TTR
+   report$RFD[1:2] <- "TTR"
+   report$SAMPLES[1] <- name.1
+   report$SAMPLES[2] <- name.2
+   report$RFD_N[1] <- nrow(nrds.RT.RFD.1.t)
+   report$RFD_N[2] <- nrow(nrds.RT.RFD.2.t)
+   report$Mappable[1] <- nrow(nrds.RT.RFD.1)
+   report$Mappable[2] <- nrow(nrds.RT.RFD.2)
+   report$RFD_P[1] <- report$RFD_N[1]/report$Mappable[1]
+   report$RFD_P[2] <- report$RFD_N[2]/report$Mappable[2]
+   
+   ##
+   overlaps.t <- intersect(rownames(nrds.RT.RFD.1.t), rownames(nrds.RT.RFD.2.t))
+   report$Overlapping_N[1] <- length(overlaps.t)
+   report$Overlapping_N[2] <- length(overlaps.t)   
+   report$Overlapping_P[1] <- length(overlaps.t)/nrow(nrds.RT.RFD.1)
+   report$Overlapping_P[2] <- length(overlaps.t)/nrow(nrds.RT.RFD.2)
+   
+   nrds.1.RT.o <- nrds.RT.RFD.1.t[overlaps.t,]
+   nrds.2.RT.o <- nrds.RT.RFD.2.t[overlaps.t,]
+
+   nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
+   report[2, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.t)
+   
+   ###
+   ## |RFD| < 0.9
+   nrds.RT.RFD.1.c <- getBootstrapCTR(nrds.RT.RFD.1, boundary.lower, boundary.upper)
+   nrds.RT.RFD.2.c <- getBootstrapCTR(nrds.RT.RFD.2, boundary.lower, boundary.upper)
+   
+   nrds.RT.RFD.1.c.e <- subset(nrds.RT.RFD.1.c, SPLINE >= 0)
+   nrds.RT.RFD.1.c.l <- subset(nrds.RT.RFD.1.c, SPLINE < 0)
+   nrds.RT.RFD.2.c.e <- subset(nrds.RT.RFD.2.c, SPLINE >= 0)
+   nrds.RT.RFD.2.c.l <- subset(nrds.RT.RFD.2.c, SPLINE < 0)
+   
+   ## CTR (E)
+   report$RFD[3:4] <- "CTR-E"
+   report$SAMPLES[3] <- name.1
+   report$SAMPLES[4] <- name.2
+   
+   report$RFD_N[3] <- nrow(nrds.RT.RFD.1.c.e)
+   report$RFD_N[4] <- nrow(nrds.RT.RFD.2.c.e)
+   report$Mappable[3] <- nrow(nrds.RT.RFD.1)
+   report$Mappable[4] <- nrow(nrds.RT.RFD.2)
+   report$RFD_P[3] <- report$RFD_N[3]/report$Mappable[3]
+   report$RFD_P[4] <- report$RFD_N[4]/report$Mappable[4]
+   
+   ##
+   overlaps.c.e <- intersect(rownames(nrds.RT.RFD.1.c.e), rownames(nrds.RT.RFD.2.c.e))
+   report$Overlapping_N[3] <- length(overlaps.c.e)
+   report$Overlapping_N[4] <- length(overlaps.c.e)   
+   report$Overlapping_P[3] <- length(overlaps.c.e)/nrow(nrds.RT.RFD.1)
+   report$Overlapping_P[4] <- length(overlaps.c.e)/nrow(nrds.RT.RFD.2)
+   
+   nrds.1.RT.o <- nrds.RT.RFD.1.c.e[overlaps.c.e,]
+   nrds.2.RT.o <- nrds.RT.RFD.2.c.e[overlaps.c.e,]
+
+   nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
+   report[4, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.c.e)
+
+   ## CTR (L)
+   report$RFD[5:6] <- "CTR-L"
+   report$SAMPLES[5] <- name.1
+   report$SAMPLES[6] <- name.2
+   
+   report$RFD_N[5] <- nrow(nrds.RT.RFD.1.c.l)
+   report$RFD_N[6] <- nrow(nrds.RT.RFD.2.c.l)
+   report$Mappable[5] <- nrow(nrds.RT.RFD.1)
+   report$Mappable[6] <- nrow(nrds.RT.RFD.2)
+   report$RFD_P[5] <- report$RFD_N[5]/report$Mappable[5]
+   report$RFD_P[6] <- report$RFD_N[6]/report$Mappable[6]
+   
+   ##
+   overlaps.c.l <- intersect(rownames(nrds.RT.RFD.1.c.l), rownames(nrds.RT.RFD.2.c.l))
+   report$Overlapping_N[5] <- length(overlaps.c.l)
+   report$Overlapping_N[6] <- length(overlaps.c.l)   
+   report$Overlapping_P[5] <- length(overlaps.c.l)/nrow(nrds.RT.RFD.1)
+   report$Overlapping_P[6] <- length(overlaps.c.l)/nrow(nrds.RT.RFD.2)
+   
+   nrds.1.RT.o <- nrds.RT.RFD.1.c.l[overlaps.c.l,]
+   nrds.2.RT.o <- nrds.RT.RFD.2.c.l[overlaps.c.l,]
+   
+   nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
+   report[6, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.c.l)
+   
+   return(report)
+}
+
+getReportRFD <- function(report, name) {
+   return(subset(report, SAMPLES == name)$RFD_P)
+}
+
+getReportRFD12 <- function(report, name) {
+   return(subset(report, SAMPLES == name)$Overlapping_P)
+}
+
+plotReportRFD <- function(reports.rfds, names, file.name, main.text) {
+   titles <- c("TTR", "CTR_E", "CTR_L")
+   cols <- c("black", "red", "blue")
+   n <- length(names)
+   
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7, 9, 11)
+   rfds$pch  <- c(19, 17, 17, 17, 15, 15)
+   rfds$pos1 <- c(3, 3, 3, 3, 3, 3)
+   rfds$pos2 <- c(3, 3, 3, 1, 3, 3)
+   rfds$pos3 <- c(1, 1, 1, 3, 1, 1)
+   for (r in 1:length(names)) {
+      rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
+      rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
+      rfds$CTR_L[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
+   }
+   
+   ##
+   pdf(file.name, height=5, width=7)
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(1,4,3.6,1))
+   plot(NULL, xlim=c(0.5, 12.5), ylim=c(55, 115), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch)
+   lines(x=rfds$X, y=rfds$TTR, type="l", lwd=3, col=cols[1])
+
+   text(12, rfds$TTR[n], "TTR ", cex=1.2, col="black")
+   abline(v=2, lty=5, lwd=1, col="black")
+   abline(v=8,  lty=5, lwd=1, col="black")
+   for (n in 1:length(names))
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
+ 
+   ##
+   axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
+   
+   legend("topleft", "Normal", col="black", bty="n", pt.cex=1, pch=1, horiz=T, cex=1.2)
+   legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
+   legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
+   
+   ##
+   par(mar=c(5,4,0,1))
+   plot(NULL, xlim=c(0.5, 12.5), ylim=c(0, 28), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch)
+   lines(rfds$X, y=rfds$CTR_E, type="l", lwd=3, col=cols[2])
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch)
+   lines(rfds$X, y=rfds$CTR_L, type="l", lwd=3, col=cols[3])
+   
+   text(12, rfds$CTR_E[n], "    CTR-E", cex=1.2, col="red") 
+   text(12, rfds$CTR_L[n], "    CTR-L", cex=1.2, col="blue")
+   abline(v=2, lty=5, lwd=1, col="black")
+   abline(v=8,  lty=5, lwd=1, col="black")
+   for (n in 1:length(names)) {
+      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
+   }
+
+   ##
+   axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
+   axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.1)
+   axis(side=1, at=seq(3, 7, by=2), labels=c("n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
+   axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
+   
+   dev.off()
+}
+
+plotReportRFD12 <- function(reports.rfds, names, file.name, main.text) {
+   titles <- c("TTR", "CTR_E", "CTR_L")
+   cols <- c("black", "red", "blue")
+   n <- length(names)
+ 
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7)
+   rfds$pch  <- c(19, 17, 17, 17)
+   rfds$pos1 <- c(3, 3, 3, 3)
+   rfds$pos2 <- c(3, 3, 3, 1)
+   rfds$pos3 <- c(1, 1, 1, 3)
+   for (r in 1:length(names)) {
+      rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
+      rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
+      rfds$CTR_L[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
+   }
+ 
+   ##
+   pdf(file.name, height=5, width=5.1)
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(1,4,3.6,1))
+   plot(NULL, xlim=c(0.35, 8.6), ylim=c(55, 115), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch)
+   lines(x=rfds$X, y=rfds$TTR, type="l", lwd=3, col=cols[1])
+
+   text(8, rfds$TTR[n], "TTR ", cex=1.2, col="black")
+   abline(v=2, lty=5, lwd=1, col="black")
+   for (n in 1:length(names))
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
+
+   ##
+   axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
+ 
+   legend("topleft", "Normal", col="black", bty="n", pt.cex=1, pch=1, horiz=T, cex=1.2)
+   legend("topright", "Primary bulks                    ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
+
+   ##
+   par(mar=c(5,4,0,1))
+   plot(NULL, xlim=c(0.35, 8.6), ylim=c(0, 28), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch)
+   lines(rfds$X, y=rfds$CTR_E, type="l", lwd=3, col=cols[2])
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch)
+   lines(rfds$X, y=rfds$CTR_L, type="l", lwd=3, col=cols[3])
+ 
+   text(8, rfds$CTR_E[n], "    CTR-E", cex=1.2, col="red", pos=1)
+   text(8, rfds$CTR_L[n], "    CTR-L", cex=1.2, col="blue", pos=3)
+   abline(v=2, lty=5, lwd=1, col="black")
+   for (n in 1:length(names)) {
+      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
+   }
+
+   ##
+   axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
+   axis(side=1, at=seq(1, 1, by=2), labels=c("n=46+46"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.1)
+   axis(side=1, at=seq(3, 7, by=2), labels=c("n=50+51", "n=28+28", "n=48+48"), line=1.2, col=NA, cex.axis=1.1)
+
+   dev.off()
+}
+
 # -----------------------------------------------------------------------------
 # Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)
 # Last Modified: 13/11/18

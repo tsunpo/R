@@ -26,13 +26,14 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
+base <- tolower(BASE)
+method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/random2")
-#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -56,6 +57,6 @@ nrds.RT <- getRT(nrds, bed.gc)
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.2 <- nrds.RT.RFD
-# > nrow(nrds.RT.RFD.2)
+nrds.RT.RFD.cll.2 <- nrds.RT.RFD
+# > nrow(nrds.RT.RFD.cll.2)
 # [1] 2644397

@@ -98,6 +98,54 @@ writeTable(samples.cll[random1,], file.path(wd.ngs, "cll_wgs_n96-random1.txt"), 
 random2 <- sort(setdiff(rownames(samples.cll), random1))
 writeTable(samples.cll[random2,], file.path(wd.ngs, "cll_wgs_n96-random2.txt"), colnames=T, rownames=F, sep="\t")
 
+## Random 25/25
+m2 <- sort(rownames(subset(samples.cll, M2 == 1)))
+m1 <- sort(rownames(subset(samples.cll, M2 == 0)))
+
+m2.12 <- sort(m2[sample(1:48, round(48/4), replace=F)])
+m1.12 <- sort(m1[sample(1:48, round(48/4), replace=F)])
+random3 <- sort(c(m2.12, m1.12))
+writeTable(samples.cll[random3,], file.path(wd.ngs, "cll_wgs_n96-random3.txt"), colnames=T, rownames=F, sep="\t")
+
+m2 <- sort(setdiff(m2, m2.12))
+m1 <- sort(setdiff(m1, m1.12))
+
+m2.12 <- sort(m2[sample(1:36, round(48/4), replace=F)])
+m1.12 <- sort(m1[sample(1:36, round(48/4), replace=F)])
+random4 <- sort(c(m2.12, m1.12))
+writeTable(samples.cll[random4,], file.path(wd.ngs, "cll_wgs_n96-random4.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
+
+## Random 14/14
+m2 <- sort(rownames(subset(samples.nbl, M2 == 1)))
+m1 <- sort(rownames(subset(samples.nbl, M2 == 0)))
+
+m2.7 <- sort(m2[sample(1:28, round(28/4), replace=F)])
+m1.7 <- sort(m1[sample(1:28, round(28/4), replace=F)])
+random3 <- sort(c(m2.7, m1.7))
+writeTable(samples.nbl[random3,], file.path(wd.ngs, "nbl_wgs_n56-random3.txt"), colnames=T, rownames=F, sep="\t")
+
+m2 <- sort(setdiff(m2, m2.7))
+m1 <- sort(setdiff(m1, m1.7))
+
+m2.7 <- sort(m2[sample(1:21, round(28/4), replace=F)])
+m1.7 <- sort(m1[sample(1:21, round(28/4), replace=F)])
+random4 <- sort(c(m2.7, m1.7))
+writeTable(samples.nbl[random4,], file.path(wd.ngs, "nbl_wgs_n56-random4.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 04/06/19; 21/04/19

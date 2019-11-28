@@ -66,6 +66,6 @@ nrds.RT <- getRT(nrds, bed.gc)
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.2 <- nrds.RT.RFD
-# > nrow(nrds.RT.RFD.2)
+nrds.RT.RFD.sclc.2 <- nrds.RT.RFD
+# > nrow(nrds.RT.RFD.sclc.2)
 # [1] 2650061

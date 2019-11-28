@@ -26,23 +26,14 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
-bstrps        <- 1000
-boundary.upper <- 520   ## 500-520 breaks
-boundary.lower <- 480   ## 480-500 breaks
-boundary.break <- 2     ## 1 breaks each centering 500
-n1 <- 25
-n0 <- 25
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/random1")
-#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -51,28 +42,24 @@ wd.rt.data  <- file.path(wd.rt, "data/random1")
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 # > nrow(nrds.RT.BSTRPS)
-# [1] 2650061
+# [1] 2651883
 
 # -----------------------------------------------------------------------------
 # Create RT + RFD data
 # Last Modified: 22/10/1
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
-load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
-# [1] 2650083
+# [1] 2651905
 
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.sclc.1 <- nrds.RT.RFD
-# nrow(nrds.RT.RFD.sclc.1)
-# [1] 2650061
-
-
-
-
+nrds.RT.RFD.sclc.tn.1 <- nrds.RT.RFD
+# nrow(nrds.RT.RFD.sclc.tn.1)
+# [1] 2651883
 
 
 

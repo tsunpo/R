@@ -40,7 +40,7 @@ n0 <- 51
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal92"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
@@ -76,96 +76,6 @@ nrds.RT.RFD.sclc.tn <- nrds.RT.RFD
 # [1] 2651861
 
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; T vs N)
-# Last Modified: 22/10/19
-# -----------------------------------------------------------------------------
-nrds.RT.RFD.sclc.c.e <- nrds.RT.RFD.sclc[overlaps.c.e,]
-# > nrow(nrds.RT.RFD.sclc.c.e)
-# [1] 40451
-
-test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
-test$T2 <- nrds.RT.RFD.nbl.c.e$T
-test$T3 <- nrds.RT.RFD.cll.c.e$T
-test$T4 <- nrds.RT.RFD.lcl.c.e$T
-
-test$N  <- nrds.RT.RFD.sclc.c.e$N
-test$N2 <- nrds.RT.RFD.nbl.c.e$N
-test$N3 <- nrds.RT.RFD.cll.c.e$N
-test$N4 <- nrds.RT.RFD.lcl.c.e$N
-
-test$P <- mapply(x = 1:nrow(test), function(x) testU(log2(as.numeric(test[x, 2:5])), log2(as.numeric(test[x, 6:9]))))
-test$FDR <- qvalue(test$P)$qvalue
-test <- test[order(test$P),]
-
-##
-test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
-test$RT2 <- nrds.RT.RFD.nbl.c.e$RT
-test$RT3 <- nrds.RT.RFD.cll.c.e$RT
-test$RT4 <- nrds.RT.RFD.lcl.c.e$RT
-test$MEAN   <- mapply(x = 1:nrow(test), function(x) mean(as.numeric(test[x, 2:5])))
-test$MEDIAN <- mapply(x = 1:nrow(test), function(x) median(as.numeric(test[x, 2:5])))
-test <- test[order(test$MEAN, decreasing=T),]
-test.fc2.5.mean <- subset(test, MEAN >= 2.5)
-nrow(test.fc2.5.mean)
-# [1] 44
-table.mean <- as.data.frame(table(bed.gc[rownames(test.fc2.5.mean),]$CHR))
-table.mean <- table.mean[order(table.mean$Freq, decreasing=T),]
-# > table.mean
-# Var1 Freq
-# 5  chr17    8
-# 6  chr19    8
-# 1   chr1    6
-# 4  chr16    4
-# 8   chr4    4
-# 10  chr7    4
-# 3  chr15    3
-# 7  chr20    2
-# 9   chr5    2
-# 11  chr8    2
-# 2  chr10    1
-
-beds.mean <- rownames(test.fc2.5.mean)
-chr17s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr17"))
-chr19s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr19"))
-chr1s.mean  <- rownames(subset(bed.gc[beds.mean,], CHR == "chr1"))
-
-bed.gc.chr <- bed.gc[chr1s.mean,]
-bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
-bed.gc.chr
-
-##
-test <- test[order(test$MEDIAN, decreasing=T),]
-test.fc2.5.median <- subset(test, MEDIAN >= 2.5)
-# > nrow(test.fc2.5.median)
-# [1] 20
-table.median <- as.data.frame(table(bed.gc[rownames(test.fc2.5.median),]$CHR))
-table.median <- table.median[order(table.median$Freq, decreasing=T),]
-# > table.median
-# Var1 Freq
-# 5 chr19    4
-# 1  chr1    3
-# 4 chr17    3
-# 7  chr4    3
-# 8  chr7    2
-# 9  chr8    2
-# 2 chr10    1
-# 3 chr15    1
-# 6 chr20    1
-
-beds.median <- rownames(test.fc2.5.median)
-chr17s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr17"))
-chr19s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr19"))
-chr1s.median  <- rownames(subset(bed.gc[beds.median,], CHR == "chr1"))
-
-bed.gc.chr <- bed.gc[chr19s.median,]
-bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
-bed.gc.chr
-
-bed.gc.chr <- bed.gc[chr1s.median,]
-bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
-bed.gc.chr
-
-# -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
 # Last Modified: 04/11/18
 # -----------------------------------------------------------------------------
@@ -194,6 +104,29 @@ for (c in 1:22) {
    file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
    plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
 }
+
+# -----------------------------------------------------------------------------
+# Report (between T and TN)
+# Last Modified: 24/11/19
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## RFD > +0.9
+boundary.lower <-  50   ## RFD < -0.9
+
+report.sclc.tn.vs.sclc <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn, nrds.RT.RFD.sclc, "SCLC-TN", "SCLC")
+writeTable(report.sclc.tn.vs.sclc, file.path(wd.rt.data, paste0("rfd_SCLC-TN_vs_SCLC.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.tn.vs.nbl  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn, nrds.RT.RFD.nbl, "SCLC-TN", "NBL")
+writeTable(report.sclc.tn.vs.nbl, file.path(wd.rt.data, paste0("rfd_SCLC-TN_vs_NBL.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.tn.vs.cll  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn, nrds.RT.RFD.cll, "SCLC-TN", "CLL")
+writeTable(report.sclc.tn.vs.cll, file.path(wd.rt.data, paste0("rfd_SCLC-TN_vs_CLL.txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # |RFD| ≥ 0.9
@@ -469,6 +402,95 @@ length(which(nrds.cll.RT.o$SIGN > 0))
 
 
 
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; T vs N)
+# Last Modified: 22/10/19
+# -----------------------------------------------------------------------------
+nrds.RT.RFD.sclc.c.e <- nrds.RT.RFD.sclc[overlaps.c.e,]
+# > nrow(nrds.RT.RFD.sclc.c.e)
+# [1] 40451
+
+test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
+test$T2 <- nrds.RT.RFD.nbl.c.e$T
+test$T3 <- nrds.RT.RFD.cll.c.e$T
+test$T4 <- nrds.RT.RFD.lcl.c.e$T
+
+test$N  <- nrds.RT.RFD.sclc.c.e$N
+test$N2 <- nrds.RT.RFD.nbl.c.e$N
+test$N3 <- nrds.RT.RFD.cll.c.e$N
+test$N4 <- nrds.RT.RFD.lcl.c.e$N
+
+test$P <- mapply(x = 1:nrow(test), function(x) testU(log2(as.numeric(test[x, 2:5])), log2(as.numeric(test[x, 6:9]))))
+test$FDR <- qvalue(test$P)$qvalue
+test <- test[order(test$P),]
+
+##
+test <- nrds.RT.RFD.sclc.c.e[,c("BED", "RT")]
+test$RT2 <- nrds.RT.RFD.nbl.c.e$RT
+test$RT3 <- nrds.RT.RFD.cll.c.e$RT
+test$RT4 <- nrds.RT.RFD.lcl.c.e$RT
+test$MEAN   <- mapply(x = 1:nrow(test), function(x) mean(as.numeric(test[x, 2:5])))
+test$MEDIAN <- mapply(x = 1:nrow(test), function(x) median(as.numeric(test[x, 2:5])))
+test <- test[order(test$MEAN, decreasing=T),]
+test.fc2.5.mean <- subset(test, MEAN >= 2.5)
+nrow(test.fc2.5.mean)
+# [1] 44
+table.mean <- as.data.frame(table(bed.gc[rownames(test.fc2.5.mean),]$CHR))
+table.mean <- table.mean[order(table.mean$Freq, decreasing=T),]
+# > table.mean
+# Var1 Freq
+# 5  chr17    8
+# 6  chr19    8
+# 1   chr1    6
+# 4  chr16    4
+# 8   chr4    4
+# 10  chr7    4
+# 3  chr15    3
+# 7  chr20    2
+# 9   chr5    2
+# 11  chr8    2
+# 2  chr10    1
+
+beds.mean <- rownames(test.fc2.5.mean)
+chr17s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr17"))
+chr19s.mean <- rownames(subset(bed.gc[beds.mean,], CHR == "chr19"))
+chr1s.mean  <- rownames(subset(bed.gc[beds.mean,], CHR == "chr1"))
+
+bed.gc.chr <- bed.gc[chr1s.mean,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
+
+##
+test <- test[order(test$MEDIAN, decreasing=T),]
+test.fc2.5.median <- subset(test, MEDIAN >= 2.5)
+# > nrow(test.fc2.5.median)
+# [1] 20
+table.median <- as.data.frame(table(bed.gc[rownames(test.fc2.5.median),]$CHR))
+table.median <- table.median[order(table.median$Freq, decreasing=T),]
+# > table.median
+# Var1 Freq
+# 5 chr19    4
+# 1  chr1    3
+# 4 chr17    3
+# 7  chr4    3
+# 8  chr7    2
+# 9  chr8    2
+# 2 chr10    1
+# 3 chr15    1
+# 6 chr20    1
+
+beds.median <- rownames(test.fc2.5.median)
+chr17s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr17"))
+chr19s.median <- rownames(subset(bed.gc[beds.median,], CHR == "chr19"))
+chr1s.median  <- rownames(subset(bed.gc[beds.median,], CHR == "chr1"))
+
+bed.gc.chr <- bed.gc[chr19s.median,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
+
+bed.gc.chr <- bed.gc[chr1s.median,]
+bed.gc.chr <- bed.gc.chr[order(as.numeric(bed.gc.chr$START)),]
+bed.gc.chr
 
 # -----------------------------------------------------------------------------
 # 

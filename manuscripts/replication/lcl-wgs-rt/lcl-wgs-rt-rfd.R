@@ -76,6 +76,22 @@ nrds.RT.RFD.lcl <- nrds.RT.RFD
 # [1] 2534909
 
 # -----------------------------------------------------------------------------
+# Report (between NBL-CL and LCL)
+# Last Modified: 24/11/19
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## RFD > +0.9
+boundary.lower <-  50   ## RFD < -0.9
+
+report.nbl.cl.vs.lcl <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.nbl.cl, nrds.RT.RFD.lcl, "NBL-CL", "LCL")
+writeTable(report.nbl.cl.vs.lcl, file.path(wd.rt.data, paste0("rfd_NBL-CL_vs_LCL.txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # |RFD| ≥ 0.9
 # Last Modified: 11/11/19; 27/10/19; 24/09/19
 # -----------------------------------------------------------------------------

@@ -25,14 +25,14 @@ load(file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "NBL"
+BASE <- "SCLC"
 base <- tolower(BASE)
 method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/random2")
 
 # -----------------------------------------------------------------------------
@@ -42,21 +42,21 @@ wd.rt.data  <- file.path(wd.rt, "data/random2")
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 # > nrow(nrds.RT.BSTRPS)
-# [1] 2652445
+# [1] 2651883
 
 # -----------------------------------------------------------------------------
 # Create RT + RFD data
 # Last Modified: 22/10/1
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
-load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
-# [1] 2652467
+# [1] 2651905
 
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.nbl.2 <- nrds.RT.RFD
-# > nrow(nrds.RT.RFD.nbl.2)
-# [1] 2652445
+nrds.RT.RFD.sclc.tn.2 <- nrds.RT.RFD
+# > nrow(nrds.RT.RFD.sclc.tn.2)
+# [1] 2651883

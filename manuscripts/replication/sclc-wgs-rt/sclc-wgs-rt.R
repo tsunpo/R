@@ -184,7 +184,7 @@ writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, row
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_n51.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")
 
-## Random 50/51
+## Random 25/26
 m2.25 <- sort(rownames(subset(samples.sclc, M2 == 1))[sample(1:50, round(50/2), replace=F)])
 m1.26 <- sort(rownames(subset(samples.sclc, M2 == 0))[sample(1:51, round(51/2), replace=F)])
 
@@ -194,7 +194,7 @@ writeTable(samples.sclc[random51,], file.path(wd.ngs, "sclc_wgs_n101-random51.tx
 random50 <- sort(setdiff(rownames(samples.sclc), random51))
 writeTable(samples.sclc[random50,], file.path(wd.ngs, "sclc_wgs_n101-random50.txt"), colnames=T, rownames=F, sep="\t")
 
-## Random 25/25
+## Random 12/13
 m2 <- sort(rownames(subset(samples.sclc, M2 == 1)))
 m1 <- sort(rownames(subset(samples.sclc, M2 == 0)))
 
@@ -210,6 +210,26 @@ m2.12 <- sort(m2[sample(1:38, round(50/4), replace=F)])
 m1.13 <- sort(m1[sample(1:38, round(51/4), replace=F)])
 random4 <- sort(c(m2.12, m1.13))
 writeTable(samples.sclc[random4,], file.path(wd.ngs, "sclc_wgs_n101-random4.txt"), colnames=T, rownames=F, sep="\t")
+
+## Random 6/7
+m2 <- sort(rownames(subset(samples.sclc, M2 == 1)))
+m1 <- sort(rownames(subset(samples.sclc, M2 == 0)))
+
+m2.6 <- sort(m2[sample(1:50, round(50/8), replace=F)])
+m1.6 <- sort(m1[sample(1:51, round(51/8), replace=F)])
+random5 <- sort(c(m2.6, m1.6))
+writeTable(samples.sclc[random5,], file.path(wd.ngs, "sclc_wgs_n101-random5.txt"), colnames=T, rownames=F, sep="\t")
+
+m2 <- sort(setdiff(m2, m2.6))
+m1 <- sort(setdiff(m1, m1.6))
+
+m2.6 <- sort(m2[sample(1:44, round(50/8), replace=F)])
+m1.6 <- sort(m1[sample(1:45, round(51/8), replace=F)])
+random6 <- sort(c(m2.6, m1.6))
+writeTable(samples.sclc[random6,], file.path(wd.ngs, "sclc_wgs_n101-random6.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
 
 # -----------------------------------------------------------------------------
 # PCA

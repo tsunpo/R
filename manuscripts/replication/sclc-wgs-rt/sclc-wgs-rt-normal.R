@@ -33,13 +33,13 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal92"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 #wd.ngs.data <- file.path(wd.ngs, "data")
 wd.ngs.data <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"), "data")
-samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.list"), header=F, rownames=F, sep="")
+samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_TN.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 ## samples1 are modified to the normals in this script
 
@@ -79,10 +79,20 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # Overall correlation with LCL S/G1
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.sclc <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n92_N.txt"), colnames=T, rownames=F, sep="\t")
+samples.sclc.tn <- setSamplesQ4(wd.rt.data, samples1)
+writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n92_TN.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7585423 -0.7439594 -0.7293444 -0.6681727  0.6753625 
+
+## Random 23/23
+m2.23 <- sort(rownames(subset(samples.sclc.tn, M2 == 1))[sample(1:46, round(46/2), replace=F)])
+m1.23 <- sort(rownames(subset(samples.sclc.tn, M2 == 0))[sample(1:46, round(46/2), replace=F)])
+
+random1 <- sort(c(m2.23, m1.23))
+writeTable(samples.sclc.tn[random1,], file.path(wd.ngs, "sclc_wgs_n92_TN-random1.txt"), colnames=T, rownames=F, sep="\t")
+
+random2 <- sort(setdiff(rownames(samples.sclc.tn), random1))
+writeTable(samples.sclc.tn[random2,], file.path(wd.ngs, "sclc_wgs_n92_TN-random2.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # PCA

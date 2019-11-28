@@ -26,23 +26,14 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "NBL"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
-bstrps        <- 1000
-boundary.upper <- 520   ## 500-520 breaks
-boundary.lower <- 480   ## 480-500 breaks
-boundary.break <- 2     ## 1 breaks each centering 500
-n1 <- 14
-n0 <- 14
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/random1")
-#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -66,9 +57,14 @@ nrds.RT <- getRT(nrds, bed.gc)
 nrds.RT.RFD <- getRTRFD(nrds.RT, nrds.RT.BSTRPS)
 save(nrds.RT.RFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".RData")))
 writeTable(nrds.RT.RFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.rfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.1 <- nrds.RT.RFD
-# nrow(nrds.RT.RFD.1)
+nrds.RT.RFD.nbl.1 <- nrds.RT.RFD
+# nrow(nrds.RT.RFD.nbl.1)
 # [1] 2652445
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # |RFD| ≥ 0.9
