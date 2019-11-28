@@ -28,14 +28,6 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 BASE <- "CLL"
 base <- tolower(BASE)
 method <- "rpkm"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
-bstrps        <- 1000
-boundary.upper <- 520   ## 500-520 breaks
-boundary.lower <- 480   ## 480-500 breaks
-boundary.break <- 2     ## 1 breaks each centering 500
-n1 <- 48
-n0 <- 48
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -64,6 +56,51 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc)
+
+save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".RData")))
+writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
+nrds.RT.NRFD.cll <- nrds.RT.NRFD
+# > nrow(nrds.RT.NRFD.cll)
+# [1] 2644397
+
+# -----------------------------------------------------------------------------
+# Plot bootstrap RFD data
+# Last Modified: 04/11/18
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 45 breaks each centering 500
+
+## Chr2
+c <- 2
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+
+## Chr12
+c <- 12
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
 # [1] 2644419

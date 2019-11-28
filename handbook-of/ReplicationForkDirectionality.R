@@ -52,12 +52,75 @@ getBootstrap <- function(base, column) {
    return(nrds.RT.BSTRPS)
 }
 
-getRTRFD <- function(nrds.RT, nrds.RT.BSTRPS) {
+getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc) {
+   nrds.RT <- NULL
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+  
+      overlaps <- intersect(rownames(bed.gc.chr), nrds$BED)
+      bed.gc.chr.o <- bed.gc.chr[overlaps,]
+      nrds.chr.o <- nrds[overlaps,]
+      nrds.chr.o$SPLINE <- NA
+      nrds.chr.o$SLOPE <- NA
+      
+      ## Same as setSpline() in ReplicaitonTiming.R
+      spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, "RT"])
+      nrds.chr.o$SPLINE <- spline$y
+      
+      ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
+      slopes <- diff(spline$y)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
+      nrds.chr.o$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.o), as no slope for the last 1kb window
+      
+      sizes <- diff(bed.gc.chr.o$START)
+      gaps <- which(sizes != 1000)
+      nrds.chr.o <- nrds.chr.o[-gaps, ]
+      
+      if (is.null(nrds.RT.NRFD)) {
+         nrds.RT <- nrds.chr.o
+      } else {
+         nrds.RT <- rbind(nrds.RT, nrds.chr.o)
+      }
+   }
+   
+   ##
+   nrds.RT.BSTRPS$RFD <- NA
    nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
    colnames(nrds.RT.BSTRPS) <- c("L", "R", "RFD")
+
    overlaps <- intersect(rownames(nrds.RT), rownames(nrds.RT.BSTRPS))
+   nrds.RT <- cbind(nrds.RT[overlaps,], nrds.RT.BSTRPS[overlaps,])
+   nrds.RT$NRFD <- NA
+   nrds.RT$NRFD2 <- NA
    
-   return(cbind(nrds.RT[overlaps,], nrds.RT.BSTRPS[overlaps,]))   ## CHANGE FROM nrds.RT.BSTRPS[rownames(nrds.RT),]
+   nrds.RT.NRFD <- NULL
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+      
+      overlaps <- intersect(rownames(bed.gc.chr), nrds.RT$BED)
+      bed.gc.chr.o <- bed.gc.chr[overlaps,]
+      nrds.chr.o <- nrds.RT[overlaps,]
+      
+      ## NRFD
+      slopes <- diff(nrds.chr.o$RFD)/diff(bed.gc.chr.o$START/1E6)
+      nrds.chr.o$NRFD[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.o), as no slope for the last 1kb window
+      nrds.chr.o$NRFD2 <- nrds.chr.o$NRFD
+      
+      spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o$RFD)
+      slopes <- diff(spline$y)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
+      idx <- which(nrds.chr.o$NRFD2 == 0)
+      nrds.chr.o$NRFD2[idx] <- slopes[idx]
+      nrds.chr.o <- nrds.chr.o[-nrow(nrds.chr.o),]
+      
+      if (is.null(nrds.RT.NRFD)) {
+         nrds.RT.NRFD <- nrds.chr.o
+      } else {
+         nrds.RT.NRFD <- rbind(nrds.RT.NRFD, nrds.chr.o)
+      }
+   }
+   
+   return(nrds.RT.NRFD)
 }
 
 # -----------------------------------------------------------------------------
@@ -116,13 +179,13 @@ getBootstrapReport <- function(boundary.upper, boundary.lower, nrds.RT.RFD.1, nr
    nrds.RT.RFD.1.c <- getBootstrapCTR(nrds.RT.RFD.1, boundary.lower, boundary.upper)
    nrds.RT.RFD.2.c <- getBootstrapCTR(nrds.RT.RFD.2, boundary.lower, boundary.upper)
    
-   nrds.RT.RFD.1.c.e <- subset(nrds.RT.RFD.1.c, SPLINE >= 0)
-   nrds.RT.RFD.1.c.l <- subset(nrds.RT.RFD.1.c, SPLINE < 0)
-   nrds.RT.RFD.2.c.e <- subset(nrds.RT.RFD.2.c, SPLINE >= 0)
-   nrds.RT.RFD.2.c.l <- subset(nrds.RT.RFD.2.c, SPLINE < 0)
+   nrds.RT.RFD.1.c.e <- subset(nrds.RT.RFD.1.c, NRFD2 >= 0)
+   nrds.RT.RFD.1.c.l <- subset(nrds.RT.RFD.1.c, NRFD2 < 0)
+   nrds.RT.RFD.2.c.e <- subset(nrds.RT.RFD.2.c, NRFD2 >= 0)
+   nrds.RT.RFD.2.c.l <- subset(nrds.RT.RFD.2.c, NRFD2 < 0)
    
-   ## CTR (E)
-   report$RFD[3:4] <- "CTR-E"
+   ## CTR (IZ)
+   report$RFD[3:4] <- "CTR-IZ"
    report$SAMPLES[3] <- name.1
    report$SAMPLES[4] <- name.2
    
@@ -146,8 +209,8 @@ getBootstrapReport <- function(boundary.upper, boundary.lower, nrds.RT.RFD.1, nr
    nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
    report[4, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.c.e)
 
-   ## CTR (L)
-   report$RFD[5:6] <- "CTR-L"
+   ## CTR (TZ)
+   report$RFD[5:6] <- "CTR-TZ"
    report$SAMPLES[5] <- name.1
    report$SAMPLES[6] <- name.2
    
@@ -182,8 +245,8 @@ getReportRFD12 <- function(report, name) {
    return(subset(report, SAMPLES == name)$Overlapping_P)
 }
 
-plotReportRFD <- function(reports.rfds, names, file.name, main.text) {
-   titles <- c("TTR", "CTR_E", "CTR_L")
+plotReportNRFD <- function(reports.rfds, names, file.name, main.text) {
+   titles <- c("TTR", "CTR_IZ", "CTR_TZ")
    cols <- c("black", "red", "blue")
    n <- length(names)
    
@@ -193,8 +256,8 @@ plotReportRFD <- function(reports.rfds, names, file.name, main.text) {
    rfds$X    <- c(1, 3, 5, 7, 9, 11)
    rfds$pch  <- c(19, 17, 17, 17, 15, 15)
    rfds$pos1 <- c(3, 3, 3, 3, 3, 3)
-   rfds$pos2 <- c(3, 3, 3, 1, 3, 3)
-   rfds$pos3 <- c(1, 1, 1, 3, 1, 1)
+   rfds$pos2 <- c(3, 1, 3, 1, 1, 3)
+   rfds$pos3 <- c(1, 3, 1, 3, 3, 1)
    for (r in 1:length(names)) {
       rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
       rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
@@ -205,11 +268,12 @@ plotReportRFD <- function(reports.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=7)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 12.5), ylim=c(55, 115), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch)
-   lines(x=rfds$X, y=rfds$TTR, type="l", lwd=3, col=cols[1])
-
-   text(12, rfds$TTR[n], "TTR ", cex=1.2, col="black")
+   plot(NULL, xlim=c(0.5, 13), ylim=c(60, 110), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.3)
+   lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
+   lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
+   
+   text(12, rfds$TTR[n], " TTR ", cex=1.2, col="black")
    abline(v=2, lty=5, lwd=1, col="black")
    abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names))
@@ -217,27 +281,30 @@ plotReportRFD <- function(reports.rfds, names, file.name, main.text) {
  
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
-   
    legend("topleft", "Normal", col="black", bty="n", pt.cex=1, pch=1, horiz=T, cex=1.2)
    legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 12.5), ylim=c(0, 28), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch)
-   lines(rfds$X, y=rfds$CTR_E, type="l", lwd=3, col=cols[2])
-   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch)
-   lines(rfds$X, y=rfds$CTR_L, type="l", lwd=3, col=cols[3])
+   plot(NULL, xlim=c(0.5, 13), ylim=c(0, 23), ylab="%", xlab="", col=cols[2], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
+   lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
    
-   text(12, rfds$CTR_E[n], "    CTR-E", cex=1.2, col="red") 
-   text(12, rfds$CTR_L[n], "    CTR-L", cex=1.2, col="blue")
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
+   lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
+   
+   text(12, rfds$CTR_E[n], "      CTR-IZ", cex=1.2, col="red", pos=3) 
+   text(12, rfds$CTR_L[n], "       CTR-TZ", cex=1.2, col="blue", pos=1)
    abline(v=2, lty=5, lwd=1, col="black")
    abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
    }
+   axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
 
    ##
    axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
@@ -250,7 +317,7 @@ plotReportRFD <- function(reports.rfds, names, file.name, main.text) {
    dev.off()
 }
 
-plotReportRFD12 <- function(reports.rfds, names, file.name, main.text) {
+plotReportNRFD12 <- function(reports.rfds, names, file.name, main.text) {
    titles <- c("TTR", "CTR_E", "CTR_L")
    cols <- c("black", "red", "blue")
    n <- length(names)
@@ -274,8 +341,8 @@ plotReportRFD12 <- function(reports.rfds, names, file.name, main.text) {
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
    plot(NULL, xlim=c(0.35, 8.6), ylim=c(55, 115), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch)
-   lines(x=rfds$X, y=rfds$TTR, type="l", lwd=3, col=cols[1])
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.2)
+   lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
 
    text(8, rfds$TTR[n], "TTR ", cex=1.2, col="black")
    abline(v=2, lty=5, lwd=1, col="black")
@@ -284,17 +351,17 @@ plotReportRFD12 <- function(reports.rfds, names, file.name, main.text) {
 
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
- 
    legend("topleft", "Normal", col="black", bty="n", pt.cex=1, pch=1, horiz=T, cex=1.2)
    legend("topright", "Primary bulks                    ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
 
    ##
    par(mar=c(5,4,0,1))
    plot(NULL, xlim=c(0.35, 8.6), ylim=c(0, 28), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch)
-   lines(rfds$X, y=rfds$CTR_E, type="l", lwd=3, col=cols[2])
-   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch)
-   lines(rfds$X, y=rfds$CTR_L, type="l", lwd=3, col=cols[3])
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
+   
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
  
    text(8, rfds$CTR_E[n], "    CTR-E", cex=1.2, col="red", pos=1)
    text(8, rfds$CTR_L[n], "    CTR-L", cex=1.2, col="blue", pos=3)
@@ -383,30 +450,34 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 
 
 
-plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, ext, width) {
-   adjustcolor.gray <- adjustcolor("darkgray", alpha.f=0.08)
 
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   overlaps <- intersect(rownames(nrds.RT.BSTRPS.chr), rownames(nrds.chr.RT))
-   nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[overlaps,]
-   nrds.chr.RT <- nrds.chr.RT[overlaps,]
-   bed.gc.chr  <- bed.gc.chr[overlaps,]
+
+# -----------------------------------------------------------------------------
+# Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)
+# Last Modified: 28/11/19
+# -----------------------------------------------------------------------------
+plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width) {
+   overlaps <- intersect(rownames(bed.gc.chr), nrds.RT.NRFD$BED)
+   nrds.RT.NRFD.chr <- nrds.RT.NRFD[overlaps,]
+   bed.gc.chr <- bed.gc.chr[overlaps,]
+ 
+   adjustcolor.gray <- adjustcolor("darkgray", alpha.f=0.08)
    
-   rights <- rownames(subset(nrds.RT.BSTRPS.chr, RFD >= 0.9))
-   lefts  <- rownames(subset(nrds.RT.BSTRPS.chr, RFD <= -0.9))
-   boundary.rights <- rownames(subset(subset(nrds.RT.BSTRPS.chr, RFD < 0.9), RFD >= 0))
-   boundary.lefts <- rownames(subset(subset(nrds.RT.BSTRPS.chr, RFD < 0), RFD > -0.9))
+   rights <- rownames(subset(nrds.RT.NRFD.chr, RFD >= 0.9))
+   lefts  <- rownames(subset(nrds.RT.NRFD.chr, RFD <= -0.9))
+   boundary.rights <- rownames(subset(subset(nrds.RT.NRFD.chr, RFD < 0.9), RFD >= 0))
+   boundary.lefts <- rownames(subset(subset(nrds.RT.NRFD.chr,  RFD < 0),   RFD > -0.9))
    
    boundaries <- c(boundary.rights, boundary.lefts)
-   earlies <- rownames(subset(nrds.chr.RT[boundaries,], SPLINE >= 0))
-   lates <- rownames(subset(nrds.chr.RT[boundaries,], SPLINE < 0))
+   initiations <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], NRFD2 > 0))
+   terminations <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], NRFD2 < 0))
    
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
-   else main.text <- paste0(BASE, " (WB) bootstrap RFD")
+   else main.text <- paste0(BASE, " bootstrap RFD")
 
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {
-      start <- bed.gc.chr[rownames(nrds.chr.RT)[1],]$START
+      start <- bed.gc.chr[rownames(nrds.RT.NRFD.chr)[1],]$START
       if (start < 5000000) xmin <- 0
       else xmin <- start
    }
@@ -425,7 +496,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
    ylab.text <- "RT [log2]"
 
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(bed.gc.chr$START/1E6, nrds.chr.RT$RT, col=adjustcolor.gray, pch=16, cex=0.35)
+   points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.35)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.1)
@@ -437,14 +508,14 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing spline with right-/left-leading positions
-   points(bed.gc.chr[lefts,]$START/1E6,  nrds.chr.RT[lefts,]$SPLINE, col="steelblue1", cex=0.4)
-   points(bed.gc.chr[rights,]$START/1E6, nrds.chr.RT[rights,]$SPLINE, col="sandybrown", cex=0.4)
-   points(bed.gc.chr[lates,]$START/1E6,   nrds.chr.RT[lates,]$SPLINE,   col="blue", pch=19, cex=0.4)
-   points(bed.gc.chr[earlies,]$START/1E6, nrds.chr.RT[earlies,]$SPLINE, col="red", pch=19, cex=0.4)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$SPLINE, col="steelblue1", cex=0.4)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col="sandybrown", cex=0.4)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col="blue", pch=19, cex=0.4)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col="red", pch=19, cex=0.4)
    
    ## Plot legend
-   legend("topright", "CTR (E)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   legend("bottomright", "CTR (L)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("topright", "CTR (IZ)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("bottomright", "CTR (TZ)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
       
    ###
@@ -464,16 +535,21 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
    for (c in 1:nrow(cytoBand.chr))
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
 
-   points(bed.gc.chr[lates,]$START/1E6,   nrds.RT.BSTRPS.chr[lates,]$RFD,   col="blue", cex=0.4)
-   points(bed.gc.chr[earlies,]$START/1E6, nrds.RT.BSTRPS.chr[earlies,]$RFD, col="red", cex=0.4)
-   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.BSTRPS.chr[lefts,]$RFD,  col="steelblue1", cex=0.4)
-   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.BSTRPS.chr[rights,]$RFD, col="sandybrown", cex=0.4)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", cex=0.4)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red", cex=0.4)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col="steelblue1", cex=0.4)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
    
    ## Plot legend
    legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    legend("bottomright", "TTR (L)", col="steelblue1", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    dev.off()
 }
+
+
+
+
+
 
 boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
@@ -488,7 +564,7 @@ nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
 ## RFD
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
 nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
-file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
 
 ## Chr12
@@ -500,5 +576,5 @@ nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
 ## RFD   
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
 nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
-file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)

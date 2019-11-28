@@ -26,21 +26,13 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
-bstrps        <- 1000
-boundary.upper <- 520   ## 500-520 breaks
-boundary.lower <- 480   ## 480-500 breaks
-boundary.break <- 2     ## 1 breaks each centering 500
-n1 <- 50
-n0 <- 51
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal92"))
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 
@@ -63,6 +55,51 @@ plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break
 # Last Modified: 22/10/1
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc)
+
+save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".RData")))
+writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
+nrds.RT.NRFD.sclc.tn <- nrds.RT.NRFD
+# > nrow(nrds.RT.NRFD.sclc.tn)
+# [1] 2651839
+
+# -----------------------------------------------------------------------------
+# Plot bootstrap RFD data
+# Last Modified: 04/11/18
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 45 breaks each centering 500
+
+## Chr2
+c <- 2
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, paste0(BASE, "-TN"), chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+
+## Chr12
+c <- 12
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, paste0(BASE, "-TN"), chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+
+
+
+
+
+
+
+
+
+
+
+
+
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 nrds.RT <- getRT(nrds, bed.gc)
 # > nrow(nrds.RT)
@@ -104,24 +141,6 @@ for (c in 1:22) {
    file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
    plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=10)
 }
-
-# -----------------------------------------------------------------------------
-# Report (between T and TN)
-# Last Modified: 24/11/19
-# -----------------------------------------------------------------------------
-boundary.upper <- 950   ## RFD > +0.9
-boundary.lower <-  50   ## RFD < -0.9
-
-report.sclc.tn.vs.sclc <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn, nrds.RT.RFD.sclc, "SCLC-TN", "SCLC")
-writeTable(report.sclc.tn.vs.sclc, file.path(wd.rt.data, paste0("rfd_SCLC-TN_vs_SCLC.txt")), colnames=T, rownames=F, sep="\t")
-
-report.sclc.tn.vs.nbl  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn, nrds.RT.RFD.nbl, "SCLC-TN", "NBL")
-writeTable(report.sclc.tn.vs.nbl, file.path(wd.rt.data, paste0("rfd_SCLC-TN_vs_NBL.txt")), colnames=T, rownames=F, sep="\t")
-
-report.sclc.tn.vs.cll  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc.tn, nrds.RT.RFD.cll, "SCLC-TN", "CLL")
-writeTable(report.sclc.tn.vs.cll, file.path(wd.rt.data, paste0("rfd_SCLC-TN_vs_CLL.txt")), colnames=T, rownames=F, sep="\t")
-
-
 
 
 
