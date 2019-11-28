@@ -120,9 +120,9 @@ writeTable(report.nbl.cl.vs.lcl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_LC
 # -----------------------------------------------------------------------------
 save(report.sclc.vs.nbl, report.sclc.vs.cll, report.nbl.vs.cll, report.sclc.tn.vs.sclc, report.sclc.tn.vs.nbl, report.sclc.tn.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("NRFD_ALL.RData")))
 
-report.rfds <- list(getReportRFD(report.sclc.tn.vs.sclc, "SCLC-TN"), getReportRFD(report.sclc.tn.vs.sclc, "SCLC"), getReportRFD(report.sclc.tn.vs.nbl, "NBL"), getReportRFD(report.sclc.tn.vs.cll, "CLL"), getReportRFD(report.nbl.cl.vs.lcl, "NBL-CL"), getReportRFD(report.nbl.cl.vs.lcl, "LCL"))
+report.rfds <- list(getReportRFD(report.sclc.tn.vs.sclc, "SCLC-TN"), getReportRFD(report.sclc.tn.vs.sclc, "SCLC"), getReportRFD(report.sclc.tn.vs.nbl, "NBL"), getReportRFD(report.sclc.tn.vs.cll, "CLL"), getReportRFD(report.nbl.cl.vs.lcl, "LCL"), getReportRFD(report.nbl.cl.vs.lcl, "NBL-CL"))
 file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL", "NBL-CL", "LCL"), file.name, "Bootstrap RFD distribution")
+plotReportNRFD(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL", "LCL", "NBL-CL"), file.name, "Bootstrap RFD distribution")
 
 
 
