@@ -147,7 +147,7 @@ save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, 
 #          ftp://ftp.sanger.ac.uk/pub/teams/153/bed/
 # -----------------------------------------------------------------------------
 #bed <- readTable(file.path(wd.reference, "collections/human-genome.1kb-grid.bed.gz"), header=F, rownames=F, sep="")
-bed <- readTable(file.path(wd.ngs, "coverage/S00022/S00022_ANALYSIS/S00022_cn.txt.gz"), header=F, rownames=T, sep="")[,c(1:4,10)]
+bed <- readTable(file.path(wd.ngs, "backup/S00022/S00022_ANALYSIS/S00022_cn.txt"), header=F, rownames=T, sep="")[,c(1:4,10)]
 colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
 rownames(bed) <- bed$BED
 bed$START <- bed$START + 1   ## ADD 18/11/18 e.g. P2 chr1 10001 11000 0.646000
@@ -159,6 +159,36 @@ save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # [1] 2861558
 # > nrow(bed.gc)   ## Based on my coverage (as shown below hg19.bed.1kb.gz)
 # [1] 2861589
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   
+   sizes <- diff(bed.gc.chr$START/1E3)
+   print(max(sizes))
+}
+# [1] 21051
+# [1] 3000
+# [1] 3001
+# [1] 3001
+# [1] 3001
+# [1] 3101
+# [1] 3001
+# [1] 3001
+# [1] 18151
+# [1] 3201
+# [1] 3101
+# [1] 3001
+# [1] 150
+# [1] 1
+# [1] 487
+# [1] 11101
+# [1] 3000
+# [1] 3101
+# [1] 3101
+# [1] 3101
+# [1] 3150
+# [1] 150
 
 # -----------------------------------------------------------------------------
 # File: hg19.5kb.bed.gz (To create fixed-size 1-kb/5-kb partition windows)

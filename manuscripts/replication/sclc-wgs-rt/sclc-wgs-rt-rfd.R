@@ -3,20 +3,19 @@
 # Chapter II   : 
 # Name         : manuscripts/replicaiton/sclc-wgs-rt-rfd.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 11/09/19; 12/11/18
+# Last Modified: 02/12/19; 11/09/19; 12/11/18
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R", "DifferentialExpression.R")
+handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
-load(file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
 
 # -----------------------------------------------------------------------------
 # 
@@ -56,13 +55,121 @@ plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc)
+# nrow(nrds)
+# [1] 2657164
 
-save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".RData")))
-writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
+#install.packages("zoo", method="wget")
+library("zoo")
+kb <- 5
+nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
+
+save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.sclc <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.sclc)
-# [1] 2650061
+# [1] 2650083
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 01/12/18
+# -----------------------------------------------------------------------------
+colnames <- c("TTR", "TTR_P", "CTR_IZ", "CTR_IZ_P", "CTR_TZ", "CTR_TZ_P", "CTR_UN", "CTR_UN_P", "CTR_NA", "CTR_NA_P", "Mappable")
+report <- toTable(0, length(colnames), 4, colnames)
+
+rfd <- 0.9
+sizes <- c(5, 10, 15, 20)
+for (s in 1:length(sizes)) {
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", sizes[s], "kb_m2-m1.RData")))
+   nrds.RT.NRFD.1 <- nrds.RT.NRFD
+   report$Mappable[s] <- nrow(nrds.RT.NRFD.1)
+   
+   ## TTR and CTR
+   nrds.RT.NRFD.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.1, rfd)
+   report$TTR[s]   <- nrow(nrds.RT.NRFD.1.ttr)
+   report$TTR_P[s] <- report$TTR[s] / report$Mappable[s]
+   
+   diff <- setdiff(rownames(nrds.RT.NRFD.1), rownames(nrds.RT.NRFD.1.ttr))
+   nrds.RT.NRFD.1.ctr <- nrds.RT.NRFD.1[diff,]
+   nrds.RT.NRFD.1.ctr.iz <- subset(nrds.RT.NRFD.1.ctr, NRFD > 0)
+   nrds.RT.NRFD.1.ctr.tz <- subset(nrds.RT.NRFD.1.ctr, NRFD < 0)
+   nrds.RT.NRFD.1.ctr.un <- subset(nrds.RT.NRFD.1.ctr, NRFD == 0)
+   nrds.RT.NRFD.1.ctr.na <- nrds.RT.NRFD.1.ctr[which(is.na(nrds.RT.NRFD.1.ctr$NRFD) == T),]
+   
+   report$CTR_IZ[s]   <- nrow(nrds.RT.NRFD.1.ctr.iz)
+   report$CTR_IZ_P[s] <- report$CTR_IZ[s] / report$Mappable[s]
+   report$CTR_TZ[s]   <- nrow(nrds.RT.NRFD.1.ctr.tz)
+   report$CTR_TZ_P[s] <- report$CTR_TZ[s] / report$Mappable[s]
+   report$CTR_UN[s]   <- nrow(nrds.RT.NRFD.1.ctr.un)
+   report$CTR_UN_P[s] <- report$CTR_UN[s] / report$Mappable[s]
+   report$CTR_NA[s]   <- nrow(nrds.RT.NRFD.1.ctr.na)
+   report$CTR_NA_P[s] <- report$CTR_NA[s] / report$Mappable[s]
+}
+writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 01/12/18
+# -----------------------------------------------------------------------------
+plotReportNRFD5K <- function(report, names, file.name, main.text) {
+   titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
+   cols <- c("black", "red", "blue", "gold")
+   n <- length(names)
+ 
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7)
+   rfds$pch  <- c(17, 17, 17, 17)
+   rfds$pos1 <- c(3, 3, 3, 3)
+   rfds$pos2 <- c(1, 1, 1, 1)
+   rfds$pos3 <- c(3, 3, 3, 3)
+   rfds$pos4 <- c(3, 3, 3, 3)
+   for (r in 1:length(names)) {
+      rfds$TTR[r]    <- as.numeric(round0(report$TTR_P[r]*100, digit=1))
+      rfds$CTR_IZ[r] <- as.numeric(round0(report$CTR_IZ_P[r]*100, digit=1))
+      rfds$CTR_TZ[r] <- as.numeric(round0(report$CTR_TZ_P[r]*100, digit=1))
+      rfds$CTR_UN[r] <- as.numeric(round0(report$CTR_UN_P[r]*100, digit=2))
+   }
+ 
+   ##
+   pdf(file.name, height=5, width=5)
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(1,4,3.6,1))
+   plot(NULL, xlim=c(0.35, 8.8), ylim=c(79, 84), ylab="%", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.2)
+   lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
+ 
+   text(8, rfds$TTR[n], "TTR ", cex=1.2, col="black")
+   for (n in 1:length(names))
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
+
+   ##
+   par(mar=c(5,4,0,1))
+   plot(NULL, xlim=c(0.35, 8.8), ylim=c(0, 12), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$CTR_TZ, col=cols[3], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_TZ[1:4], type="l", lwd=3, col=cols[3])
+ 
+   points(rfds$X, rfds$CTR_IZ, col=cols[2], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_IZ[1:4], type="l", lwd=3, col=cols[2])
+ 
+   points(rfds$X, rfds$CTR_UN, col=cols[4], pch=rfds$pch, cex=1.3)
+   lines(rfds$X[1:4], y=rfds$CTR_UN[1:4], type="l", lwd=3, col=cols[4])
+ 
+   text(8, rfds$CTR_TZ[n], "    CTR-TZ", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_IZ[n], "    CTR-IZ", cex=1.2, col="red", pos=1)
+   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="gold")
+   for (n in 1:length(names)) {
+      text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_UN[n], rfds$CTR_UN[n], col=cols[4], pos=rfds$pos4[n], cex=1.2)
+   }
+ 
+   axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.1)
+   dev.off()
+}
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC_5-20KB.pdf"))
+plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC sliding window size on RFD")
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
@@ -71,6 +178,10 @@ nrds.RT.NRFD.sclc <- nrds.RT.NRFD
 boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 45 breaks each centering 500
+PAIR1 <- "M2"
+PAIR0 <- "M1"
+n1 <- 50
+n0 <- 51
 
 ## Chr2
 c <- 2
@@ -87,6 +198,20 @@ bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+
+## Chr1
+c <- 1
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
@@ -123,7 +248,6 @@ save(report.sclc.vs.nbl, report.sclc.vs.cll, report.nbl.vs.cll, report.sclc.tn.v
 report.rfds <- list(getReportRFD(report.sclc.tn.vs.sclc, "SCLC-TN"), getReportRFD(report.sclc.tn.vs.sclc, "SCLC"), getReportRFD(report.sclc.tn.vs.nbl, "NBL"), getReportRFD(report.sclc.tn.vs.cll, "CLL"), getReportRFD(report.nbl.cl.vs.lcl, "LCL"), getReportRFD(report.nbl.cl.vs.lcl, "NBL-CL"))
 file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ.pdf"))
 plotReportNRFD(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL", "LCL", "NBL-CL"), file.name, "Bootstrap RFD distribution")
-
 
 
 

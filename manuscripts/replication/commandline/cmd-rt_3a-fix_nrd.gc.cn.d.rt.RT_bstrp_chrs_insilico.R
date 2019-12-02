@@ -58,41 +58,18 @@ if (BSTRP != 0) {
    samples0 <- samples0[sort(sample(1:n0, n0, replace=T))]
 }
 
-for (c in 1:22) {
-   #chr <- chrs[CHR]
-   chr <- chrs[c]
-
-   ## Replication timing
-   nrds.chr.d <- readTable(file.path(wd.rt, "data", paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR, "_n", N, ".txt.gz")), header=T, rownames=T, sep="\t")
-   colnames(nrds.chr.d) <- gsub("\\.", "", colnames(nrds.chr.d))   ## ADD 05/10/19
-   colnames(nrds.chr.d) <- toupper(colnames(nrds.chr.d))           ## ADD 05/10/19
-   nrds.T.chr.d <- nrds.chr.d[,c("BED", samples1)]
-   nrds.N.chr.d <- nrds.chr.d[,c("BED", samples0)]
-
-   nrds.T.chr.d$MEDIAN <- mapply(x = 1:nrow(nrds.T.chr.d), function(x) median(as.numeric(nrds.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
-   nrds.N.chr.d$MEDIAN <- mapply(x = 1:nrow(nrds.N.chr.d), function(x) median(as.numeric(nrds.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
-
-   nrds.chr <- toTable(NA, 3, nrow(nrds.chr.d), c("T", "N", "RT"))
-   rownames(nrds.chr) <- rownames(nrds.chr.d)   ## BUG 18/09/19
-   nrds.chr$T  <- nrds.T.chr.d$MEDIAN
-   nrds.chr$N  <- nrds.N.chr.d$MEDIAN
-   nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
-   
-   writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR, "-", PAIR, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-}
-
 # -----------------------------------------------------------------------------
 # Adapted from sclc-wgs-rt-m2.R
 # -----------------------------------------------------------------------------
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR, PAIR, n1, n0, chrs, bed.gc)
 
-nrds.RT <- toTable(0, 4, 0, c("BED", "RT", "SPLINE", "SLOPE"))
+nrds.RT <- toTable(0, 4, 0, c("BED", "RT", "SPLINE"))
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
  
    ## Read in replicaiton time
-   overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds))   ## 29/11/19: Changed from intersect(rownames(nrds), rownames(bed.gc.chr))
+   overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds))   ## ## Changed 29/11/19: From intersect(rownames(nrds), rownames(bed.gc.chr))
    nrds.chr <- nrds[overlaps,]
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT", removeCentromere=F, returnAll=F)   ## Changed 29/11/19
 

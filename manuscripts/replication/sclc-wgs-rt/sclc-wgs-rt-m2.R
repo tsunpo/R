@@ -63,7 +63,7 @@ ymin <- 0.14
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+   nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
    lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
  
    ## Plot RT

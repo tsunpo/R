@@ -146,25 +146,50 @@ getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs
    return(nrds)
 }
 
-setSpline <- function(nrds.chr, bed.gc.chr, column) {
+setSpline <- function(nrds.chr, bed.gc.chr, column, kb=1, returnAll=F) {
    overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
    bed.gc.chr.o <- bed.gc.chr[overlaps,]
    nrds.chr.o <- nrds.chr[overlaps,]
-   
+ 
    spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, column])
    nrds.chr.o$SPLINE <- spline$y
-   
+ 
    ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
    slopes <- diff(spline$y)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
    nrds.chr.o$SLOPE <- NA
    nrds.chr.o$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.o), as no slope for the last 1kb window
    #nrds.chr.o <- nrds.chr.o[1:length(slopes),]   ## REMOVED 24/11/19
    #nrds.chr.o$SLOPE <- slopes
-   
-   sizes <- diff(bed.gc.chr.o$START)
-   gaps <- which(sizes != 1000)
-   return(nrds.chr.o[-gaps, c("BED", column, "SPLINE", "SLOPE")])
+ 
+   sizes <- diff(bed.gc.chr.o$START/1E6)
+   gaps <- which(sizes > kb)   ## gaps <- which(sizes != 1000)
+   if (length(gaps) != 0)       ## For chr14
+      nrds.chr.o <- nrds.chr.o[-gaps, ]
+ 
+   if (returnAll)
+      return(nrds.chr.o)
+   return(nrds.chr.o[, c("BED", column, "SPLINE", "SLOPE")])
 }
+
+#setSpline <- function(nrds.chr, bed.gc.chr, column) {
+#   overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
+#   bed.gc.chr.o <- bed.gc.chr[overlaps,]
+#   nrds.chr.o <- nrds.chr[overlaps,]
+#  
+#   spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, column])
+#   nrds.chr.o$SPLINE <- spline$y
+   
+   ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
+#   slopes <- diff(spline$y)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
+#   nrds.chr.o$SLOPE <- NA
+#   nrds.chr.o$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.o), as no slope for the last 1kb window
+   #nrds.chr.o <- nrds.chr.o[1:length(slopes),]   ## REMOVED 24/11/19
+   #nrds.chr.o$SLOPE <- slopes
+   
+#   sizes <- diff(bed.gc.chr.o$START)
+#   gaps <- which(sizes != 1000)
+#   return(nrds.chr.o[-gaps, c("BED", column, "SPLINE", "SLOPE")])
+#}
 
 getRT <- function(nrds, bed.gc) {
    nrds.RT <- NULL
