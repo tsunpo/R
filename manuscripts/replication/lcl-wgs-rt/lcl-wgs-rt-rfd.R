@@ -25,8 +25,12 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "LCL"
+PAIR1 <- "S"
+PAIR0 <- "G1"
 base <- tolower(BASE)
 method <- "rpkm"
+n1 <- 7
+n0 <- 7
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -67,7 +71,7 @@ save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "s-g1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.lcl <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.lcl)
-# [1] 
+# [1] 2534909
 
 # -----------------------------------------------------------------------------
 # 
@@ -104,6 +108,7 @@ for (s in 1:length(sizes)) {
    report$CTR_NA[s]   <- nrow(nrds.RT.NRFD.1.ctr.na)
    report$CTR_NA_P[s] <- report$CTR_NA[s] / report$Mappable[s]
 }
+save(report, file=file.path(wd.rt.data, paste0("NRFD_LCL_5-20KB.RData")))
 writeTable(report, file.path(wd.rt.data, paste0("NRFD_LCL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
@@ -112,7 +117,7 @@ writeTable(report, file.path(wd.rt.data, paste0("NRFD_LCL_5-20KB.txt")), colname
 # -----------------------------------------------------------------------------
 plotReportNRFD5K <- function(report, names, file.name, main.text) {
    titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
-   cols <- c("black", "red", "blue", "gold")
+   cols <- c("black", "red", "blue", "green")
    n <- length(names)
  
    colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
@@ -157,7 +162,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
  
    text(8, rfds$CTR_TZ[n], "    CTR-TZ", cex=1.2, col="blue")
    text(8, rfds$CTR_IZ[n], "    CTR-IZ", cex=1.2, col="red")
-   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="gold")
+   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="green")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
@@ -178,10 +183,6 @@ plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "LCL s
 boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 45 breaks each centering 500
-PAIR1 <- "S"
-PAIR0 <- "G1"
-n1 <- 7
-n0 <- 7
 
 ## Chr2
 c <- 2
@@ -198,6 +199,11 @@ bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+
+###
+##
+kb <- 20
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "s-g1", ".RData")))
 
 ## Chr1
 c <- 1

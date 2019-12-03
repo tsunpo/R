@@ -129,14 +129,14 @@ getBootstrapTTR <- function(nrds.RFD, rfd) {
 #   return(nrds.RFD[diff,])
 #}
 
-getBootstrapReport <- function(boundary.upper, boundary.lower, nrds.RT.RFD.1, nrds.RT.RFD.2, name.1, name.2) {
+getBootstrapReport <- function(rfd, nrds.RT.RFD.1, nrds.RT.RFD.2, name.1, name.2) {
    colnames <- c("RFD", "SAMPLES", name.1, name.2, "Overlapping_N", "Overlapping_P", "RFD_N", "RFD_P", "Mappable")
    report <- toTable(NA, length(colnames), 6, colnames)
    
    ###
    ## |RFD| ≥ 0.9
-   nrds.RT.RFD.1.t <- getBootstrapTTR(nrds.RT.RFD.1, boundary.lower, boundary.upper)
-   nrds.RT.RFD.2.t <- getBootstrapTTR(nrds.RT.RFD.2, boundary.lower, boundary.upper)
+   nrds.RT.RFD.1.t <- getBootstrapTTR(nrds.RT.RFD.1, rfd)
+   nrds.RT.RFD.2.t <- getBootstrapTTR(nrds.RT.RFD.2, rfd)
    
    ## TTR
    report$RFD[1:2] <- "TTR"
@@ -164,13 +164,13 @@ getBootstrapReport <- function(boundary.upper, boundary.lower, nrds.RT.RFD.1, nr
    
    ###
    ## |RFD| < 0.9
-   nrds.RT.RFD.1.c <- getBootstrapCTR(nrds.RT.RFD.1, boundary.lower, boundary.upper)
-   nrds.RT.RFD.2.c <- getBootstrapCTR(nrds.RT.RFD.2, boundary.lower, boundary.upper)
+   nrds.RT.RFD.1.c <- getBootstrapCTR(nrds.RT.RFD.1, rfd)
+   nrds.RT.RFD.2.c <- getBootstrapCTR(nrds.RT.RFD.2, rfd)
    
-   nrds.RT.RFD.1.c.e <- subset(nrds.RT.RFD.1.c, NRFD2 >= 0)
-   nrds.RT.RFD.1.c.l <- subset(nrds.RT.RFD.1.c, NRFD2 < 0)
-   nrds.RT.RFD.2.c.e <- subset(nrds.RT.RFD.2.c, NRFD2 >= 0)
-   nrds.RT.RFD.2.c.l <- subset(nrds.RT.RFD.2.c, NRFD2 < 0)
+   nrds.RT.RFD.1.c.e <- subset(nrds.RT.RFD.1.c, NRFD > 0)
+   nrds.RT.RFD.1.c.l <- subset(nrds.RT.RFD.1.c, NRFD < 0)
+   nrds.RT.RFD.2.c.e <- subset(nrds.RT.RFD.2.c, NRFD > 0)
+   nrds.RT.RFD.2.c.l <- subset(nrds.RT.RFD.2.c, NRFD < 0)
    
    ## CTR (IZ)
    report$RFD[3:4] <- "CTR-IZ"
@@ -244,8 +244,8 @@ plotReportNRFD <- function(reports.rfds, names, file.name, main.text) {
    rfds$X    <- c(1, 3, 5, 7, 9, 11)
    rfds$pch  <- c(19, 17, 17, 17, 15, 15)
    rfds$pos1 <- c(3, 3, 3, 3, 3, 3)
-   rfds$pos2 <- c(3, 1, 3, 1, 3, 3)
-   rfds$pos3 <- c(1, 3, 1, 3, 1, 1)
+   rfds$pos2 <- c(3, 1, 3, 1, 1, 3)
+   rfds$pos3 <- c(1, 3, 1, 3, 3, 1)
    for (r in 1:length(names)) {
       rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
       rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
@@ -300,7 +300,7 @@ plotReportNRFD <- function(reports.rfds, names, file.name, main.text) {
    axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.1)
    axis(side=1, at=seq(3, 7, by=2), labels=c("n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.1)
    axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
-   axis(side=1, at=seq(9, 11, by=2), labels=c("n=14", "n=8"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
    
    dev.off()
 }
@@ -499,7 +499,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col="blue", pch=19, cex=0.4)
    points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col="red", pch=19, cex=0.4)
    if (length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE,  col="gold", pch=19, cex=0.4)
+      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="gold", pch=19, cex=0.4)
    
    ## Plot legend
    legend("topright", "CTR (IZ)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
@@ -526,10 +526,10 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
 
    points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col="steelblue1", cex=0.4)
    points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
-   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", cex=0.4)
-   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red", cex=0.4)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", pch=19, cex=0.4)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red",  pch=19, cex=0.4)
    if (length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="gold", cex=0.4)
+      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="gold", pch=19, cex=0.4)
    
    ## Plot legend
    legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)

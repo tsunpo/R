@@ -25,8 +25,12 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
+PAIR1 <- "M2"
+PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
+n1 <- 50
+n0 <- 51
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
@@ -104,6 +108,7 @@ for (s in 1:length(sizes)) {
    report$CTR_NA[s]   <- nrow(nrds.RT.NRFD.1.ctr.na)
    report$CTR_NA_P[s] <- report$CTR_NA[s] / report$Mappable[s]
 }
+save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC_5-20KB.RData")))
 writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
@@ -112,7 +117,7 @@ writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC_5-20KB.txt")), colnam
 # -----------------------------------------------------------------------------
 plotReportNRFD5K <- function(report, names, file.name, main.text) {
    titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
-   cols <- c("black", "red", "blue", "gold")
+   cols <- c("black", "red", "blue", "rosybrown1")
    n <- length(names)
  
    colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
@@ -157,7 +162,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
  
    text(8, rfds$CTR_TZ[n], "    CTR-TZ", cex=1.2, col="blue", pos=3)
    text(8, rfds$CTR_IZ[n], "    CTR-IZ", cex=1.2, col="red", pos=1)
-   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="gold")
+   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="rosybrown1")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
@@ -168,7 +173,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC_5-20KB.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC_5-20KB_rosybrown1.pdf"))
 plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC sliding window size on RFD")
 
 # -----------------------------------------------------------------------------
@@ -178,10 +183,6 @@ plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC 
 boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 45 breaks each centering 500
-PAIR1 <- "M2"
-PAIR0 <- "M1"
-n1 <- 50
-n0 <- 51
 
 ## Chr2
 c <- 2
@@ -199,55 +200,59 @@ bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
 
+###
+##
+kb <- 5
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
 ## Chr1
 c <- 1
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
-
-
-
-
-
-
+plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, "springgreen3")
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
 # Last Modified: 24/11/19
 # -----------------------------------------------------------------------------
-boundary.upper <- 950   ## RFD > +0.9
-boundary.lower <-  50   ## RFD < -0.9
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
 
-report.sclc.tn.vs.sclc <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.NRFD.sclc.tn, nrds.RT.NRFD.sclc, "SCLC-TN", "SCLC")
-writeTable(report.sclc.tn.vs.sclc, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_vs_SCLC.txt")), colnames=T, rownames=F, sep="\t")
+report.sclc.tn.vs.sclc <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.tn, nrds.RT.NRFD.sclc, "SCLC-TN", "SCLC")
+writeTable(report.sclc.tn.vs.sclc, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_vs_SCLC_20KB.txt")), colnames=T, rownames=F, sep="\t")
 
-report.sclc.tn.vs.nbl  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.NRFD.sclc.tn, nrds.RT.NRFD.nbl, "SCLC-TN", "NBL")
-writeTable(report.sclc.tn.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_vs_NBL.txt")), colnames=T, rownames=F, sep="\t")
+report.sclc.tn.vs.nbl  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.tn, nrds.RT.NRFD.nbl, "SCLC-TN", "NBL")
+writeTable(report.sclc.tn.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
 
-report.sclc.tn.vs.cll  <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.NRFD.sclc.tn, nrds.RT.NRFD.cll, "SCLC-TN", "CLL")
-writeTable(report.sclc.tn.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_vs_CLL.txt")), colnames=T, rownames=F, sep="\t")
+report.sclc.tn.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.tn, nrds.RT.NRFD.cll, "SCLC-TN", "CLL")
+writeTable(report.sclc.tn.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Report (between NBL-CL and LCL)
 # Last Modified: 24/11/19
 # -----------------------------------------------------------------------------
-boundary.upper <- 950   ## RFD > +0.9
-boundary.lower <-  50   ## RFD < -0.9
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
 
-report.nbl.cl.vs.lcl <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.lcl, "NBL-CL", "LCL")
-writeTable(report.nbl.cl.vs.lcl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_LCL.txt")), colnames=T, rownames=F, sep="\t")
+report.nbl.cl.vs.lcl <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.lcl, "NBL-CL", "LCL")
+writeTable(report.nbl.cl.vs.lcl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_LCL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.cl.vs.nbl <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.nbl, "NBL-CL", "NBL")
+writeTable(report.nbl.cl.vs.nbl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Plot report (between TN, T and CL)
 # Last Modified: 27/11/19
 # -----------------------------------------------------------------------------
-save(report.sclc.vs.nbl, report.sclc.vs.cll, report.nbl.vs.cll, report.sclc.tn.vs.sclc, report.sclc.tn.vs.nbl, report.sclc.tn.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("NRFD_ALL.RData")))
+save(report.sclc.tn.vs.sclc, report.sclc.tn.vs.nbl, report.sclc.tn.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
 
-report.rfds <- list(getReportRFD(report.sclc.tn.vs.sclc, "SCLC-TN"), getReportRFD(report.sclc.tn.vs.sclc, "SCLC"), getReportRFD(report.sclc.tn.vs.nbl, "NBL"), getReportRFD(report.sclc.tn.vs.cll, "CLL"), getReportRFD(report.nbl.cl.vs.lcl, "LCL"), getReportRFD(report.nbl.cl.vs.lcl, "NBL-CL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL", "LCL", "NBL-CL"), file.name, "Bootstrap RFD distribution")
+report.rfds <- list(getReportRFD(report.sclc.tn.vs.sclc, "SCLC-TN"), getReportRFD(report.sclc.tn.vs.sclc, "SCLC"), getReportRFD(report.sclc.tn.vs.nbl, "NBL"), getReportRFD(report.sclc.tn.vs.cll, "CLL"), getReportRFD(report.nbl.cl.vs.lcl, "NBL-CL"), getReportRFD(report.nbl.cl.vs.lcl, "LCL"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL", "NBL-CL", "LCL"), file.name, "Bootstrap RFD distribution")
 
 
 

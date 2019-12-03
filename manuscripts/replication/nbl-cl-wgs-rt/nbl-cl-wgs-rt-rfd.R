@@ -56,13 +56,24 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc)
+# nrow(nrds)
+# [1] 2663308
 
-save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".RData")))
-writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
+#install.packages("zoo", method="wget")
+library("zoo")
+kb <- 20
+nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
+
+save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.nbl.cl <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.nbl.cl)
-# [1] 2656570
+# [1] 2656592
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
