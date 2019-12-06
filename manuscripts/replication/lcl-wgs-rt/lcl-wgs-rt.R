@@ -67,7 +67,7 @@ for (c in 1:22) {
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL)
 }
 
 # -----------------------------------------------------------------------------
@@ -89,7 +89,7 @@ for (c in 1:22) {
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
    main.text <- c(paste0("LCL read depths correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
-   xlab.text <- "S/G1 read depth ratio [log2]"
+   xlab.text <- "RT (S/G1 ratio) [log2]"
    ylab.text <- "Read depth [RPKM]"
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")

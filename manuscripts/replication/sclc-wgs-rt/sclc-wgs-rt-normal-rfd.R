@@ -100,7 +100,7 @@ plotBootstrapRFD(file.name, paste0(BASE, "-TN"), chr,  97500000, 105000000, nrds
 
 ###
 ##
-kb <- 5
+kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
 ## Chr1
@@ -155,7 +155,7 @@ writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_5-20KB.txt")), col
 # -----------------------------------------------------------------------------
 plotReportNRFD5K <- function(report, names, file.name, main.text) {
    titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
-   cols <- c("black", "red", "blue", "green")
+   cols <- c("black", "red", "blue", "gold")
    n <- length(names)
  
    colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
@@ -200,7 +200,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
  
    text(8, rfds$CTR_TZ[n], "    CTR-TZ", cex=1.2, col="blue", pos=1)
    text(8, rfds$CTR_IZ[n], "    CTR-IZ", cex=1.2, col="red", pos=3)
-   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="green")
+   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="gold")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)

@@ -232,6 +232,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
 
    ## Initiation plot
+   if (!is.null(lcl.rt.chr))
+      file.name <- paste0(file.name, "_with-koren")
    if (ext == "pdf") {
       pdf(paste0(file.name, ".pdf"), height=5, width=width)
    } else if (ext == "png")
@@ -271,7 +273,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    par(mar=c(5.5,4,0,1))
    ylab.text <- "RT [log2]"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.05, cex.lab=1.08, cex.main=1.2)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.05, cex.lab=1.08, cex.main=1.25)
    idx <- which(nrds.chr.RT$RT == 0)
    points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col="lightgrey", cex=0.3)
    idx <- which(nrds.chr.RT$RT < 0)
@@ -286,7 +288,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
   
    ## Plot Koren 2012 (before smoothing spline)
    if (!is.null(lcl.rt.chr))
-      points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col="forestgreen", pch=16, cex=0.2)
+      points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col=colours[3], pch=16, cex=0.2)
    
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, nrds.chr.RT$SPLINE, col="black", pch=16, cex=0.2)
@@ -302,7 +304,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    else
       legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (!is.null(lcl.rt.chr))
-      legend("bottomright", "Koren et al. 2012", col="forestgreen", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
+      legend("bottomright", "Koren et al. 2012", col=colours[3], lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")

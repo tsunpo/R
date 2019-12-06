@@ -440,13 +440,13 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
 # Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)
 # Last Modified: 28/11/19
 # -----------------------------------------------------------------------------
-plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb) {
+plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb, col) {
    overlaps <- intersect(rownames(bed.gc.chr), nrds.RT.NRFD$BED)
    nrds.RT.NRFD.chr <- nrds.RT.NRFD[overlaps,]
    bed.gc.chr <- bed.gc.chr[overlaps,]
  
    adjustcolor.gray <- adjustcolor("darkgray", alpha.f=0.08)
-   
+     
    rights <- rownames(subset(nrds.RT.NRFD.chr, RFD >= 0.9))
    lefts  <- rownames(subset(nrds.RT.NRFD.chr, RFD <= -0.9))
    boundary.rights <- rownames(subset(subset(nrds.RT.NRFD.chr, RFD < 0.9), RFD >= 0))
@@ -461,7 +461,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
    else main.text <- paste0(BASE, " bootstrap RFD (", kb, " kb)")
 
-   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb_", kb, "kb")
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb_", kb, "kb_", col)
    if (is.na(xmin)) {
       start <- bed.gc.chr[rownames(nrds.RT.NRFD.chr)[1],]$START
       if (start < 5000000) xmin <- 0
@@ -499,12 +499,12 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col="blue", pch=19, cex=0.4)
    points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col="red", pch=19, cex=0.4)
    if (length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="gold", pch=19, cex=0.4)
+      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col=col, pch=19, cex=0.5)
    
    ## Plot legend
    legend("topright", "CTR (IZ)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    legend("bottomright", "CTR (TZ)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   legend("bottomleft", "CTR (UN)", col="gold", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("bottomleft", "CTR (UN)", col=col, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
       
    ###
@@ -522,14 +522,14 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ## Plot cytobands (before points)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
 
    points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col="steelblue1", cex=0.4)
    points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
    points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", pch=19, cex=0.4)
    points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red",  pch=19, cex=0.4)
    if (length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="gold", pch=19, cex=0.4)
+      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col=col, pch=19, cex=0.5)
    
    ## Plot legend
    legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)

@@ -117,7 +117,7 @@ writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC_5-20KB.txt")), colnam
 # -----------------------------------------------------------------------------
 plotReportNRFD5K <- function(report, names, file.name, main.text) {
    titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
-   cols <- c("black", "red", "blue", "rosybrown1")
+   cols <- c("black", "red", "blue", "gold")
    n <- length(names)
  
    colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
@@ -162,7 +162,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
  
    text(8, rfds$CTR_TZ[n], "    CTR-TZ", cex=1.2, col="blue", pos=3)
    text(8, rfds$CTR_IZ[n], "    CTR-IZ", cex=1.2, col="red", pos=1)
-   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="rosybrown1")
+   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="gold")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
@@ -173,7 +173,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC_5-20KB_rosybrown1.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC_5-20KB.pdf"))
 plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC sliding window size on RFD")
 
 # -----------------------------------------------------------------------------
@@ -211,7 +211,7 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, "springgreen3")
+plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, "pulm1")
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
