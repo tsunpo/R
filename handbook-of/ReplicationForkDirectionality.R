@@ -440,7 +440,7 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
 # Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)
 # Last Modified: 28/11/19
 # -----------------------------------------------------------------------------
-plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb, col) {
+plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb, withUnclassified=F) {
    overlaps <- intersect(rownames(bed.gc.chr), nrds.RT.NRFD$BED)
    nrds.RT.NRFD.chr <- nrds.RT.NRFD[overlaps,]
    bed.gc.chr <- bed.gc.chr[overlaps,]
@@ -461,7 +461,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
    else main.text <- paste0(BASE, " bootstrap RFD (", kb, " kb)")
 
-   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb_", kb, "kb_", col)
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb_", kb, "kb_")
+   if (withUnclassified) file.name <- paste0(file.name, "_with-un")
    if (is.na(xmin)) {
       start <- bed.gc.chr[rownames(nrds.RT.NRFD.chr)[1],]$START
       if (start < 5000000) xmin <- 0
@@ -498,13 +499,13 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col="sandybrown", cex=0.4)
    points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col="blue", pch=19, cex=0.4)
    points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col="red", pch=19, cex=0.4)
-   if (length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col=col, pch=19, cex=0.5)
+   if (withUnclassified && length(unclassified) != 0)
+      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="#01DF01", pch=19, cex=0.5)
    
    ## Plot legend
    legend("topright", "CTR (IZ)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    legend("bottomright", "CTR (TZ)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   legend("bottomleft", "CTR (UN)", col=col, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
       
    ###
@@ -528,8 +529,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
    points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", pch=19, cex=0.4)
    points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red",  pch=19, cex=0.4)
-   if (length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col=col, pch=19, cex=0.5)
+   if (withUnclassified && length(unclassified) != 0)
+      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="#01DF01", pch=19, cex=0.5)
    
    ## Plot legend
    legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)

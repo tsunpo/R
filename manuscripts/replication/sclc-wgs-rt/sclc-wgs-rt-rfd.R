@@ -117,7 +117,7 @@ writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC_5-20KB.txt")), colnam
 # -----------------------------------------------------------------------------
 plotReportNRFD5K <- function(report, names, file.name, main.text) {
    titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
-   cols <- c("black", "red", "blue", "gold")
+   cols <- c("black", "red", "blue", "#01DF01")
    n <- length(names)
  
    colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
@@ -140,17 +140,17 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
    pdf(file.name, height=5, width=5)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.35, 8.8), ylim=c(79, 84), ylab="%", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.35, 9.02), ylim=c(79, 84), ylab="%", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.2)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
  
-   text(8, rfds$TTR[n], "TTR ", cex=1.2, col="black")
+   text(8, rfds$TTR[n], "TTR  ", cex=1.2, col="black")
    for (n in 1:length(names))
       text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
 
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.35, 8.8), ylim=c(0, 12), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.35, 9.02), ylim=c(0, 12), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    points(rfds$X, rfds$CTR_TZ, col=cols[3], pch=rfds$pch, cex=1.3)
    lines(rfds$X[1:4], y=rfds$CTR_TZ[1:4], type="l", lwd=3, col=cols[3])
  
@@ -160,9 +160,9 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
    points(rfds$X, rfds$CTR_UN, col=cols[4], pch=rfds$pch, cex=1.3)
    lines(rfds$X[1:4], y=rfds$CTR_UN[1:4], type="l", lwd=3, col=cols[4])
  
-   text(8, rfds$CTR_TZ[n], "    CTR-TZ", cex=1.2, col="blue", pos=3)
-   text(8, rfds$CTR_IZ[n], "    CTR-IZ", cex=1.2, col="red", pos=1)
-   text(8, rfds$CTR_UN[n], "    CTR-UN", cex=1.2, col="gold")
+   text(8, rfds$CTR_TZ[n], "       CTR (TZ)", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_IZ[n], "      CTR (IZ)", cex=1.2, col="red", pos=1)
+   text(8, rfds$CTR_UN[n], "      CTR (UN)", cex=1.2, col="#01DF01")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
@@ -202,7 +202,7 @@ plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.g
 
 ###
 ##
-kb <- 5
+kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
 ## Chr1
@@ -211,7 +211,7 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, "pulm1")
+plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, withUnclassified=T)
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
