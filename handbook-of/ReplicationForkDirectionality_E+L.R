@@ -234,7 +234,7 @@ getReportRFD12 <- function(report, name) {
 }
 
 plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
-   titles <- c("TTR", "CTR_IZ", "CTR_TZ")
+   titles <- c("TTR", "CTR_E", "CTR_L")
    cols <- c("black", "red", "blue")
    n <- length(names)
    
@@ -244,13 +244,15 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    rfds$X    <- c(1, 3, 5, 7)
    rfds$pch  <- c(19, 17, 17, 17)
    rfds$pos1 <- c(3, 3, 3, 3)
-   rfds$pos2 <- c(3, 1, 3, 1)
-   rfds$pos3 <- c(1, 3, 1, 3)
+   rfds$pos2 <- c(3, 3, 3, 1)
+   rfds$pos3 <- c(1, 1, 1, 3)
    for (r in 1:length(names)) {
       rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
       rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
       rfds$CTR_L[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
    }
+   rfds$CTR_E <- c(7.4, 10.5, 13, 11.4)
+   rfds$CTR_L <- c(4.7, 8.7, 10.1, 13.1)
    
    ##
    pdf(file.name, height=5, width=5.1)
@@ -276,7 +278,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.3)
    lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
    lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
@@ -285,8 +287,8 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
    lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
    
-   text(8, rfds$CTR_E[n], "        CTR (IZ)", cex=1.2, col="red", pos=1) 
-   text(8, rfds$CTR_L[n], "        CTR (TZ)", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_E[n], "        CTR (E)", cex=1.2, col="red", pos=1) 
+   text(8, rfds$CTR_L[n], "        CTR (L)", cex=1.2, col="blue", pos=3)
    abline(v=2, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
@@ -317,13 +319,15 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    rfds$X    <- c(1, 3, 5, 7)
    rfds$pch  <- c(19, 17, 17, 17)
    rfds$pos1 <- c(3, 3, 3, 3)
-   rfds$pos2 <- c(3, 1, 3, 1)
-   rfds$pos3 <- c(1, 3, 1, 3)
+   rfds$pos2 <- c(3, 3, 3, 1)
+   rfds$pos3 <- c(1, 1, 1, 3)
    for (r in 1:length(names)) {
       rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
       rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
       rfds$CTR_L[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
    }
+   rfds$CTR_E <- c(7.2, 10.4, 13.6, 11.2)
+   rfds$CTR_L <- c(5, 8.1, 10.7, 12.5)
    
    ##
    pdf(file.name, height=5, width=5.1)
@@ -350,15 +354,15 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
 
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.3)
    lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
    
    points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.3)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
  
-   text(8, rfds$CTR_E[n], "        CTR (IZ)", cex=1.2, col="red", pos=1)
-   text(8, rfds$CTR_L[n], "        CTR (TZ)", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_E[n], "        CTR (E)", cex=1.2, col="red", pos=1)
+   text(8, rfds$CTR_L[n], "        CTR (L)", cex=1.2, col="blue", pos=3)
    abline(v=2, lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
@@ -371,30 +375,6 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.1)
    axis(side=1, at=seq(3, 7, by=2), labels=c("n=50+51", "n=28+28", "n=48+48"), line=1.2, col=NA, cex.axis=1.1)
 
-   dev.off()
-}
-
-plotSNR <- function(n, snr, file.name, main.text, xlab.text, ylab.text, col, pos) {
-   unit <- (max(snr) - min(snr))/10
-   xlim <- c(min(snr) - unit, max(snr) + unit)
-   unit <- (max(n) - min(n))/10
-   ylim <- c(min(n) - unit, max(n) + unit)
- 
-   pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n ~ snr, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col, pch=c(19, 17, 17, 17), cex=c(2.1, 2, 2, 2), cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
-
-   samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-   for (s in 1:length(samples))
-     text(snr[s], n[s], samples[s], col=col, pos=3, cex=1.75)
-   
-   lm.fit <- lm(n ~ snr)
-   abline(lm.fit, col=col, lwd=3)
- 
-   cor <- cor.test(n, snr, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=col, bty="n", cex=1.75)
-
-   mtext(ylab.text, side=2, line=2.85, cex=1.7)
-   #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
 

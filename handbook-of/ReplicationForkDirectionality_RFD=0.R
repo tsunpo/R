@@ -128,7 +128,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
    boundary.idx <- setdiff(c(1:nrow(nrds.RT.BSTRPS.chr)), c(right.idx, left.idx))
    
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
-   else main.text <- paste0(BASE, " (WB) bootstrap RFD")
+   else main.text <- paste0(BASE, " bootstrap RFD")
 
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {

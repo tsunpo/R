@@ -70,10 +70,8 @@ nrds.RT.NRFD.nbl <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.nbl)
 # [1] 2652467
 
-
-
-
-
+snr$S[3] <- sd(nrds.RT.NRFD.nbl$SPLINE)
+snr$N[3] <- sd(nrds.RT.NRFD.nbl$RT - nrds.RT.NRFD.nbl$SPLINE)
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
@@ -83,13 +81,18 @@ boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 45 breaks each centering 500
 
+###
+##
+kb <- 20
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
 ## Chr2
 c <- 2
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 ## Chr12
 c <- 12
@@ -97,8 +100,15 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
+## Chr1
+c <- 1
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, withUnclassified=T)
 
 
 

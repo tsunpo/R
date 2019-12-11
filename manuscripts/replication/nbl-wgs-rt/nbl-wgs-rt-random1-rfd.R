@@ -33,7 +33,7 @@ wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
-wd.rt.data  <- file.path(wd.rt, "data/random2")
+wd.rt.data  <- file.path(wd.rt, "data/random1")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -51,7 +51,7 @@ save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.R
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 # nrow(nrds)
-# [1] 
+# [1] 2659570
 
 #install.packages("zoo", method="wget")
 library("zoo")
@@ -60,8 +60,8 @@ nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
 
 save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.RFD.nbl.1 <- nrds.RT.RFD
-# nrow(nrds.RT.RFD.nbl.1)
+nrds.RT.NRFD.nbl.1 <- nrds.RT.NRFD
+# nrow(nrds.RT.NRFD.nbl.1)
 # [1] 2652445
 
 

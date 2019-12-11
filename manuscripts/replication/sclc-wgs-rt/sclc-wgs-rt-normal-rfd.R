@@ -70,9 +70,14 @@ nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
 
 save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.NRFD.sclc.tn <- nrds.RT.NRFD
+nrds.RT.NRFD.sclc.nl <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.sclc.tn)
 # [1] 2651861
+
+colnames <- c("S", "N", "SNR")
+snr <- toTable(0, length(colnames), 4, colnames)
+snr$S[1] <- sd(nrds.RT.NRFD.sclc.nl$SPLINE)
+snr$N[1] <- sd(nrds.RT.NRFD.sclc.nl$RT - nrds.RT.NRFD.sclc.nl$SPLINE)
 
 # -----------------------------------------------------------------------------
 # 
@@ -109,8 +114,8 @@ for (s in 1:length(sizes)) {
    report$CTR_NA[s]   <- nrow(nrds.RT.NRFD.1.ctr.na)
    report$CTR_NA_P[s] <- report$CTR_NA[s] / report$Mappable[s]
 }
-save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-TN_5-20KB.RData")))
-writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-TN_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
+save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.RData")))
+writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # 
@@ -174,8 +179,8 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC-TN_5-20KB.pdf"))
-plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC-TN sliding window size on RFD")
+file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC-NL_5-20KB.pdf"))
+plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC-NL sliding window size on RFD")
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
@@ -185,13 +190,18 @@ boundary.upper <- 950   ## 500-520 breaks
 boundary.lower <-  50   ## 480-500 breaks
 boundary.break <-  45   ## 45 breaks each centering 500
 
+###
+##
+kb <- 20
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
 ## Chr2
 c <- 2
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, paste0(BASE, "-TN"), chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
+plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 ## Chr12
 c <- 12
@@ -199,12 +209,7 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, paste0(BASE, "-TN"), chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5)
-
-###
-##
-kb <- 5
-load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 ## Chr1
 c <- 1
@@ -212,7 +217,133 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, paste0(BASE, "-TN"), chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, withUnclassified=T)
+plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, withUnclassified=T)
+
+# -----------------------------------------------------------------------------
+# Report (between NL and Ts)
+# Last Modified: 24/11/19
+# -----------------------------------------------------------------------------
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
+
+report.sclc.nl.vs.sclc <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl, nrds.RT.NRFD.sclc, "SCLC-NL", "SCLC")
+writeTable(report.sclc.nl.vs.sclc, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_SCLC_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.nl.vs.nbl  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl, nrds.RT.NRFD.nbl, "SCLC-NL", "NBL")
+writeTable(report.sclc.nl.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.nl.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl, nrds.RT.NRFD.cll, "SCLC-NL", "CLL")
+writeTable(report.sclc.nl.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Plot report (between NL, Ts)
+# Last Modified: 27/11/19
+# -----------------------------------------------------------------------------
+save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
+
+report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution    ")
+
+report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution    ")
+
+# -----------------------------------------------------------------------------
+# Report (between random1 and random2)
+# Last Modified: 08/12/19; 24/11/19
+# -----------------------------------------------------------------------------
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
+
+report.sclc.nl.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl.1, nrds.RT.NRFD.sclc.nl.2, "SCLC-NL-R1", "SCLC-NL-R2")
+writeTable(report.sclc.nl.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_SCLC-NL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.1, nrds.RT.NRFD.sclc.2, "SCLC-R1", "SCLC-R2")
+writeTable(report.sclc.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_SCLC_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.1, nrds.RT.NRFD.nbl.2, "NBL-R1", "NBL-R2")
+writeTable(report.nbl.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.cll.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.cll.1, nrds.RT.NRFD.cll.2, "CLL-R1", "CLL-R2")
+writeTable(report.cll.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Plot report (between random1 and random2)
+# Last Modified: 08/12/19; 28/11/19
+# -----------------------------------------------------------------------------
+save(report.sclc.nl.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB_random12.RData")))
+
+report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12.pdf"))
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
+
+report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_random12.pdf"))
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
+
+# > (87.8-77.1)/87.8
+# [1] 0.1218679
+# > (80.7-64.4)/80.7
+# [1] 0.2019827
+# > (76.9-57.8)/76.9
+# [1] 0.2483745
+# > (75.5-57.8)/75.5
+# [1] 0.2344371
+
+# -----------------------------------------------------------------------------
+# Plot signal-to-noice
+# Last Modified: 10/12/19
+# -----------------------------------------------------------------------------
+save(snr, file=file.path(wd.rt.data, paste0("SNR_ALL.RData")))
+writeTable(snr, file.path(wd.rt.data, paste0("SNR_ALL.txt")), colnames=T, rownames=T, sep="\t")
+
+## Sample size
+file.name <- file.path(wd.rt.plots, "STN_ALL_SIZE")
+main.text <- c("Sample size", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "Sample size"
+plotSNR(c(92, 101, 56, 96), snr$SNR, file.name, main.text, xlab.text, ylab.text, "purple", "bottomright")
+
+## TTR
+file.name <- file.path(wd.rt.plots, "STN_ALL_TTR")
+main.text <- c("TTR", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% TTR"
+plotSNR(snr$TTR, snr$SNR, file.name, main.text, xlab.text, ylab.text, "black", "topleft")
+
+## 
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-IZ")
+main.text <- c("CTR (IZ)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (IZ)"
+plotSNR(snr$CTR_IZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
+
+## 
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-TZ")
+main.text <- c("CTR (TZ)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (TZ)"
+plotSNR(snr$CTR_TZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
+
+## Early
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-E")
+main.text <- c("CTR (E)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (E)"
+plotSNR(snr$CTR_E, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
+
+## Late
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-L")
+main.text <- c("CTR (L)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (L)"
+plotSNR(snr$CTR_L, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
+
+
+
 
 
 

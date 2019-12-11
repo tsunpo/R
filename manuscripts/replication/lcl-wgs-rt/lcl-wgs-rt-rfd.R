@@ -140,7 +140,7 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
    pdf(file.name, height=5, width=5)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.35, 9.02), ylim=c(62, 67), ylab="%", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.35, 9.02), ylim=c(62.5, 67.5), ylab="%", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.2)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
  
@@ -212,6 +212,20 @@ bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, withUnclassified=T)
+
+# -----------------------------------------------------------------------------
+# Report (between NBL-CL and LCL)
+# Last Modified: 24/11/19
+# -----------------------------------------------------------------------------
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
+
+report.nbl.cl.vs.lcl <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.lcl, "NBL-CL", "LCL")
+writeTable(report.nbl.cl.vs.lcl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_LCL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.cl.vs.nbl <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.nbl, "NBL-CL", "NBL")
+writeTable(report.nbl.cl.vs.nbl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
 
 
 
