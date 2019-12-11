@@ -271,8 +271,8 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
  
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
-   legend("topleft", "Normal", col="black", bty="n", pt.cex=1, pch=19, horiz=T, cex=1.2)
-   legend("topright", "Primary tumour                    ", col="black", bty="n", pt.cex=1, pch=17, horiz=T, cex=1.2)
+   legend("topleft", "Normal", col="black", bty="n", pt.cex=1.2, pch=1, horiz=T, cex=1.2)
+   legend("topright", "Primary tumour                    ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
    
@@ -349,8 +349,8 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
 
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
-   legend("topleft", "Normal", col="black", bty="n", pt.cex=1, pch=19, horiz=T, cex=1.2)
-   legend("topright", "Primary tumour                    ", col="black", bty="n", pt.cex=1, pch=17, horiz=T, cex=1.2)
+   legend("topleft", "Normal", col="black", bty="n", pt.cex=1.2, pch=1, horiz=T, cex=1.2)
+   legend("topright", "Primary tumour                    ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
 
    ##
    par(mar=c(5,4,0,1))
