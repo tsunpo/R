@@ -80,8 +80,8 @@ separator <- function(number) {
    return(formatC(number, format="f", big.mark=",", digits=0))
 }
 
-scientific <- function(number) {
-   return(formatC(number, format="e", digits=2))
+scientific <- function(number, digits=2) {
+   return(formatC(number, format="e", digits=digits))
 }
 
 # -----------------------------------------------------------------------------

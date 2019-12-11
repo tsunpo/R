@@ -384,14 +384,13 @@ plotSNR <- function(n, snr, file.name, main.text, xlab.text, ylab.text, col, pos
    plot(n ~ snr, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col, pch=c(19, 17, 17, 17), cex=c(2.1, 2, 2, 2), cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
 
    samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-   for (s in 1:length(samples))
-     text(snr[s], n[s], samples[s], col=col, pos=3, cex=1.75)
+   text(snr, n, samples, col=col, pos=c(1,3,3,3), cex=1.75)
    
    lm.fit <- lm(n ~ snr)
    abline(lm.fit, col=col, lwd=3)
  
    cor <- cor.test(n, snr, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=col, bty="n", cex=1.75)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col, bty="n", cex=1.75)
 
    mtext(ylab.text, side=2, line=2.85, cex=1.7)
    #mtext(main.text[2], cex=1.2, line=0.3)
