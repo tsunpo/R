@@ -33,7 +33,7 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal92"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
@@ -79,10 +79,12 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # Overall correlation with LCL S/G1
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.sclc.tn <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n92_TN.txt"), colnames=T, rownames=F, sep="\t")
+samples.sclc.nl <- setSamplesQ4(wd.rt.data, samples1)
+writeTable(samples.sclc.nl, file.path(wd.ngs, "sclc_wgs_n92_TN.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7585423 -0.7439594 -0.7293444 -0.6681727  0.6753625 
+
+writeTable(subset(samples.sclc.nl, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_n92_NL_q4.txt"), colnames=T, rownames=F, sep="\t")
 
 ## Random 23/23
 m2.23 <- sort(rownames(subset(samples.sclc.tn, M2 == 1))[sample(1:46, round(46/2), replace=F)])

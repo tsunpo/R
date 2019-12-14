@@ -58,6 +58,12 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2657164
 nrds.sclc.q4 <- nrds
 
+##
+nrds.sclc.q4 <- setSpline(nrds.sclc.q4, bed.gc.chr, "RT", returnAll=T)
+snr.q4$S[2] <- sd(nrds.sclc.q4$SPLINE)
+snr.q4$N[2] <- sd(nrds.sclc.q4$RT - nrds.sclc.q4$SPLINE)
+
+##
 ymax <- 0.6
 ymin <- 0.14
 for (c in 1:22) {

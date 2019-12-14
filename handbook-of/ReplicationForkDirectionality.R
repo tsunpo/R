@@ -384,7 +384,7 @@ plotSNR <- function(n, snr, file.name, main.text, xlab.text, ylab.text, col, pos
    plot(n ~ snr, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col, pch=c(19, 17, 17, 17), cex=c(2.1, 2, 2, 2), cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
 
    samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-   text(snr, n, samples, col=col, pos=c(1,3,3,3), cex=1.75)
+   text(snr, n, samples, col=col, pos=c(3,3,3,3), cex=1.75)
    
    lm.fit <- lm(n ~ snr)
    abline(lm.fit, col=col, lwd=3)

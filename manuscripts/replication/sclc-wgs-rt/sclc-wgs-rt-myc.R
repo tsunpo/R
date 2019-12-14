@@ -30,363 +30,214 @@ PAIR1 <- "M2"
 PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
-n1 <- 46
-n0 <- 46
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata/George 2015")
 
-wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
-wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data")
+wd.rt.plots <- file.path(wd.rt, "plots")
 
-# -----------------------------------------------------------------------------
-# Bootstrap distribution
-# Last Modified: 02/11/18
-# -----------------------------------------------------------------------------
-nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
-save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
-# > nrow(nrds.RT.BSTRPS)
-# [1] 2651861
-
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "-normal_rpkm.gc.cn.d.rt.rfd.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
-xlab.text <- "Number of right-leading resamplings"
-plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break)
-
-# -----------------------------------------------------------------------------
-# Create RT + RFD data
-# Last Modified: 22/10/1
-# -----------------------------------------------------------------------------
-#load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
-load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-# > nrow(nrds)
-# [1] 2658679
-
-#install.packages("zoo", method="wget")
-library("zoo")
-kb <- 20
-nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
-
-save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
-writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.NRFD.sclc.nl <- nrds.RT.NRFD
-# > nrow(nrds.RT.NRFD.sclc.tn)
-# [1] 2651861
-
-colnames <- c("S", "N", "SNR")
-snr <- toTable(0, length(colnames), 4, colnames)
-snr$S[1] <- sd(nrds.RT.NRFD.sclc.nl$SPLINE)
-snr$N[1] <- sd(nrds.RT.NRFD.sclc.nl$RT - nrds.RT.NRFD.sclc.nl$SPLINE)
+samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
 
 # -----------------------------------------------------------------------------
 # 
-# Last Modified: 01/12/18
+# Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-colnames <- c("TTR", "TTR_P", "CTR_IZ", "CTR_IZ_P", "CTR_TZ", "CTR_TZ_P", "CTR_UN", "CTR_UN_P", "CTR_NA", "CTR_NA_P", "Mappable")
-report <- toTable(0, length(colnames), 4, colnames)
-
-rfd <- 0.9
-sizes <- c(5, 10, 15, 20)
-for (s in 1:length(sizes)) {
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", sizes[s], "kb_m2-m1.RData")))
-   nrds.RT.NRFD.1 <- nrds.RT.NRFD
-   report$Mappable[s] <- nrow(nrds.RT.NRFD.1)
- 
-   ## TTR and CTR
-   nrds.RT.NRFD.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.1, rfd)
-   report$TTR[s]   <- nrow(nrds.RT.NRFD.1.ttr)
-   report$TTR_P[s] <- report$TTR[s] / report$Mappable[s]
- 
-   diff <- setdiff(rownames(nrds.RT.NRFD.1), rownames(nrds.RT.NRFD.1.ttr))
-   nrds.RT.NRFD.1.ctr <- nrds.RT.NRFD.1[diff,]
-   nrds.RT.NRFD.1.ctr.iz <- subset(nrds.RT.NRFD.1.ctr, NRFD > 0)
-   nrds.RT.NRFD.1.ctr.tz <- subset(nrds.RT.NRFD.1.ctr, NRFD < 0)
-   nrds.RT.NRFD.1.ctr.un <- subset(nrds.RT.NRFD.1.ctr, NRFD == 0)
-   nrds.RT.NRFD.1.ctr.na <- nrds.RT.NRFD.1.ctr[which(is.na(nrds.RT.NRFD.1.ctr$NRFD) == T),]
- 
-   report$CTR_IZ[s]   <- nrow(nrds.RT.NRFD.1.ctr.iz)
-   report$CTR_IZ_P[s] <- report$CTR_IZ[s] / report$Mappable[s]
-   report$CTR_TZ[s]   <- nrow(nrds.RT.NRFD.1.ctr.tz)
-   report$CTR_TZ_P[s] <- report$CTR_TZ[s] / report$Mappable[s]
-   report$CTR_UN[s]   <- nrow(nrds.RT.NRFD.1.ctr.un)
-   report$CTR_UN_P[s] <- report$CTR_UN[s] / report$Mappable[s]
-   report$CTR_NA[s]   <- nrow(nrds.RT.NRFD.1.ctr.na)
-   report$CTR_NA_P[s] <- report$CTR_NA[s] / report$Mappable[s]
-}
-save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.RData")))
-writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 01/12/18
-# -----------------------------------------------------------------------------
-plotReportNRFD5K <- function(report, names, file.name, main.text) {
-   titles <- c("TTR", "CTR_IZ", "CTR_TZ", "CTR_UN")
-   cols <- c("black", "red", "blue", "#01DF01")
-   n <- length(names)
- 
-   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
-   rfds <- toTable(0, length(colnames), length(names), colnames)
-   rfds$NAME <- names
-   rfds$X    <- c(1, 3, 5, 7)
-   rfds$pch  <- c(17, 17, 17, 17)
-   rfds$pos1 <- c(3, 3, 3, 3)
-   rfds$pos2 <- c(3, 3, 3, 3)
-   rfds$pos3 <- c(1, 1, 1, 1)
-   rfds$pos4 <- c(3, 3, 3, 3)
-   for (r in 1:length(names)) {
-      rfds$TTR[r]    <- as.numeric(round0(report$TTR_P[r]*100, digit=1))
-      rfds$CTR_IZ[r] <- as.numeric(round0(report$CTR_IZ_P[r]*100, digit=1))
-      rfds$CTR_TZ[r] <- as.numeric(round0(report$CTR_TZ_P[r]*100, digit=1))
-      rfds$CTR_UN[r] <- as.numeric(round0(report$CTR_UN_P[r]*100, digit=2))
-   }
- 
-   ##
-   pdf(file.name, height=5, width=5)
-   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
-   par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.35, 9.02), ylim=c(86, 91), ylab="%", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.2)
-   lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
- 
-   text(8, rfds$TTR[n], "TTR ", cex=1.2, col="black")
-   for (n in 1:length(names))
-      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
- 
-   ##
-   par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.35, 9.02), ylim=c(0, 8), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$CTR_TZ, col=cols[3], pch=rfds$pch, cex=1.3)
-   lines(rfds$X[1:4], y=rfds$CTR_TZ[1:4], type="l", lwd=3, col=cols[3])
- 
-   points(rfds$X, rfds$CTR_IZ, col=cols[2], pch=rfds$pch, cex=1.3)
-   lines(rfds$X[1:4], y=rfds$CTR_IZ[1:4], type="l", lwd=3, col=cols[2])
- 
-   points(rfds$X, rfds$CTR_UN, col=cols[4], pch=rfds$pch, cex=1.3)
-   lines(rfds$X[1:4], y=rfds$CTR_UN[1:4], type="l", lwd=3, col=cols[4])
- 
-   text(8, rfds$CTR_TZ[n], "      CTR (TZ)", cex=1.2, col="blue", pos=1)
-   text(8, rfds$CTR_IZ[n], "     CTR (IZ)", cex=1.2, col="red", pos=3)
-   text(8, rfds$CTR_UN[n], "      CTR (UN)", cex=1.2, col="#01DF01")
-   for (n in 1:length(names)) {
-      text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
-      text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
-      text(rfds$X[n], rfds$CTR_UN[n], rfds$CTR_UN[n], col=cols[4], pos=rfds$pos4[n], cex=1.2)
-   }
-
-   axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.1)
-   dev.off()
-}
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC-NL_5-20KB.pdf"))
-plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC-NL sliding window size on RFD")
-
-# -----------------------------------------------------------------------------
-# Plot bootstrap RFD data
-# Last Modified: 04/11/18
-# -----------------------------------------------------------------------------
-boundary.upper <- 950   ## 500-520 breaks
-boundary.lower <-  50   ## 480-500 breaks
-boundary.break <-  45   ## 45 breaks each centering 500
-
-###
-##
-kb <- 20
-load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
-
-## Chr2
-c <- 2
-chr <- chrs[c]
-bed.gc.chr <- subset(bed.gc, CHR == chr)
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
-
-## Chr12
-c <- 12
-chr <- chrs[c]
-bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
-
-## Chr1
-c <- 1
-chr <- chrs[c]
-bed.gc.chr <- subset(bed.gc, CHR == chr)
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr, 142575001, 172575001, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, withUnclassified=T)
-
-# -----------------------------------------------------------------------------
-# Report (between NL and Ts)
-# Last Modified: 24/11/19
-# -----------------------------------------------------------------------------
-#boundary.upper <- 950   ## RFD > +0.9
-#boundary.lower <-  50   ## RFD < -0.9
-rfd <- 0.9
-
-report.sclc.nl.vs.sclc <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl, nrds.RT.NRFD.sclc, "SCLC-NL", "SCLC")
-writeTable(report.sclc.nl.vs.sclc, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_SCLC_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-report.sclc.nl.vs.nbl  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl, nrds.RT.NRFD.nbl, "SCLC-NL", "NBL")
-writeTable(report.sclc.nl.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-report.sclc.nl.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl, nrds.RT.NRFD.cll, "SCLC-NL", "CLL")
-writeTable(report.sclc.nl.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Plot report (between NL, Ts)
-# Last Modified: 27/11/19
-# -----------------------------------------------------------------------------
-save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
-
-report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution    ")
-
-report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution    ")
-
-# -----------------------------------------------------------------------------
-# Report (between random1 and random2)
-# Last Modified: 08/12/19; 24/11/19
-# -----------------------------------------------------------------------------
-#boundary.upper <- 950   ## RFD > +0.9
-#boundary.lower <-  50   ## RFD < -0.9
-rfd <- 0.9
-
-report.sclc.nl.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.nl.1, nrds.RT.NRFD.sclc.nl.2, "SCLC-NL-R1", "SCLC-NL-R2")
-writeTable(report.sclc.nl.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_SCLC-NL_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-report.sclc.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc.1, nrds.RT.NRFD.sclc.2, "SCLC-R1", "SCLC-R2")
-writeTable(report.sclc.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_SCLC_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-report.nbl.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.1, nrds.RT.NRFD.nbl.2, "NBL-R1", "NBL-R2")
-writeTable(report.nbl.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-report.cll.1.2 <- getBootstrapReport(rfd, nrds.RT.NRFD.cll.1, nrds.RT.NRFD.cll.2, "CLL-R1", "CLL-R2")
-writeTable(report.cll.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Plot report (between random1 and random2)
-# Last Modified: 08/12/19; 28/11/19
-# -----------------------------------------------------------------------------
-save(report.sclc.nl.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB_random12.RData")))
-
-report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
-
-report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
-file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_random12.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
-
-# > (87.8-77.1)/87.8
-# [1] 0.1218679
-# > (80.7-64.4)/80.7
-# [1] 0.2019827
-# > (76.9-57.8)/76.9
-# [1] 0.2483745
-# > (75.5-57.8)/75.5
-# [1] 0.2344371
-
-# -----------------------------------------------------------------------------
-# Plot signal-to-noice
-# Last Modified: 10/12/19
-# -----------------------------------------------------------------------------
-save(snr, file=file.path(wd.rt.data, paste0("SNR_ALL.RData")))
-writeTable(snr, file.path(wd.rt.data, paste0("SNR_ALL.txt")), colnames=T, rownames=T, sep="\t")
-
-## Sample size
-file.name <- file.path(wd.rt.plots, "STN_ALL_SIZE")
-main.text <- c("Sample size", "")
-xlab.text <- "Signal-to-noise"
-ylab.text <- "Sample size"
-plotSNR(c(92, 101, 56, 96), snr$SNR, file.name, main.text, xlab.text, ylab.text, "purple", "bottomright")
-
-## TTR
-file.name <- file.path(wd.rt.plots, "STN_ALL_TTR")
-main.text <- c("TTR", "")
-xlab.text <- "Signal-to-noise"
-ylab.text <- "%"
-plotSNR(snr$TTR, snr$SNR, file.name, main.text, xlab.text, ylab.text, "black", "topleft")
-
-## 
-file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-IZ")
-main.text <- c("CTR (IZ)", "")
-xlab.text <- "Signal-to-noise"
-ylab.text <- "%"
-plotSNR(snr$CTR_IZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
-
-## 
-file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-TZ")
-main.text <- c("CTR (TZ)", "")
-xlab.text <- "Signal-to-noise"
-ylab.text <- "%"
-plotSNR(snr$CTR_TZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
-
-## Early
-file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-E")
-main.text <- c("CTR (E)", "")
-xlab.text <- "Signal-to-noise"
-ylab.text <- "%"
-plotSNR(snr$CTR_E, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
-
-## Late
-file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-L")
-main.text <- c("CTR (L)", "")
-xlab.text <- "Signal-to-noise"
-ylab.text <- "%"
-plotSNR(snr$CTR_L, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
-
-# -----------------------------------------------------------------------------
-# Plot signal-to-noice
-# Last Modified: 10/12/19
-# -----------------------------------------------------------------------------
-plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.text, col, pos) {
-   n <- c(n1, n2)
-   snr <- c(snr1, snr2)
- 
+plotCN <- function(cn, snr, pch, file.name, main.text, xlab.text, ylab.text, col, pos) {
    unit <- (max(snr) - min(snr))/10
    xlim <- c(min(snr) - unit, max(snr) + unit)
-   unit <- (max(n) - min(n))/10
-   ylim <- c(min(n) - unit, max(n) + unit)
+   unit <- (max(cn) - min(cn))/10
+   ylim <- c(min(cn) - unit, max(cn) + unit)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
-   points(n2 ~ snr2, col=col[2], pch=2, cex=2.1)
-   
-   samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-   text(snr1, n1, samples, col=col[1], pos=c(1,3,3,3), cex=1.75)
-   text(snr2, n2, samples, col=col[2], pos=c(1,3,3,3), cex=1.75)
-   
-   lm.fit <- lm(n1 ~ snr1)
-   abline(lm.fit, col=col[1], lwd=3)
-   lm.fit <- lm(n2 ~ snr2)
-   abline(lm.fit, col=col[2], lwd=3)
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col, pch=pch, cex=2, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
  
-   cor <- cor.test(n1, snr1, method="spearman", exact=F)
-   #legend(pos[1], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[1], bty="n", cex=1.75)
-   legend(pos[1], c("M2/M1", "rho = 0.8"), text.col=col[1], pch=c(19, NA), bty="n", cex=1.75)
-   
-   cor <- cor.test(n2, snr2, method="spearman", exact=F)
-   #legend(pos[2], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[2], bty="n", cex=1.75)
-   legend(pos[2], c("Q4/Q1", "rho = 0.8"), text.col=col[2], pch=c(2, NA), col=col[2], bty="n", cex=1.75)
+   #text(snr, n, samples, col=col, pos=c(1,3,3,3), cex=1.75)
+ 
+   lm.fit <- lm(cn ~ snr)
+   abline(lm.fit, col=col, lwd=3)
+ 
+   cor <- cor.test(cn, snr, method="spearman", exact=F)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, bty="n", cex=1.75)
+   #legend("bottomright", c("A", "B", "C"), col="black", bty="n", pt.cex=1.4, pch=c(1, 2, 0), horiz=T, cex=1.4)
+ 
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
+   #mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+}
+## 
+file.name <- file.path(wd.rt.plots, "CN-vs-CYCLE_MYCL")
+main.text <- c("MYCL CN", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYCL [log2]"
+samples$PCH <- samples$Group_MYCL
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$CN_MYCL), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+
+
+
+
+
+
+##
+samples.myc <- readTable(file.path(wd.meta, "MYCLN_manual-focality_TPM_CN_Groups_11-Dec-2019_23h-06m-30s.txt"), header=T, rownames=T, sep="")
+overlaps <- intersect(rownames(samples), rownames(samples.myc))
+samples <- cbind(samples[overlaps,], samples.myc[overlaps,])
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 12/12/19
+# -----------------------------------------------------------------------------
+plotCN <- function(cn, snr, pch, file.name, main.text, xlab.text, ylab.text, col, pos) {
+   unit <- (max(snr) - min(snr))/10
+   xlim <- c(min(snr) - unit, max(snr) + unit)
+   unit <- (max(cn) - min(cn))/10
+   ylim <- c(min(cn) - unit, max(cn) + unit)
+ 
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col, pch=pch, cex=2, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+
+   #text(snr, n, samples, col=col, pos=c(1,3,3,3), cex=1.75)
+ 
+   lm.fit <- lm(cn ~ snr)
+   abline(lm.fit, col=col, lwd=3)
+ 
+   cor <- cor.test(cn, snr, method="spearman", exact=F)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, bty="n", cex=1.75)
+   legend("bottomright", c("A", "B", "C"), col="black", bty="n", pt.cex=1.4, pch=c(1, 2, 0), horiz=T, cex=1.4)
    
    mtext(ylab.text, side=2, line=2.85, cex=1.7)
    #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
 
+## CN
+file.name <- file.path(wd.rt.plots, "CN-vs-CYCLE_MYC")
+main.text <- c("MYC CN", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYC [log2]"
+samples$PCH <- samples$Group_MYC
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$CN_MYC), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+## 
+file.name <- file.path(wd.rt.plots, "CN-vs-CYCLE_MYCL")
+main.text <- c("MYCL CN", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYCL [log2]"
+samples$PCH <- samples$Group_MYCL
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$CN_MYCL), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+## 
+file.name <- file.path(wd.rt.plots, "CN-vs-CYCLE_MYCN")
+main.text <- c("MYCN CN", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYCN [log2]"
+samples$PCH <- samples$Group_MYCN
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$CN_MYCN), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+## TPM
+file.name <- file.path(wd.rt.plots, "TPM-vs-CYCLE_MYC")
+main.text <- c("MYC TPM", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYC [log2+0.01]"
+samples$PCH <- samples$Group_MYC
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$TPM_MYC + 0.01), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+## 
+file.name <- file.path(wd.rt.plots, "TPM-vs-CYCLE_MYCL")
+main.text <- c("MYCL TPM", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYCL [log2+0.01]"
+samples$PCH <- samples$Group_MYCL
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$TPM_MYCL + 0.01), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+## 
+file.name <- file.path(wd.rt.plots, "TPM-vs-CYCLE_MYCN")
+main.text <- c("MYCN TPM", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYCN [log2+0.01]"
+samples$PCH <- samples$Group_MYCN
+samples$PCH[which(samples$PCH == "A")] <- 1
+samples$PCH[which(samples$PCH == "B")] <- 2
+samples$PCH[which(samples$PCH == "C")] <- 0
+samples$PCH <- as.numeric(samples$PCH)
+plotCN(log2(samples$TPM_MYCN + 0.01), samples$COR, samples$PCH, file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+
+
+
+
 ## Sample size
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE")
-main.text <- c("Signal-to-noise ratio", "")
+file.name <- file.path(wd.rt.plots, "CN-vs-CYCLE_MYCL")
+main.text <- c("MYCL", "")
+xlab.text <- "Cell cycle status"
+ylab.text <- "MYCL CN [log2]"
+plotCN(log2(samples$CN_MYCL), samples$COR, samples,file.name, main.text, xlab.text, ylab.text, "black", "topright")
+
+
+
+
+## TTR
+file.name <- file.path(wd.rt.plots, "STN_ALL_TTR")
+main.text <- c("TTR", "")
 xlab.text <- "Signal-to-noise"
-ylab.text <- "Sample size"
-plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "purple"), c("topleft", "bottomright"))
+ylab.text <- "% TTR"
+plotCN(snr$TTR, snr$SNR, file.name, main.text, xlab.text, ylab.text, "black", "topleft")
+
+## 
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-IZ")
+main.text <- c("CTR (IZ)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (IZ)"
+plotSNR(snr$CTR_IZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
+
+## 
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-TZ")
+main.text <- c("CTR (TZ)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (TZ)"
+plotSNR(snr$CTR_TZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
+
+## Early
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-E")
+main.text <- c("CTR (E)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (E)"
+plotSNR(snr$CTR_E, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
+
+## Late
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-L")
+main.text <- c("CTR (L)", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "% CTR (L)"
+plotSNR(snr$CTR_L, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
+
 
 
 
