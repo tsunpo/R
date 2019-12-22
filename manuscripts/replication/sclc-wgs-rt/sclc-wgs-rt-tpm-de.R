@@ -101,6 +101,7 @@ tpm.gene.log2.ctr.tz.ho <- subset(tpm.gene.log2.ctr.tz, TRC < 0)
 
 testU(tpm.gene.log2.ctr.iz.ho$MEDIAN, tpm.gene.log2.ctr.iz.cd$MEDIAN)
 
+## IZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.iz))
 de.tpm.gene.iz <- de.tpm.gene[overlaps,]
 de.tpm.gene.iz$Q <- qvalue(de.tpm.gene.iz$P)$qvalue
@@ -115,6 +116,17 @@ overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.iz.cd))
 de.tpm.gene.iz.cd <- de.tpm.gene[overlaps,]
 de.tpm.gene.iz.cd$Q <- qvalue(de.tpm.gene.iz.cd$P)$qvalue
 writeTable(de.tpm.gene.iz.cd, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_iz_cd_n70_.txt"), colnames=T, rownames=F, sep="\t")
+
+## TZ
+overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.tz.cd))
+de.tpm.gene.tz.cd <- de.tpm.gene[overlaps,]
+de.tpm.gene.tz.cd$Q <- qvalue(de.tpm.gene.tz.cd$P)$qvalue
+writeTable(de.tpm.gene.tz.cd, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_tz_cd_n70_.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.tz.ho))
+de.tpm.gene.tz.ho <- de.tpm.gene[overlaps,]
+de.tpm.gene.tz.ho$Q <- qvalue(de.tpm.gene.tz.ho$P)$qvalue
+writeTable(de.tpm.gene.tz.ho, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_tz_ho_n70_.txt"), colnames=T, rownames=F, sep="\t")
 
 ###
 ## IZ vs TZ
