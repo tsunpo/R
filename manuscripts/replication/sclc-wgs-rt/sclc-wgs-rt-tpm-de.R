@@ -88,6 +88,129 @@ tpm.gene.log2.ll.ho <- subset(tpm.gene.log2.ll, TRC < 0)
 tpm.gene.log2.cd <- subset(tpm.gene.log2, TRC > 0)
 tpm.gene.log2.ho <- subset(tpm.gene.log2, TRC < 0)
 
+## CTR (IZ)
+tpm.gene.log2$TSS_NRFD <- nrds.RT.NRFD[tpm.gene.log2$TSS,]$NRFD
+tpm.gene.log2.ctr <- subset(subset(tpm.gene.log2, TSS_RFD < 0.9), TSS_RFD > -0.9)
+tpm.gene.log2.ctr.iz <- subset(tpm.gene.log2.ctr, TSS_NRFD > 0)
+tpm.gene.log2.ctr.iz.cd <- subset(tpm.gene.log2.ctr.iz, TRC > 0)
+tpm.gene.log2.ctr.iz.ho <- subset(tpm.gene.log2.ctr.iz, TRC < 0)
+
+tpm.gene.log2.ctr.tz <- subset(tpm.gene.log2.ctr, TSS_NRFD < 0)
+tpm.gene.log2.ctr.tz.cd <- subset(tpm.gene.log2.ctr.tz, TRC > 0)
+tpm.gene.log2.ctr.tz.ho <- subset(tpm.gene.log2.ctr.tz, TRC < 0)
+
+testU(tpm.gene.log2.ctr.iz.ho$MEDIAN, tpm.gene.log2.ctr.iz.cd$MEDIAN)
+
+overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.iz))
+de.tpm.gene.iz <- de.tpm.gene[overlaps,]
+de.tpm.gene.iz$Q <- qvalue(de.tpm.gene.iz$P)$qvalue
+writeTable(de.tpm.gene.iz, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_iz_n70.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.iz.ho))
+de.tpm.gene.iz.ho <- de.tpm.gene[overlaps,]
+de.tpm.gene.iz.ho$Q <- qvalue(de.tpm.gene.iz.ho$P)$qvalue
+writeTable(de.tpm.gene.iz.ho, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_iz_ho_n70.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.ctr.iz.cd))
+de.tpm.gene.iz.cd <- de.tpm.gene[overlaps,]
+de.tpm.gene.iz.cd$Q <- qvalue(de.tpm.gene.iz.cd$P)$qvalue
+writeTable(de.tpm.gene.iz.cd, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_iz_cd_n70_.txt"), colnames=T, rownames=F, sep="\t")
+
+###
+## IZ vs TZ
+# > median(tpm.gene.log2.ctr.iz$MEDIAN)
+# [1] 3.43802
+# > median(tpm.gene.log2.ctr.tz$MEDIAN)
+# [1] 3.205719
+# > testU(tpm.gene.log2.ctr.iz$MEDIAN, tpm.gene.log2.ctr.tz$MEDIAN)
+# [1] 0.01250994
+
+## IZ (CD vs. HO)
+# > median(tpm.gene.log2.ctr.iz.cd$MEDIAN)
+# [1] 3.411179
+# > median(tpm.gene.log2.ctr.iz.ho$MEDIAN)
+# [1] 3.469866
+# > testU(tpm.gene.log2.ctr.iz.cd$MEDIAN, tpm.gene.log2.ctr.iz.ho$MEDIAN)
+# [1] 0.8621095
+
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.iz.cd), rownames(subset(de.tpm.gene, LOG2_FC > 0)))
+tpm.gene.log2.ctr.iz.cd.up <- tpm.gene.log2.ctr.iz.cd[overlaps,]
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.iz.cd), rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+tpm.gene.log2.ctr.iz.cd.down <- tpm.gene.log2.ctr.iz.cd[overlaps,]
+# > median(tpm.gene.log2.ctr.iz.cd.up$MEDIAN)
+# [1] 3.66595
+# > median(tpm.gene.log2.ctr.iz.cd.down$MEDIAN)
+# [1] 3.19066
+# > testU(tpm.gene.log2.ctr.iz.cd.up$MEDIAN, tpm.gene.log2.ctr.iz.cd.down$MEDIAN)
+# [1] 0.05708869
+
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.iz.ho), rownames(subset(de.tpm.gene, LOG2_FC > 0)))
+tpm.gene.log2.ctr.iz.ho.up <- tpm.gene.log2.ctr.iz.ho[overlaps,]
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.iz.ho), rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+tpm.gene.log2.ctr.iz.ho.down <- tpm.gene.log2.ctr.iz.ho[overlaps,]
+# > median(tpm.gene.log2.ctr.iz.ho.up$MEDIAN)
+# [1] 3.5404
+# > median(tpm.gene.log2.ctr.iz.ho.down$MEDIAN)
+# [1] 3.385101
+# > testU(tpm.gene.log2.ctr.iz.ho.up$MEDIAN, tpm.gene.log2.ctr.iz.ho.down$MEDIAN)
+# [1] 0.6264661
+
+## TZ (CD vs. HO)
+# > median(tpm.gene.log2.ctr.tz.cd$MEDIAN)
+# [1] 2.942382
+# > median(tpm.gene.log2.ctr.tz.ho$MEDIAN)
+# [1] 3.391783
+# > testU(tpm.gene.log2.ctr.tz.cd$MEDIAN, tpm.gene.log2.ctr.tz.ho$MEDIAN)
+# [1] 0.01135786
+
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.tz.cd), rownames(subset(de.tpm.gene, LOG2_FC > 0)))
+tpm.gene.log2.ctr.tz.cd.up <- tpm.gene.log2.ctr.tz.cd[overlaps,]
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.tz.cd), rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+tpm.gene.log2.ctr.tz.cd.down <- tpm.gene.log2.ctr.tz.cd[overlaps,]
+# > median(tpm.gene.log2.ctr.tz.cd.up$MEDIAN)
+# [1] 2.980883
+# > median(tpm.gene.log2.ctr.tz.cd.down$MEDIAN)
+# [1] 2.936244
+# > testU(tpm.gene.log2.ctr.tz.cd.up$MEDIAN, tpm.gene.log2.ctr.tz.cd.down$MEDIAN)
+# [1] 0.7453487
+
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.tz.ho), rownames(subset(de.tpm.gene, LOG2_FC > 0)))
+tpm.gene.log2.ctr.tz.ho.up <- tpm.gene.log2.ctr.tz.ho[overlaps,]
+overlaps <- intersect(rownames(tpm.gene.log2.ctr.tz.ho), rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+tpm.gene.log2.ctr.tz.ho.down <- tpm.gene.log2.ctr.tz.ho[overlaps,]
+# > median(tpm.gene.log2.ctr.tz.ho.up$MEDIAN)
+# [1] 3.829392
+# > median(tpm.gene.log2.ctr.tz.ho.down$MEDIAN)
+# [1] 3.191806
+# > testU(tpm.gene.log2.ctr.tz.ho.up$MEDIAN, tpm.gene.log2.ctr.tz.ho.down$MEDIAN)
+# [1] 0.14126
+
+
+
+
+###
+## SCLC specific CTR (IZ)
+nrds.RT.NRFD.sclc.nl.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc.nl, 0.9)
+nrds.RT.NRFD.sclc.nl.ctr.iz <- subset(nrds.RT.NRFD.sclc.nl.ctr, NRFD > 0)
+
+nrds.RT.NRFD.sclc.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc, 0.9)
+nrds.RT.NRFD.sclc.ctr.iz <- subset(nrds.RT.NRFD.sclc.ctr, NRFD > 0)
+
+overlaps <- intersect(rownames(nrds.RT.NRFD.sclc.ctr.iz), rownames(nrds.RT.NRFD.sclc.nl.ctr.iz))
+specific <- setdiff(rownames(nrds.RT.NRFD.sclc.ctr.iz), overlaps)
+
+##
+overlaps <- intersect(rownames(de.tpm.gene.iz.ho), rownames(subset(tpm.gene.log2, TSS %in% specific)))
+de.tpm.gene.iz.ho.sp <- de.tpm.gene.iz.ho[overlaps,]
+de.tpm.gene.iz.ho.sp$Q <- qvalue(de.tpm.gene.iz.ho.sp$P)$qvalue
+writeTable(de.tpm.gene.iz.ho.sp, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_iz_ho_sp_n70.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(rownames(de.tpm.gene.iz.cd), rownames(subset(tpm.gene.log2, TSS %in% specific)))
+de.tpm.gene.iz.cd.sp <- de.tpm.gene.iz.cd[overlaps,]
+de.tpm.gene.iz.cd.sp$Q <- qvalue(de.tpm.gene.iz.cd.sp$P)$qvalue
+writeTable(de.tpm.gene.iz.cd.sp, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src_q_iz_cd_sp_n70.txt"), colnames=T, rownames=F, sep="\t")
+
+
 ##
 plotTRC <- function(tpm, rfd, main.text, file.name, xlim, ylim, col, pos) {
    xlab.text <- "RFD"
@@ -172,6 +295,12 @@ writeTable(de.tpm.gene.ho, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_cor_src
 
 testU(tpm.gene.log2.cd$MEDIAN, tpm.gene.log2.ho$MEDIAN)
 
+## Cell cycle regulation
+genes <- readTable(paste0(plot.de, "_cycle.tab"), header=T, rownames=F, sep="\t")
+file.main <- c(plot.main, "Cell cycle regulation")
+file.de <- paste0(plot.de, "_cycle.pdf")
+plotVolcano(de.tpm.gene, 1.00E-04, genes, file.de, file.main)
+
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 31/10/18
@@ -207,6 +336,8 @@ plotCYS <- function(gene, cn, snr, pch, col, pos) {
 ##
 genes <- c("GTF3C2", "RP11-141C7.3", "SUPT7L", "RAD9A", "E2F3", "ERCC8", "BLM", "POLE")
 genes <- c("MYC", "MYCL", "MYCN")
+genes <- c("PIF1", "EIF3B", "UBE2I", "BRCA2", "TOR1AIP1")
+genes <- c("B2M")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")

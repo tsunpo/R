@@ -519,6 +519,11 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.1)
    abline(h=0, lty=5, lwd=1, col="black")
+
+   ## Plot gene PIF1
+   abline(v=65107831/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=65117867/1E6, lty=2, lwd=1, col="#01DF01")
+   #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
    
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
@@ -538,7 +543,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    legend("bottomright", "CTR (TZ)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
-      
+   
    ###
    ## Initiate RFD plot
    par(mar=c(5.5,4,0,1))
@@ -550,6 +555,10 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    #abline(h=0, lty=5, lwd=1, col="black")
    abline(h=0.9, lty=5, lwd=1, col="black")
    abline(h=-0.9, lty=5, lwd=1, col="black")
+   
+   ## Plot gene PIF1
+   abline(v=65107831/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=65117867/1E6, lty=2, lwd=1, col="#01DF01")
    
    ## Plot cytobands (before points)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
