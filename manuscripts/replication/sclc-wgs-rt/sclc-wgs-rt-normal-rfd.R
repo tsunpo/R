@@ -225,7 +225,19 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_PIF1"))
-plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 63117867, 67117867, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 64617867, 65617867, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+## Chr5 (BRD9)
+c <- 5
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_BRD9"))
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 350406,	1392939, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 0,	1892939, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 0,	2892939, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 0,	3892939, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
 
 
 # -----------------------------------------------------------------------------

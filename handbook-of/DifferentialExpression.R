@@ -357,6 +357,10 @@ getFinalExpression <- function(expr, pheno.expr) {
    return(expr[,rownames(pheno.expr)])
 }
 
+getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
+   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
+}
+
 ## Differential expression analysis methods
 differentialAnalysis <- function(expr, pheno, predictor, predictor.wt, test, test.fdr) {
    pheno.expr <- getFinalPhenotype(expr, pheno, predictor)

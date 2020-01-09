@@ -80,6 +80,8 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 # > nrow(tpm.gene)
 # [1] 19872
 
+tpm.gene.lung.log2 <- log2(tpm.gene + 0.01)
+
 # =============================================================================
 # Density plots
 # Last Modified: 11/06/18

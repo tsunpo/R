@@ -525,6 +525,14 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    abline(v=65117867/1E6, lty=2, lwd=1, col="#01DF01")
    #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
    
+   ## Plot gene TOR1AIP1
+   abline(v=179851177/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=179894135/1E6, lty=2, lwd=1, col="#01DF01")
+   
+   ## Plot gene BRD9
+   abline(v=850406/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=892939/1E6, lty=2, lwd=1, col="#01DF01")
+   
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
@@ -559,6 +567,14 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ## Plot gene PIF1
    abline(v=65107831/1E6, lty=2, lwd=1, col="#01DF01")
    abline(v=65117867/1E6, lty=2, lwd=1, col="#01DF01")
+   
+   ## Plot gene TOR1AIP1
+   abline(v=179851177/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=179894135/1E6, lty=2, lwd=1, col="#01DF01")
+   
+   # Plot gene BRD9
+   abline(v=850406/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=892939/1E6, lty=2, lwd=1, col="#01DF01")
    
    ## Plot cytobands (before points)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
