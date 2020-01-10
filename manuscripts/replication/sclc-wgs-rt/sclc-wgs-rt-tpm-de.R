@@ -389,7 +389,7 @@ plotCYS <- function(gene, cn, snr, pch, col, pos) {
 genes <- c("GTF3C2", "RP11-141C7.3", "SUPT7L", "RAD9A", "E2F3", "ERCC8", "BLM", "POLE")
 genes <- c("MYC", "MYCL", "MYCN")
 genes <- c("PIF1", "EIF3B", "UBE2I", "BRCA2", "TOR1AIP1")
-genes <- c("RAD9A", "PIF1", "BRCA2", "E2F3", "ERCC8", "BLM", "POLE")
+genes <- c("RAD9A", "PIF1", "BRCA2", "E2F3", "ERCC8", "BLM", "POLE", "TOR1AIP1")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
@@ -417,14 +417,15 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main, xlab.text) {
    xmax <- max(de$LOG2_FC)
    #xmax <- 1
    ymax <- max(de$log10P)
-   #ymax <- 4.5
+   ymax <- 4.8
    
    pdf(file.de, height=6, width=6)
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="-log10(p-value)", col="lightgray", main=file.main[1], cex=1.2, cex.axis=1.2, cex.lab=1.2, cex.main=1.25)
 
    abline(h=c(-log10(pvalue)), lty=5)
-   text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)
-   #text(xmax*-1 + 2*xmax/11, -log10(pvalue) - ymax/30, paste0("Q=1.00E-16"), cex=1.1)
+   text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)
+   #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)
+   #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
    
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.2)
@@ -478,13 +479,52 @@ file.de <- paste0(plot.de, "_iz.pdf")
 plotVolcano(de.tpm.gene.iz, 0.07, genes, file.de, file.main, xlab.text)
 
 # -----------------------------------------------------------------------------
+# p-values vs. RFD slopes
+# Last Modified: 10/01/20
+# -----------------------------------------------------------------------------
+plotTRC <- function(tpm, rfd, main.text, file.name, xlim, ylim, col, pos) {
+   xlab.text <- "Initiation efficiency [RFD slope]"
+   ylab.text <- "Significance [-log10(p-value)]"
+ 
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(tpm ~ rfd, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=1, cex=1, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+ 
+   lm.fit <- lm(tpm ~ rfd)
+   abline(lm.fit, col=col[2], lwd=3)
+ 
+   cor <- cor.test(tpm, rfd, method="spearman", exact=F)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col[2], bty="n", cex=1.75)
+ 
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
+   mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+}
+
+de.tpm.gene.iz <- de.tpm.gene.iz[rownames(tpm.gene.log2.ctr.iz),]
+xlim <- c(min(tpm.gene.log2.ctr.iz$TSS_NRFD), max(tpm.gene.log2.ctr.iz$TSS_NRFD))
+ylim <- c(min(-log10(de.tpm.gene.iz$P)), max(-log10(de.tpm.gene.iz$P)))
+
+## 
+file.name <- file.path(wd.de.plots, "TRC_P-vs-NRFD_IZ")
+plotTRC(-log10(de.tpm.gene.iz$P), tpm.gene.log2.ctr.iz$TSS_NRFD, c("Initiation (IZ)", "(n=2,598)"), file.name, xlim, ylim, col=c("red", "black"), "topright")
+
+## 
+file.name <- file.path(wd.de.plots, "TRC_P-vs-NRFD_IZ_HO")
+plotTRC(-log10(de.tpm.gene.iz.ho$P), tpm.gene.log2.ctr.iz.ho$TSS_NRFD, c("IZ (HO)", "(n=1,303)"), file.name, xlim, ylim, col=c("red", "black"), "topright")
+
+file.name <- file.path(wd.de.plots, "TRC_P-vs-NRFD_IZ_CD")
+plotTRC(-log10(de.tpm.gene.iz.cd$P), tpm.gene.log2.ctr.iz.cd$TSS_NRFD, c("IZ (CD)", "(n=1,294)"), file.name, xlim, ylim, col=c("red", "black"), "topright")
+
+# -----------------------------------------------------------------------------
 # D.E.
 # Last Modified: 08/01/20
 # -----------------------------------------------------------------------------
 #tpm.gene.log2.0      <- tpm.gene.log2[rownames(de.tpm.gene.iz),]
 #tpm.gene.lung.log2.0 <- tpm.gene.lung.log2[rownames(de.tpm.gene.iz),]
-tpm.gene.log2.0      <- tpm.gene.log2[rownames(de.tpm.gene),]
-tpm.gene.lung.log2.0 <- tpm.gene.lung.log2[rownames(tpm.gene.log2.0),]
+overlaps <- intersect(intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2)), rownames(tpm.gene.lung.log2))
+length(overlaps)
+tpm.gene.log2.0      <- tpm.gene.log2[overlaps,]
+tpm.gene.lung.log2.0 <- tpm.gene.lung.log2[overlaps,]
 
 colnames <- c("P", "FDR", "N", "T", "LOG2_FC")
 de2 <- toTable(0, length(colnames), nrow(tpm.gene.log2.0), colnames)
@@ -514,6 +554,16 @@ writeTable(de2.tpm.gene, file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q
 
 ## Volcano
 xlab.text <- "SCLC/Lung [log2FC]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_bh1e-16")
+
+genes <- readTable(paste0(plot.de, "_lung.tab"), header=T, rownames=F, sep="\t")
+file.main <- c("TTR + CTR", paste0("(n=17,311)"))
+file.de <- paste0(plot.de, "_lung.pdf")
+plotVolcano(de2.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text)
+
+###
+## Volcano (All genes)
+xlab.text <- "SCLC/Lung [log2FC]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_q1e-06")
 
 genes <- readTable(paste0(plot.de, "_iz_lung.tab"), header=T, rownames=F, sep="\t")
@@ -537,6 +587,13 @@ median(as.numeric(tpm.gene.log2["ENSG00000140451",]))
 testU(as.numeric(tpm.gene.lung.log2["ENSG00000140451",]), as.numeric(tpm.gene.log2["ENSG00000140451",]))
 file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_gene_PIF1")
 plotBox2(wd.de.plots, file.name, tpm.gene.lung.log2["ENSG00000140451",], tpm.gene.log2["ENSG00000140451",], main="PIF1 (ENSG00000140451)", names=c("Lung", "SCLC"))
+
+## TOR1AIP1
+median(as.numeric(tpm.gene.lung.log2["ENSG00000143337",]))
+median(as.numeric(tpm.gene.log2["ENSG00000143337",]))
+testU(as.numeric(tpm.gene.lung.log2["ENSG00000143337",]), as.numeric(tpm.gene.log2["ENSG00000143337",]))
+file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_gene_TOR1AIP1")
+plotBox2(wd.de.plots, file.name, tpm.gene.lung.log2["ENSG00000143337",], tpm.gene.log2["ENSG00000143337",], main="TOR1AIP1 (ENSG00000143337)", names=c("Lung", "SCLC"))
 
 ## BRCA2
 median(as.numeric(tpm.gene.lung.log2["ENSG00000139618",]))

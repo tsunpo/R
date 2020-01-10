@@ -528,6 +528,10 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ## Plot gene TOR1AIP1
    abline(v=179851177/1E6, lty=2, lwd=1, col="#01DF01")
    abline(v=179894135/1E6, lty=2, lwd=1, col="#01DF01")
+  
+   ## Plot gene BRCA2
+   abline(v=32889611/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=32973805/1E6, lty=2, lwd=1, col="#01DF01") 
    
    ## Plot gene BRD9
    abline(v=850406/1E6, lty=2, lwd=1, col="#01DF01")
@@ -572,7 +576,11 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    abline(v=179851177/1E6, lty=2, lwd=1, col="#01DF01")
    abline(v=179894135/1E6, lty=2, lwd=1, col="#01DF01")
    
-   # Plot gene BRD9
+   ## Plot gene BRCA2
+   abline(v=32889611/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=32973805/1E6, lty=2, lwd=1, col="#01DF01") 
+   
+   ## Plot gene BRD9
    abline(v=850406/1E6, lty=2, lwd=1, col="#01DF01")
    abline(v=892939/1E6, lty=2, lwd=1, col="#01DF01")
    
