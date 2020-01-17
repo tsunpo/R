@@ -520,6 +520,16 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.1)
    abline(h=0, lty=5, lwd=1, col="black")
 
+   ## Plot gene GTF3C2
+   abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
+   #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
+   
+   ## Plot gene SUPT7L
+   abline(v=27873679/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=27886676/1E6, lty=2, lwd=1, col="#01DF01")
+   #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
+   
    ## Plot gene PIF1
    abline(v=65107831/1E6, lty=2, lwd=1, col="#01DF01")
    abline(v=65117867/1E6, lty=2, lwd=1, col="#01DF01")
@@ -567,6 +577,16 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    #abline(h=0, lty=5, lwd=1, col="black")
    abline(h=0.9, lty=5, lwd=1, col="black")
    abline(h=-0.9, lty=5, lwd=1, col="black")
+   
+   ## Plot gene GTF3C2
+   abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
+   #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
+   
+   ## Plot gene SUPT7L
+   abline(v=27873679/1E6, lty=2, lwd=1, col="#01DF01")
+   abline(v=27886676/1E6, lty=2, lwd=1, col="#01DF01")
+   #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
    
    ## Plot gene PIF1
    abline(v=65107831/1E6, lty=2, lwd=1, col="#01DF01")
