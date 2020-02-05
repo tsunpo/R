@@ -64,12 +64,13 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
-   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
- 
+   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
@@ -141,6 +142,53 @@ file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spe
 ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
+
+# -----------------------------------------------------------------------------
+# M2/M1 vs. Q4/Q4, LCL and SCLC-NL RTs
+# Last Modified: 05/02/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.sclc.m2, nrds.sclc.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT3_SCLC-M2-M1-vs-ALL_spline_spearman")
+main.text <- paste0(BASE, " M2/M1")
+ymin <- 0.55
+ymax <- 1
+plotRTvsRT3(cors, file.name, main.text, ymin, ymax, cols=c("gold", "black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL", "SCLC vs. LCL S/G1"))
+
+# -----------------------------------------------------------------------------
+# WGD
+# Last Modified: 20/01/20
+# -----------------------------------------------------------------------------
+samples <- readTable(file.path(wd.ngs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")   ## M2/M1
+samples$COR <- as.numeric(samples$COR)
+wgds <- readTable(file.path(wd.ngs, "sclc_wgs_n110_WGD.txt"), header=T, rownames=T, sep="")
+wgds <- wgds[rownames(samples),]
+wgds$decision_value <- as.numeric(wgds$decision_value)
+
+xlab.text <- "In-silico sorting [rho]"
+ylab.text <- "WGD [decision_value]"
+file.name <- file.path(wd.rt.plots, paste0("WGD-vs-SORTING"))
+
+pdf(paste0(file.name, ".pdf"), height=6, width=6)
+plot(samples$COR, wgds$decision_value, ylab="", xlab=xlab.text, main="SCLC (n=101)", col="black", pch=1, cex=2, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+
+lm.fit <- lm(samples$COR ~ wgds$decision_value)
+abline(lm.fit, col="black", lwd=3)
+
+cor <- cor.test(samples$COR, wgds$decision_value, method="spearman", exact=F)
+legend("topright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col="black", bty="n", cex=1.8)
+
+mtext(ylab.text, side=2, line=2.85, cex=1.7)
+dev.off()
+
+samples1 <- cbind(samples, wgds)
+samples1 <- samples1[order(samples1$COR, decreasing=T),]
+writeTable(samples1, file.path(wd.rt.plots, "WGD-vs-SORTING.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
 
 
 
@@ -247,6 +295,7 @@ nrds.nbl.RT.o  <- nrds.nbl.RT[overlaps,]
 nrds.cll.RT.o  <- nrds.cll.RT[overlaps,]
 length(overlaps)
 # [1] 2638820
+
 
 
 

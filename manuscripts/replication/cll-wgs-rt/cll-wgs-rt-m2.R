@@ -64,12 +64,13 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
- 
+   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
@@ -141,6 +142,20 @@ file.name <- file.path(wd.rt.plots, "RTD-vs-RT_CLL-M2-M1-vs-LCL-S-G1_spline_spea
 ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
+
+# -----------------------------------------------------------------------------
+# M2/M1 vs. Q4/Q4, LCL and SCLC-NL RTs
+# Last Modified: 05/02/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.cll.m2, nrds.cll.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT3_CLL-M2-M1-vs-ALL_spline_spearman")
+main.text <- paste0(BASE, " M2/M1")
+ymin <- 0.55
+ymax <- 1
+plotRTvsRT3(cors, file.name, main.text, ymin, ymax, cols=c("gold", "black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL", "CLL vs. LCL S/G1"))
 
 
 

@@ -210,7 +210,7 @@ getRT <- function(nrds, bed.gc) {
    return(nrds.RT)
 }
 
-plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL) {
+plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL) {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
    adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.08)
@@ -219,6 +219,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
+   if (!is.null(nrds.lcl.chr))
+    
    #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
    #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## NOT HERE?
  
@@ -234,6 +237,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ## Initiation plot
    if (!is.null(lcl.rt.chr))
       file.name <- paste0(file.name, "_with-koren")
+   if (!is.null(nrds.lcl.chr))
+      file.name <- paste0(file.name, "_with-LCL")
    if (ext == "pdf") {
       pdf(paste0(file.name, ".pdf"), height=5, width=width)
    } else if (ext == "png")
@@ -258,6 +263,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
 
    ## Plot smoothing splines
+   bed.gc.chr.lcl <- NULL
+   if (!is.null(nrds.lcl.chr))
+      bed.gc.chr.lcl <- bed.gc.chr[rownames(nrds.lcl.chr.RT),]
    bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## BUT HERE?
    points(bed.gc.chr$START/1E6, nrds.chr.T$SPLINE, col=colours[1], pch=16, cex=0.2)
    points(bed.gc.chr$START/1E6, nrds.chr.N$SPLINE, col=colours[2], pch=16, cex=0.2)
@@ -289,7 +297,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ## Plot Koren 2012 (before smoothing spline)
    if (!is.null(lcl.rt.chr))
       points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col=colours[3], pch=16, cex=0.2)
-   
+   if (!is.null(nrds.lcl.chr)) {
+      points(bed.gc.chr.lcl$START/1E6, nrds.lcl.chr.RT$SPLINE, col=colours[3], pch=16, cex=0.2)
+   }
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, nrds.chr.RT$SPLINE, col="black", pch=16, cex=0.2)
    abline(h=0, lty=5, lwd=1, col="black")
@@ -305,6 +315,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
       legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (!is.null(lcl.rt.chr))
       legend("bottomright", "Koren et al. 2012", col=colours[3], lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
+   if (!is.null(nrds.lcl.chr))
+      legend("bottomright", "S/G1 read depth ratio", col=colours[3], lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    if (length(peaks) != 0)
       for (p in 1:length(peaks))
          abline(v=peaks[p]/1E6, lty=5, lwd=1, col="black")
@@ -325,6 +337,37 @@ getCor <- function(reads, timings, method) {
       lm.fit <- lm(reads ~ timings)
       return(summary(lm.fit)$r.squared)
    }
+}
+
+plotRDvsRT <- function(reads1, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
+   xlim <- c(min(timings), max(timings))
+   ylim <- c(min(reads1), max(reads1))
+   cor <- "rho"
+   main.text2 <- "Spearman correlation"
+   if (method == "pearson") {
+      cor <- "r" 
+      main.text2 <- "Pearson correlation"
+   }
+ 
+   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   plot(reads1 ~ timings, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", col=colours[2], cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   #pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   #plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   abline(v=0, lty=5)
+ 
+   lm.fit1 <- lm(reads1 ~ timings)
+   abline(lm.fit1, col=colours[1], lwd=3)
+   cor1 <- getCor(reads1, timings, method)
+
+   RT <- paste0(legends[1], "/", legends[2])
+   if (cor1 > 0) {
+      legend("topright", paste0(cor, " = ", round0(cor1, digits=2), " (", legends[1], " vs. ", RT, ")"), text.col=colours[1], bty="n", cex=1.2)        
+   } else {
+      legend("bottomright", paste0(cor, " = \u2212", round0(abs(cor1), digits=2), " (", legends[2], " vs. ", RT, ")"), text.col=colours[1], bty="n", cex=1.2)
+   }
+   axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3), cex.axis=1.1)
+   mtext(main.text[2], line=0.3, cex=1.2)
+   dev.off()
 }
 
 plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, colours, legends, method) {
@@ -423,7 +466,7 @@ plotRD3vsRTALL <- function(cors, file.name, main.text, ymin, ymax, cols, legends
 }
 
 # -----------------------------------------------------------------------------
-# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
+# Compare betweeen RT and LCL RT in *-wgs-rt.R
 # Last Modified: 05/03/19
 # -----------------------------------------------------------------------------
 getRTvsRT <- function(nrds, nrds.lcl, bed.gc) {
@@ -463,6 +506,62 @@ plotRTvsRTALL <- function(cors, file.name, main.text, ylab.text, xlab.text, ymin
       text(cors[c,]$chr, cors[c,]$cor, round0(cors[c,]$cor, digits=2), col=col, pos=pos, cex=1.2)
    axis(side=1, at=seq(2, 22, by=2))
    axis(side=2, at=seq(-1, 1, by=0.2), labels=c(-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1))
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Compare betweeen M2/M1, Q4/Q4, LCL and SCLC-NL RTs in *-wgs-rt.R
+# Last Modified: 05/02/20
+# -----------------------------------------------------------------------------
+getRTvsRT3 <- function(nrds.m2, nrds.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc) {
+   cors <- toTable(0, 5, 22, c("chr", "length", "cor", "cor1", "cor2"))
+   cors$chr <- 1:22
+ 
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chr)
+      nrds.m2.chr <- nrds.m2[intersect(nrds.m2$BED, rownames(bed.gc.chr)),]
+      nrds.m2.chr.RT <- setSpline(nrds.m2.chr, bed.gc.chr, "RT")
+  
+      nrds.q4.chr <- nrds.q4[intersect(nrds.q4$BED, rownames(bed.gc.chr)),]
+      nrds.q4.chr.RT <- setSpline(nrds.q4.chr, bed.gc.chr, "RT")
+      
+      nrds.sclc.nl.m2.chr <- nrds.sclc.nl.m2[intersect(nrds.sclc.nl.m2$BED, rownames(bed.gc.chr)),]
+      nrds.sclc.nl.m2.chr.RT <- setSpline(nrds.sclc.nl.m2.chr, bed.gc.chr, "RT")
+      
+      nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]  ## Reference LCL S/G1 ratio
+      nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
+  
+      ## Keep only overlapping 1kb windows
+      overlaps <- intersect(intersect(intersect(nrds.m2.chr.RT$BED, nrds.q4.chr.RT$BED), nrds.sclc.nl.m2.chr.RT$BED), nrds.lcl.chr.RT$BED)
+      cors$length[c] <- length(overlaps)
+      cors$cor[c]  <- getCor(nrds.m2.chr.RT[overlaps,]$SPLINE, nrds.q4.chr.RT[overlaps,]$SPLINE, method="spearman")
+      cors$cor1[c] <- getCor(nrds.m2.chr.RT[overlaps,]$SPLINE, nrds.sclc.nl.m2.chr.RT[overlaps,]$SPLINE, method="spearman")
+      cors$cor2[c] <- getCor(nrds.m2.chr.RT[overlaps,]$SPLINE, nrds.lcl.chr.RT[overlaps,]$SPLINE, method="spearman")
+   }
+ 
+   return(cors)
+}
+
+plotRTvsRT3 <- function(cors, file.name, main.text, ymin, ymax, cols, legends) {
+   ylab.text <- "Spearman's rho"
+   xlab.text <- "Chromosome"
+ 
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab="", xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+   lines(cors$cor, y=NULL, type="l", lwd=3, col=cols[1])
+   points(cors$chr, cors$cor1, col=cols[2], pch=19)
+   lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[2])
+   points(cors$chr, cors$cor2, col=cols[3], pch=19)
+   lines(cors$cor2, y=NULL, type="l", lwd=3, col=cols[3])
+
+   legend("bottomright", c(legends[1], legends[2], legends[3]), text.col=c(cols[1], cols[2], cols[3]), bty="n", cex=1.75)        
+
+   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.6)
+   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.6)
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
+   axis(side=2, at=seq(0.5, 1, by=0.1), labels=c(0.5, 0.6, 0.7, 0.8, 0.9, 1), cex.axis=1.7)
    dev.off()
 }
 

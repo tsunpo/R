@@ -38,9 +38,9 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal")
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.txt"), header=T, rownames=T, sep="")
+samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.txt"), header=T, rownames=T, sep="")
 samples1 <- subset(samples1, M2 == 1)[,1]
-samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_N.txt"), header=T, rownames=T, sep="")
+samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.txt"), header=T, rownames=T, sep="")
 samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
@@ -54,7 +54,7 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 # nrow(nrds)
 # [1] 2658679
-nrds.sclc.m2 <- nrds
+nrds.sclc.nl.m2 <- nrds
 
 ymax <- 0.6
 ymin <- 0.14
@@ -62,12 +62,13 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
- 
+   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   
    ## Plot RT
-   main.text <- paste0(BASE, " (TN) M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") lung tissues")  
+   main.text <- paste0(BASE, "\u2212", "NL M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") lung tissues")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("M2 normal", "M1 normal"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 normal", "M1 normal"), c("lightcoral", "lightskyblue3"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
