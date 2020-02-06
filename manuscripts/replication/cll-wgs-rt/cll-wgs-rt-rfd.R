@@ -72,7 +72,7 @@ nrds.RT.NRFD.cll <- nrds.RT.NRFD
 
 snr$S[4] <- sd(nrds.RT.NRFD.cll$SPLINE)
 snr$N[4] <- sd(nrds.RT.NRFD.cll$RT - nrds.RT.NRFD.cll$SPLINE)
-snr$SNR <- stn$S/stn$N
+snr$SNR <- snr$S/snr$N
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data

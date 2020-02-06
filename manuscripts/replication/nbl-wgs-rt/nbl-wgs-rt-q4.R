@@ -149,6 +149,13 @@ ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
 
+###
+##
+file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
+main.text <- "NBL Q4/Q1"
+plotRD2(cors, file.name, main.text)
+
+
 
 
 

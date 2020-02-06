@@ -376,6 +376,9 @@ plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.na
 save(snr, file=file.path(wd.rt.data, paste0("SNR_ALL.RData")))
 writeTable(snr, file.path(wd.rt.data, paste0("SNR_ALL.txt")), colnames=T, rownames=T, sep="\t")
 
+save(snr.q4, file=file.path(wd.rt.data, paste0("SNR.Q4_ALL.RData")))
+writeTable(snr.q4, file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), colnames=T, rownames=T, sep="\t")
+
 ## Sample size
 file.name <- file.path(wd.rt.plots, "STN_ALL_SIZE")
 main.text <- c("Sample size", "")
@@ -433,11 +436,11 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
-   points(n2 ~ snr2, col=col[2], pch=2, cex=2.1)
+   points(n2 ~ snr2, col=col[2], pch=19, cex=2)
    
    samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-   text(snr1, n1, samples, col=col[1], pos=c(1,3,3,3), cex=1.75)
-   text(snr2, n2, samples, col=col[2], pos=c(1,3,3,3), cex=1.75)
+   text(snr1, n1, samples, col=col[1], pos=c(1,2,2,2), cex=1.75)
+   text(snr2, n2, samples, col=col[2], pos=c(1,4,4,4), cex=1.75)
    
    lm.fit <- lm(n1 ~ snr1)
    abline(lm.fit, col=col[1], lwd=3)
@@ -450,7 +453,7 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    
    cor <- cor.test(n2, snr2, method="spearman", exact=F)
    #legend(pos[2], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[2], bty="n", cex=1.75)
-   legend(pos[2], c("Q4/Q1", "rho = 0.8"), text.col=col[2], pch=c(2, NA), col=col[2], bty="n", cex=1.75)
+   legend(pos[2], c("Q4/Q1", "rho = 0.8"), text.col=col[2], pch=c(19, NA), col=col[2], bty="n", cex=1.75)
    
    mtext(ylab.text, side=2, line=2.85, cex=1.7)
    #mtext(main.text[2], cex=1.2, line=0.3)
@@ -458,11 +461,11 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 }
 
 ## Sample size
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE")
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_gold")
 main.text <- c("Signal-to-noise ratio", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "Sample size"
-plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "purple"), c("topleft", "bottomright"))
+plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "gold"), c("topleft", "bottomright"))
 
 
 

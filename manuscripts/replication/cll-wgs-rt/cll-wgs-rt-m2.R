@@ -157,6 +157,11 @@ ymin <- 0.55
 ymax <- 1
 plotRTvsRT3(cors, file.name, main.text, ymin, ymax, cols=c("gold", "black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL", "CLL vs. LCL S/G1"))
 
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-ALL_spline_spearman")
+main.text <- paste0(BASE, " M2/M1")
+ymin <- 0.85
+ymax <- 1
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("gold", "black"), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL"))
 
 
 
