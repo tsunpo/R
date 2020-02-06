@@ -588,8 +588,8 @@ plotRTvsRT2 <- function(cors, file.name, main.text, ymin, ymax, cols, legends) {
 ###
 ##
 plotRD2 <- function(cors, file.name, main.text) {
-   ylab.text <- "NBL Q4 vs. LCL S/G1 [rho]"
-   xlab.text <- "NBL Q1 vs. LCL S/G1 [-rho]"
+   ylab.text <- "LCL S vs. LCL S/G1 [rho]"
+   xlab.text <- "LCL G1 vs. LCL S/G1 [-rho]"
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
