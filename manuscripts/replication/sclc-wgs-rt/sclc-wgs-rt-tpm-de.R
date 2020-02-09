@@ -390,7 +390,7 @@ genes <- c("GTF3C2", "RP11-141C7.3", "SUPT7L", "RAD9A", "E2F3", "ERCC8", "BLM", 
 genes <- c("MYC", "MYCL", "MYCN")
 genes <- c("PIF1", "EIF3B", "UBE2I", "BRCA2", "TOR1AIP1")
 genes <- c("RAD9A", "PIF1", "BRCA2", "E2F3", "ERCC8", "BLM", "POLE", "TOR1AIP1")
-genes <- c("FOXH1")
+genes <- c("TONSL")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
@@ -448,8 +448,8 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main, xlab.text) {
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
-   ymax <- max(de$log10P)
-   #ymax <- 5
+   #ymax <- max(de$log10P)
+   ymax <- 4.5
    
    pdf(file.de, height=6, width=6)
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="-log10(p-value)", col="lightgray", main=file.main[1], cex=1.2, cex.axis=1.2, cex.lab=1.2, cex.main=1.25)
@@ -516,11 +516,11 @@ file.de <- paste0(plot.de, "_iz_sp.pdf")
 plotVolcano(de.tpm.gene.rfd.iz.sp, 0.1, genes, file.de, file.main, xlab.text)
 
 ## IZ (Expressed, SP)
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.05")
-genes <- readTable(paste0(plot.de, "_iz_sp.tab"), header=T, rownames=F, sep="\t")
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08")
+genes <- readTable(paste0(plot.de, "_iz_sp2.tab"), header=T, rownames=F, sep="\t")
 file.main <- c("SCLC-specificly initiated (IZ-S), expressed genes", paste0("(n=1,299)"))
-file.de <- paste0(plot.de, "_iz_sp.pdf")
-plotVolcano(de.tpm.gene.rfd.iz.sp, 0.05, genes, file.de, file.main, xlab.text)
+file.de <- paste0(plot.de, "_iz_sp2.pdf")
+plotVolcano(de.tpm.gene.rfd.iz.sp, 0.08, genes, file.de, file.main, xlab.text)
 
 # -----------------------------------------------------------------------------
 # Gene length vs. RFD slopes
@@ -700,6 +700,13 @@ de2.tpm.gene <- cbind(annot[rownames(de2.iz.sp),], de2.iz.sp)   ## BE EXTRA CARE
 save(de2.tpm.gene, samples, file=file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp.RData"))
 writeTable(de2.tpm.gene, file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp.txt"), colnames=T, rownames=F, sep="\t")
 
+overlaps <- intersect(rownames(de2.tpm.gene), rownames(tpm.gene))
+# length(overlaps)
+# [1] 1245
+de2.tpm.gene <- de2.tpm.gene[overlaps,]
+save(de2.tpm.gene, samples, file=file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp_expressed-in-lung.RData"))
+writeTable(de2.tpm.gene, file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp_expressed-in-lung.txt"), colnames=T, rownames=F, sep="\t")
+
 ## Volcano
 xlab.text <- "SCLC/Lung [log2FC]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_bh1e-17")
@@ -714,9 +721,9 @@ plotVolcano(de2.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text)
 xlab.text <- "SCLC/Lung [log2FC]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_iz_sp_bh1e-16")
 
-genes <- readTable(paste0(plot.de, "_lung.tab"), header=T, rownames=F, sep="\t")
-file.main <- c("Initiation (IZ)", paste0("(n=1,299)"))
-file.de <- paste0(plot.de, "_lung.pdf")
+genes <- readTable(paste0(plot.de, "_lung2.tab"), header=T, rownames=F, sep="\t")
+file.main <- c("SCLC-specificly initiated (IZ-S), expressed genes", paste0("(n=1,245)"))
+file.de <- paste0(plot.de, "_lung2.pdf")
 plotVolcano(de2.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text)
 
 genes <- readTable(paste0(plot.de, "_lung_FOXH1.tab"), header=T, rownames=F, sep="\t")

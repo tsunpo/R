@@ -1,5 +1,5 @@
 # =============================================================================
-# Library      : The bioinformatician's guide to the reference genome
+# Library      : The bioinformatician's guide to the human genome
 # Name         : guide-to-the/hg19.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 15/03/18

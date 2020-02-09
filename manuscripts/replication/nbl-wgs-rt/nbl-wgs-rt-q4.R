@@ -153,7 +153,7 @@ plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "bl
 ##
 file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
 main.text <- "NBL Q4/Q1"
-plotRD2(cors, file.name, main.text)
+plotRD2(cors, file.name, main.text, 0.34, 0.83)
 
 
 

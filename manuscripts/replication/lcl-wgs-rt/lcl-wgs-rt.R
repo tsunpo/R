@@ -132,7 +132,7 @@ plotRD2vsRTALL(sprs, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c(
 ##
 file.name <- file.path(wd.rt.plots, "RD2_LCL-S-G1-vs-LCL-S-G1_spline_spearman")
 main.text <- "LCL S/G1"
-plotRD2(sprs, file.name, main.text)
+plotRD2(sprs, file.name, main.text, 0.14, 0.72)
 
 # -----------------------------------------------------------------------------
 # Mapping replication origins

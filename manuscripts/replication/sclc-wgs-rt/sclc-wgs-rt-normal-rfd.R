@@ -195,6 +195,30 @@ boundary.break <-  45   ## 45 breaks each centering 500
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
+## Chr17 (BIRC5)
+c <- 17
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_BIRC5"))
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  74210267, 78210267, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, gene="BIRC5")
+
+## Chr17 (RDM1)
+c <- 17
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RDM1"))
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  32257777, 36257777, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, gene="RDM1")
+
+## Chr17 (TP53)
+c <- 17
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_TP53"))
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  5590856, 9590856, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, gene="TP53")
+
 ## Chr4
 c <- 4
 chr <- chrs[c]
@@ -380,18 +404,31 @@ save(snr.q4, file=file.path(wd.rt.data, paste0("SNR.Q4_ALL.RData")))
 writeTable(snr.q4, file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), colnames=T, rownames=T, sep="\t")
 
 ## Sample size
-file.name <- file.path(wd.rt.plots, "STN_ALL_SIZE")
+file.name <- file.path(wd.rt.plots, "STN_ALL_SIZE_M2")
 main.text <- c("Sample size", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "Sample size"
-plotSNR(c(92, 101, 56, 96), snr$SNR, file.name, main.text, xlab.text, ylab.text, "purple", "bottomright")
+plotSNR(c(92, 101, 56, 96), snr$SNR, file.name, main.text, xlab.text, ylab.text, "black", "bottomright")
+
+file.name <- file.path(wd.rt.plots, "STN_ALL_SIZE_Q4")
+main.text <- c("Sample size", "")
+xlab.text <- "Signal-to-noise"
+ylab.text <- "Sample size"
+plotSNR(c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, "black", "bottomright")
+
 
 ## TTR
-file.name <- file.path(wd.rt.plots, "STN_ALL_TTR")
+file.name <- file.path(wd.rt.plots, "STN_ALL_TTR_SNR")
 main.text <- c("TTR", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "%"
-plotSNR(snr$TTR, snr$SNR, file.name, main.text, xlab.text, ylab.text, "black", "topleft")
+plotSNR(c(87.8, 80.7, 76.9, 75.5), snr$SNR, file.name, main.text, xlab.text, ylab.text, "black", "topleft")
+
+file.name <- file.path(wd.rt.plots, "STN_ALL_TTR_SIZE")
+main.text <- c("TTR", "")
+xlab.text <- "Sample sizes"
+ylab.text <- "%"
+plotSNR(c(87.8, 80.7, 76.9, 75.5), c(92, 101, 56, 96), file.name, main.text, xlab.text, ylab.text, "black", "topleft")
 
 ## 
 file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-IZ")
@@ -400,12 +437,24 @@ xlab.text <- "Signal-to-noise"
 ylab.text <- "%"
 plotSNR(snr$CTR_IZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
 
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-IZ_SIZE")
+main.text <- c("CTR (IZ)", "")
+xlab.text <- "Sample size"
+ylab.text <- "%"
+plotSNR(c(6.1, 9.5, 11.6, 11.9), c(92, 101, 56, 96), file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
+
 ## 
 file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-TZ")
 main.text <- c("CTR (TZ)", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "%"
 plotSNR(snr$CTR_TZ, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
+
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-TZ_SIZE")
+main.text <- c("CTR (TZ)", "")
+xlab.text <- "Sample size"
+ylab.text <- "%"
+plotSNR(c(6.1, 9.7, 11.5, 12.6), c(92, 101, 56, 96), file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
 
 ## Early
 file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-E")
@@ -414,12 +463,24 @@ xlab.text <- "Signal-to-noise"
 ylab.text <- "%"
 plotSNR(snr$CTR_E, snr$SNR, file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
 
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-E_SIZE")
+main.text <- c("CTR (E)", "")
+xlab.text <- "Sample size"
+ylab.text <- "%"
+plotSNR(c(7.4, 10.5, 13, 11.4), c(92, 101, 56, 96), file.name, main.text, xlab.text, ylab.text, "red", "bottomleft")
+
 ## Late
 file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-L")
 main.text <- c("CTR (L)", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "%"
 plotSNR(snr$CTR_L, snr$SNR, file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
+
+file.name <- file.path(wd.rt.plots, "STN_ALL_CTR-L_SIZE")
+main.text <- c("CTR (L)", "")
+xlab.text <- "Sample size"
+ylab.text <- "%"
+plotSNR(c(4.7, 8.7, 10.1, 13.1), c(92, 101, 56, 96), file.name, main.text, xlab.text, ylab.text, "blue", "bottomleft")
 
 # -----------------------------------------------------------------------------
 # Plot signal-to-noice
