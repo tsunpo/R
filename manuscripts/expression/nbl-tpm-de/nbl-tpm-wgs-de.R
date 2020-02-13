@@ -40,6 +40,7 @@ samples <- cbind(samples.rna[overlaps,], samples.wgs[overlaps,])
 samples$Q4 <- as.factor(samples$Q4)
 samples$M2 <- as.factor(samples$M2)
 rownames(samples) <- samples$V1
+samples <- subset(samples, Q4 != 4)
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
@@ -50,6 +51,8 @@ tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
 # [1] 34908    53
 # > dim(tpm.gene.log2)
 # [1] 18764    53
+# > dim(tpm.gene.log2)
+# [1] 18764    39
 
 # -----------------------------------------------------------------------------
 # Expression vs. in-silico sorting
@@ -57,14 +60,14 @@ tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
 # -----------------------------------------------------------------------------
 #tpm.gene.log2 <- tpm.gene.log2[,rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
 
-colnames <- c("P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
 de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
 rownames(de) <- rownames(tpm.gene.log2)
 
 ## SRC
-#de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
-#de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
-de$P <- mapply(x = 1:nrow(tpm.gene.log2), function(x) testU(as.numeric(tpm.gene.log2[x, rownames(subset(samples, M2 == 0))]), tpm.gene.log2[x, rownames(subset(samples, M2 == 1))]))
+de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
+#de$P <- mapply(x = 1:nrow(tpm.gene.log2), function(x) testU(as.numeric(tpm.gene.log2[x, rownames(subset(samples, M2 == 0))]), tpm.gene.log2[x, rownames(subset(samples, M2 == 1))]))
 
 ## Log2 fold change
 de$M1 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 0)))
@@ -81,8 +84,8 @@ annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", 
 de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
 
 de.tpm.gene <- de.tpm.gene[!is.na(de.tpm.gene$P),]
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_nbl_tpm-gene_U_q_n53.txt"), colnames=T, rownames=F, sep="\t")
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_nbl_tpm-gene_U_q_n53.RData"))
+writeTable(de.tpm.gene, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_n39.txt"), colnames=T, rownames=F, sep="\t")
+save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_n39.RData"))
 # > nrow(de.tpm.gene)
 # [1] 32912
 
@@ -176,7 +179,7 @@ testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
 # [1] 0.1979625
 
-save(tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.iz.cd, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.tz.cd, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ttr, file=file.path(wd.de.data, "tpm_gene_r5p47_m_rfd.RData"))
+save(tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.iz.cd, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.tz.cd, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ttr, file=file.path(wd.de.data, "tpm_gene_r5p47_m_rfd_n39.RData"))
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
@@ -186,39 +189,39 @@ save(tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, t
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd))
 de.tpm.gene.rfd <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd$Q <- qvalue(de.tpm.gene.rfd$P)$qvalue
-writeTable(de.tpm.gene.rfd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 ## IZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz))
 de.tpm.gene.rfd.iz <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz$Q <- qvalue(de.tpm.gene.rfd.iz$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.cd))
 de.tpm.gene.rfd.iz.cd <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.cd$Q <- qvalue(de.tpm.gene.rfd.iz.cd$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_cd_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_cd_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.ho))
 de.tpm.gene.rfd.iz.ho <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.ho$Q <- qvalue(de.tpm.gene.rfd.iz.ho$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_ho_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 ## TZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz))
 de.tpm.gene.rfd.tz <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz$Q <- qvalue(de.tpm.gene.rfd.tz$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_tz_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.tz, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_tz_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz.cd))
 de.tpm.gene.rfd.tz.cd <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz.cd$Q <- qvalue(de.tpm.gene.rfd.tz.cd$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_tz_cd_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.tz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_tz_cd_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz.ho))
 de.tpm.gene.rfd.tz.ho <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz.ho$Q <- qvalue(de.tpm.gene.rfd.tz.ho$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_tz_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.tz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_tz_ho_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Figures

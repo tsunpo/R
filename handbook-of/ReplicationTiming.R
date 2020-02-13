@@ -571,16 +571,16 @@ plotRTvsRT2 <- function(cors, file.name, main.text, ymin, ymax, cols, legends) {
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab="", xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+   plot(cors$cor ~ cors$chr, ylim=c(ymin, ymax), ylab="", xlab=xlab.text, main=main.text, col=cols[1], xaxt="n", yaxt="n", pch=19, cex.axis=1.75, cex.lab=1.75, cex.main=1.85)
    lines(cors$cor, y=NULL, type="l", lwd=3, col=cols[1])
    points(cors$chr, cors$cor1, col=cols[2], pch=19)
    lines(cors$cor1, y=NULL, type="l", lwd=3, col=cols[2])
 
-   legend("bottomright", c(legends[1], legends[2]), text.col=c(cols[1], cols[2]), bty="n", cex=1.75)        
+   legend("bottomright", c(legends[1], legends[2]), text.col=c(cols[1], cols[2]), bty="n", cex=1.8)       
  
    axis(side=1, at=seq(2, 22, by=4), cex.axis=1.6)
    axis(side=1, at=seq(4, 20, by=4), cex.axis=1.6)
-   mtext(ylab.text, side=2, line=2.85, cex=1.7)
+   mtext(ylab.text, side=2, line=2.85, cex=1.75)
    axis(side=2, at=seq(0.8, 1, by=0.05), labels=c(0.8, 0.85, 0.9, 0.95, 1), cex.axis=1.7)
    dev.off()
 }
