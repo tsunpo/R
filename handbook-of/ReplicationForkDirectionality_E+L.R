@@ -432,7 +432,7 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    #abline(v=500, lty=5, lwd=1, col="black")
    abline(v=950, lty=5, lwd=1, col="black")
    abline(v=50,  lty=5, lwd=1, col="black")
-   text(500, ymax*4/5, "|RFD| > 0.9 (80.7%)", cex=1.2, col="black") 
+   text(500, ymax*4/5, "RFD = 0", cex=1.2, col="black") 
    
    mtext(main.text[2], line=4.8, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()

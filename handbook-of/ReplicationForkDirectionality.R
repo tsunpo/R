@@ -549,7 +549,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ###
    ## Initiate RFD plot
    par(mar=c(5.5,4,0,1))
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
    ylab.text <- "RFD"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.1, cex.lab=1.2)

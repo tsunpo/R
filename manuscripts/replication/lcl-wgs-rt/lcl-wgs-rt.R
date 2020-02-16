@@ -62,12 +62,12 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
    
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL)
 }
 
 # -----------------------------------------------------------------------------

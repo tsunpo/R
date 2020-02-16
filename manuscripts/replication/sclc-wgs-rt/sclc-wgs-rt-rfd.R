@@ -50,8 +50,8 @@ save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.R
 
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm.gc.cn.d.rt.rfd.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
-xlab.text <- "Number of right-leading resamplings"
-plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break)
+xlab.text <- "Number of rightward-moving forks"
+plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
 # -----------------------------------------------------------------------------
 # Create RT + RFD data
@@ -192,6 +192,26 @@ boundary.break <-  45   ## 45 breaks each centering 500
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
+## Chr12
+c <- 12
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+## Chr2
+c <- 2
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
+plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+
+
+
+
 ## Chr17 (BIRC5)
 c <- 17
 chr <- chrs[c]
@@ -247,21 +267,11 @@ chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
 plotBootstrapRFD(file.name, BASE, chr, 22579868, 33886676, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_GTF3C2"))
 plotBootstrapRFD(file.name, BASE, chr, 25548716, 29886676, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
-## Chr12
-c <- 12
-chr <- chrs[c]
-bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))
-plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 ## Chr1
 c <- 1

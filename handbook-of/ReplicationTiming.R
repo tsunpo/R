@@ -210,6 +210,7 @@ getRT <- function(nrds, bed.gc) {
    return(nrds.RT)
 }
 
+## http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
 plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL) {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
@@ -219,13 +220,13 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
    if (!is.null(nrds.lcl.chr))
+      nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
     
    #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
    #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## NOT HERE?
  
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
    if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
    if (is.na(xmin)) {
       start <- bed.gc.chr[rownames(nrds.chr)[1],]$START
