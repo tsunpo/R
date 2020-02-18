@@ -110,7 +110,7 @@ boundary.upper <- 500   ## 500-520 breaks
 boundary.lower <- 500   ## 480-500 breaks
 boundary.break <- 0   ## 1 breaks each centering 500
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD=0.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), "")   #paste0("Chr1-22 (1-kbs)"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), paste0("Chr1-22 (1-kbs)"))
 xlab.text <- "Number of rightward-moving forks"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 

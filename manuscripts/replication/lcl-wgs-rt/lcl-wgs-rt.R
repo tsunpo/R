@@ -79,7 +79,7 @@ save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_sp
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 
-for (c in 22:1) {
+for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    

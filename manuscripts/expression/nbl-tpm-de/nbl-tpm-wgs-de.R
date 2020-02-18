@@ -40,7 +40,7 @@ samples <- cbind(samples.rna[overlaps,], samples.wgs[overlaps,])
 samples$Q4 <- as.factor(samples$Q4)
 samples$M2 <- as.factor(samples$M2)
 rownames(samples) <- samples$V1
-samples <- subset(samples, Q4 != 4)
+#samples <- subset(samples, Q4 != 4)
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
@@ -171,7 +171,7 @@ testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
 ## TTR (r5p47)
 tpm.gene.log2.m.rfd.ttr <- rbind(subset(tpm.gene.log2.m.rfd, TSS_RFD >= 0.9), subset(tpm.gene.log2.m.rfd, TSS_RFD <= -0.9))
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
-# [1] 1.374863e
+# [1] 1.374863e-05
 testU(tpm.gene.log2.m.rfd.ctr.iz$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
 # [1] 0.02015283
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
@@ -179,7 +179,7 @@ testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
 # [1] 0.1979625
 
-save(tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.iz.cd, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.tz.cd, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ttr, file=file.path(wd.de.data, "tpm_gene_r5p47_m_rfd_n39.RData"))
+save(tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.iz.cd, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.tz.cd, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ttr, file=file.path(wd.de.data, "tpm_gene_r5p47_m_rfd_n53.RData"))
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
@@ -291,23 +291,30 @@ for (g in 1:length(genes)) {
 # 
 # Last Modified: 01/21/20
 # -----------------------------------------------------------------------------
+tpm.gene.log2.m.rfd.ctr.iz.nbl <- tpm.gene.log2.m.rfd.ctr.iz
+# > nrow(tpm.gene.log2.m.rfd.ctr.iz.nbl)
+# [1] 3107
+# > nrow(tpm.gene.log2.m.rfd.ctr.iz)
+# [1] 2565
+
 overlaps <- intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl), rownames(tpm.gene.log2.m.rfd.ctr.iz.sclc))
-tpm.gene.log2.m.rfd.ctr.iz.nbl.s <- tpm.gene.log2.m.rfd.ctr.iz.nbl[overlaps,]
+diffs <- setdiff(rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl), overlaps)
+tpm.gene.log2.m.rfd.ctr.iz.nbl.s <- tpm.gene.log2.m.rfd.ctr.iz.nbl[diffs,]
 
 tpm.gene.log2.m.rfd.ctr.iz.nbl.s <- tpm.gene.log2.m.rfd.ctr.iz.nbl.s[intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl.s), rownames(de.tpm.gene)),]
-tpm.gene.log2.m.rfd.ctr.iz.nbl.ns <- tpm.gene.log2.m.rfd.ctr.iz.nbl[setdiff(rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl), overlaps),]
+tpm.gene.log2.m.rfd.ctr.iz.nbl.ns <- tpm.gene.log2.m.rfd.ctr.iz.nbl[overlaps,]
 tpm.gene.log2.m.rfd.ctr.iz.nbl.ns <- tpm.gene.log2.m.rfd.ctr.iz.nbl.ns[intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl.ns), rownames(de.tpm.gene)),]
 
 ## IZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl.s))
 de.tpm.gene.rfd.iz.s <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.s$Q <- qvalue(de.tpm.gene.rfd.iz.s$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.s, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_s_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.s, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_s_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.nbl.ns))
 de.tpm.gene.rfd.iz.ns <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.ns$Q <- qvalue(de.tpm.gene.rfd.iz.ns$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.ns, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_ns_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.ns, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47-rfd_src_q_iz_ns_n39.txt"), colnames=T, rownames=F, sep="\t")
 
 ##
 xlab.text <- "NBL M2/M1 [log2FC]"

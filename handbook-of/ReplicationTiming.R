@@ -589,13 +589,14 @@ plotRTvsRT2 <- function(cors, file.name, main.text, ymin, ymax, cols, legends) {
 ###
 ##
 plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
-   ylab.text <- "LCL S vs. LCL S/G1 [rho]"
-   xlab.text <- "LCL G1 vs. LCL S/G1 [-rho]"
+   ylab.text <- "S vs. S/G1 [rho]"
+   xlab.text <- "G1 vs. S/G1 [-rho]"
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(cors$cor1 ~ abs(cors$cor2), ylim=c(ymin, ymax), xlim=c(ymin, ymax), ylab="", xlab=xlab.text, main=main.text, col=NULL, pch=19, cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
-   lines(abs(cors$cor2), abs(cors$cor2), pch=NULL, col="purple", type="l", lty=2, lwd=3)
+   lines(c(0, 1), c(0, 1), pch=NULL, col="purple", type="l", lty=2, lwd=3)
+   #lines(abs(cors$cor2), abs(cors$cor2), pch=NULL, col="purple", type="l", lty=2, lwd=3)
    #lm.fit <- lm(abs(cors$cor2) ~ abs(cors$cor2))
    #abline(lm.fit, col="purple", lty=2, lwd=2)
    
