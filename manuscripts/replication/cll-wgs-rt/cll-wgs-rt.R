@@ -174,7 +174,7 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_CLL_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=-1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_CLL_chrs", size=6, file.main, "bottomright", c("red", "lightpink1", "lightskyblue2", "blue"), NULL, flip.x=-1, flip.y=1, legend.title=NA)
 
 
 

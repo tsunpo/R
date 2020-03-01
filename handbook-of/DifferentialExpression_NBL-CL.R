@@ -226,7 +226,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="white", pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.lab=1.7, cex.axis=1.5, cex.main=1.8)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="lightgray", pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.2, cex.lab=1.3, cex.main=1.5)
    #idx <- which(trait != "NA")
    #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
    idx <- which(trait == "Q3")
@@ -241,12 +241,13 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    if (!is.null(samples))
       for (s in 1:length(samples)) {
          sample <- samples[s]
+         
          if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1)
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1.3)
          else if (sample == "TR14")
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1)
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1.3)
          else
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1)
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1.3)
       }
    
    mtext(file.main[2], cex=1.2, line=0.3)
@@ -255,12 +256,14 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=16, cex=1.7)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=16, cex=1.25)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.7)
-   mtext(ylab.txt, side=2, line=2.85, cex=1.7)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.25)
+   mtext(ylab.txt, side=2, line=2.85, cex=1.3)
    dev.off()
 }
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL-CL_chrs", size=6, file.main, "topright", c("red", "lightpink1", "lightskyblue2", "blue"), samples1, flip.x=-1, flip.y=1, legend.title=NA)
+
 
 plotPCAs <- function(x, y, pca, traits, wd.pca, file.main, legend.x, legend.y, cols) {
    for (t in 1:ncol(traits)) {
@@ -363,10 +366,6 @@ getFinalPhenotype <- function(expr, pheno, covariate) {
 
 getFinalExpression <- function(expr, pheno.expr) {
    return(expr[,rownames(pheno.expr)])
-}
-
-getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
-   return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
 }
 
 ## Differential expression analysis methods

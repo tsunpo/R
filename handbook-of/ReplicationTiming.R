@@ -214,8 +214,8 @@ getRT <- function(nrds, bed.gc) {
 plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL) {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.08)
-   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.08)
+   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.05)
+   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.05)
 
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
@@ -308,8 +308,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.08)
    
    ## Plot legend and peaks
-   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pch=1, col=colours2[1], cex=1.15)   
-   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pch=1, col=colours2[2], cex=1.15)
+   legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.5, pch=1, col=colours2[1], cex=1.15)   
+   legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.5, pch=1, col=colours2[2], cex=1.15)
    if (!is.na(xmin) && !is.na(xmax))
       legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=2, bty="n", horiz=T, cex=1.15)
    else

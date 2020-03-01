@@ -55,7 +55,7 @@ nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, be
 save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "q4-q1", ".RData")))
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "q4-q1", ".RData")))
 # > nrow(nrds)
-# [1] 2659570
+# [1] 2653842
 nrds.cll.q4 <- nrds
 
 ##
@@ -70,12 +70,13 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
- 
+   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   
    ## Plot RT
    main.text <- paste0(BASE, " Q4/Q1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue"), c("Q3 tumour", "Q1 tumour"), c("lightcoral", "lightskyblue3"), c("Q3", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4 tumour", "Q1 tumour"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------

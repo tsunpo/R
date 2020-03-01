@@ -67,7 +67,7 @@ for (c in 1:22) {
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("S phase", "G1 phase"), c("lightcoral", "lightskyblue3"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("S phase", "G1 phase"), c("lightpink1", "lightskyblue2"), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL)
 }
 
 # -----------------------------------------------------------------------------
@@ -90,13 +90,13 @@ for (c in 1:22) {
 
    xlab.text <- "RT (S/G1 ratio) [log2]"
    ylab.text <- "Read depth [RPKM]"
-   #main.text <- c(paste0("LCL read depths vs. LCL RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
-   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
-   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
+   main.text <- c(paste0("LCL read depth vs. LCL RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
 
-   main.text <- c(paste0("LCL G1 read depth vs. LCL RT (", "Chr", c, ")"), "")
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
-   plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("blue", adjustcolor("lightskyblue3", alpha.f=0.08)), c("S", "G1"), method="spearman")
+   #main.text <- c(paste0("LCL G1 read depth vs. LCL RT (", "Chr", c, ")"), "")
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
+   #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("blue", adjustcolor("lightskyblue3", alpha.f=0.08)), c("S", "G1"), method="spearman")
    
    #main.text <- c(paste0("LCL S read depth vs. LCL RT (", "Chr", c, ")"), "")
    #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
@@ -123,7 +123,7 @@ plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), 
 
 ## Fighte 2C
 file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
-main.text <- paste0("LCL read depths vs. LCL RT")
+main.text <- paste0("LCL read depth vs. LCL RT")
 ymin <- -0.8
 ymax <- 0.8
 plotRD2vsRTALL(sprs, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)

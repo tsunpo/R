@@ -259,7 +259,7 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "lightskyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_chrs_lightpink1_lightskyblue2_Q4", size=6, file.main, "bottomright", c("red", "lightpink1", "lightskyblue2", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1
@@ -286,18 +286,18 @@ samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_2.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL RT", yaxt="n", cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="skyblue3", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="lightskyblue2", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightpink1", pch=16, add=T)
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"), cex=1.7)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.7)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.6)
 mtext("Spearman's rho", side=2, line=2.8, cex=1.7)
