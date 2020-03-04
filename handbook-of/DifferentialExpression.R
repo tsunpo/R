@@ -226,7 +226,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col="white", pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.lab=1.7, cex.axis=1.5, cex.main=1.8)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.lab=1.7, cex.axis=1.5, cex.main=1.8)
    #idx <- which(trait != "NA")
    #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
    idx <- which(trait == "Q3")

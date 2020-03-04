@@ -39,7 +39,7 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 #wd.ngs.data <- file.path(wd.ngs, "data")
 wd.ngs.data <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"), "data")
-samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_TN.list"), header=F, rownames=F, sep="")
+samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 ## samples1 are modified to the normals in this script
 
@@ -70,7 +70,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-tn-vs-l
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-TN-vs-LCL_spline_spearman")
-main.text <- c("SCLC TN read depth vs. LCL S/G1", "")
+main.text <- c("SCLC-TN read depth vs. LCL S/G1", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -80,7 +80,7 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.sclc.nl <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.sclc.nl, file.path(wd.ngs, "sclc_wgs_n92_TN.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(samples.sclc.nl, file.path(wd.ngs, "sclc_wgs_n92_NL.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7585423 -0.7439594 -0.7293444 -0.6681727  0.6753625 
 
@@ -117,14 +117,14 @@ test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
 pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc-tn_chrs.RData")))
 
-#load(file.path(wd.rt.data, paste0("pca_sclc-tn_chrs.RData")))
-file.main <- c("SCLC TN (n=92) read depth profiles", "")
-trait <- as.numeric(samples.sclc$Q4)
+#load(file.path(wd.rt.data, paste0("pca_sclc-nl_chrs.RData")))
+file.main <- c("SCLC-NL (n=92) read depth profiles", "")
+trait <- as.numeric(samples.sclc.nl$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC-TN_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "lightskyblue3", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC-NL_chrs", size=6, file.main, "bottomright", c("red", "lightpink1", "lightskyblue2", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1
@@ -134,46 +134,55 @@ plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC-TN_chrs", size=6, file.main,
 # Beeswarm plots
 # Last Modified: 21/04/19
 # -----------------------------------------------------------------------------
-samples.sclc <- readTable("/projects/cangen/tyang2/SCLC/ngs/WGS/sclc_wgs_n92_N.txt", header=T, rownames=T, sep="")
-samples.nbl  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1_N.txt", header=T, rownames=T, sep="")
-samples.cll  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96_N.txt", header=T, rownames=T, sep="")
-n.sclc <- nrow(samples.sclc)
-n.nbl  <- nrow(samples.nbl)
-n.cll  <- nrow(samples.cll)
+#samples.sclc <- readTable("/projects/cangen/tyang2/SCLC/ngs/WGS/sclc_wgs_n92_NL.txt", header=T, rownames=T, sep="")
+#samples.nbl  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1_N.txt", header=T, rownames=T, sep="")
+#samples.cll  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96_N.txt", header=T, rownames=T, sep="")
+n.sclc.nl <- nrow(samples.sclc.nl)
+n.nbl.wb  <- nrow(samples.nbl.wb)
+n.cll.wb  <- nrow(samples.cll.wb)
 
-samples <- toTable(0, 3, n.cll+n.sclc+n.nbl, c("CANCER", "COR", "Q4"))
-samples$CANCER[1:n.sclc] <- 0
-samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
-samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
-samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR)
-samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
+samples <- toTable(0, 3, n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
+samples$CANCER[1:n.sclc.nl] <- 0
+samples$CANCER[(1+n.sclc.nl):(n.sclc.nl+n.nbl.wb)] <- 1
+samples$CANCER[(1+n.sclc.nl+n.nbl.wb):(n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 2
+samples$COR <- c(samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
+samples$Q4  <- c(samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_normal.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_normal_2.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL S/G1", yaxt="n", cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC-NL", "NBL-WB", "CLL-WB"), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL S/G1", yaxt="n", cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="skyblue3", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightcoral", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="lightskyblue2", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightpink1", pch=16, add=T)
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightcoral", "skyblue3", "blue"), cex=1.7)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.7)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.6)
 mtext("Spearman's rho", side=2, line=2.8, cex=1.7)
 mtext("", cex=1.2, line=0.3)
-mtext(text=c("(TN)", "(WB)", "(WB)"), side=1, cex=1.7, line=2.5, at=c(1,2,3))
+#mtext(text=c("(TN)", "(WB)", "(WB)"), side=1, cex=1.7, line=2.5, at=c(1,2,3))
 dev.off()
 
+## 
+testU(samples.sclc.nl$COR, samples.sclc$COR)
+# [1] 5.601622e-10
+testU(samples.sclc.nl$COR, samples.nbl$COR)
+# [1] 0.5027551
+testU(samples.sclc.nl$COR, samples.cll$COR)
+# [1] 2.72587e-15
 
-
-
-
+## 
+testU(samples.sclc$COR, samples.nbl$COR)
+# [1] 4.788974e-05
+testU(samples.sclc$COR, samples.cll$COR)
+# [1] 9.387524e-31
 
 
 

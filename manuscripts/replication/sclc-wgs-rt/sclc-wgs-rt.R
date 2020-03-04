@@ -276,7 +276,7 @@ n.sclc <- nrow(samples.sclc)
 n.nbl  <- nrow(samples.nbl)
 n.cll  <- nrow(samples.cll)
 
-samples <- toTable(0, 3, n.cll+n.sclc+n.nbl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2

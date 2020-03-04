@@ -522,11 +522,14 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 }
 
 ## Sample size
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE")
+snr    <- readTable(file.path(wd.rt.data, paste0("SNR_ALL.txt")), header=T, rownames=T, sep="\t")
+snr.q4 <- readTable(file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), header=T, rownames=T, sep="\t")
+
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_lightgray")
 main.text <- c("Signal-to-noise ratio", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "Sample size"
-plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "goldenrod2"), c("topleft", "bottomright"))
+plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "lightgray"), c("topleft", "bottomright"))
 
 
 

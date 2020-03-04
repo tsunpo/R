@@ -70,7 +70,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_s
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-WB-vs-LCL_spline_spearman")
-main.text <- c("NBL WB read depth vs. LCL S/G1", "")
+main.text <- c("NBL-WB read depth vs. LCL S/G1", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -79,8 +79,8 @@ plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
 # Overall correlation with LCL S/G1
 # Last Modified: 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.nbl <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1_N.txt"), colnames=T, rownames=F, sep="\t")
+samples.nbl.wb <- setSamplesQ4(wd.rt.data, samples1)
+writeTable(samples.nbl.wb, file.path(wd.ngs, "nbl_wgs_n57-1_N.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7788625 -0.7618046 -0.7357533 -0.5147924  0.7063812 
 
@@ -106,13 +106,13 @@ pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl-wb_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_nbl-wb_chrs.RData")))
-file.main <- c("NBL WB (n=56) read depth profiles", "")
-trait <- as.numeric(samples.nbl$Q4)
+file.main <- c("NBL-WB (n=56) read depth profiles", "")
+trait <- as.numeric(samples.nbl.wb$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL-WB_chrs", size=6, file.main, "bottomright", c("red", "lightcoral", "skyblue3", "blue"), NULL, flip.x=1, flip.y=-1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL-WB_chrs", size=6, file.main, "bottomright", c("red", "lightpink1", "lightskyblue2", "blue"), NULL, flip.x=1, flip.y=-1, legend.title=NA)
 
 # -----------------------------------------------------------------------------
 # PCA; Remove 15 outliers
