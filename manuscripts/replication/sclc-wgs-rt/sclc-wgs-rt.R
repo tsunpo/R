@@ -40,7 +40,7 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs.data <- file.path(wd.ngs, "data")
 samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n101.list"), header=F, rownames=F, sep="")
-samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_TN.list"), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.list"), header=F, rownames=F, sep="")
 #samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_WB.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
@@ -286,10 +286,10 @@ samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_2.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_1.3.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("SCLC", "NBL", "CLL"), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL RT", yaxt="n", cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL RT", yaxt="n", cex.axis=1.7, cex.lab=1.7, cex.main=1.8)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
@@ -301,7 +301,8 @@ legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lig
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.6)
 mtext("Spearman's rho", side=2, line=2.8, cex=1.7)
-mtext("", cex=1.2, line=0.3)
+#mtext("", cex=1.2, line=0.3)
+mtext(text=c("SCLC", "NBL", "CLL"), side=1, cex=1.7, line=1.3, at=c(1,2,3))
 dev.off()
 
 

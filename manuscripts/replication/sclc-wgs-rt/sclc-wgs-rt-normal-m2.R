@@ -99,18 +99,18 @@ for (c in 1:22) {
 ## S-phase progression rate (SPR)
 ylab.text <- "SPR"
 file.name <- file.path(wd.rt.plots, "SPR_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " (TN) M2/M1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
+main.text <- c(paste0(BASE, "-TN M2/M1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
 plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " (TN) M2/M1 SPR vs. Read depths correlation"), "")
+main.text <- c(paste0(BASE, "-TN M2/M1 SPR vs. Read depths correlation"), "")
 xlab.text <- "M2 vs. M1 [rho]"
 plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, " (TN) M2/M1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
+main.text <- c(paste0(BASE, "-TN M2/M1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
 xlab.text <- "Woodfine et al. 2004"
 plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
