@@ -206,7 +206,7 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA, BASE) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait), decreasing=T)
@@ -255,6 +255,11 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
    #trait.v[5] <- "Others"   ## For PCA ALL
+   if (BASE != "") {
+      trait.v <- trait.v[1:4]
+      trait.v <- paste0(BASE, " ", trait.v)
+      cols <- cols[1:4]
+   }
    if (is.na(legend.title))
       legend(legend, trait.v, col=cols, pch=16, cex=1.7)   ##bty="n")
    else
