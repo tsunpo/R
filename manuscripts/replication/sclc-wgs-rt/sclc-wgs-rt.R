@@ -340,8 +340,8 @@ samples.sclc <- readTable("/projects/cangen/tyang2/SCLC/ngs/WGS/sclc_wgs_n101.tx
 samples.nbl  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1.txt", header=T, rownames=T, sep="")
 samples.cll  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96.txt", header=T, rownames=T, sep="")
 samples.sclc.nl <- readTable("/projects/cangen/tyang2/SCLC/ngs/WGS/sclc_wgs_n92_NL.txt", header=T, rownames=T, sep="")
-samples.nbl.wb  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1_WB.txt", header=T, rownames=T, sep="")
-samples.cll.wb  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96_WB.txt", header=T, rownames=T, sep="")
+samples.nbl.wb  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1_N.txt", header=T, rownames=T, sep="")
+samples.cll.wb  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96_N.txt", header=T, rownames=T, sep="")
 n.sclc <- nrow(samples.sclc)
 n.nbl  <- nrow(samples.nbl)
 n.cll  <- nrow(samples.cll)
@@ -355,10 +355,10 @@ samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
-rownames(samples) <- c(rownames(samples.sclc), rownames(samples.nbl), rownames(samples.cll), rownames(samples.sclc.nl), rownames(samples.nbl.wb), rownames(samples.cll.wb))
+rownames(samples) <- c(rownames(samples.sclc), rownames(samples.nbl), rownames(samples.cll), paste0(rownames(samples.sclc.nl), "-NL"), paste0(rownames(samples.nbl.wb), "-WB"), paste0(rownames(samples.cll.wb), "-WB"))
 samples$SAMPLE_ID <- rownames(samples)
 
 ## ALL
@@ -382,17 +382,17 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL+WB_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA)
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL+WB", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "")
 
 ###
 ## SCLC
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
@@ -403,16 +403,16 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL_SCLC_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "SCLC")
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL_SCLC", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "SCLC")
 
 ## NBL
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
@@ -423,16 +423,16 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL_NBL_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "NBL")
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL_NBL", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "NBL")
 
 ## CLL
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
@@ -443,16 +443,16 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL_CLL_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "CLL")
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL_CLL", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "CLL")
 
 ## SCLC-NL
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
@@ -463,16 +463,16 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL_SCLC-NL_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "SCLC-NL")
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL_SCLC-NL", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "SCLC-NL")
 
 ## NBL-WB
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
@@ -483,16 +483,16 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL_NBL-WB_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "NBL-WB")
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL_NBL-WB", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "NBL-WB")
 
 ## CLL
-samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl, c("CANCER", "COR", "Q4"))
+samples <- toTable(0, 3, n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb, c("CANCER", "COR", "Q4"))
 samples$CANCER[1:n.sclc] <- 0
 samples$CANCER[(1+n.sclc):(n.sclc+n.nbl)] <- 1
 samples$CANCER[(1+n.sclc+n.nbl):(n.sclc+n.nbl+n.cll)] <- 2
 samples$CANCER[(1+n.sclc+n.nbl+n.cll):(n.sclc+n.nbl+n.cll+n.sclc.nl)] <- 3
 samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb)] <- 4
-samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
+samples$CANCER[(1+n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb):(n.sclc+n.nbl+n.cll+n.sclc.nl+n.nbl.wb+n.cll.wb)] <- 5
 samples$COR <- c(samples.sclc$COR, samples.nbl$COR, samples.cll$COR, samples.sclc.nl$COR, samples.nbl.wb$COR, samples.cll.wb$COR)
 samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4, samples.sclc.nl$Q4, samples.nbl.wb$Q4, samples.cll.wb$Q4)
 
@@ -503,7 +503,7 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_ALL_CLL-WB_Q4", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "CLL-WB")
+plotPCA(1, 3, pca.de, trait, wd.rt.plots, "PCA_ALL_CLL-WB", size=6, file.main, "topleft", c("red", "lightpink1", "lightskyblue2", "blue", "lightgray"), NULL, flip.x=-1, flip.y=1, legend.title=NA, "CLL-WB")
 
 
 
