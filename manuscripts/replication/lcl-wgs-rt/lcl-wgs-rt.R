@@ -16,7 +16,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.handbook, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")     ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
-load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
+#load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -54,6 +54,9 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
 # > nrow(nrds)
 # [1] 2582940 - 22
+nrds.lcl <- nrds
+
+load(file.path("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("lcl", "_", "rpkm", ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
 nrds.lcl <- nrds
 
 ymax <- 0.6
@@ -94,13 +97,13 @@ for (c in 1:22) {
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
 
-   #main.text <- c(paste0("LCL G1 read depth vs. LCL RT (", "Chr", c, ")"), "")
-   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
-   #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("blue", adjustcolor("lightskyblue3", alpha.f=0.08)), c("S", "G1"), method="spearman")
+   main.text <- c(paste0("LCL G1 read depth vs. LCL RT (", "Chr", c, ")"), "")
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
+   plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("blue", adjustcolor("lightskyblue2", alpha.f=0.08)), c("S", "G1"), method="spearman")
    
-   #main.text <- c(paste0("LCL S read depth vs. LCL RT (", "Chr", c, ")"), "")
-   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
-   #plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", adjustcolor("lightcoral", alpha.f=0.08)), c("S", "G1"), method="spearman")
+   main.text <- c(paste0("LCL S read depth vs. LCL RT (", "Chr", c, ")"), "")
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
+   plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", adjustcolor("lightpink1", alpha.f=0.08)), c("S", "G1"), method="spearman")
 }
 
 ## S-phase progression rate (SPR)
@@ -122,7 +125,7 @@ xlab.text <- "Mean replication timing ratio"
 plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## Fighte 2C
-file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman_2")
 main.text <- paste0("LCL read depth vs. LCL RT")
 ymin <- -0.8
 ymax <- 0.8

@@ -258,38 +258,39 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=5.1)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.3)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
    
    text(8, rfds$TTR[n], " TTR ", cex=1.2, col="black")
-   abline(v=2, lty=5, lwd=1, col="black")
+   #abline(v=2, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names))
       text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
  
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
-   legend("topleft", "Normal", col="black", bty="n", pt.cex=1.2, pch=1, horiz=T, cex=1.2)
-   legend("topright", "Primary tumour                    ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
+   legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
+   legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
    #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
+   mtext("[%]                ", side=2, line=2.8, cex=1.2)
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.3)
-   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
-   lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
-   
-   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.3)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.5)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
    lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
    
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
+   lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
+   
    text(8, rfds$CTR_E[n], "        CTR (E)", cex=1.2, col="red", pos=1) 
    text(8, rfds$CTR_L[n], "        CTR (L)", cex=1.2, col="blue", pos=3)
-   abline(v=2, lty=5, lwd=1, col="black")
+   #abline(v=2, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
@@ -298,13 +299,14 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
 
    ##
-   axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
-   axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
-   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.1)
-   axis(side=1, at=seq(3, 7, by=2), labels=c("n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.1)
+   #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
+   #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.2)
+   axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.1)
    #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
    #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
    
+   mtext("                        Frequency", side=2, line=2.8, cex=1.2)
    dev.off()
 }
 
@@ -321,6 +323,10 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    rfds$pos1 <- c(3, 3, 3, 3)
    rfds$pos2 <- c(3, 3, 3, 1)
    rfds$pos3 <- c(1, 1, 1, 3)
+   #rfds$TTR0 <- c(0, 0, 0, 0)
+   #for (r in 1:length(names)) {
+   #   rfds$TTR0[r] <- as.numeric(round0((report.rfds[[r]][1] + report.rfds[[r]][2] + report.rfds[[r]][3])*100, digit=1))
+   #}
    for (r in 1:length(names)) {
       rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
       rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
@@ -328,53 +334,58 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    }
    rfds$CTR_E <- c(7.2, 10.4, 13.6, 11.2)
    rfds$CTR_L <- c(5, 8.1, 10.7, 12.5)
-   
+   rfds$TTR0 <- rfds$TTR + rfds$CTR_E + rfds$CTR_L
+    
    ##
    pdf(file.name, height=5, width=5.1)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="%", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.3)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    
-   rfds$TTR0 <- c(87.8, 80.7, 76.9, 75.5)
-   points(rfds$X, rfds$TTR0, col="gray", pch=rfds$pch, cex=1.3)
-   lines(x=rfds$X[1:4], y=rfds$TTR0[1:4], type="l", lty=5, lwd=2.5, col="gray")
-   text(8, rfds$TTR0[n], " TTR ", cex=1.2, col="gray")
+   #rfds$TTR0 <- c(87.8, 80.7, 76.9, 75.5)
+   points(rfds$X, rfds$TTR0, col="#01DF01", pch=rfds$pch, cex=1.5)
+   lines(x=rfds$X[1:4], y=rfds$TTR0[1:4], type="l", lty=5, lwd=2.5, col="#01DF01")
+   text(8, rfds$TTR0[n], "       TTR+CTR", cex=1.2, col="#01DF01")
+   for (n in 1:length(names))
+      text(rfds$X[n], rfds$TTR0[n], rfds$TTR0[n], col="#01DF01", pos=rfds$pos1[n], cex=1.2)
    
    text(8, rfds$TTR[n], " TTR ", cex=1.2, col="black")
-   abline(v=2, lty=5, lwd=1, col="black")
+   #abline(v=2, lty=5, lwd=1, col="black")
    for (n in 1:length(names))
       text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
 
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
-   legend("topleft", "Normal", col="black", bty="n", pt.cex=1.2, pch=1, horiz=T, cex=1.2)
-   legend("topright", "Primary tumour                    ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
-
+   legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
+   legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
+   mtext("[%]                ", side=2, line=2.8, cex=1.2)
+   
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="%", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.3)
-   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
-   
-   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.3)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.5)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
  
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
+   
    text(8, rfds$CTR_E[n], "        CTR (E)", cex=1.2, col="red", pos=1)
    text(8, rfds$CTR_L[n], "        CTR (L)", cex=1.2, col="blue", pos=3)
-   abline(v=2, lty=5, lwd=1, col="black")
+   #abline(v=2, lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
       text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
    }
 
    ##
-   axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
-   axis(side=1, at=seq(1, 1, by=2), labels=c("n=46+46"), line=1.2, col=NA, cex.axis=1.1)
-   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.1)
-   axis(side=1, at=seq(3, 7, by=2), labels=c("n=50+51", "n=28+28", "n=48+48"), line=1.2, col=NA, cex.axis=1.1)
+   #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
+   #axis(side=1, at=seq(1, 1, by=2), labels=c("n=46+46"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.2)
+   axis(side=1, at=seq(1, 7, by=2), labels=c("n=46,46", "n=50,51", "n=28,28", "n=48,48"), line=1.2, col=NA, cex.axis=1.2)
 
+   mtext("                        Frequency", side=2, line=2.8, cex=1.2)
    dev.off()
 }
 

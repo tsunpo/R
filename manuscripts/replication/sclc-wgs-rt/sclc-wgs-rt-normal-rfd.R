@@ -344,11 +344,11 @@ save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, repor
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
 file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution    ")
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
 file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution    ")
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 # -----------------------------------------------------------------------------
 # Report (between random1 and random2)
@@ -378,11 +378,11 @@ save(report.sclc.nl.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=f
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
 file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD           ")
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
 file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_random12.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD           ")
 
 # > (87.8-77.1)/87.8
 # [1] 0.1218679
@@ -496,7 +496,7 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    ylim <- c(min(n) - unit, max(n) + unit)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.7, cex.lab=1.75, cex.main=1.85)
+   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=2)
    points(n2 ~ snr2, col=col[2], pch=19, cex=2)
    
    lm.fit <- lm(n1 ~ snr1)
@@ -507,7 +507,7 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
    text(snr1, n1, samples, col=col[1], pos=c(1,2,2,2), cex=1.8)
    text(snr2, n2, samples, col=col[2], pos=c(1,4,4,4), cex=1.8)
-   
+
    cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[1], bty="n", cex=1.75)
    legend(pos[1], c("M2/M1", "rho = 0.8"), text.col=col[1], pch=c(19, NA), bty="n", cex=1.8)
@@ -516,7 +516,7 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    #legend(pos[2], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[2], bty="n", cex=1.75)
    legend(pos[2], c("Q4/Q1", "rho = 0.8"), text.col=col[2], pch=c(19, NA), col=col[2], bty="n", cex=1.8)
    
-   mtext(ylab.text, side=2, line=2.85, cex=1.75)
+   mtext(ylab.text, side=2, line=2.75, cex=1.8)
    #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
@@ -525,11 +525,11 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 snr    <- readTable(file.path(wd.rt.data, paste0("SNR_ALL.txt")), header=T, rownames=T, sep="\t")
 snr.q4 <- readTable(file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), header=T, rownames=T, sep="\t")
 
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_lightgray")
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE")
 main.text <- c("Signal-to-noise ratio", "")
 xlab.text <- "Signal-to-noise"
 ylab.text <- "Sample size"
-plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "lightgray"), c("topleft", "bottomright"))
+plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "darkgray"), c("topleft", "bottomright"))
 
 
 

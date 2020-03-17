@@ -206,7 +206,7 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA, BASE) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait), decreasing=T)
@@ -226,27 +226,27 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.lab=1.7, cex.axis=1.5, cex.main=1.8)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.7, cex.lab=1.8, cex.main=2)
    idx <- which(trait == "NA")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5, ylab=ylab.txt)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7, ylab=ylab.txt)
    idx <- which(trait == "Q3")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
    idx <- which(trait == "Q2")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
    idx <- which(trait == "Q4")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
    idx <- which(trait == "Q1")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.5)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
    
    if (!is.null(samples))
       for (s in 1:length(samples)) {
          sample <- samples[s]
          if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1)
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1.7)
          else if (sample == "TR14")
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1)
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1.7)
          else
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1)
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1.7)
       }
    
    mtext(file.main[2], cex=1.2, line=0.3)
@@ -255,16 +255,16 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
    #trait.v[5] <- "Others"   ## For PCA ALL
-   if (BASE != "") {
-      trait.v <- trait.v[1:4]
-      trait.v <- paste0(BASE, " ", trait.v)
-      cols <- cols[1:4]
-   }
+   #if (BASE != "") {
+   #   trait.v <- trait.v[1:4]
+   #   trait.v <- paste0(BASE, " ", trait.v)
+   #   cols <- cols[1:4]
+   #}
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=16, cex=1.7)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=16, cex=1.8)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.7)
-   mtext(ylab.txt, side=2, line=2.85, cex=1.7)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.8)
+   mtext(ylab.txt, side=2, line=2.75, cex=1.8)
    dev.off()
 }
 

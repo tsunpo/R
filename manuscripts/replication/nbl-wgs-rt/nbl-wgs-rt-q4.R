@@ -36,7 +36,7 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-q4"))
 wd.rt.data  <- file.path(wd.rt, "data")
-wd.rt.plots <- file.path(wd.rt, "plots/with-LCL")
+wd.rt.plots <- file.path(wd.rt, "plots")
 
 #samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")   ## M2/M1
 samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), header=T, rownames=T, sep="")    ## Q4/Q1
@@ -76,8 +76,8 @@ for (c in 1:22) {
    ## Plot RT
    main.text <- paste0(BASE, " Q4/Q1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4 tumour", "Q1 tumour"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
-   #plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4", "Q1"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4 tumour", "Q1 tumour"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4", "Q1"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 }
 
 # -----------------------------------------------------------------------------
@@ -106,22 +106,23 @@ for (c in 1:22) {
 }
 
 ## S-phase progression rate (SPR)
-ylab.text <- "SPR"
 file.name <- file.path(wd.rt.plots, "SPR_NBL-Q4-Q1_spline_spearman")
-main.text <- c(paste0(BASE, " Q4/Q1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
+main.text <- c("S-phase progression rate (SPR)")
+ylab.text <- "SPR = (E-L)/(E+L)"
 plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
-
-## SPR vs Read depth correlation
-file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-Q4-Q1_spline_spearman")
-main.text <- c(paste0(BASE, " Q4/Q1 SPR vs. Read depths correlation"), "")
-xlab.text <- "Q4 vs. Q1 [rho]"
-plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Woodfine 2004
 file.name <- file.path(wd.rt.plots, "SPR-Woodfine_NBL-Q4-Q1_spline_spearman")
-main.text <- c(paste0(BASE, " Q4/Q1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
+main.text <- c("Mean replication timing ratio", "")
 xlab.text <- "Woodfine et al. 2004"
+ylab.text <- "SPR"
 plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## SPR vs Read depth correlation
+#file.name <- file.path(wd.rt.plots, "SPR-RDC_NBL-Q4-Q1_spline_spearman")
+#main.text <- c(paste0(BASE, " Q4/Q1 SPR vs. Read depths correlation"), "")
+#xlab.text <- "Q4 vs. Q1 [rho]"
+#plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 # -----------------------------------------------------------------------------
 # RT vs LCL S/G1
@@ -136,19 +137,22 @@ cors <- getRTvsRT(nrds, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
 
-ylab.text <- "Spearman's rho"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
-main.text <- paste0("NBL Q4/Q1 vs. LCL S/G1")
-ymin <- 0.25
-ymax <- 1.05
-plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
-
 ##
 file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
+main.text <- paste0("NBL Q4/Q1 vs. LCL S/G1")
+ylab.text <- "Spearman's rho"
+xlab.text <- "Chromosome"
 ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
+
+#ylab.text <- "Spearman's rho"
+#xlab.text <- "Chromosome"
+#file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
+#main.text <- paste0("NBL Q4/Q1 vs. LCL S/G1")
+#ymin <- 0.25
+#ymax <- 1.05
+#plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
 
 ###
 ##
