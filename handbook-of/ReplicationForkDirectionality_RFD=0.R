@@ -114,31 +114,31 @@ main.text <- c(paste0(BASE, " (WB) bootstrap distribution"), "")   #paste0("Chr1
 xlab.text <- "Number of right-leading resamplings"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
-plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, ext, width) {
+plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb, withUnclassified=F) {
+   overlaps <- intersect(rownames(bed.gc.chr), nrds.RT.NRFD$BED)
+   nrds.RT.NRFD.chr <- nrds.RT.NRFD[overlaps,]
+   bed.gc.chr <- bed.gc.chr[overlaps,]
+ 
    adjustcolor.gray <- adjustcolor("darkgray", alpha.f=0.08)
  
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-   overlaps <- intersect(rownames(nrds.RT.BSTRPS.chr), rownames(nrds.chr.RT))
-   nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[overlaps,]
-   nrds.chr.RT <- nrds.chr.RT[overlaps,]
-   bed.gc.chr  <- bed.gc.chr[overlaps,]
-   
-   right.idx <- which(nrds.RT.BSTRPS.chr$NEG >= boundary.upper)
-   left.idx  <- which(nrds.RT.BSTRPS.chr$NEG <= boundary.lower)
-   boundary.idx <- setdiff(c(1:nrow(nrds.RT.BSTRPS.chr)), c(right.idx, left.idx))
+   rights <- rownames(subset(nrds.RT.NRFD.chr, RFD >= 0))
+   lefts  <- rownames(subset(nrds.RT.NRFD.chr, RFD <= 0))
    
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
    else main.text <- paste0(BASE, " bootstrap RFD")
-
-   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb")
+   if (withUnclassified)
+      main.text <- paste0(main.text, " (", kb, " kb)")
+   
+   if (!is.na(xmin) && !is.na(xmax)) file.name <- paste0(file.name, "_", xmin/1E6, "-", xmax/1E6, "Mb_", kb, "kb")
+   if (withUnclassified) file.name <- paste0(file.name, "_with-un")
    if (is.na(xmin)) {
-      start <- bed.gc.chr[rownames(nrds.chr.RT)[1],]$START
+      start <- bed.gc.chr[rownames(nrds.RT.NRFD.chr)[1],]$START
       if (start < 5000000) xmin <- 0
       else xmin <- start
    }
    if (is.na(xmax)) xmax <- subset(chromInfo, chrom == chr)$size
    
-   # Initiation plot
+   ## Initiation plot
    if (ext == "pdf") {
       pdf(paste0(file.name, ".pdf"), height=5, width=width)
    } else if (ext == "png")
@@ -149,53 +149,57 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.chr, bed.gc.
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
    par(mar=c(1,4,4,1))
    ylab.text <- "RT [log2]"
-
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   points(bed.gc.chr$START/1E6, nrds.chr.RT$RT, col=adjustcolor.gray, pch=16, cex=0.35)
+   
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
+   points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.35)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.1)
    abline(h=0, lty=5, lwd=1, col="black")
-
+   
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+    abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
    
    ## Plot smoothing spline with right-/left-leading positions
-   points(bed.gc.chr$START[boundary.idx]/1E6, nrds.chr.RT$SPLINE[boundary.idx], col="gray", cex=0.4)
-   points(bed.gc.chr$START[left.idx]/1E6,     nrds.chr.RT$SPLINE[left.idx],     col="steelblue1", cex=0.4)
-   points(bed.gc.chr$START[right.idx]/1E6,    nrds.chr.RT$SPLINE[right.idx],    col="sandybrown", cex=0.4)
-   
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$SPLINE, col="steelblue1", cex=0.4)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col="sandybrown", cex=0.4)
+
    ## Plot legend
-   ##if (width == 10)
-      legend("topright", c("Left-leading", "Right-leading   "), col=c("steelblue1", "sandybrown"), bty="n", pt.cex=1, lty=c(1, 1), lwd=c(3, 3), pch=c(NA, NA), horiz=T, cex=1.2)
-      #legend("topright", c("Left-leading", "Boundary", "Right-leading"), col=c("steelblue1", "red", "sandybrown"), bty="n", pt.cex=1, lty=c(1, NA, 1), lwd=c(2, NA, 2), pch=c(NA, 16, NA), cex=1.15, horiz=T)
-   ##else
-      ##legend("topright", c("TTR (L)",  "TTR (R)"), col=c("steelblue1", "gray", "sandybrown"), bty="n", pt.cex=1, lty=c(1, NA, NA, 1), lwd=c(2, NA, NA, 2), pch=c(NA, 16, 16, NA), cex=1.15, horiz=T)
-      #legend("topright", c("L", "I   ", "T     ", "R"), col=c("steelblue1", "red", "blue", "sandybrown"), bty="n", pt.cex=1, lty=c(1, NA, NA, 1), lwd=c(2, NA, NA, 2), pch=c(NA, 16, 16, NA), cex=1.15, horiz=T)
+   legend("topright", c("Leftward", "Rightward   "), col=c("steelblue1", "sandybrown"), bty="n", pt.cex=1, lty=c(1, 1), lwd=c(3, 3), pch=c(NA, NA), horiz=T, cex=1.2)
    mtext("RFD = (R\u2212L)/(R+L)", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
-      
+   
    ###
    ## Initiate RFD plot
    par(mar=c(5.5,4,0,1))
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
    ylab.text <- "RFD"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.1, cex.lab=1.2)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.1)
-   abline(h=0, lty=5, lwd=1, col="black")
+   #abline(h=0, lty=5, lwd=1, col="black")
+   abline(h=0.9, lty=5, lwd=1, col="black")
+   abline(h=-0.9, lty=5, lwd=1, col="black")
    
    ## Plot cytobands (before points)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+    abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
    
-   points(bed.gc.chr$START[left.idx]/1E6,     nrds.RT.BSTRPS.chr$RFD[left.idx],     col="steelblue1", cex=0.4)
-   points(bed.gc.chr$START[right.idx]/1E6,    nrds.RT.BSTRPS.chr$RFD[right.idx],    col="sandybrown", cex=0.4)
-   points(bed.gc.chr$START[boundary.idx]/1E6, nrds.RT.BSTRPS.chr$RFD[boundary.idx], col="red", cex=0.4)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col="steelblue1", cex=0.4)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
+
+   ## Plot legend
+   legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("bottomright", "TTR (L)", col="steelblue1", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    dev.off()
 }
+
+
+
+
+
 
 boundary.upper <- 500   ## 500-520 breaks
 boundary.lower <- 500   ## 480-500 breaks

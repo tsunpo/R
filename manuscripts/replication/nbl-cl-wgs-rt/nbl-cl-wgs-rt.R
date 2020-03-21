@@ -251,17 +251,17 @@ file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
 main.text <- c("Flow cytometry validation", "")
 xlab.text <- "Proportion of cells"
 ylab.text <- "Overall correlation with LCL RT"
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "#01DF01"), "topright")
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("#619CFF", "#F8766D", "#00BA38"), "topright")
 
 ##
 file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart")
 main.text <- c("Proportion of cells (Dean-Jett-Fox)", "")
 xlab.text <- ""
 ylab.text <- "Percentage"
-adjustcolor.red   <- adjustcolor("red", alpha.f=0.8)
-adjustcolor.blue  <- adjustcolor("blue", alpha.f=0.8)
-adjustcolor.green <- adjustcolor("#01DF01", alpha.f=0.8)
-cols <- c(adjustcolor.blue, adjustcolor.red, adjustcolor.green)
+#adjustcolor.red   <- adjustcolor("red", alpha.f=0.8)
+#adjustcolor.blue  <- adjustcolor("blue", alpha.f=0.8)
+#adjustcolor.green <- adjustcolor("#01DF01", alpha.f=0.8)
+cols <- c("#619CFF", "#F8766D", "#00BA38")
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)

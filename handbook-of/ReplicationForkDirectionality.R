@@ -256,7 +256,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=5.1)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
@@ -277,7 +277,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.5)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
    lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
@@ -336,7 +336,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=5.1)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    
@@ -360,7 +360,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.3)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
   
@@ -525,7 +525,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    par(mar=c(1,4,4,1))
    ylab.text <- "RT [log2]"
 
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.35)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)

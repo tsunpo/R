@@ -155,7 +155,7 @@ cors <- getRTvsRT3(nrds.sclc.m2, nrds.sclc.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman")   ## gold (#f6c700)
 main.text <- paste0(BASE, " M2/M1")
 ymin <- 0.85
 ymax <- 1

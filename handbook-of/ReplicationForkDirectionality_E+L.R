@@ -258,7 +258,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=5.1)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
@@ -279,7 +279,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.5)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
    lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
@@ -340,7 +340,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=5.1)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    
@@ -364,7 +364,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    
    ##
    par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15.8), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.5)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
  
@@ -474,10 +474,10 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    boundary.lefts <- rownames(subset(subset(nrds.RT.NRFD.chr,  RFD < 0),   RFD > -0.9))
    
    boundaries <- c(boundary.rights, boundary.lefts)
-   initiations <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], NRFD > 0))
-   terminations <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], NRFD < 0))
-   unclassified <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], NRFD == 0))
-   unclassified <- c(unclassified, rownames(nrds.RT.NRFD.chr[boundaries,])[which(is.na(nrds.RT.NRFD.chr[boundaries,]$NRFD) == T)])
+   initiations <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], SPLINE > 0))
+   terminations <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], SPLINE < 0))
+   #unclassified <- rownames(subset(nrds.RT.NRFD.chr[boundaries,], RT == 0))
+   #unclassified <- c(unclassified, rownames(nrds.RT.NRFD.chr[boundaries,])[which(is.na(nrds.RT.NRFD.chr[boundaries,]$RT) == T)])
       
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
    else main.text <- paste0(BASE, " bootstrap RFD")
@@ -505,7 +505,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    par(mar=c(1,4,4,1))
    ylab.text <- "RT [log2]"
 
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.35)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)
@@ -526,15 +526,15 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
       points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="#01DF01", pch=19, cex=0.5)
    
    ## Plot legend
-   legend("topright", "CTR (IZ)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   legend("bottomright", "CTR (TZ)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("topright", "CTR (E)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("bottomright", "CTR (L)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   #if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
       
    ###
    ## Initiate RFD plot
    par(mar=c(5.5,4,0,1))
-   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " coordinate [Mb]")
+   xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
    ylab.text <- "RFD"
    
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.1, cex.lab=1.2)
@@ -552,8 +552,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
    points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", pch=19, cex=0.4)
    points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red",  pch=19, cex=0.4)
-   if (withUnclassified && length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="#01DF01", pch=19, cex=0.5)
+   #if (withUnclassified && length(unclassified) != 0)
+   #   points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="#01DF01", pch=19, cex=0.5)
    
    ## Plot legend
    legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)

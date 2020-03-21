@@ -343,12 +343,12 @@ writeTable(report.sclc.nl.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_
 save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, report.nbl.cl.vs.lcl, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_1.3.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution           ")
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_1.3.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution           ")
 
 # -----------------------------------------------------------------------------
 # Report (between random1 and random2)
@@ -377,12 +377,12 @@ writeTable(report.cll.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_CLL_20KB.
 save(report.sclc.nl.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB_random12.RData")))
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD           ")
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12_1.3.pdf"))
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD         ")
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
-file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_random12.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD           ")
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_random12_1.3.pdf"))
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD         ")
 
 # > (87.8-77.1)/87.8
 # [1] 0.1218679
