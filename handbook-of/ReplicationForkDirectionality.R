@@ -426,6 +426,7 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    cols[(breaks/2 - boundary.break + 1):50] <- "white"
    cols[51:(breaks/2 + boundary.break)] <- "white"
    #cols[51:breaks] <- "sandybrown"
+   #cols[50:50]     <- "steelblue1"
    
    h <- hist(nrds.RT.BSTRPS$NEG, breaks=breaks)
    ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
@@ -442,39 +443,39 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    } else
       ylim[1] <- floor(ylim[1])
    par(mar=c(1,4,3.6,1))
-   plot(h, main=main.text[1], ylab="Freq. (x1000)", xlab="", ylim=ylim, col=cols, xaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, col=cols, xaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    #abline(v=500, lty=5, lwd=1, col="black")
    abline(v=950, lty=5, lwd=1, col="black")
    abline(v=50,  lty=5, lwd=1, col="black")
 
    ##
    par(mar=c(5,4,0,1))
-   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
    if (ymax < 1000) {
-      axis(side=2, at=seq(0, ymax, by=250))
+      axis(side=2, at=seq(0, ymax, by=250), cex.axis=1.1)
    } else if (ymax < 3000) {
-      axis(side=2, at=seq(0, ymax, by=500))
+      axis(side=2, at=seq(0, ymax, by=500), cex.axis=1.1)
    } else if (ymax > 20000) {
-      axis(side=2, at=seq(0, ymax, by=10000))
+      axis(side=2, at=seq(0, ymax, by=10000), cex.axis=1.1)
    } else
-      axis(side=2, at=seq(0, ymax, by=1000))
-   axis(side=1, at=seq(0, 1000, by=250))
+      axis(side=2, at=seq(0, ymax, by=1000), cex.axis=1.1)
+   axis(side=1, at=seq(0, 1000, by=250), cex.axis=1.1)
    #abline(v=500, lty=5, lwd=1, col="black")
    abline(v=950, lty=5, lwd=1, col="black")
    abline(v=50,  lty=5, lwd=1, col="black")
-   text(500, ymax*4/5, "|RFD| > 0.9 (80.7%)", cex=1.2, col="black") 
+   text(500, ymax*4/5, "|RFD| > 0.9 (80.7%)", cex=1.3, col="black") 
    
-   mtext(main.text[2], line=4.8, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
+   mtext(main.text[2], line=4.7, cex=1.3)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()
 }
 
-#boundary.upper <- 950   ## 500-520 breaks
-#boundary.lower <-  50   ## 480-500 breaks
-#boundary.break <-  45   ## 1 breaks each centering 500
-#file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_white.pdf"))
-#main.text <- c(paste0(BASE, " bootstrap distribution"), "Chr1-22 (1-kbs)")   #paste0("Chr1-22 (1-kbs)"))
-#xlab.text <- "Number of right-leading resamplings"
-#plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 1 breaks each centering 500
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), "Chr1-22 (1-kbs)")
+xlab.text <- "Number of rightward-moving forks"
+plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
 # -----------------------------------------------------------------------------
 # Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)

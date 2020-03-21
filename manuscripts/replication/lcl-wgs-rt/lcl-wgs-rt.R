@@ -125,7 +125,7 @@ xlab.text <- "Mean replication timing ratio"
 plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## Fighte 2C
-file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman_2")
+file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
 main.text <- paste0("LCL read depth vs. LCL RT")
 ymin <- -0.8
 ymax <- 0.8

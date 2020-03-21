@@ -345,11 +345,11 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    
    #rfds$TTR0 <- c(87.8, 80.7, 76.9, 75.5)
-   points(rfds$X, rfds$TTR0, col="#01DF01", pch=rfds$pch, cex=1.5)
-   lines(x=rfds$X[1:4], y=rfds$TTR0[1:4], type="l", lty=5, lwd=2.5, col="#01DF01")
-   text(8, rfds$TTR0[n], "       TTR+CTR", cex=1.2, col="#01DF01")
+   points(rfds$X, rfds$TTR0, col="goldenrod2", pch=rfds$pch, cex=1.5)
+   lines(x=rfds$X[1:4], y=rfds$TTR0[1:4], type="l", lty=5, lwd=2.5, col="goldenrod2")
+   text(8, rfds$TTR0[n], "       TTR+CTR", cex=1.2, col="goldenrod2")
    for (n in 1:length(names))
-      text(rfds$X[n], rfds$TTR0[n], rfds$TTR0[n], col="#01DF01", pos=rfds$pos1[n], cex=1.2)
+      text(rfds$X[n], rfds$TTR0[n], rfds$TTR0[n], col="goldenrod2", pos=rfds$pos1[n], cex=1.2)
    
    text(8, rfds$TTR[n], " TTR ", cex=1.2, col="black")
    #abline(v=2, lty=5, lwd=1, col="black")

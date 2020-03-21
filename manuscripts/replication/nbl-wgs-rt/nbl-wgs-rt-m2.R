@@ -138,8 +138,8 @@ file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spea
 main.text <- paste0("NBL M2/M1 vs. LCL S/G1")
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
-ymin <- -1.1
-ymax <- 1.1
+ymin <- -1.25
+ymax <- 1.25
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
 
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman_test")

@@ -126,39 +126,39 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl.pdf"), height=5.5, width=3.7)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6.pdf"), height=6, width=4)
 ymax <- 0.5
 ymin <- -0.367
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="in silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="in silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5)
 
-points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=1.8)
-points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="lightskyblue2", pch=19, cex=1.8)
-points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="lightpink1", pch=19, cex=1.8)
-points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="red", pch=19, cex=1.8)
+points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=2)
+points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="lightskyblue2", pch=19, cex=2)
+points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="lightpink1", pch=19, cex=2)
+points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="red", pch=19, cex=2)
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
    if ( sample$SAMPLE_ID == "SKNFI")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.55), cex=1.3) 
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.55), cex=1.5) 
    else if (sample$SAMPLE_ID == "CLBGA")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, -0.55), cex=1.3)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, -0.55), cex=1.5)
    else if (sample$SAMPLE_ID == "NGP" || sample$SAMPLE_ID == "TR14" || sample$SAMPLE_ID == "LAN6")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.22, 0.5), cex=1.3)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.22, 0.5), cex=1.5)
    else if (sample$SAMPLE_ID == "LS")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.5, 0.5), cex=1.3)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.5, 0.5), cex=1.5)
    else
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.3)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.5)
 }
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.3)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.5)
 
-axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.3)
-mtext("Proportion of S phase cells", side=2, line=2.75, cex=1.4)
+axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
+mtext("Overall correlation with LCL RT", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
-axis(side=1, at=1, labels="NBL-CL", cex.axis=1.4)
+axis(side=1, at=1, labels="NBL-CL", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
-mtext(text=c("n=8"), side=1, cex=1.4, line=2.2, at=c(1,2,3))
+mtext(text=c("n=8"), side=1, cex=1.6, line=2.2, at=c(1,2,3))
 dev.off()
 
 # -----------------------------------------------------------------------------
@@ -235,23 +235,44 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
 
 ## FACS
 facs <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS.txt"), header=T, rownames=T, sep="")
-facs$SUM <- facs$G1 + facs$S + facs$G2
-facs$G1 <- (facs$G1/facs$SUM) * 100
-facs$S <- (facs$S/facs$SUM) * 100
-facs$G2 <- (facs$G2/facs$SUM) * 100
 samples <- samples[facs$SAMPLE_ID,]
+#facs$SUM <- facs$G1 + facs$S + facs$G2
+#facs$G1 <- (facs$G1/facs$SUM) * 100
+#facs$S <- (facs$S/facs$SUM) * 100
+#facs$G2 <- (facs$G2/facs$SUM) * 100
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL")
-main.text <- c("Flow cytometry validation", "")
-xlab.text <- "DNA content count"
-ylab.text <- "Proportion of S phase cells"
-plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
+#file.name <- file.path(wd.rt.plots, "FACS_NBL-CL")
+#main.text <- c("Flow cytometry validation", "")
+#xlab.text <- "Proportion of cells"
+#ylab.text <- "Proportion of S phase cells"
+#plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P2")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
 main.text <- c("Flow cytometry validation", "")
-xlab.text <- "DNA content count [%]"
-ylab.text <- "Proportion of S phase cells"
+xlab.text <- "Proportion of cells"
+ylab.text <- "Overall correlation with LCL RT"
 plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "#01DF01"), "topright")
+
+##
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart")
+main.text <- c("Proportion of cells (Dean-Jett-Fox)", "")
+xlab.text <- ""
+ylab.text <- "Percentage"
+adjustcolor.red   <- adjustcolor("red", alpha.f=0.8)
+adjustcolor.blue  <- adjustcolor("blue", alpha.f=0.8)
+adjustcolor.green <- adjustcolor("#01DF01", alpha.f=0.8)
+cols <- c(adjustcolor.blue, adjustcolor.red, adjustcolor.green)
+facs1 <- t(as.matrix(facs[,-1]))
+
+pdf(paste0(file.name, ".pdf"), height=6, width=9.3)
+par(mar=c(5.1, 4.1, 4.1, 4.1), xpd=TRUE)
+barplot(facs1, col=cols, ylim=c(0, 100), main=main.text[1], cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+
+legend("right", rownames(facs1)[3:1], cex=1.6, fill=cols[3:1], horiz=F, bty="n", inset=c(-0.11, 0))
+mtext(ylab.text, side=2, line=2.75, cex=1.6)
+dev.off()
+
+
 
 ## FACS (14/11/20)
 facs00 <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS_0.txt"), header=T, rownames=F, sep="")
@@ -264,20 +285,16 @@ for (s in 1:length(ss)) {
    facs0$S[s] <- sum(facs000$S)
    facs0$G2[s] <- sum(facs000$G2)
 }
-
-facs0$SUM <- facs0$G1 + facs0$S + facs0$G2
-facs0$G1 <- (facs0$G1/facs0$SUM) * 100
-facs0$S <- (facs0$S/facs0$SUM) * 100
-facs0$G2 <- (facs0$G2/facs0$SUM) * 100
+#facs0$SUM <- facs0$G1 + facs0$S + facs0$G2
+#facs0$G1 <- (facs0$G1/facs0$SUM) * 100
+#facs0$S <- (facs0$S/facs0$SUM) * 100
+#facs0$G2 <- (facs0$G2/facs0$SUM) * 100
 
 file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_0")
 main.text <- c("Flow cytometry validation", "")
-xlab.text <- "DNA content count [%]"
-ylab.text <- "Proportion of S phase cells"
+xlab.text <- "Proportion of cells"
+ylab.text <- "Overall correlation with LCL RT"
 plotFACS3(samples$COR, facs0$G1, samples$COR, facs0$S, samples$COR, facs0$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "#01DF01"), "topright")
-
-
-
 
 
 
