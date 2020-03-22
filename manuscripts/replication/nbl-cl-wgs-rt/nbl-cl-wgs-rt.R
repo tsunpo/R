@@ -126,7 +126,7 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6.pdf"), height=6, width=4)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3.pdf"), height=6, width=4)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="in silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
@@ -158,7 +158,7 @@ mtext("Overall correlation with LCL RT", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="NBL-CL", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
-mtext(text=c("n=8"), side=1, cex=1.6, line=2.2, at=c(1,2,3))
+mtext(text=c("n=8"), side=1, cex=1.6, line=2.3, at=c(1,2,3))
 dev.off()
 
 # -----------------------------------------------------------------------------
@@ -247,21 +247,18 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_coral")
 main.text <- c("Flow cytometry validation", "")
 xlab.text <- "Proportion of cells"
-ylab.text <- "Overall correlation with LCL RT"
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("#619CFF", "#F8766D", "#00BA38"), "topright")
+ylab.text <- "Overall correlation with LCL RT"                                                                         ##"#619CFF", "#F8766D", "#00BA38"
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("skyblue3", "lightcoral", "#01DF01"), "topright")
 
 ##
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_coral")
 main.text <- c("Proportion of cells (Dean-Jett-Fox)", "")
 xlab.text <- ""
 ylab.text <- "Percentage"
-#adjustcolor.red   <- adjustcolor("red", alpha.f=0.8)
-#adjustcolor.blue  <- adjustcolor("blue", alpha.f=0.8)
-#adjustcolor.green <- adjustcolor("#01DF01", alpha.f=0.8)
-cols <- c("#619CFF", "#F8766D", "#00BA38")
+cols <- c("skyblue3", "lightcoral", "#01DF01")
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)

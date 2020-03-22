@@ -287,7 +287,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
    
    text(8, rfds$CTR_E[n], "        CTR (IZ)", cex=1.2, col="red", pos=1) 
-   text(8, rfds$CTR_L[n], "        CTR (TZ)", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_L[n], "         CTR (TZ)", cex=1.2, col="blue", pos=3)
    #abline(v=4, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
@@ -300,7 +300,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
    #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
    axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.2)
-   axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.2)
    #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
    #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
    
@@ -368,7 +368,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
 
    text(8, rfds$CTR_E[n], "        CTR (IZ)", cex=1.2, col="red", pos=1)
-   text(8, rfds$CTR_L[n], "        CTR (TZ)", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_L[n], "         CTR (TZ)", cex=1.2, col="blue", pos=3)
    #abline(v=2, lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
       text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
