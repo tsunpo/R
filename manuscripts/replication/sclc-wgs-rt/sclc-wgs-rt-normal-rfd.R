@@ -394,6 +394,151 @@ plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.na
 # [1] 0.2344371
 
 # -----------------------------------------------------------------------------
+# Report (between NL and Ts)
+# Last Modified: 23/03/20
+# -----------------------------------------------------------------------------
+getBootstrapSummary <- function(report.sclc.nl.vs.sclc) {
+   colnames <- c("Conserved", "Specific", "Fold")
+   summary <- toTable(0, length(colnames), 3, colnames)
+   rownames(summary) <- c("TTR", "IZ", "TZ")
+   
+   summary$Conserved[1] <- report.sclc.nl.vs.sclc$Overlapping_P[1]
+   summary$Conserved[2] <- report.sclc.nl.vs.sclc$Overlapping_P[3]
+   summary$Conserved[3] <- report.sclc.nl.vs.sclc$Overlapping_P[5]
+   
+   summary$Specific[1] <- (report.sclc.nl.vs.sclc$RFD_N[1] - report.sclc.nl.vs.sclc$Overlapping_N[1])/report.sclc.nl.vs.sclc$Mappable[1]
+   summary$Specific[2] <- (report.sclc.nl.vs.sclc$RFD_N[3] - report.sclc.nl.vs.sclc$Overlapping_N[3])/report.sclc.nl.vs.sclc$Mappable[3]
+   summary$Specific[3] <- (report.sclc.nl.vs.sclc$RFD_N[5] - report.sclc.nl.vs.sclc$Overlapping_N[5])/report.sclc.nl.vs.sclc$Mappable[5]
+   
+   for (c in 1:3) {
+      if (summary$Conserved[c] < summary$Specific[c])
+         summary$Fold[c] <- summary$Specific[c]/summary$Conserved[c]
+      else
+         summary$Fold[c] <- summary$Conserved[c]/summary$Specific[c]
+   }
+   return(summary)
+}
+
+report.sclc.nl.vs.sclc <- readTable(file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_SCLC_20KB.txt")), header=T, rownames=F, sep="")
+report.sclc.nl.vs.nbl  <- readTable(file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_NBL_20KB.txt")), header=T, rownames=F, sep="")
+report.sclc.nl.vs.cll  <- readTable(file.path(wd.rt.data, paste0("NRFD_SCLC-NL_vs_CLL_20KB.txt")), header=T, rownames=F, sep="")
+
+summary.sclc.nl.vs.sclc <- getBootstrapSummary(report.sclc.nl.vs.sclc)
+summary.sclc.nl.vs.nbl  <- getBootstrapSummary(report.sclc.nl.vs.nbl)
+summary.sclc.nl.vs.cll  <- getBootstrapSummary(report.sclc.nl.vs.cll)
+
+## https://stackoverflow.com/questions/40919759/stacked-barplot-using-r-base-how-to-add-values-inside-each-stacked-bar
+plotBootstrapSummary <- function(summary, file.name, main.text) {
+   xlab.text <- "Percentage [%]"
+   cols <- c(adjustcolor("#00BA38", alpha.f=0.7), adjustcolor("#F8766D", alpha.f=0.7))
+   summary$Conserved <- summary$Conserved*100
+   summary$Specific <- summary$Specific*100
+   summary <- t(as.matrix(summary[,-3]))
+   summary <- summary[,3:1]
+   
+   pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
+   par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
+   bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+
+   h <- summary
+   h[1,] <- as.numeric(round0(summary[1,], digits=1))
+   h[2,] <- as.numeric(round0(summary[2,], digits=1))
+   H <- apply(summary, 2L, cumsum) - summary/2
+   text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
+
+   legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
+   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   dev.off()
+}
+
+plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
+   xlab.text <- "Percentage [%]"
+   cols <- c(adjustcolor("#00BA38", alpha.f=0.7), adjustcolor("#F8766D", alpha.f=0.7))
+   summary$Conserved <- summary$Conserved*100
+   summary$Specific <- summary$Specific*100
+   summary <- as.data.frame(t(summary[,-3]))
+   summary <- summary[,3:1]
+   summary$Total <- 0
+   summary$Total[1] <- sum(summary[1,])
+   summary$Total[2] <- sum(summary[2,])
+   summary <- as.matrix(summary[,4])
+   
+   pdf(paste0(file.name, "_total.pdf"), height=3.5, width=4)
+   par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
+   bp <- barplot(summary, col=cols, xlim=c(0, 100), xlab=xlab.text, names.arg="", main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+ 
+   h <- summary
+   h[1,] <- as.numeric(round0(summary[1,], digits=1))
+   h[2,] <- as.numeric(round0(summary[2,], digits=1))
+   H <- apply(summary, 2L, cumsum) - summary/2
+   text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
+   
+   #legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
+   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   dev.off()
+}
+
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-SCLC_barchart")
+main.text <- c("SCLC-NL landscape domains conserved with SCLC", "")
+plotBootstrapSummary(summary.sclc.nl.vs.sclc, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "Between SCLC-NL and SCLC")
+
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-NBL_barchart")
+main.text <- c("SCLC-NL landscape domains conserved with NBL", "")
+plotBootstrapSummary(summary.sclc.nl.vs.nbl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "Between SCLC-NL and NBL")
+
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-CLL_barchart")
+main.text <- c("SCLC-NL landscape domains conserved with CLL", "")
+plotBootstrapSummary(summary.sclc.nl.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "Between SCLC-NL and CLL")
+
+# -----------------------------------------------------------------------------
+# Report (between SCLC and others)
+# Last Modified: 25/03/20
+# -----------------------------------------------------------------------------
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
+
+report.sclc.vs.sclc.nl <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.sclc.nl, "SCLC", "SCLC-NL")
+writeTable(report.sclc.vs.sclc.nl, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_SCLC-NL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.vs.nbl  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.nbl, "SCLC", "NBL")
+writeTable(report.sclc.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.cll, "SCLC", "CLL")
+writeTable(report.sclc.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+##
+summary.sclc.vs.sclc.nl <- getBootstrapSummary(report.sclc.vs.sclc.nl)
+summary.sclc.vs.nbl     <- getBootstrapSummary(report.sclc.vs.nbl)
+summary.sclc.vs.cll     <- getBootstrapSummary(report.sclc.vs.cll)
+
+##
+file.name <- file.path(wd.rt.plots, "FS7_SCLC-vs-SCLC-NL_barchart")
+main.text <- c("SCLC landscape domains conserved with SCLC-NL", "")
+plotBootstrapSummary(summary.sclc.vs.sclc.nl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.sclc.nl, file.name, "Between SCLC and SCLC-NL")
+
+file.name <- file.path(wd.rt.plots, "FS7_SCLC-vs-NBL_barchart")
+main.text <- c("SCLC landscape domains conserved with NBL", "")
+plotBootstrapSummary(summary.sclc.vs.nbl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.nbl, file.name, "Between SCLC and NBL")
+
+file.name <- file.path(wd.rt.plots, "FS7_SCLC-vs-CLL_barchart")
+main.text <- c("SCLC landscape domains conserved with CLL", "")
+plotBootstrapSummary(summary.sclc.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.cll, file.name, "Between SCLC and CLL")
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # Plot signal-to-noice
 # Last Modified: 10/12/19
 # -----------------------------------------------------------------------------

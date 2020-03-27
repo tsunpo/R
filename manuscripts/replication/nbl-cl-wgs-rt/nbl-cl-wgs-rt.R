@@ -202,6 +202,7 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    dev.off()
 }
 
+# https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
 plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.text, ylab.text, col, pos) {
    xlim <- c(0, 115)
    ylim <- c(-0.367, 0.5)
@@ -247,18 +248,21 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_coral")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
 main.text <- c("Flow cytometry validation", "")
-xlab.text <- "Proportion of cells"
-ylab.text <- "Overall correlation with LCL RT"                                                                         ##"#619CFF", "#F8766D", "#00BA38"
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("skyblue3", "lightcoral", "#01DF01"), "topright")
+xlab.text <- "Proportion of cells [%]"
+ylab.text <- "Overall correlation with LCL RT"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("#619CFF", "#F8766D", "#00BA38"), "topright")
 
 ##
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_coral")
-main.text <- c("Proportion of cells (Dean-Jett-Fox)", "")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart9")
+main.text <- c("Flow cytometry (Dean-Jett-Fox)", "")
 xlab.text <- ""
-ylab.text <- "Percentage"
-cols <- c("skyblue3", "lightcoral", "#01DF01")
+ylab.text <- "Proportion of cells [%]"
+blue  <- adjustcolor("#619CFF", alpha.f=0.9)
+red   <- adjustcolor("#F8766D", alpha.f=0.9)
+green <- adjustcolor("#00BA38", alpha.f=0.9)
+cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)
@@ -271,27 +275,31 @@ dev.off()
 
 
 
+
+
+###
 ## FACS (14/11/20)
-facs00 <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS_0.txt"), header=T, rownames=F, sep="")
-ss <- facs$SAMPLE_ID
-facs0 <- facs
-for (s in 1:length(ss)) {
-   facs000 <- subset(facs00, model %in% ss[s])
-   
-   facs0$G1[s] <- sum(facs000$G1)
-   facs0$S[s] <- sum(facs000$S)
-   facs0$G2[s] <- sum(facs000$G2)
-}
+facs0 <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS_0.txt"), header=T, rownames=T, sep="")
+facs0 <- facs0[samples$SAMPLE_ID,]
+#ss <- facs$SAMPLE_ID
+#facs0 <- facs
+#for (s in 1:length(ss)) {
+#   facs000 <- subset(facs00, model %in% ss[s])
+#   
+#   facs0$G1[s] <- sum(facs000$G1)
+#   facs0$S[s] <- sum(facs000$S)
+#   facs0$G2[s] <- sum(facs000$G2)
+#}
 #facs0$SUM <- facs0$G1 + facs0$S + facs0$G2
 #facs0$G1 <- (facs0$G1/facs0$SUM) * 100
 #facs0$S <- (facs0$S/facs0$SUM) * 100
 #facs0$G2 <- (facs0$G2/facs0$SUM) * 100
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_0")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_2019_new")
 main.text <- c("Flow cytometry validation", "")
-xlab.text <- "Proportion of cells"
+xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall correlation with LCL RT"
-plotFACS3(samples$COR, facs0$G1, samples$COR, facs0$S, samples$COR, facs0$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "#01DF01"), "topright")
+plotFACS3(samples$COR, facs0$G1, samples$COR, facs0$S, samples$COR, facs0$G2, file.name, main.text, xlab.text, ylab.text, c("#619CFF", "#F8766D", "#00BA38"), "topright")
 
 
 
