@@ -137,7 +137,7 @@ pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_nbl_chrs.RData")))
-file.main <- c("NBL read depth profiles", "")
+file.main <- c("NBL overall read depth", "")
 trait <- as.numeric(samples.nbl$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"

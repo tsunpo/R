@@ -70,7 +70,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-tn-vs-l
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-TN-vs-LCL_spline_spearman")
-main.text <- c("SCLC-TN read depth vs. LCL S/G1", "")
+main.text <- c("SCLC-TN read depth vs. LCL RT", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -118,7 +118,7 @@ pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc-tn_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_sclc-nl_chrs.RData")))
-file.main <- c("SCLC-NL (n=92) read depth profiles", "")
+file.main <- c("SCLC-NL overall read depth", "")
 trait <- as.numeric(samples.sclc.nl$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
@@ -154,7 +154,7 @@ library(beeswarm)
 pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_normal.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL S/G1", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL RT", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
@@ -168,7 +168,7 @@ axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.a
 mtext("Spearman's rho", side=2, line=2.75, cex=1.8)
 mtext("", cex=1.2, line=0.3)
 mtext(text=c("SCLC-NL", "NBL-WB", "CLL-WB"), side=1, cex=1.8, line=1.3, at=c(1,2,3))
-#mtext(text=c("(TN)", "(WB)", "(WB)"), side=1, cex=1.7, line=2.5, at=c(1,2,3))
+mtext(text=c("n=92", "n=56", "n=96"), side=1, cex=1.8, line=3, at=c(1,2,3))
 dev.off()
 
 ## 

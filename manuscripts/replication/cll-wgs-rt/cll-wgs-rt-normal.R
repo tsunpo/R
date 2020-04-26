@@ -70,7 +70,7 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_s
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_cll-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_CLL-WB-vs-LCL_spline_spearman")
-main.text <- c("CLL-WB read depth vs. LCL S/G1", "")
+main.text <- c("CLL-WB read depth vs. LCL RT", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -106,7 +106,7 @@ pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_cll-wb_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_cll-wb_chrs.RData")))
-file.main <- c("CLL-WB (n=96) read depth profiles", "")
+file.main <- c("CLL-WB overall read depth", "")
 trait <- as.numeric(samples.cll.wb$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"

@@ -84,6 +84,7 @@ sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
+sprs.sclc <- sprs
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -101,18 +102,82 @@ for (c in 1:22) {
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
 }
 
-## S-phase progression rate (SPR)
-file.name <- file.path(wd.rt.plots, "SPR_SCLC-M2-M1_spline_spearman")
-main.text <- c("S-phase progression rate (SPR)", "")
-ylab.text <- "SPR = (E-L)/(E+L)"
-plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
+## Teplication timing skew (RTS)
+file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman")
+main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
+ylab.text <- "SCLC M2/M1"
+plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text)
 
-## SPR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-M2-M1_spline_spearman")
+## SCLC vs. LCL
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman")
+main.text <- c("Replication timing skew", "")
+xlab.text <- "LCL S/G1"
+ylab.text <- "SCLC M2/M1"
+plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## SCLC vs. SCLC-NL
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_SCLC-NL_spline_spearman")
+main.text <- c("Replication timing skew", "")
+xlab.text <- "SCLC-NL M2/M1"
+ylab.text <- "SCLC M2/M1"
+plotRTS2(sprs.sclc$spr, sprs.sclc.nl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## SCLC vs. NBL
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_NBL_spline_spearman")
+main.text <- c("Replication timing skew", "")
+xlab.text <- "NBL M2/M1"
+ylab.text <- "SCLC M2/M1"
+plotRTS2(sprs.sclc$spr, sprs.nbl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+## SCLC vs. CLL
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_CLL_spline_spearman")
+main.text <- c("Replication timing skew", "")
+xlab.text <- "CLL M2/M1"
+ylab.text <- "SCLC M2/M1"
+plotRTS2(sprs.sclc$spr, sprs.cll$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+###
+## SCLC vs. Woodfine 2004
+file.name <- file.path(wd.rt.plots, "RTS2_Woodfine_vs_SCLC-M2-M1_spline_spearman")
 main.text <- c("Mean replication timing ratio", "")
 xlab.text <- "Woodfine et al. 2004"
-ylab.text <- "SPR"
-plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+ylab.text <- "SCLC M2/M1"
+plotRTS2(sprs.sclc$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+file.name <- file.path(wd.rt.plots, "RTS2_Woodfine_vs_SCLC-NL-M2-M1_spline_spearman")
+main.text <- c("Mean replication timing ratio", "")
+xlab.text <- "Woodfine et al. 2004"
+ylab.text <- "SCLC-NL M2/M1"
+plotRTS2(sprs.sclc.nl$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+file.name <- file.path(wd.rt.plots, "RTS2_Woodfine_vs_NBL-M2-M1_spline_spearman")
+main.text <- c("Mean replication timing ratio", "")
+xlab.text <- "Woodfine et al. 2004"
+ylab.text <- "NBL M2/M1"
+plotRTS2(sprs.nbl$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+file.name <- file.path(wd.rt.plots, "RTS2_Woodfine_vs_CLL-M2-M1_spline_spearman")
+main.text <- c("Mean replication timing ratio", "")
+xlab.text <- "Woodfine et al. 2004"
+ylab.text <- "CLL M2/M1"
+plotRTS2(sprs.cll$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+file.name <- file.path(wd.rt.plots, "RTS2_Woodfine_vs_LCL-S-G1_spline_spearman")
+main.text <- c("Mean replication timing ratio", "")
+xlab.text <- "Woodfine et al. 2004"
+ylab.text <- "LCL S/G1"
+plotRTS2(sprs.lcl$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+
+
+
+
+
+## SCLC vs Woodfine 2004
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_Woodfine_spline_spearman")
+main.text <- c("Mean replication timing ratio", "")
+xlab.text <- "Woodfine et al. 2004"
+ylab.text <- "SCLC M2/M1"
+plotRTS2(sprs.sclc$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
 
 ## SPR vs Read depth correlation
 #file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-M2-M1_spline_spearman")

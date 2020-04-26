@@ -225,6 +225,106 @@ getBootstrapReport <- function(rfd, nrds.RT.RFD.1, nrds.RT.RFD.2, name.1, name.2
    return(report)
 }
 
+getBootstrapReport3 <- function(rfd, nrds.RT.RFD.1, nrds.RT.RFD.2, nrds.RT.RFD.3, name.1) {
+   colnames <- c("RFD", "SAMPLES", name.1, "ALL", "Overlapping_N", "Overlapping_P", "RFD_N", "RFD_P", "Mappable")
+   report <- toTable(NA, length(colnames), 6, colnames)
+ 
+   ###
+   ## |RFD| ≥ 0.9
+   nrds.RT.RFD.1.t <- getBootstrapTTR(nrds.RT.RFD.1, rfd)
+   nrds.RT.RFD.2.t <- getBootstrapTTR(nrds.RT.RFD.2, rfd)
+   nrds.RT.RFD.3.t <- getBootstrapTTR(nrds.RT.RFD.3, rfd)
+   
+   ## TTR
+   report$RFD[1:2] <- "TTR"
+   report$SAMPLES[1] <- name.1
+   #report$SAMPLES[2] <- NA
+   report$RFD_N[1] <- nrow(nrds.RT.RFD.1.t)
+   #report$RFD_N[2] <- NA
+   report$Mappable[1] <- nrow(nrds.RT.RFD.1)
+   #report$Mappable[2] <- NA
+   report$RFD_P[1] <- report$RFD_N[1]/report$Mappable[1]
+   #report$RFD_P[2] <- NA
+ 
+   ##
+   overlaps.t <- intersect(intersect(rownames(nrds.RT.RFD.1.t), rownames(nrds.RT.RFD.2.t)), rownames(nrds.RT.RFD.3.t))
+   report$Overlapping_N[1] <- length(overlaps.t)
+   #report$Overlapping_N[2] <- NA
+   report$Overlapping_P[1] <- length(overlaps.t)/nrow(nrds.RT.RFD.1)
+   #report$Overlapping_P[2] <- NA
+ 
+   nrds.1.RT.o <- nrds.RT.RFD.1.t[overlaps.t,]
+   #nrds.2.RT.o <- nrds.RT.RFD.2.t[overlaps.t,]
+ 
+   #nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
+   #report[2, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.t)
+ 
+   ###
+   ## |RFD| < 0.9
+   nrds.RT.RFD.1.c <- getBootstrapCTR(nrds.RT.RFD.1, rfd)
+   nrds.RT.RFD.2.c <- getBootstrapCTR(nrds.RT.RFD.2, rfd)
+   nrds.RT.RFD.3.c <- getBootstrapCTR(nrds.RT.RFD.3, rfd)
+   
+   nrds.RT.RFD.1.c.e <- subset(nrds.RT.RFD.1.c, NRFD > 0)
+   nrds.RT.RFD.1.c.l <- subset(nrds.RT.RFD.1.c, NRFD < 0)
+   nrds.RT.RFD.2.c.e <- subset(nrds.RT.RFD.2.c, NRFD > 0)
+   nrds.RT.RFD.2.c.l <- subset(nrds.RT.RFD.2.c, NRFD < 0)
+   nrds.RT.RFD.3.c.e <- subset(nrds.RT.RFD.3.c, NRFD > 0)
+   nrds.RT.RFD.3.c.l <- subset(nrds.RT.RFD.3.c, NRFD < 0)
+ 
+   ## CTR (IZ)
+   report$RFD[3:4] <- "CTR-IZ"
+   report$SAMPLES[3] <- name.1
+   report$SAMPLES[4] <- NA
+ 
+   report$RFD_N[3] <- nrow(nrds.RT.RFD.1.c.e)
+   report$RFD_N[4] <- NA
+   report$Mappable[3] <- nrow(nrds.RT.RFD.1)
+   report$Mappable[4] <- NA
+   report$RFD_P[3] <- report$RFD_N[3]/report$Mappable[3]
+   report$RFD_P[4] <- NA
+ 
+   ##
+   overlaps.c.e <- intersect(intersect(rownames(nrds.RT.RFD.1.c.e), rownames(nrds.RT.RFD.2.c.e)), rownames(nrds.RT.RFD.3.c.e))
+   report$Overlapping_N[3] <- length(overlaps.c.e)
+   #report$Overlapping_N[4] <- length(overlaps.c.e)   
+   report$Overlapping_P[3] <- length(overlaps.c.e)/nrow(nrds.RT.RFD.1)
+   #report$Overlapping_P[4] <- length(overlaps.c.e)/nrow(nrds.RT.RFD.2)
+ 
+   #nrds.1.RT.o <- nrds.RT.RFD.1.c.e[overlaps.c.e,]
+   #nrds.2.RT.o <- nrds.RT.RFD.2.c.e[overlaps.c.e,]
+ 
+   #nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
+   #report[4, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.c.e)
+ 
+   ## CTR (TZ)
+   report$RFD[5:6] <- "CTR-TZ"
+   report$SAMPLES[5] <- name.1
+   report$SAMPLES[6] <- NA
+ 
+   report$RFD_N[5] <- nrow(nrds.RT.RFD.1.c.l)
+   report$RFD_N[6] <- NA
+   report$Mappable[5] <- nrow(nrds.RT.RFD.1)
+   report$Mappable[6] <- NA
+   report$RFD_P[5] <- report$RFD_N[5]/report$Mappable[5]
+   report$RFD_P[6] <- NA
+ 
+   ##
+   overlaps.c.l <- intersect(intersect(rownames(nrds.RT.RFD.1.c.l), rownames(nrds.RT.RFD.2.c.l)), rownames(nrds.RT.RFD.3.c.l))
+   report$Overlapping_N[5] <- length(overlaps.c.l)
+   #report$Overlapping_N[6] <- length(overlaps.c.l)   
+   report$Overlapping_P[5] <- length(overlaps.c.l)/nrow(nrds.RT.RFD.1)
+   #report$Overlapping_P[6] <- length(overlaps.c.l)/nrow(nrds.RT.RFD.2)
+ 
+   #nrds.1.RT.o <- nrds.RT.RFD.1.c.l[overlaps.c.l,]
+   #nrds.2.RT.o <- nrds.RT.RFD.2.c.l[overlaps.c.l,]
+ 
+   #nrds.1.RT.o$SIGN <- nrds.1.RT.o$SLOPE * nrds.2.RT.o$SLOPE
+   #report[6, 3] <- length(which(nrds.1.RT.o$SIGN > 0))/length(overlaps.c.l)
+ 
+   return(report)
+}
+
 getReportRFD <- function(report, name) {
    return(subset(report, SAMPLES == name)$RFD_P)
 }

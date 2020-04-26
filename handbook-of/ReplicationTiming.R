@@ -618,7 +618,7 @@ getSPR <- function(nrds, bed.gc) {
    return(sprs)
 }
 
-plotSPR <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
+plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text) {
    xlab.text <- "Chromosome"
    cols <- c("red", "blue", "black")
    #ylim <- getYlim(sprs$spr, unit)
@@ -649,8 +649,8 @@ plotSPR <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
             text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), col=cols[2], pos=1, cex=1.2)
             #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
-   legend("topleft", "Earlier than Chr2", bty="n", text.col=cols[1], pch=16, col=cols[1], cex=1.2)   
-   legend("bottomleft", "Later than Chr2", bty="n", text.col=cols[2], pch=16, col=cols[2], cex=1.2)
+   legend("topleft", "Greater than Chr2", bty="n", text.col=cols[1], pch=16, col=cols[1], cex=1.2)   
+   legend("bottomleft", "Less than Chr2", bty="n", text.col=cols[2], pch=16, col=cols[2], cex=1.2)
 
    axis(side=1, at=seq(2, 22, by=4), cex.axis=1.1)
    axis(side=1, at=seq(4, 20, by=4), cex.axis=1.1)
@@ -659,7 +659,7 @@ plotSPR <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    dev.off()
 }
 
-plotSPRRDC <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, ylab.text) {
+plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, ylab.text) {
    cols <- c("red", "blue", "black", "purple")
    ylim <- c(-1, 1)
    
@@ -687,9 +687,9 @@ plotSPRRDC <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, y
       for (c in 1:length(cs)) {
          c <- cs[c]
          if (sprs[c] > sprs[2])
-            if (sprs[c] == sprs[22])
-               text(means[c], sprs[c], paste0("Chr", c), col=cols[1], pos=1, cex=1.2)
-            else
+            #if (sprs[c] == sprs[22])
+            #   text(means[c], sprs[c], paste0("Chr", c), col=cols[1], pos=1, cex=1.2)
+            #else
                text(means[c], sprs[c], paste0("Chr", c), col=cols[1], pos=3, cex=1.2)
          else
             text(means[c], sprs[c], paste0("Chr", c), col=cols[2], pos=1, cex=1.2)
@@ -698,9 +698,10 @@ plotSPRRDC <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, y
    cor <- cor.test(sprs, means, method="spearman", exact=F)
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
-   legend(legends[1], "Earlier than Chr2", bty="n", text.col=cols[1], pch=16, col=cols[1], cex=1.2)   ## bty="n"
-   legend(legends[2], "Later than Chr2", bty="n", text.col=cols[2], pch=16, col=cols[2], cex=1.2)
+   legend(legends[1], "Greater than Chr2", bty="n", text.col=cols[1], pch=16, col=cols[1], cex=1.2)   ## bty="n"
+   legend(legends[2], "Less than Chr2", bty="n", text.col=cols[2], pch=16, col=cols[2], cex=1.2)
    
+   #legend("bottomright", paste0("rho = ", round0(cor[[4]], digits=2)), text.col=cols[4], bty="n", cex=1.2)
    legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.2)
    #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
    #axis(side=1, at=seq(2, 22, by=2))

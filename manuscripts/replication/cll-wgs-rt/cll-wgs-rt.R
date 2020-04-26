@@ -168,7 +168,7 @@ pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_cll_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_cll_chrs.RData")))
-file.main <- c("CLL read depth profiles", "")
+file.main <- c("CLL overall read depth", "")
 trait <- as.numeric(samples.cll$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"

@@ -253,7 +253,7 @@ pca.de <- getPCA(t(test))
 save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
-file.main <- c("SCLC read depth profiles", "")
+file.main <- c("SCLC overall read depth", "")
 trait <- as.numeric(samples.sclc$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"

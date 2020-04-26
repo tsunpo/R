@@ -129,11 +129,11 @@ rownames(samples) <- samples$SAMPLE_ID
 pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3.pdf"), height=6, width=4)
 ymax <- 0.5
 ymin <- -0.367
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="in silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5)
 
-points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=2)
 points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="lightskyblue2", pch=19, cex=2)
+points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=2)
 points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="lightpink1", pch=19, cex=2)
 points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="red", pch=19, cex=2)
 for (s in 1:nrow(samples)) {
@@ -249,25 +249,29 @@ samples <- samples[facs$SAMPLE_ID,]
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
 file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
-main.text <- c("Flow cytometry validation", "")
+main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall correlation with LCL RT"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("#619CFF", "#F8766D", "#00BA38"), "topright")
 
-##
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart9")
-main.text <- c("Flow cytometry (Dean-Jett-Fox)", "")
+###
+## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_3.7+4.0")
+main.text <- c("Flow cytometry validation in vitro (Dean-Jett-Fox)", "")
 xlab.text <- ""
 ylab.text <- "Proportion of cells [%]"
-blue  <- adjustcolor("#619CFF", alpha.f=0.9)
-red   <- adjustcolor("#F8766D", alpha.f=0.9)
-green <- adjustcolor("#00BA38", alpha.f=0.9)
+blue  <- "#619CFF"   ## adjustcolor("#619CFF", alpha.f=0.9)
+red   <- "#F8766D"   ## adjustcolor("#F8766D", alpha.f=0.9)
+green <- "#00BA38"   ## adjustcolor("#00BA38", alpha.f=0.9)
 cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)
-par(mar=c(5.1, 4.1, 4.1, 4.1), xpd=TRUE)
-barplot(facs1, col=cols, ylim=c(0, 100), main=main.text[1], cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+par(mar=c(5.1, 4, 4.1, 3.7), xpd=TRUE)
+barplot(facs1, col=cols, ylim=c(0, 100), main=main.text[1], cex.names=1.5, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+
+#mids <- barplot(facs1, xlab="")   ## To capture the midpoints
+axis(1, at=1.9, labels="GIMEN", cex.axis=1.5, las=0, lwd.tick=0)
 
 legend("right", rownames(facs1)[3:1], cex=1.6, fill=cols[3:1], horiz=F, bty="n", inset=c(-0.11, 0))
 mtext(ylab.text, side=2, line=2.75, cex=1.6)

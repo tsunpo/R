@@ -447,7 +447,7 @@ plotBootstrapSummary <- function(summary, file.name, main.text) {
    text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
 
    legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
-   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
    dev.off()
 }
 
@@ -474,7 +474,7 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
    
    #legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
-   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
    dev.off()
 }
 
@@ -510,10 +510,19 @@ writeTable(report.sclc.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_NBL_20
 report.sclc.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.cll, "SCLC", "CLL")
 writeTable(report.sclc.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
 
+report.nbl.vs.cll   <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl, nrds.RT.NRFD.cll, "NBL", "CLL")
+writeTable(report.nbl.vs.cll, file.path(wd.rt.data, paste0("NRFD_NBL_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.vs.nbl.vs.cll   <- getBootstrapReport3(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.nbl, nrds.RT.NRFD.cll, "SCLC")
+writeTable(report.sclc.vs.nbl.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_NBL_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+
 ##
 summary.sclc.vs.sclc.nl <- getBootstrapSummary(report.sclc.vs.sclc.nl)
 summary.sclc.vs.nbl     <- getBootstrapSummary(report.sclc.vs.nbl)
 summary.sclc.vs.cll     <- getBootstrapSummary(report.sclc.vs.cll)
+summary.nbl.vs.cll      <- getBootstrapSummary(report.nbl.vs.cll)
+summary.sclc.vs.nbl.vs.cll <- getBootstrapSummary(report.sclc.vs.nbl.vs.cll)
 
 ##
 file.name <- file.path(wd.rt.plots, "FS7_SCLC-vs-SCLC-NL_barchart")
@@ -531,6 +540,15 @@ main.text <- c("SCLC landscape domains conserved with CLL", "")
 plotBootstrapSummary(summary.sclc.vs.cll, file.name, main.text)
 plotBootstrapSummaryTotal(summary.sclc.vs.cll, file.name, "Between SCLC and CLL")
 
+file.name <- file.path(wd.rt.plots, "FS7_NBL-vs-CLL_barchart")
+main.text <- c("NBL landscape domains conserved with CLL", "")
+plotBootstrapSummary(summary.nbl.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.vs.cll, file.name, "Between NBL and CLL")
+
+file.name <- file.path(wd.rt.plots, "FS7_SCLC-vs-NBL-vs-CLL_barchart")
+main.text <- c("SCLC landscape domains conserved with NBL and CLL", "")
+plotBootstrapSummary(summary.sclc.vs.nbl.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.nbl.vs.cll, file.name, "Between SCLC, NBL and CLL")
 
 
 
