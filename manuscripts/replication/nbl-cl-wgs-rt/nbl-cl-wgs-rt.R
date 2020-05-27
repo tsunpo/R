@@ -126,16 +126,16 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3.pdf"), height=6, width=4)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3_gray50-70-85.pdf"), height=6, width=4)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5)
 
-points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="lightskyblue2", pch=19, cex=2)
-points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=2)
-points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="lightpink1", pch=19, cex=2)
-points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="red", pch=19, cex=2)
+points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="gray70", pch=19, cex=2)
+points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="gray85", pch=19, cex=2)
+points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="gray50", pch=19, cex=2)
+points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="black", pch=19, cex=2)
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
@@ -151,7 +151,7 @@ for (s in 1:nrow(samples)) {
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.5)
 }
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.5)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("black", "gray50", "gray70", "gray85"), cex=1.5)
 
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
 mtext("Overall correlation with LCL RT", side=2, line=2.75, cex=1.6)
@@ -248,21 +248,21 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_red")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall correlation with LCL RT"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("#619CFF", "#F8766D", "#00BA38"), "topright")
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "#01DF01"), "topright")
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_3.7+4.0")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_3.7+4.0_red")
 main.text <- c("Flow cytometry validation in vitro (Dean-Jett-Fox)", "")
 xlab.text <- ""
 ylab.text <- "Proportion of cells [%]"
-blue  <- "#619CFF"   ## adjustcolor("#619CFF", alpha.f=0.9)
-red   <- "#F8766D"   ## adjustcolor("#F8766D", alpha.f=0.9)
-green <- "#00BA38"   ## adjustcolor("#00BA38", alpha.f=0.9)
+blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
+red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
+green <- "#01DF01"   ## adjustcolor("#00BA38", alpha.f=0.9)
 cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
 facs1 <- t(as.matrix(facs[,-1]))
 
