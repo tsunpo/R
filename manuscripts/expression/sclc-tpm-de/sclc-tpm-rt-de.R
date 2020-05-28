@@ -207,7 +207,7 @@ writeTable(de.tpm.gene.rfd.tz.ho, file.path(wd.de.data, "de_sclc_tpm-gene-median
 # RFD vs. TPM (Figures)
 # Last Modified: 06/01/20
 # -----------------------------------------------------------------------------
-ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 15)
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
 file.name <- paste0("boxplot_sclc_tpm.gene.median0_rfd_TTR+IZ")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expression", names=c("TTR", "IZ"), cols=c("black", "red"), ylim)

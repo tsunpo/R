@@ -88,10 +88,9 @@ plotBox0 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
    
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
    text <- ""
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-5)  text <- "**"
-   if (p < 1E-10) text <- "***"
-   if (p < 1E-20) text <- "****"
+   if (p < 1E-5)  text <- "*"
+   if (p < 1E-9)  text <- "**"
+   if (p < 1E-13) text <- "***"
    text(1.5, ylim[2], text, col="black", cex=2.5)
  
    ##
