@@ -48,6 +48,9 @@ getGeneTPM <- function(tpm.gene.patch, ensGene) {
 ## https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5143225/
 ## https://www.nature.com/articles/nmeth.3580/figures/7
 getLog2andMedian <- function(tpm.gene, pseudocount) {
+   medians <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
+   tpm.gene <- tpm.gene[-which(medians == 0),]
+   
    tpm.gene.log2 <- log2(tpm.gene + pseudocount)
    tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
  
