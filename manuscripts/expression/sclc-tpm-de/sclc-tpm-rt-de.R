@@ -32,13 +32,10 @@ wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
-wd.rt.data  <- file.path(wd.rt, "data")
-wd.rt.plots <- file.path(wd.rt, "plots")
-
 samples.rna <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")
 samples.wgs <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
 overlaps <- intersect(rownames(samples.rna), rownames(samples.wgs))
+
 samples  <- samples.wgs[overlaps,]
 samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 1))
@@ -46,18 +43,14 @@ samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 0))
 # [1] 35
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2   <- log2(tpm.gene + 0.01)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
 nrow(tpm.gene.log2.m)
-# [1] 34908
-# [1] 23593
+# [1] 23572
 # [1] 19131
-
-tpm.gene <- tpm.gene[rownames(tpm.gene.log2.m),]
-save(tpm.gene, file=file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)
 
 # -----------------------------------------------------------------------------
 # TPM vs. in-silico sorting
@@ -89,7 +82,7 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
 writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
 save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.RData"))
 nrow(de.tpm.gene)
-# [1] 23593
+# [1] 23572
 
 ##
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
@@ -108,16 +101,16 @@ nrow(de.tpm.gene)
 nrds.RT.NRFD <- nrds.RT.NRFD.sclc   ## 17/05/20 WHY nrds.RT.NRFD.sclc.nl? ## MUY MUY IMPORTANTE!!
 tpm.gene.log2.m <- tpm.gene.log2.m[rownames(de.tpm.gene),]
 nrow(tpm.gene.log2.m)
-# [1] 23593
+# [1] 23572
 # [1] 
 
 tpm.gene.log2.m.rfd <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
 nrow(tpm.gene.log2.m.rfd)
-# [1] 22047
+# [1] 22023
 # [1] 
 nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 # [1] 1
-# [1] ?
+# [1] 
 
 #load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-tpm-de/data/de_sclc_tpm-gene_src_q_n70.RData")
 #tpm.gene.log2.m.rfd <- tpm.gene.log2.m.rfd[intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd)),]
@@ -131,21 +124,21 @@ load(file.name)
 ## CTR
 length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
 # [1] 70
-# [1] ?
+# [1] 
 
 length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
 # [1] 85
-# [1] ?
+# [1] 
 
 ## TTR
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
-# [1] 0.001380256
+# [1] 0.001565641
 testU(tpm.gene.log2.m.rfd.ctr.iz$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 0.001385107
+# [1] 0.001309764
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
-# [1] 8.799909e-06
+# [1] 9.670566e-06
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 0.8265845
+# [1] 0.798553
 
 #colnames <- c("SCLC-NL", "SCLC", "NBL", "CLL")
 #ps <- toTable(0, length(colnames), 2, colnames)

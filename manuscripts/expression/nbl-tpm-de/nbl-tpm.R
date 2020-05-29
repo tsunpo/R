@@ -3,7 +3,7 @@
 # Chapter      :
 # Name         : manuscripts/expression/nbl-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 07/03/18
+# Last Modified: 29/05/20
 # =============================================================================
 wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
@@ -64,37 +64,57 @@ so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_
 ## https://www.ncbi.nlm.nih.gov/grc/help/patches
 tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
 tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
-save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm_r5_p47.RData")))
-save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5_p47.RData")))
+save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
+save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5p47.RData")))
 
-###
-## Gene-level TPMs without filtering
+## Gene-level TPMs (All)
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
-# > nrow(tpm.gene)
+#writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
+nrow(tpm.gene)
 # [1] 34908
 
-###
+## Gene-level TPMs (Detected)
+load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+tpm.gene <- removeMedian0(tpm.gene)
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+nrow(tpm.gene)
+# [1] 22899
+
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
-# > nrow(tpm.gene)
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+nrow(tpm.gene)
+# [1] 18764
+
+## Gene-level TPMs (Detected + Expressed)
+load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+tpm.gene.median0 <- tpm.gene
+load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+tpm.gene.r5p47   <- tpm.gene
+overlaps <- intersect(rownames(tpm.gene.median0), rownames(tpm.gene.r5p47))
+
+tpm.gene <- tpm.gene[overlaps,]
+#save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.r5p47.RData")))
+nrow(tpm.gene)
 # [1] 18764
 
 # =============================================================================
-# Density plot and histogram (See DifferentialExpression.R)
-# Last Modified: 25/11/18
+# Density plot and histograms (See DifferentialExpression.R)
+# Figure(s)    : Figure S2 (A and B)
+# Last Modified: 29/05/20
 # =============================================================================
-## Detected genes
-file.main <- "_kallisto_0.43.1_tpm.gene"
-load(file.path(wd.de.data, paste0(base, file.main, ".RData")))
-tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
-plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=T, pseudocount=0.01, NULL)
-plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=T, pseudocount=0.01, NULL)
+## All genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "All")
 
-## Expressed genes (with default filters)
-file.main <- "_kallisto_0.43.1_tpm.gene_r5p47"
-load(file.path(wd.de.data, paste0(base, file.main, ".RData")))
-tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
-plotDensity(  tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_d_pc1e2.pdf")),    detected=F, pseudocount=0.01, NULL)
-plotHistogram(tpm.gene.log2$MEDIAN, BASE, file.path(wd.de.data, paste0(base, file.main, "_hist_pc1e2.pdf")), detected=F, pseudocount=0.01, NULL)
+## Detected genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "Detected")
+
+## Expressed genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "Expressed")

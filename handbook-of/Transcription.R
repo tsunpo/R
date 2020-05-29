@@ -45,12 +45,16 @@ getGeneTPM <- function(tpm.gene.patch, ensGene) {
    return(tpm.gene)
 }
 
+removeMedian0 <- function(tpm.gene) {
+   medians <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
+   tpm.gene <- tpm.gene[-which(medians == 0),]
+ 
+   return(tpm.gene)
+}
+
 ## https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5143225/
 ## https://www.nature.com/articles/nmeth.3580/figures/7
 getLog2andMedian <- function(tpm.gene, pseudocount) {
-   medians <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
-   tpm.gene <- tpm.gene[-which(medians == 0),]
-   
    tpm.gene.log2 <- log2(tpm.gene + pseudocount)
    tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
  
@@ -72,7 +76,7 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
 # =============================================================================
 ## http://www.sthda.com/english/wiki/abline-r-function-an-easy-way-to-add-straight-lines-to-a-plot-using-r-software
 ## http://www.sthda.com/english/wiki/line-types-in-r-lty
-plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
+plotDensity <- function(medians, BASE, file.name, title, pseudocount, ymax) {
    xlab.text <- paste0("log2(TPM+", pseudocount, ")")
    ylab.text <- "Density"
    d <- density(medians)
@@ -81,12 +85,9 @@ plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
    if (is.null(ymax))
       ymax <- max(d$y)
    numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
-   conditioned <- "Expressed"
-   if (detected)
-      conditioned <- "Detected"
-   
+
    pdf(file.name, height=6, width=6)
-   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(conditioned, " genes in ", BASE), ylim=c(0, ymax), lwd=1.5)
+   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(title, " genes in ", BASE), ylim=c(0, ymax), lwd=1.5)
    abline(v=q, col=c("red", "blue", "blue", "blue", "blue"), lty=c(1, 5, 1, 5, 1), lwd=c(0.85, 0.85, 0.85, 0.85, 0.85))
    for (x in 2:5)
       text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
@@ -102,21 +103,31 @@ plotDensity <- function(medians, BASE, file.name, detected, pseudocount, ymax) {
 ## https://homepage.divms.uiowa.edu/~luke/classes/STAT4580/histdens.html
 ## https://www.r-graph-gallery.com/190-mirrored-histogram/
 ## https://www.statmethods.net/graphs/density.html
-plotHistogram <- function(medians, BASE, file.name, detected, pseudocount, ymax, breaks=15) {
+plotHistogram <- function(medians, BASE, file.name, title, pseudocount, ymax, breaks=15) {
    h <- hist(medians, breaks=breaks) 
    if (is.null(ymax))
       ymax <- max(h$counts)
    numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
-   conditioned <- "Expressed"
-   if (detected)
-      conditioned <- "Detected"
    
    pdf(file.name, height=6, width=6)
-   hist(medians, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(conditioned, " genes in ", BASE), breaks=breaks, ylim=c(0, ymax)) 
+   hist(medians, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(title, " genes in ", BASE), breaks=breaks, ylim=c(0, ymax)) 
    mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.3)
    dev.off()
 }
 
+plotDensityHistogram <- function(tpm.gene, file.main, title) {
+   pcs <- c(1, 0.1, 0.01)
+   for (c in 1:3) {
+      pc <- pcs[c]
+  
+      tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=pc)
+      plotDensity(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc", pc, ".pdf"), title, pseudocount=pc, NULL)
+      plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc", pc, ".pdf"), title, pseudocount=pc, NULL)
+   }
+}
+
+###
+##
 plotTxDensityHistogram <- function(gene, BASE, wd.rt.plots, tpm.gene.log2, ensGene.rt.tx, tx.q4.fix.all, pseudocount) {
    ensembl_gene_id <- rownames(subset(ensGene.rt.tx, external_gene_name == gene))
    ensGene.rt.tx.gene <- ensGene.rt.tx[ensembl_gene_id,]
