@@ -43,125 +43,68 @@ samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 0))
 # [1] 35
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 0.01)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
 nrow(tpm.gene.log2.m)
-# [1] 23572
-# [1] 19131
-
-# -----------------------------------------------------------------------------
-# TPM vs. in-silico sorting
-# Last Modified: 12/12/19; 08/01/19; 17/08/17
-# -----------------------------------------------------------------------------
-colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
-de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
-rownames(de) <- rownames(tpm.gene.log2)
-
-## SRC
-de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
-de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
-de <- de[!is.na(de$P),]
-
-## Log2 fold change
-de$M1 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 0)))
-de$M2 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 1)))
-de$LOG2_FC <- de$M2 - de$M1
-
-## FDR
-library(qvalue)
-de$Q <- qvalue(de$P)$qvalue
-de <- de[order(de$P),]
-
-## Ensembl gene annotations
-annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
-
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.RData"))
-nrow(de.tpm.gene)
-# [1] 23572
-
-##
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-de.tpm.gene <- de.tpm.gene[intersect(rownames(de.tpm.gene), rownames(tpm.gene)),]
-de.tpm.gene$Q <- qvalue(de.tpm.gene$P)$qvalue
-de.tpm.gene <- de.tpm.gene[order(de.tpm.gene$P),]
-
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_n70.RData"))
-nrow(de.tpm.gene)
 # [1] 19131
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-nrds.RT.NRFD <- nrds.RT.NRFD.sclc   ## 17/05/20 WHY nrds.RT.NRFD.sclc.nl? ## MUY MUY IMPORTANTE!!
+load(file=file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_n70.RData"))
+dim(de.tpm.gene)
+# [1] 19131    13
+
+nrds.RT.NRFD <- nrds.RT.NRFD.sclc.nl   ## 17/05/20 WHY nrds.RT.NRFD.sclc.nl? ## MUY MUY IMPORTANTE!!
 tpm.gene.log2.m <- tpm.gene.log2.m[rownames(de.tpm.gene),]
 nrow(tpm.gene.log2.m)
-# [1] 23572
 # [1] 19131
 
-tpm.gene.log2.m.rfd <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
-nrow(tpm.gene.log2.m.rfd)
-# [1] 22023
-# [1] 18007
-nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
+tpm.gene.log2.m.rfd.nl <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
+nrow(tpm.gene.log2.m.rfd.nl)
+# [1] 18014
+nrow(subset(tpm.gene.log2.m.rfd.nl, TRC == 0))
 # [1] 1
-# [1] 1
-
-de.tpm.gene <- de.tpm.gene[rownames(tpm.gene.log2.m.rfd), ]
-de.tpm.gene$Q <- qvalue(de.tpm.gene$P)$qvalue
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_rfd_n70.txt"), colnames=T, rownames=F, sep="\t")
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_rfd_n70.RData"))
-#de.tpm.gene$Q <- p.adjust(de.tpm.gene$P, "BH")
-#writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_bh_rfd_n70.txt"), colnames=T, rownames=F, sep="\t")
-#save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_bh_rfd_n70.RData"))
-
-#load("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-tpm-de/data/de_sclc_tpm-gene_src_q_n70.RData")
-#tpm.gene.log2.m.rfd <- tpm.gene.log2.m.rfd[intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd)),]
 
 ###
 ## TTR and CTR (IZ +TZ)
-file.name <- file.path(wd.de.data, "tpm_gene_r5p47_log2_m_rfd.RData")
-setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
-load(file.name)
+file.name <- file.path(wd.de.data, "tpm_gene_r5p47_log2_m_rfd_nl.RData")
+rfd <- 0.9
+#setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
+
+## CTR 
+tpm.gene.log2.m.rfd.ctr.nl <- subset(subset(tpm.gene.log2.m.rfd.nl, TSS_RFD < rfd), TSS_RFD > -rfd)
+
+tpm.gene.log2.m.rfd.ctr.iz.nl <- subset(tpm.gene.log2.m.rfd.ctr.nl, TSS_NRFD > 0)
+tpm.gene.log2.m.rfd.ctr.tz.nl <- subset(tpm.gene.log2.m.rfd.ctr.nl, TSS_NRFD < 0)
+
+tpm.gene.log2.m.rfd.ctr.iz.cd.nl <- subset(tpm.gene.log2.m.rfd.ctr.iz.nl, TRC > 0)
+tpm.gene.log2.m.rfd.ctr.iz.ho.nl <- subset(tpm.gene.log2.m.rfd.ctr.iz.nl, TRC < 0)
+tpm.gene.log2.m.rfd.ctr.tz.cd.nl <- subset(tpm.gene.log2.m.rfd.ctr.tz.nl, TRC > 0)
+tpm.gene.log2.m.rfd.ctr.tz.ho.nl <- subset(tpm.gene.log2.m.rfd.ctr.tz.nl, TRC < 0)
+
+## TTR
+tpm.gene.log2.m.rfd.ttr.nl <- rbind(subset(tpm.gene.log2.m.rfd.nl, TSS_RFD >= rfd), subset(tpm.gene.log2.m.rfd.nl, TSS_RFD <= -rfd))
+save(tpm.gene.log2.m.rfd.nl, tpm.gene.log2.m.rfd.ctr.nl, tpm.gene.log2.m.rfd.ctr.iz.nl, tpm.gene.log2.m.rfd.ctr.iz.cd.nl, tpm.gene.log2.m.rfd.ctr.iz.ho.nl, tpm.gene.log2.m.rfd.ctr.tz.nl, tpm.gene.log2.m.rfd.ctr.tz.cd.nl, tpm.gene.log2.m.rfd.ctr.tz.ho.nl, tpm.gene.log2.m.rfd.ttr.nl, file=file.name)
 
 ## CTR
-length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
-# [1] 70
-# [1] 60
-length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
-# [1] 85
-# [1] 80
+length(which(tpm.gene.log2.m.rfd.ctr.iz.nl$GENE_NRFD < 0))
+# [1] 43
+length(which(tpm.gene.log2.m.rfd.ctr.tz.nl$GENE_NRFD > 0))
+# [1] 52
 
-## TTR (median0)
-testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
-# [1] 0.001565641
-testU(tpm.gene.log2.m.rfd.ctr.iz$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 0.001309764
-testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
-# [1] 9.670566e-06
-testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 0.798553
 
-#colnames <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-#ps <- toTable(0, length(colnames), 2, colnames)
-#ps[2, 4] <-  testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
-#save(ps, file=file.path(wd.de.data, "tpm_gene_log2_m_rfd_ps.RData"))
 
-## TTR (r5p47)
-testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
-# [1] 0.0180178
-testU(tpm.gene.log2.m.rfd.ctr.iz$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 0.0180636
-testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
-# [1] 0.001018786
-testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 0.8708842
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (Tables)
@@ -232,9 +175,6 @@ plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.
 # -----------------------------------------------------------------------------
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
-file.name <- paste0("boxplot3_sclc_tpm.gene.r5p47_rfd_TTR+CTR")
-plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.tz, main="SCLC expressed genes", names=c("TTR", "IZ", "TZ"), cols=c("black", "red", "blue"), ylim)
-
 file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_rfd_TTR+IZ")
 plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expressed genes", names=c("TTR", "IZ"), cols=c("black", "red"), ylim)
 
@@ -255,26 +195,10 @@ plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.r
 # 
 # Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
-genes <- c("PIF1", "MARS", "KIF18B", "BRCA2", "RAD9A", "FOXH1", "TONSL", "AL807752.1", "TOR1AIP1", "TOR1A", "TOR1B", "TP53", "RB1")
-genes <- c("GTF3C2", "SUPT7L", "RAD9A", "E2F3")
+genes <- c("PIF1", "MARS", "KIF18B", "BRCA2", "RAD9A", "TOR1AIP1", "TOR1A", "TOR1B", "TP53", "RB1")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
-}
-
-##
-plotNLSCLC <- function(id, gene) {
-   median(as.numeric(tpm.gene.lung.log2[id,]))
-   median(as.numeric(tpm.gene.log2[id,]))
-   testU(as.numeric(tpm.gene.lung.log2[id,]), as.numeric(tpm.gene.log2[id,]))
-   file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_gene_", gene, "_")
-   plotBox2(wd.de.plots, file.name, tpm.gene.lung.log2[id,], tpm.gene.log2[id,], main=gene, names=c("Lung", "SCLC"))
-}
-
-genes <- c("GTF3C2", "SUPT7L", "RAD9A", "E2F3", "ALK")
-for (g in 1:length(genes)) {
-   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
-   plotNLSCLC(id, genes[g])
 }
 
 # -----------------------------------------------------------------------------
@@ -282,23 +206,23 @@ for (g in 1:length(genes)) {
 # Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 tpm.gene.log2.m.rfd.ctr.iz <- cbind(de.tpm.gene.rfd.iz, tpm.gene.log2.m.rfd.ctr.iz[rownames(de.tpm.gene.rfd.iz),])
-tpm.gene.log2.m.rfd.ctr.iz$length <- abs(tpm.gene.log2.m.rfd.ctr.iz$end_position - tpm.gene.log2.m.rfd.ctr.iz$start_position)
+tpm.gene.log2.m.rfd.ctr.iz$length <- abs(tpm.gene.log2.m.rfd.ctr.iz$end_position - tpm.gene.log2.m.rfd.ctr.iz$start_position) / 1000
 tpm.gene.log2.m.rfd.ctr.iz.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC > 0)
 tpm.gene.log2.m.rfd.ctr.iz.ho <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC < 0)
 
 ##
 xlim <- c(min(log10(tpm.gene.log2.m.rfd.ctr.iz$length)), max(log10(tpm.gene.log2.m.rfd.ctr.iz$length)))
-ylim <- c(min(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD), max(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD))
+ylim <- c(min(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD), min(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD) * -1)
 ylab.text <- "IZ efficiency"
 
-file.name <- file.path(wd.de.plots, "SCLC_TRC_LENGTH-vs-TSS-NRFD_IZ")
-plotTRC(tpm.gene.log2.m.rfd.ctr.iz$TSS_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz$length), c("SCLC IZ genes", "n=2,565"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
+file.name <- file.path(wd.de.plots, "SCLC-SP_TRC_LENGTH-vs-GENE-NRFD_IZ")
+plotTRC(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz$length), c("SCLC IZ genes", "n=2,565"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
 
-file.name <- file.path(wd.de.plots, "SCLC_TRC_LENGTH-vs-TSS-NRFD_IZ_CD")
-plotTRC(tpm.gene.log2.m.rfd.ctr.iz.cd$TSS_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.cd$length), c("SCLC IZ, CD genes", "n=1,275"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
+file.name <- file.path(wd.de.plots, "SCLC-SP_TRC_LENGTH-vs-GENE-NRFD_IZ_CD")
+plotTRC(tpm.gene.log2.m.rfd.ctr.iz.cd$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.cd$length), c("SCLC IZ, CD genes", "n=1,275"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
 
-file.name <- file.path(wd.de.plots, "SCLC_TRC_LENGTH-vs-TSS-NRFD_IZ_HO")
-plotTRC(tpm.gene.log2.m.rfd.ctr.iz.ho$TSS_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.ho$length), c("SCLC IZ, HO genes", "n=1,289"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
+file.name <- file.path(wd.de.plots, "SCLC-SP_TRC_LENGTH-vs-GENE-NRFD_IZ_HO")
+plotTRC(tpm.gene.log2.m.rfd.ctr.iz.ho$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.ho$length), c("SCLC IZ, HO genes", "n=1,289"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
 
 ##
 tpm.gene.log2.m.rfd.ctr.tz <- cbind(de.tpm.gene.rfd.tz, tpm.gene.log2.m.rfd.ctr.tz[rownames(de.tpm.gene.rfd.tz),])
@@ -307,18 +231,26 @@ tpm.gene.log2.m.rfd.ctr.tz.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC > 0)
 tpm.gene.log2.m.rfd.ctr.tz.ho <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC < 0)
 
 ##
-xlim <- c(min(log10(tpm.gene.log2.m.rfd.ctr.tz$length)), max(log10(tpm.gene.log2.m.rfd.ctr.tz$length)))
+xlim <- c(min(log10(tpm.gene.log2.m.rfd.ctr.iz$length)), max(log10(tpm.gene.log2.m.rfd.ctr.tz$length)))
 ylim <- c(max(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD), min(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD)) * -1
 ylab.text <- "TZ efficiency"
 
-file.name <- file.path(wd.de.plots, "SCLC_TRC_LENGTH-vs-GENE-NRFD_TZ")
-plotTRC(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz$length), c("SCLC expressed TZ genes", "n=1,577"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+file.name <- file.path(wd.de.plots, "SCLC-SP_TRC_LENGTH-vs-GENE-NRFD_TZ")
+plotTRC(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz$length), c("SCLC, TZ-S genes", "n=1,577"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
 
-file.name <- file.path(wd.de.plots, "SCLC_TRC_LENGTH-vs-GENE-NRFD_TZ_CD")
-plotTRC(tpm.gene.log2.m.rfd.ctr.tz.cd$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz.cd$length), c("SCLC expressed TZ, CD genes", "n=802"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+file.name <- file.path(wd.de.plots, "SCLC-SP_TRC_LENGTH-vs-GENE-NRFD_TZ_CD")
+plotTRC(tpm.gene.log2.m.rfd.ctr.tz.cd$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz.cd$length), c("SCLC TZ, CD genes", "n=802"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
 
-file.name <- file.path(wd.de.plots, "SCLC_TRC_LENGTH-vs-GENE-NRFD_TZ_HO")
-plotTRC(tpm.gene.log2.m.rfd.ctr.tz.ho$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz.ho$length), c("SCLC expressed TZ, HO genes", "n=775"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+file.name <- file.path(wd.de.plots, "SCLC-SP_TRC_LENGTH-vs-GENE-NRFD_TZ_HO")
+plotTRC(tpm.gene.log2.m.rfd.ctr.tz.ho$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz.ho$length), c("SCLC TZ, HO genes", "n=775"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # 
@@ -328,185 +260,27 @@ overlaps <- intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz), rownames(tpm.gene.lo
 tpm.gene.log2.m.rfd.ctr.iz.sp <- tpm.gene.log2.m.rfd.ctr.iz[setdiff(rownames(tpm.gene.log2.m.rfd.ctr.iz), overlaps),]
 
 tpm.gene.log2.m.rfd.ctr.iz.sp <- tpm.gene.log2.m.rfd.ctr.iz.sp[intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.sp), rownames(de.tpm.gene)),]
-#tpm.gene.log2.m.rfd.ctr.iz.nsp <- tpm.gene.log2.m.rfd.ctr.iz[overlaps,]
-#tpm.gene.log2.m.rfd.ctr.iz.nsp <- tpm.gene.log2.m.rfd.ctr.iz.nsp[intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.nsp), rownames(de.tpm.gene)),]
-
-overlaps <- intersect(rownames(tpm.gene.log2.m.rfd.ctr.tz), rownames(tpm.gene.log2.m.rfd.ctr.tz.nl))
-tpm.gene.log2.m.rfd.ctr.tz.sp <- tpm.gene.log2.m.rfd.ctr.tz[setdiff(rownames(tpm.gene.log2.m.rfd.ctr.tz), overlaps),]
-
-tpm.gene.log2.m.rfd.ctr.tz.sp <- tpm.gene.log2.m.rfd.ctr.tz.sp[intersect(rownames(tpm.gene.log2.m.rfd.ctr.tz.sp), rownames(de.tpm.gene)),]
-#tpm.gene.log2.m.rfd.ctr.tz.nsp <- tpm.gene.log2.m.rfd.ctr.tz[overlaps,]
-#tpm.gene.log2.m.rfd.ctr.tz.nsp <- tpm.gene.log2.m.rfd.ctr.tz.nsp[intersect(rownames(tpm.gene.log2.m.rfd.ctr.tz.nsp), rownames(de.tpm.gene)),]
+tpm.gene.log2.m.rfd.ctr.iz.nsp <- tpm.gene.log2.m.rfd.ctr.iz[overlaps,]
+tpm.gene.log2.m.rfd.ctr.iz.nsp <- tpm.gene.log2.m.rfd.ctr.iz.nsp[intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.nsp), rownames(de.tpm.gene)),]
 
 ## IZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.sp))
 de.tpm.gene.rfd.iz.sp <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.sp$Q <- qvalue(de.tpm.gene.rfd.iz.sp$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.sp, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-sp_src_q_rfd_iz_n70.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.sp, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-rfd_src_q_iz_sp_n70.txt"), colnames=T, rownames=F, sep="\t")
 
-## IZ-S (HO vs CD)  ## 2020/05/29
+## IZ-SP (HO vs CD)  ## 2020/05/17
+de.tpm.gene.rfd.iz.sp <- readTable(file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-rfd_src_q_iz_sp_n70.txt"), header=T, rownames=T, sep="\t")
+
 overlaps <- intersect(rownames(de.tpm.gene.rfd.iz.sp), rownames(subset(tpm.gene.log2.m.rfd.ctr.iz, TRC == 1)))
 de.tpm.gene.rfd.iz.sp.cd <- cbind(de.tpm.gene.rfd.iz.sp[overlaps,], tpm.gene.log2.m.rfd.ctr.iz[overlaps,])
 de.tpm.gene.rfd.iz.sp.cd$Q <- qvalue(de.tpm.gene.rfd.iz.sp.cd$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.sp.cd, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-sp_src_q_rfd_iz_cd_n70.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.sp.cd, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-rfd_src_q_iz_sp_cd_n70.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene.rfd.iz.sp), rownames(subset(tpm.gene.log2.m.rfd.ctr.iz, TRC == -1)))
 de.tpm.gene.rfd.iz.sp.ho <- cbind(de.tpm.gene.rfd.iz.sp[overlaps,], tpm.gene.log2.m.rfd.ctr.iz[overlaps,])
 de.tpm.gene.rfd.iz.sp.ho$Q <- qvalue(de.tpm.gene.rfd.iz.sp.ho$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.sp.ho, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-sp_src_q_rfd_iz_ho_n70.txt"), colnames=T, rownames=F, sep="\t")
-
-## TZ
-overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz.sp))
-de.tpm.gene.rfd.tz.sp <- de.tpm.gene[overlaps,]
-de.tpm.gene.rfd.tz.sp$Q <- qvalue(de.tpm.gene.rfd.tz.sp$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.sp, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-sp_src_q_rfd_tz_n70.txt"), colnames=T, rownames=F, sep="\t")
-
-## TZ-S (HO vs CD)  ## 2020/05/29
-overlaps <- intersect(rownames(de.tpm.gene.rfd.tz.sp), rownames(subset(tpm.gene.log2.m.rfd.ctr.tz, TRC == 1)))
-de.tpm.gene.rfd.tz.sp.cd <- cbind(de.tpm.gene.rfd.tz.sp[overlaps,], tpm.gene.log2.m.rfd.ctr.tz[overlaps,])
-de.tpm.gene.rfd.tz.sp.cd$Q <- qvalue(de.tpm.gene.rfd.tz.sp.cd$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.sp.cd, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-sp_src_q_rfd_tz_cd_n70.txt"), colnames=T, rownames=F, sep="\t")
-
-overlaps <- intersect(rownames(de.tpm.gene.rfd.tz.sp), rownames(subset(tpm.gene.log2.m.rfd.ctr.tz, TRC == -1)))
-de.tpm.gene.rfd.tz.sp.ho <- cbind(de.tpm.gene.rfd.tz.sp[overlaps,], tpm.gene.log2.m.rfd.ctr.tz[overlaps,])
-de.tpm.gene.rfd.tz.sp.ho$Q <- qvalue(de.tpm.gene.rfd.tz.sp.ho$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.sp.ho, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-sp_src_q_rfd_tz_ho_n70.txt"), colnames=T, rownames=F, sep="\t")
-
-####
-##
-tpm.gene.log2.m.rfd.ctr.iz.cd.sp <- tpm.gene.log2.m.rfd.ctr.iz[rownames(de.tpm.gene.rfd.iz.sp.cd), ]
-tpm.gene.log2.m.rfd.ctr.iz.ho.sp <- tpm.gene.log2.m.rfd.ctr.iz[rownames(de.tpm.gene.rfd.iz.sp.ho), ]
-tpm.gene.log2.m.rfd.ctr.tz.cd.sp <- tpm.gene.log2.m.rfd.ctr.tz[rownames(de.tpm.gene.rfd.tz.sp.cd), ]
-tpm.gene.log2.m.rfd.ctr.tz.ho.sp <- tpm.gene.log2.m.rfd.ctr.tz[rownames(de.tpm.gene.rfd.tz.sp.ho), ]
-
-file.name <- paste0("boxplot_sclc_tpm.gene.r5p47.sp_rfd_HO+CD_IZ")
-plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.ho.sp, tpm.gene.log2.m.rfd.ctr.iz.cd.sp, main="SCLC IZ-S", names=c("HO", "CD"), cols=c("red", "red"), ylim)
-
-file.name <- paste0("boxplot_sclc_tpm.gene.r5p47.sp_rfd_HO+CD_TZ")
-plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho.sp, tpm.gene.log2.m.rfd.ctr.tz.cd.sp, main="SCLC TZ-S", names=c("HO", "CD"), cols=c("blue", "blue"), ylim)
-
-# -----------------------------------------------------------------------------
-# Volcano plots
-# Last Modified: 29/05/20
-# -----------------------------------------------------------------------------
-fdrToP <- function(fdr, de) {
-   de.sig <- subset(de, Q <= fdr)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   return(max(de.sig$P))
-}
-
-pvalueToFDR <- function(pvalue, de) {
-   de.sig <- subset(de, P <= pvalue)
- 
-   return(round0(max(de.sig$Q)*100, digits=0))
-}
-
-plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
-   #pvalue <- fdrToP(fdr, de)
-   fdr <- pvalueToFDR(pvalue, de)
-   de.sig <- subset(de, P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   if (ymax ==0) ymax <- max(de$log10P)
-   
-   pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="-log10(p-value)", col="lightgray", main=file.main[1], cex=1.2, cex.axis=1.2, cex.lab=1.2, cex.main=1.25)
-
-   abline(h=c(-log10(pvalue)), lty=5)
-   text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.1)    ## SCLC (IZ)
-   #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
-   #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
-   
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.2)
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="dodgerblue", cex=1.2)
- 
-   if (nrow(genes) != 0) {
-      for (g in 1:nrow(genes)) {
-         gene <- subset(de, external_gene_name == genes[g,]$GENE)
-         gene <- cbind(gene, genes[g,])
-      
-         if (nrow(gene) > 0) {
-            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.2)
-         
-            if (!is.na(gene$ADJ_1))
-               if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
-               else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
-            else
-               if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=1.2)
-               else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=1.2)
-         } else
-            print(genes[g])
-      }
-   }
-   
-   mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("gold", "dodgerblue"), pch=19)
-   dev.off()
-}
-
-## All
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_p2e04")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC expressed genes", paste0("n=18,004"))
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 0.0002, genes, file.de, file.main, xlab.text, ymax=6.8)
-
-##
-xlab.text <- "SCLC M2/M1 [log2FC]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.1")
-
-## IZ-S
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_p2e04_iz_sp_cd")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC expressed, IZ-S, CD genes", paste0("n=642"))
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene.rfd.iz.sp.cd, 0.0002, genes, file.de, file.main, xlab.text, ymax=4.5)
-
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08_iz_sp_ho")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC IZ-S, HO genes", paste0("n=657"))
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene.rfd.iz.sp.ho, 0.08, genes, file.de, file.main, xlab.text)
-
-## TOR1
-de.tpm.gene.rfd.ctr.sp <- rbind(de.tpm.gene.rfd.iz.sp, de.tpm.gene.rfd.tz.sp)
-de.tpm.gene.rfd.ctr.sp$Q <- qvalue(de.tpm.gene.rfd.ctr.sp$P)$qvalue
-
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08_ctr_sp")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC CTR-S genes", paste0("n=2,173"))
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene.rfd.ctr.sp, 0.08, genes, file.de, file.main, xlab.text)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+writeTable(de.tpm.gene.rfd.iz.sp.ho, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-rfd_src_q_iz_sp_ho_n70.txt"), colnames=T, rownames=F, sep="\t")
 
 ## IZ (CD vs. HO)
 # > median(de.tpm.gene.rfd.iz.sp.cd$MEDIAN)
@@ -560,6 +334,125 @@ writeTable(de.tpm.gene.rfd.tz.sp, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47-
 
 ## IZ (Overlapping SCLC and NBL)
 overlaps <- intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.sp), rownames(de.tpm.gene.rfd.iz.s))
+
+
+# -----------------------------------------------------------------------------
+# Volcano plots
+# Last Modified: 15/08/18
+# -----------------------------------------------------------------------------
+fdrToP <- function(fdr, de) {
+   de.sig <- subset(de, Q <= fdr)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   return(max(de.sig$P))
+}
+
+plotVolcano <- function(de, fdr, genes, file.de, file.main, xlab.text) {
+   pvalue <- fdrToP(fdr, de)
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   de$log10P <- -log10(de$P)
+   xmax <- max(de$LOG2_FC)
+   #ymax <- max(de$log10P)
+   ymax <- 4.5
+   
+   pdf(file.de, height=6, width=6)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="-log10(p-value)", col="lightgray", main=file.main[1], cex=1.2, cex.axis=1.2, cex.lab=1.2, cex.main=1.25)
+
+   abline(h=c(-log10(pvalue)), lty=5)
+   text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)    ## SCLC (IZ)
+   #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
+   #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
+   
+   de.up   <- subset(de.sig, LOG2_FC > 0)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.2)
+   de.down <- subset(de.sig, LOG2_FC < 0)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="dodgerblue", cex=1.2)
+ 
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+      
+         if (nrow(gene) > 0) {
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.2)
+         
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
+            else
+               if (gene$LOG2_FC > 0)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=1.2)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=1.2)
+         } else
+            print(genes[g])
+      }
+   }
+   
+   mtext(file.main[2], cex=1.25, line=0.3)
+   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("gold", "dodgerblue"), pch=19)
+   dev.off()
+}
+
+##
+xlab.text <- "SCLC M2/M1 [log2FC]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.1")
+
+## All genes
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("SCLC all genes", paste0("(n=18,007)"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano(de.tpm.gene.rfd, 0.14, genes, file.de, file.main, xlab.text)
+
+## IZ
+genes <- readTable(paste0(plot.de, "_iz.tab"), header=T, rownames=F, sep="\t")
+file.main <- c("Initiation (IZ)", paste0("(n=2,565)"))
+file.de <- paste0(plot.de, "_iz.pdf")
+plotVolcano(de.tpm.gene.rfd.iz, 0.08, genes, file.de, file.main, xlab.text)
+
+## IZ (SP)
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_rfd_fdr0.1")
+genes <- readTable(paste0(plot.de, "_iz_sp.tab"), header=T, rownames=F, sep="\t")
+file.main <- c("SCLC-specific initiated genes (IZ-S)", paste0("(n=2,045)"))
+file.de <- paste0(plot.de, "_iz_sp.pdf")
+plotVolcano(de.tpm.gene.rfd.iz.sp, 0.1, genes, file.de, file.main, xlab.text)
+
+## IZ (Expressed, SP)
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08")
+genes <- readTable(paste0(plot.de, "_iz_sp2.tab"), header=T, rownames=F, sep="\t")
+file.main <- c("SCLC-specificly initiated (IZ-S), expressed genes", paste0("(n=1,299)"))
+file.de <- paste0(plot.de, "_iz_sp2.pdf")
+plotVolcano(de.tpm.gene.rfd.iz.sp, 0.08, genes, file.de, file.main, xlab.text)
+
+## IZ (Expressed, SP, CD)
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08_iz_sp_cd")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("SCLC, IZ-S and CD genes", paste0("n=642"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano(de.tpm.gene.rfd.iz.sp.cd, 0.08, genes, file.de, file.main, xlab.text)
+
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08_iz_sp_ho")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("SCLC, IZ-S and HO genes", paste0("n=657"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano(de.tpm.gene.rfd.iz.sp.ho, 0.08, genes, file.de, file.main, xlab.text)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -833,7 +726,7 @@ plotVolcano(de2.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text)
 
 
 overlaps <- intersect(rownames(de2.tpm.gene), rownames(tpm.gene))
-length(overlaps)
+# length(overlaps)
 # [1] 2199
 de2.tpm.gene <- de2.tpm.gene[overlaps,]
 save(de2.tpm.gene, samples, file=file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp_expressed-in-lung.RData"))

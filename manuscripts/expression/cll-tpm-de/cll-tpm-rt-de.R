@@ -3,7 +3,7 @@
 # Chapter      : 
 # Name         : manuscripts/expression/cll-tpm-rt-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 27/05/20
+# Last Modified: 29/05/20
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
@@ -55,7 +55,7 @@ nrow(tpm.gene.log2.m)
 
 # -----------------------------------------------------------------------------
 # Relationship between expression and in-silico sorting
-# Last Modified: 12/12/19; 08/01/19; 17/08/17
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
 de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
@@ -98,7 +98,7 @@ nrow(de.tpm.gene)
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
-# Last Modified: 31/10/18
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 nrds.RT.NRFD <- nrds.RT.NRFD.cll   ## MUY MUY IMPORTANTE!!
 tpm.gene.log2.m <- tpm.gene.log2.m[rownames(de.tpm.gene),]
@@ -123,12 +123,11 @@ load(file.name)
 length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
 # [1] 88
 # [1] 
-
 length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
 # [1] 77
 # [1] 
 
-## TTR
+## TTR  (median0)
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
 # [1] 0.1372059
 testU(tpm.gene.log2.m.rfd.ctr.iz$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
@@ -154,8 +153,8 @@ testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
 # [1] 
 
 # -----------------------------------------------------------------------------
-# RFD vs. TPM
-# Last Modified: 31/10/18
+# RFD vs. TPM (Tables)
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd))
 de.tpm.gene.rfd <- de.tpm.gene[overlaps,]
@@ -195,8 +194,8 @@ de.tpm.gene.rfd.tz.ho$Q <- qvalue(de.tpm.gene.rfd.tz.ho$P)$qvalue
 writeTable(de.tpm.gene.rfd.tz.ho, file.path(wd.de.data, "de_cll_tpm-gene-median0_src_q_rfd_tz_ho_n70.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
-# RFD vs. TPM (Figures)
-# Last Modified: 06/01/20
+# RFD vs. TPM (median0)
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 

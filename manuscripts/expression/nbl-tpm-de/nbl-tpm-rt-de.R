@@ -3,7 +3,7 @@
 # Chapter      : 
 # Name         : manuscripts/expression/nbl-tpm-rt-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 28/05/20
+# Last Modified: 29/05/20
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
@@ -51,7 +51,7 @@ nrow(tpm.gene.log2.m)
 
 # -----------------------------------------------------------------------------
 # Relationship between expression and in-silico sorting
-# Last Modified: 10/01/20
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
 de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
@@ -90,39 +90,38 @@ de.tpm.gene <- de.tpm.gene[order(de.tpm.gene$P),]
 writeTable(de.tpm.gene, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_n53.txt"), colnames=T, rownames=F, sep="\t")
 save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_n53.RData"))
 nrow(de.tpm.gene)
-# [1] ?
+# [1] 18763
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
-# Last Modified: 31/10/18
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 nrds.RT.NRFD <- nrds.RT.NRFD.nbl   ## MUY MUY IMPORTANTE!!
 tpm.gene.log2.m <- tpm.gene.log2.m[rownames(de.tpm.gene),]
 nrow(tpm.gene.log2.m)
 # [1] 22899
-# [1] ?
+# [1] 18763
 
 tpm.gene.log2.m.rfd <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
 nrow(tpm.gene.log2.m.rfd)
 # [1] 21419
-# [1] ?
+# [1] 17653
 nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 # [1] 2
-# [1] ?
+# [1] 2
 
 ###
 ## TTR and CTR (IZ +TZ)
-file.name <- file.path(wd.de.data, "tpm-gene-median0_log2_m_rfd.RData")
+file.name <- file.path(wd.de.data, "tpm-gene-r5p47_log2_m_rfd.RData")
 setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
 load(file.name)
 
 length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
 # [1] 111
-# [1] 
-
+# [1] 104
 length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
 # [1] 125
-# [1] 
+# [1] 113
 
 ## TTR (median0)
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
@@ -136,76 +135,121 @@ testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
 
 ## TTR (r5p47)
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr$MEDIAN)
-# [1] 
+# [1] 1.248456e-05
 testU(tpm.gene.log2.m.rfd.ctr.iz$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 
+# [1] 0.01910895
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.iz$MEDIAN)
-# [1] 
+# [1] 9.463916e-07
 testU(tpm.gene.log2.m.rfd.ttr$MEDIAN, tpm.gene.log2.m.rfd.ctr.tz$MEDIAN)
-# [1] 
+# [1] 0.1979625
 
 # -----------------------------------------------------------------------------
-# RFD vs. TPM
-# Last Modified: 31/10/18
+# RFD vs. TPM (Tables)
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd))
 de.tpm.gene.rfd <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd$Q <- qvalue(de.tpm.gene.rfd$P)$qvalue
-writeTable(de.tpm.gene.rfd, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 ## IZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz))
 de.tpm.gene.rfd.iz <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz$Q <- qvalue(de.tpm.gene.rfd.iz$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_iz_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.cd))
 de.tpm.gene.rfd.iz.cd <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.cd$Q <- qvalue(de.tpm.gene.rfd.iz.cd$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_cd_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_iz_cd_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz.ho))
 de.tpm.gene.rfd.iz.ho <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.iz.ho$Q <- qvalue(de.tpm.gene.rfd.iz.ho$P)$qvalue
-writeTable(de.tpm.gene.rfd.iz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.iz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_iz_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 ## TZ
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz))
 de.tpm.gene.rfd.tz <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz$Q <- qvalue(de.tpm.gene.rfd.tz$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_tz_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.tz, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_tz_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz.cd))
 de.tpm.gene.rfd.tz.cd <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz.cd$Q <- qvalue(de.tpm.gene.rfd.tz.cd$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_tz_cd_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.tz.cd, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_tz_cd_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 overlaps <- intersect(rownames(de.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz.ho))
 de.tpm.gene.rfd.tz.ho <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz.ho$Q <- qvalue(de.tpm.gene.rfd.tz.ho$P)$qvalue
-writeTable(de.tpm.gene.rfd.tz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_tz_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene.rfd.tz.ho, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_src_q_rfd_tz_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
-# RFD vs. TPM (Figures)
-# Last Modified: 06/01/20
+# RFD vs. TPM (median0)
+# Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
-file.name <- paste0("boxplot_nbl_tpm.gene.median0_rfd_TTR+IZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="NBL expression", names=c("TTR", "IZ"), cols=c("black", "red"), ylim)
+file.name <- paste0("boxplot_nbl_tpm.gene.r5p47_rfd_TTR+IZ")
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="NBL expressed genes", names=c("TTR", "IZ"), cols=c("black", "red"), ylim)
 
-file.name <- paste0("boxplot_nbl_tpm.gene.median0_rfd_TTR+TZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, main="NBL expression", names=c("TTR", "TZ"), cols=c("black", "blue"), ylim)
+file.name <- paste0("boxplot_nbl_tpm.gene.r5p47_rfd_TTR+TZ")
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, main="NBL expressed genes", names=c("TTR", "TZ"), cols=c("black", "blue"), ylim)
 
-file.name <- paste0("boxplot_nbl_tpm.gene.median0_rfd_IZ+TZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.tz, main="NBL expression", names=c("IZ", "TZ"), cols=c("red", "blue"), ylim)
+file.name <- paste0("boxplot_nbl_tpm.gene.r5p47_rfd_IZ+TZ")
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.tz, main="NBL expressed genes", names=c("IZ", "TZ"), cols=c("red", "blue"), ylim)
 
 ##
-file.name <- paste0("boxplot_nbl_tpm.gene.median0_rfd_HO+CD_IZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.iz.cd, main="NBL IZ", names=c("HO", "CD"), cols=c("red", "red"), ylim)
+file.name <- paste0("boxplot_nbl_tpm.gene.r5p47_rfd_HO+CD_IZ")
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.iz.cd, main="NBL expressed IZ", names=c("HO", "CD"), cols=c("red", "red"), ylim)
 
-file.name <- paste0("boxplot_nbl_tpm.gene.median0_rfd_HO+CD_TZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ctr.tz.cd, main="NBL TZ", names=c("HO", "CD"), cols=c("blue", "blue"), ylim)
+file.name <- paste0("boxplot_nbl_tpm.gene.r5p47_rfd_HO+CD_TZ")
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ctr.tz.cd, main="NBL expressed TZ", names=c("HO", "CD"), cols=c("blue", "blue"), ylim)
+
+# -----------------------------------------------------------------------------
+# Gene length vs. RFD slopes
+# Last Modified: 29/05/20
+# -----------------------------------------------------------------------------
+tpm.gene.log2.m.rfd.ctr.iz <- cbind(de.tpm.gene.rfd.iz, tpm.gene.log2.m.rfd.ctr.iz[rownames(de.tpm.gene.rfd.iz),])
+tpm.gene.log2.m.rfd.ctr.iz$length <- abs(tpm.gene.log2.m.rfd.ctr.iz$end_position - tpm.gene.log2.m.rfd.ctr.iz$start_position) / 1000
+tpm.gene.log2.m.rfd.ctr.iz.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC > 0)
+tpm.gene.log2.m.rfd.ctr.iz.ho <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC < 0)
+
+##
+xlim <- c(min(log10(tpm.gene.log2.m.rfd.ctr.iz$length)), max(log10(tpm.gene.log2.m.rfd.ctr.iz$length)))
+ylim <- c(min(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD), max(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD))
+ylab.text <- "IZ efficiency"
+
+file.name <- file.path(wd.de.plots, "NBL_TRC_LENGTH-vs-GENE-NRFD_IZ")
+plotTRC(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz$length), c("NBL expressed IZ", "n=3,106"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
+
+file.name <- file.path(wd.de.plots, "NBL_TRC_LENGTH-vs-GENE-NRFD_IZ_CD")
+plotTRC(tpm.gene.log2.m.rfd.ctr.iz.cd$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.cd$length), c("NBL expressed IZ, CD genes", "n=1,510"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
+
+file.name <- file.path(wd.de.plots, "NBL_TRC_LENGTH-vs-GENE-NRFD_IZ_HO")
+plotTRC(tpm.gene.log2.m.rfd.ctr.iz.ho$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.ho$length), c("NBL expressed IZ, HO genes", "n=1,594"), file.name, xlim, ylim, col=c("red", "black"), "topright", ylab.text)
+
+##
+tpm.gene.log2.m.rfd.ctr.tz <- cbind(de.tpm.gene.rfd.tz, tpm.gene.log2.m.rfd.ctr.tz[rownames(de.tpm.gene.rfd.tz),])
+tpm.gene.log2.m.rfd.ctr.tz$length <- abs(tpm.gene.log2.m.rfd.ctr.tz$end_position - tpm.gene.log2.m.rfd.ctr.tz$start_position) / 1000
+tpm.gene.log2.m.rfd.ctr.tz.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC > 0)
+tpm.gene.log2.m.rfd.ctr.tz.ho <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC < 0)
+
+##
+xlim <- c(min(log10(tpm.gene.log2.m.rfd.ctr.tz$length)), max(log10(tpm.gene.log2.m.rfd.ctr.tz$length)))
+ylim <- c(max(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD), min(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD)) * -1
+ylab.text <- "TZ efficiency"
+
+file.name <- file.path(wd.de.plots, "NBL_TRC_LENGTH-vs-GENE-NRFD_TZ")
+plotTRC(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz$length), c("NBL expressed TZ-S genes", "n=1,952"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+
+file.name <- file.path(wd.de.plots, "NBL_TRC_LENGTH-vs-GENE-NRFD_TZ_CD")
+plotTRC(tpm.gene.log2.m.rfd.ctr.tz.cd$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz.cd$length), c("NBL expressed TZ, CD genes", "n=963"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+
+file.name <- file.path(wd.de.plots, "NBL_TRC_LENGTH-vs-GENE-NRFD_TZ_HO")
+plotTRC(tpm.gene.log2.m.rfd.ctr.tz.ho$GENE_NRFD * -1, log10(tpm.gene.log2.m.rfd.ctr.tz.ho$length), c("NBL expressed TZ, HO genes", "n=989"), file.name, xlim, ylim, col=c("blue", "black"), "topright", ylab.text, isFlip=T)
+
+
 
 
 

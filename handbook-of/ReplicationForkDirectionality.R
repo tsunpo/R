@@ -638,6 +638,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
       abline(v=g$start_position/1E6, lty=2, lwd=1, col="#01DF01")
       abline(v=g$end_position/1E6, lty=2, lwd=1, col="#01DF01")
    }
+   #abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
+   #abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
 
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
@@ -676,6 +678,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
       abline(v=g$start_position/1E6, lty=2, lwd=1, col="#01DF01")
       abline(v=g$end_position/1E6, lty=2, lwd=1, col="#01DF01")
    }
+   #abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
+   #abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
    #arrows(65107831/1E6, -2, 65117867/1E6, -2, length=0.15, angle=90, lty=1, lwd=2, col="#01DF01")
    
    ## Plot cytobands (before points)

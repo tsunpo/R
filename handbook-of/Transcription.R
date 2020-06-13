@@ -440,7 +440,7 @@ fdrToP <- function(fdr, de) {
 pvalueToFDR <- function(pvalue, de) {
    de.sig <- subset(de, P <= pvalue)
  
-   return(round0(max(de.sig$FDR)*100, digits=1))
+   return(round0(max(de.sig$FDR)*100, digits=0))
 }
 
 rhoToP <- function(rho, de) {
