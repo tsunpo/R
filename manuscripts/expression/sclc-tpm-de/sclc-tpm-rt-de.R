@@ -257,6 +257,8 @@ plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.r
 # -----------------------------------------------------------------------------
 genes <- c("PIF1", "MARS", "KIF18B", "BRCA2", "RAD9A", "FOXH1", "TONSL", "AL807752.1", "TOR1AIP1", "TOR1A", "TOR1B", "TP53", "RB1")
 genes <- c("GTF3C2", "SUPT7L", "RAD9A", "E2F3")
+genes <- c("MARS", "KIF18B", "BRCA2")
+genes <- c("BLM", "POLE")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
@@ -272,6 +274,8 @@ plotNLSCLC <- function(id, gene) {
 }
 
 genes <- c("GTF3C2", "SUPT7L", "RAD9A", "E2F3", "ALK")
+genes <- c("MARS", "KIF18B", "BRCA2")
+genes <- c("BLM", "POLE")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotNLSCLC(id, genes[g])
@@ -454,22 +458,22 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
 }
 
 ## All
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_p2e04")
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_p3e04")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.main <- c("SCLC expressed genes", paste0("n=18,004"))
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 0.0002, genes, file.de, file.main, xlab.text, ymax=6.8)
+plotVolcano(de.tpm.gene, 0.0003, genes, file.de, file.main, xlab.text, ymax=6.8)
 
 ##
 xlab.text <- "SCLC M2/M1 [log2FC]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.1")
 
 ## IZ-S
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_p2e04_iz_sp_cd")
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_p3e04_iz_sp_cd")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.main <- c("SCLC expressed, IZ-S, CD genes", paste0("n=642"))
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene.rfd.iz.sp.cd, 0.0002, genes, file.de, file.main, xlab.text, ymax=4.5)
+plotVolcano(de.tpm.gene.rfd.iz.sp.cd, 0.0003, genes, file.de, file.main, xlab.text, ymax=4.5)
 
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_rfd_fdr0.08_iz_sp_ho")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")

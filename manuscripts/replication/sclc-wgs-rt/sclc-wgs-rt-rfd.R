@@ -206,8 +206,8 @@ c <- 2
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10"))
-plotBootstrapRFD(file.name, BASE, chr, 110000000, 150000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10_E+L"))
+plotBootstrapRFD(file.name, BASE, chr, 110000000, 160000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10"))
 plotBootstrapRFD(file.name, BASE, chr, 100000000, 200000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
@@ -470,10 +470,29 @@ report.rfds <- list(getReportRFD12(report.sclc.tn.1.2, "SCLC-TN-R1"), getReportR
 file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_random12_E-L.pdf"))
 plotReportRFD12(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL"), file.name, "Overlapping downsampled RFD    ")
 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 12/08/20
+# -----------------------------------------------------------------------------
+nrds.RT.NRFD.sclc.ttr <- getBootstrapTTR(nrds.RT.NRFD.sclc, 0.9)
 
+nrds.RT.NRFD.sclc.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc, 0.9)
+nrds.RT.NRFD.sclc.ctr.iz <- subset(nrds.RT.NRFD.sclc.ctr, NRFD > 0)
+nrds.RT.NRFD.sclc.ctr.tz <- subset(nrds.RT.NRFD.sclc.ctr, NRFD < 0)
 
+nrds.RT.NRFD.sclc.ctr.iz.e <- subset(nrds.RT.NRFD.sclc.ctr.iz, RT > 0)
+nrds.RT.NRFD.sclc.ctr.iz.l <- subset(nrds.RT.NRFD.sclc.ctr.iz, RT < 0)
+nrds.RT.NRFD.sclc.ctr.tz.e <- subset(nrds.RT.NRFD.sclc.ctr.tz, RT > 0)
+nrds.RT.NRFD.sclc.ctr.tz.l <- subset(nrds.RT.NRFD.sclc.ctr.tz, RT < 0)
 
-
+nrow(nrds.RT.NRFD.sclc.ctr.iz.e)/nrow(nrds.RT.NRFD.sclc)
+# [1] 0.06241276
+nrow(nrds.RT.NRFD.sclc.ctr.iz.l)/nrow(nrds.RT.NRFD.sclc)
+# [1] 0.03264011
+nrow(nrds.RT.NRFD.sclc.ctr.tz.e)/nrow(nrds.RT.NRFD.sclc)
+# [1] 0.04736871
+nrow(nrds.RT.NRFD.sclc.ctr.tz.l)/nrow(nrds.RT.NRFD.sclc)
+# [1] 0.04999504
 
 
 

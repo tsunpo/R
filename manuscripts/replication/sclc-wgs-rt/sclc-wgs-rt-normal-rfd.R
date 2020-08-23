@@ -759,6 +759,36 @@ xlab.text <- "Signal-to-noise"
 ylab.text <- "Sample size"
 plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "darkgray"), c("topleft", "bottomright"))
 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 12/08/20
+# -----------------------------------------------------------------------------
+nrds.RT.NRFD.sclc.nl.ttr <- getBootstrapTTR(nrds.RT.NRFD.sclc.nl, 0.9)
+
+nrds.RT.NRFD.sclc.nl.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc.nl, 0.9)
+nrds.RT.NRFD.sclc.nl.ctr.iz <- subset(nrds.RT.NRFD.sclc.nl.ctr, NRFD > 0)
+nrds.RT.NRFD.sclc.nl.ctr.tz <- subset(nrds.RT.NRFD.sclc.nl.ctr, NRFD < 0)
+
+nrds.RT.NRFD.sclc.nl.ctr.iz.e <- subset(nrds.RT.NRFD.sclc.nl.ctr.iz, RT > 0)
+nrds.RT.NRFD.sclc.nl.ctr.iz.l <- subset(nrds.RT.NRFD.sclc.nl.ctr.iz, RT < 0)
+nrds.RT.NRFD.sclc.nl.ctr.tz.e <- subset(nrds.RT.NRFD.sclc.nl.ctr.tz, RT > 0)
+nrds.RT.NRFD.sclc.nl.ctr.tz.l <- subset(nrds.RT.NRFD.sclc.nl.ctr.tz, RT < 0)
+
+nrow(nrds.RT.NRFD.sclc.nl.ctr.iz.e)/nrow(nrds.RT.NRFD.sclc.nl)
+# [1] 0.04346457
+nrow(nrds.RT.NRFD.sclc.nl.ctr.iz.l)/nrow(nrds.RT.NRFD.sclc.nl)
+# [1] 0.01751864
+nrow(nrds.RT.NRFD.sclc.nl.ctr.tz.e)/nrow(nrds.RT.NRFD.sclc.nl)
+# [1] 0.03364618
+nrow(nrds.RT.NRFD.sclc.nl.ctr.tz.l)/nrow(nrds.RT.NRFD.sclc.nl)
+# [1] 0.0268717
+
+###
+##
+report <- readTable(file.path(wd.rt.plots, paste0("RFD_CTR_E-L.txt")), header=T, rownames=T, sep="")
+report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
+file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L.pdf"))
+plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution (CTR)")
 
 
 
@@ -767,6 +797,23 @@ plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, 
 
 
 
+
+
+nrds.RT.NRFD.sclc.nl.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.sclc.nl.1, 0.9)
+nrds.RT.NRFD.sclc.nl.2.ttr <- getBootstrapTTR(nrds.RT.NRFD.sclc.nl.2, 0.9)
+
+nrds.RT.NRFD.sclc.nl.1.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc.nl.1, 0.9)
+nrds.RT.NRFD.sclc.nl.2.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc.nl.2, 0.9)
+
+nrds.RT.NRFD.sclc.nl.1.ctr.iz <- subset(nrds.RT.NRFD.sclc.nl.1.ctr, NRFD > 0)
+nrds.RT.NRFD.sclc.nl.1.ctr.tz <- subset(nrds.RT.NRFD.sclc.nl.1.ctr, NRFD < 0)
+nrds.RT.NRFD.sclc.nl.2.ctr.iz <- subset(nrds.RT.NRFD.sclc.nl.2.ctr, NRFD > 0)
+nrds.RT.NRFD.sclc.nl.2.ctr.tz <- subset(nrds.RT.NRFD.sclc.nl.2.ctr, NRFD < 0)
+
+nrds.RT.NRFD.sclc.nl.1.2.ttr <- nrds.RT.NRFD.sclc.nl.1.ttr[intersect(rownames(nrds.RT.NRFD.sclc.nl.1.ttr), rownames(nrds.RT.NRFD.sclc.nl.2.ttr)),]
+nrds.RT.NRFD.sclc.nl.1.2.ctr.iz <- nrds.RT.NRFD.sclc.nl.1.ctr.iz[intersect(rownames(nrds.RT.NRFD.sclc.nl.1.ctr.iz), rownames(nrds.RT.NRFD.sclc.nl.2.ctr.iz)),]
+nrds.RT.NRFD.sclc.nl.1.2.ctr.tz <- nrds.RT.NRFD.sclc.nl.1.ctr.tz[intersect(rownames(nrds.RT.NRFD.sclc.nl.1.ctr.tz), rownames(nrds.RT.NRFD.sclc.nl.2.ctr.tz)),]
+nrds.RT.NRFD.sclc.nl.1.2 <- rbind(rbind(nrds.RT.NRFD.sclc.nl.1.2.ttr, nrds.RT.NRFD.sclc.nl.1.2.ctr.iz), nrds.RT.NRFD.sclc.nl.1.2.ctr.tz)
 
 
 

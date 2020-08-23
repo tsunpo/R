@@ -135,7 +135,29 @@ bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_TP53"))
 plotBootstrapRFD(file.name, BASE, chr,  5590856, 9590856, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, gene="TP53")
 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 12/08/20
+# -----------------------------------------------------------------------------
+nrds.RT.NRFD.cll.ttr <- getBootstrapTTR(nrds.RT.NRFD.cll, 0.9)
 
+nrds.RT.NRFD.cll.ctr <- getBootstrapCTR(nrds.RT.NRFD.cll, 0.9)
+nrds.RT.NRFD.cll.ctr.iz <- subset(nrds.RT.NRFD.cll.ctr, NRFD > 0)
+nrds.RT.NRFD.cll.ctr.tz <- subset(nrds.RT.NRFD.cll.ctr, NRFD < 0)
+
+nrds.RT.NRFD.cll.ctr.iz.e <- subset(nrds.RT.NRFD.cll.ctr.iz, RT > 0)
+nrds.RT.NRFD.cll.ctr.iz.l <- subset(nrds.RT.NRFD.cll.ctr.iz, RT < 0)
+nrds.RT.NRFD.cll.ctr.tz.e <- subset(nrds.RT.NRFD.cll.ctr.tz, RT > 0)
+nrds.RT.NRFD.cll.ctr.tz.l <- subset(nrds.RT.NRFD.cll.ctr.tz, RT < 0)
+
+nrow(nrds.RT.NRFD.cll.ctr.iz.e)/nrow(nrds.RT.NRFD.cll)
+# [1] 0.06612303
+nrow(nrds.RT.NRFD.cll.ctr.iz.l)/nrow(nrds.RT.NRFD.cll)
+# [1] 0.05293223
+nrow(nrds.RT.NRFD.cll.ctr.tz.e)/nrow(nrds.RT.NRFD.cll)
+# [1] 0.04680801
+nrow(nrds.RT.NRFD.cll.ctr.tz.l)/nrow(nrds.RT.NRFD.cll)
+# [1] 0.07899089
 
 
 
