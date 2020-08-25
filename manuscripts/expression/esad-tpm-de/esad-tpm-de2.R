@@ -127,7 +127,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(TR/T)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(T/N)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(pvalue)), lty=5)
    #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
@@ -136,9 +136,9 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
    de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="#01DF01")
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red")
    de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="red")
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="dodgerblue")
  
    for (g in 1:nrow(genes)) {
       gene <- subset(de, external_gene_name == genes[g,]$GENE)
@@ -162,16 +162,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    }
    
    mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("#01DF01", "red"), pch=19)
+   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "368 differential expressed genes after treatment"
-plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_median0_TR-vs-T_p1e-6")
+plot.main <- "1,137 differential expressed genes in ESAD"
+plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_median0_T-vs-N_p1e-6")
 
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "TR vs. T")
+file.main <- c(plot.main, "T vs. N")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
 
@@ -201,23 +201,26 @@ writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownam
 
 ###
 ## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_p1e-6_up")
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
 reactome.up <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
 reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
 reactome.up <- reactome.up[order(reactome.up$log10P),]
 
-main.text <- c("Up-regulated pathways after treatment", "224 genes")
-file.de <- file.path(wd.de.reactome, "genes_tr_p1e-6_n224_up.pdf")
+main.text <- c("Up-regulated pathways in ESAD", "682 genes")
+file.de <- file.path(wd.de.reactome, "genes_T-vs-N_p1e-6_n682_up.pdf")
 
-pdf(file.de, height=3, width=7.5)
+pdf(file.de, height=6, width=7.5)
 par(mar=c(4,18,4,3.1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 15), xaxt="n", names.arg=reactome.up$Pathway.name, col="#01DF01", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 16), xaxt="n", names.arg=reactome.up$Pathway.name, col="red", xlab="-log10(p-value)", width=1)   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 
-axis(side=1, at=seq(0, 14, by=2))
+axis(side=1, at=seq(0, 16, by=2))
 mtext(main.text[2], line=0.3)
 dev.off()
 
 ##
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_TR-vs-T_p1e-6_down")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_p1e-6_down")
 reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
 
 reactome.down <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
@@ -225,14 +228,14 @@ reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
 reactome.down <- reactome.down[order(reactome.down$log10P),]
 reactome.down$log10P <- reactome.down$log10P * -1
 
-main.text <- c("Down-regulated pathways after treatment", "144 genes")
-file.de <- file.path(wd.de.reactome, "genes_TR-vs-T_p1e-6_n144_down.pdf")
+main.text <- c("Down-regulated pathways in ESAD", "455 genes")
+file.de <- file.path(wd.de.reactome, "genes_T-vs-N_p1e-6_n455_down.pdf")
 
-pdf(file.de, height=5.8, width=7.5)
-par(mar=c(4,2,4,18))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col="red", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+pdf(file.de, height=2.1, width=7.5)
+par(mar=c(4,3,4,18))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col="dodgerblue", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
 
-axis(side=1, at=seq(-14, 0, by=2), labels=c(14, 12, 10, 8, 6, 4, 2, 0))
+axis(side=1, at=seq(-16, 0, by=2), labels=c(16, 14, 12, 10, 8, 6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()

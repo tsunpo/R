@@ -40,7 +40,8 @@ isNA <- function(input) {
 plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
-   trait.v <- sort(unique(trait), decreasing=T)
+   #trait.v <- sort(unique(trait), decreasing=T)
+   trait.v <- c("T", "TR", "N")
    
    if (isNA(cols))
       cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
@@ -57,8 +58,8 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.7, cex.lab=1.8, cex.main=2)
-   idx <- which(trait == "UN")
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+   idx <- which(trait == "T")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
    idx <- which(trait == "TR")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
@@ -77,10 +78,10 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #   cols <- cols[1:4]
    #}
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=16, cex=1.8)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=16, cex=1.4)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.8)
-   mtext(ylab.txt, side=2, line=2.75, cex=1.8)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.4)
+   mtext(ylab.txt, side=2, line=2.75, cex=1.4)
    dev.off()
 }
 
