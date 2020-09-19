@@ -69,51 +69,73 @@ save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tp
 ## Gene-level TPMs (All)
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
-#writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
+writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrow(tpm.gene)
 # [1] 34908
 
-## Gene-level TPMs (Detected)
+read.gene <- getGeneTPM(list2Matrix(tpm.norm$scaled_reads_per_base, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
+save(read.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_read.gene.RData")))
+writeTable(read.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_read.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
+nrow(read.gene)
+# [1] 34908
+
+## Gene-level TPMs (Expressed)
 load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene <- removeMedian0(tpm.gene)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 nrow(tpm.gene)
-# [1] 15658
+# [1] 14787 (lengths; sd=20)
+# [1] 15658 (length=200; sd=20)
 
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 nrow(tpm.gene)
-# [1] 13569
-
-## Gene-level TPMs (Detected + Expressed)
-load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.median0 <- tpm.gene
-load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-tpm.gene.r5p47   <- tpm.gene
-overlaps <- intersect(rownames(tpm.gene.median0), rownames(tpm.gene.r5p47))
-
-tpm.gene <- tpm.gene[overlaps,]
-#save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.r5p47.RData")))
-nrow(tpm.gene)
-# [1] 13569
+# [1] 12703 (lengths; sd=20)
+# [1] 13569 (length=200; sd=20)
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
 # Figure(s)    : Figure S2 (A and B)
-# Last Modified: 29/05/20
+# Last Modified: 13/09/20; 29/05/20
 # =============================================================================
 ## All genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "All")
-
-## Detected genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
-load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Detected")
+plotDensityHistogram(tpm.gene, file.main, "Total Ensembl")
 
 ## Expressed genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Expressed")
+
+## Consistently expressed genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "Consistently expressed")
+
+###
+## 13/09/20
+load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+new <- getLog2andMedian(tpm.gene, 0.01)
+nrow(new)
+# [1] 14787
+load("/Users/tpyang/Work/uni-koeln/tyang2/ESAD/analysis/expression/kallisto/esad-tpm-de_old/data/esad_kallisto_0.43.1_tpm.gene.median0.RData")
+old <- getLog2andMedian(tpm.gene, 0.01)
+nrow(old)
+# [1] 15658
+overlaps <- intersect(rownames(new), rownames(old))
+length(overlaps)
+# [1] 14752
+
+file.name <- file.path(wd.de.plots, paste0("kalisto_tpm_new-vs-old"))
+pdf(paste0(file.name, ".pdf"), height=6, width=6)
+plot(new[overlaps,]$MEDIAN ~ old[overlaps,]$MEDIAN, ylab="NEW (Fragment sizes; sd=20)", xlab="OLD (size=200; sd=20)", main="ESAD 3'RNA")
+
+lm.fit <- lm(new[overlaps,]$MEDIAN ~ old[overlaps,]$MEDIAN)
+abline(lm.fit, lwd=5)
+
+cor <- cor.test(new[overlaps,]$MEDIAN, old[overlaps,]$MEDIAN, method="spearman", exact=F)
+legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n")
+mtext("[log2(TPM + 0.01)]", line=0.3)
+dev.off()

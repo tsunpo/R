@@ -162,12 +162,12 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    }
    
    mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("red", "dodgerblue"), pch=19)
+   legend("topleft", legend=c("Upregulated in T", "Downregulated in T"), col=c("red", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "1,137 differential expressed genes in ESAD"
+plot.main <- "1,137 differentially expressed genes in ESAD"
 plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_median0_T-vs-N_p1e-6")
 
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")

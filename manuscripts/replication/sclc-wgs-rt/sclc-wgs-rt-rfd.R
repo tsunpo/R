@@ -37,7 +37,8 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -60,7 +61,7 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-# nrow(nrds)
+nrow(nrds)
 # [1] 2657164
 
 #install.packages("zoo", method="wget")
@@ -193,6 +194,31 @@ boundary.break <-  45   ## 45 breaks each centering 500
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
+genes <- c("PIF1", "MARS", "KIF18B", "GTPBP3", "EIF3B", "AL049840.1", "RP3-407E4.3") 
+genes <- c("BRCA2", "MYC", "MYCN", "MYCL", "B2M", "RB1", "TP53", "BRD9", "RAD9A", "IFI6", "RSAD2", "PINK1", "CXXC1", "GRB7", "IRF2", "PIAS3", "UBE2I", "AAAS")
+genes <- c("RP3-407E4.3")
+genes <- c("AL807752.1", "TOR1AIP1", "ECH1", "NMRK1", "PHPT1")
+genes <- c("RP11-730B22.1")
+genes <- c("FBXL5", "FAM92B", "BSDC1", "MORF4L1", "IRF2", "B2M")
+for (g in 1:length(genes)) {
+   chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   start_position <- subset(ensGene, external_gene_name == genes[g])$start_position
+   end_position   <- subset(ensGene, external_gene_name == genes[g])$end_position
+   strand <- subset(ensGene, external_gene_name == genes[g])$strand
+   
+   size  <- 2000000
+   start <- start_position + size
+   end   <- start_position - size
+   if (strand < 0) {
+      start <- end_position + size
+      end   <- end_position - size
+   }
+    
+   file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
+   plotBootstrapRFD(file.name, BASE, chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, F, genes[g])
+}
+
 ## Chr12
 c <- 12
 chr <- chrs[c]
@@ -211,6 +237,13 @@ plotBootstrapRFD(file.name, BASE, chr, 110000000, 160000000, nrds.RT.NRFD, bed.g
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10"))
 plotBootstrapRFD(file.name, BASE, chr, 100000000, 200000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+
+
+
+
+
+
+
 
 ## GTF3C2, SUPT7L, ALK
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_GTF3C2"))
@@ -385,13 +418,6 @@ bed.gc.chr <- subset(bed.gc, CHR == chr)
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_FOXH1"))
 plotBootstrapRFD(file.name, BASE, chr, 141701718, 149701718, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
-## Chr15 (PIF1)
-c <- 15
-chr <- chrs[c]
-bed.gc.chr <- subset(bed.gc, CHR == chr)
-
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_PIF1"))
-plotBootstrapRFD(file.name, BASE, chr, 63117867, 67117867, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 ## Chr5 (BRD9)
 c <- 5

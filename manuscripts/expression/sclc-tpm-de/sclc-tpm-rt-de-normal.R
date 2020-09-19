@@ -43,11 +43,13 @@ samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 0))
 # [1] 35
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 0.01)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
 nrow(tpm.gene.log2.m)
+# [1] 23572
 # [1] 19131
 
 # -----------------------------------------------------------------------------
@@ -61,17 +63,20 @@ dim(de.tpm.gene)
 nrds.RT.NRFD <- nrds.RT.NRFD.sclc.nl   ## 17/05/20 WHY nrds.RT.NRFD.sclc.nl? ## MUY MUY IMPORTANTE!!
 tpm.gene.log2.m <- tpm.gene.log2.m[rownames(de.tpm.gene),]
 nrow(tpm.gene.log2.m)
+# [1] 23572
 # [1] 19131
 
 tpm.gene.log2.m.rfd.nl <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
 nrow(tpm.gene.log2.m.rfd.nl)
+# [1] 22041
 # [1] 18014
 nrow(subset(tpm.gene.log2.m.rfd.nl, TRC == 0))
+# [1] 1
 # [1] 1
 
 ###
 ## TTR and CTR (IZ +TZ)
-file.name <- file.path(wd.de.data, "tpm_gene_r5p47_log2_m_rfd_nl.RData")
+file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd_nl.RData")
 rfd <- 0.9
 #setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
 
@@ -80,6 +85,11 @@ tpm.gene.log2.m.rfd.ctr.nl <- subset(subset(tpm.gene.log2.m.rfd.nl, TSS_RFD < rf
 
 tpm.gene.log2.m.rfd.ctr.iz.nl <- subset(tpm.gene.log2.m.rfd.ctr.nl, TSS_NRFD > 0)
 tpm.gene.log2.m.rfd.ctr.tz.nl <- subset(tpm.gene.log2.m.rfd.ctr.nl, TSS_NRFD < 0)
+
+## 31/08/20
+
+
+
 
 tpm.gene.log2.m.rfd.ctr.iz.cd.nl <- subset(tpm.gene.log2.m.rfd.ctr.iz.nl, TRC > 0)
 tpm.gene.log2.m.rfd.ctr.iz.ho.nl <- subset(tpm.gene.log2.m.rfd.ctr.iz.nl, TRC < 0)
@@ -196,6 +206,7 @@ plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.r
 # Last Modified: 29/05/20
 # -----------------------------------------------------------------------------
 genes <- c("PIF1", "MARS", "KIF18B", "BRCA2", "RAD9A", "TOR1AIP1", "TOR1A", "TOR1B", "TP53", "RB1")
+genes <- c("RP3-407E4.3", "BRD9")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
@@ -665,13 +676,93 @@ plotTRC(-log10(de.tpm.gene.iz.cd$P), tpm.gene.log2.m.rfd.ctr.iz.cd$GENE_NRFD, c(
 
 
 # -----------------------------------------------------------------------------
-# D.E.
-# Last Modified: 08/01/20
+# D.E. LUNG vs. SCLC
+# Last Modified: 01/09/20; 08/01/20
 # -----------------------------------------------------------------------------
+plotVolcano0 <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
+   #pvalue <- fdrToP(fdr, de)
+   #fdr <- pvalueToFDR(pvalue, de)
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   de$log10P <- -log10(de$P)
+   xlim <- c(min(de$LOG2_FC), max(de$LOG2_FC))
+   if (ymax ==0) ymax <- max(de$log10P)
+ 
+   pdf(file.de, height=6, width=6)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
+   
+   abline(h=c(-log10(pvalue)), lty=5)
+   #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.15)    ## SCLC (IZ)
+   #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
+   #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
+   #text(xmax*-1 + 2*xmax/30, -log10(pvalue) + ymax/30, paste0("***"), cex=2)
+   
+   de.up   <- subset(de.sig, LOG2_FC > 0)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.4)
+   de.down <- subset(de.sig, LOG2_FC < 0)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="steelblue1", cex=1.4)
+ 
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+   
+         if (nrow(gene) > 0) {
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+    
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
+            else
+               if (gene$LOG2_FC > 0)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.2)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.2)
+         } else
+            print(genes[g])
+      }
+   }
+ 
+   axis(side=1, at=seq(-10, 10, by=2), labels=c(-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10), cex.axis=1.1)
+   mtext(file.main[2], cex=1.25, line=0.3)
+   legend("topleft", legend=c("Upregulated in SCLC", "Downregulated in SCLC"), col=c("gold", "steelblue1"), pch=19, pt.cex=1.1, cex=1.1)
+   dev.off()
+}
+
+## Volcano
+xlab.text <- "SCLC/Lung [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_iz_e_cd_p1e-15_lung")
+
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("Differential expression between SCLC and normal lung", paste0("SCLC early IZ, CD genes (n=1,377)"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano0(de2.tpm.gene, 1E-15, genes, file.de, file.main, xlab.text, ymax=21)
+
+## Volcano (S)
+xlab.text <- "SCLC/Lung [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_iz_e_cd_p1e-15_lung_UBE2I")
+
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("Differential expression between SCLC and lung", paste0("SCLC early IZ, CD genes (n=1,178)"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano0(de2.tpm.gene, 1E-15, genes, file.de, file.main, xlab.text, ymax=21)
+
+###
+##
 #tpm.gene.log2.0      <- tpm.gene.log2[rownames(de.tpm.gene.iz),]
 #tpm.gene.lung.log2.0 <- tpm.gene.lung.log2[rownames(de.tpm.gene.iz),]
-overlaps <- intersect(intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.cd), rownames(tpm.gene.log2)), rownames(tpm.gene.lung.log2))
+load("/Users/tpyang/Work/uni-koeln/tyang2/LUSC/analysis/expression/kallisto/normal-tpm-de/data/lusc_kallisto_0.43.1_tpm.gene.RData")
+tpm.gene.lung.log2   <- log2(tpm.gene + 0.01)
+# > dim(tpm.gene.lung.log2)
+# [1] 34908    41
+
+overlaps <- intersect(intersect(rownames(tpm.gene.log2.m.rfd.ctr.iz.e.cd), rownames(tpm.gene.log2)), rownames(tpm.gene.lung.log2))
 length(overlaps)
+# [1] 1377
 tpm.gene.log2.0      <- tpm.gene.log2[overlaps,]
 tpm.gene.lung.log2.0 <- tpm.gene.lung.log2[overlaps,]
 
@@ -687,10 +778,10 @@ de2$N <- mapply(x = 1:nrow(tpm.gene.log2.0), function(x) median(as.numeric(tpm.g
 de2$T <- mapply(x = 1:nrow(tpm.gene.log2.0), function(x) median(as.numeric(tpm.gene.log2.0[x,])))
 de2$LOG2_FC <- de2$T - de2$N
 
-de2.iz.sp <- de2[intersect(rownames(de2), rownames(tpm.gene.log2.m.rfd.ctr.iz.cd)),]
-de2.iz.sp$FDR <- p.adjust(de2.iz.sp$P, method="BH", n=length(de2.iz.sp$P))
+#de2.iz.sp <- de2[intersect(rownames(de2), rownames(tpm.gene.log2.m.rfd.ctr.iz.cd)),]
+#de2.iz.sp$FDR <- p.adjust(de2.iz.sp$P, method="BH", n=length(de2.iz.sp$P))
 #de2.iz.sp$Q <- qvalue(de2.iz.sp$P)$qvalue
-de2.iz.sp <- de2.iz.sp[order(de2.iz.sp$P),]
+#de2.iz.sp <- de2.iz.sp[order(de2.iz.sp$P),]
 
 ## FDR
 #library(qvalue)
@@ -701,21 +792,31 @@ de2 <- de2[order(de2$P),]
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de2.tpm.gene <- cbind(annot[rownames(de2.iz.sp),], de2.iz.sp)   ## BE EXTRA CAREFUL!!
+de2.tpm.gene <- cbind(annot[rownames(de2),], de2)   ## BE EXTRA CAREFUL!!
 
-save(de2.tpm.gene, samples, file=file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp_cd.RData"))
-writeTable(de2.tpm.gene, file.path(wd.de.data, "de2_sclc_tpm-gene-r5p47_lung_U_q_n70+41_iz_sp_cd.txt"), colnames=T, rownames=F, sep="\t")
-# nrow(de2.tpm.gene)
-# [1] 616
+save(de2.tpm.gene, samples, file=file.path(wd.de.data, "de2_sclc_tpm-gene-median0-lung_U_BH_n70+41_iz_e_cd.RData"))
+writeTable(de2.tpm.gene, file.path(wd.de.data, "de2_sclc_tpm-gene-median0-lung_U_BH_n70+41_iz_e_cd.txt"), colnames=T, rownames=F, sep="\t")
+nrow(de2.tpm.gene)
+# [1] 1377
 
-## Volcano
-xlab.text <- "SCLC/Lung [log2FC]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_iz_sp_cd_bh1e-16_lung")
+###
+##
+plotNormal <- function(gene, id, tpm.gene.log2, tpm.gene.lung.log2) {
+   file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_gene_", gene)
+   plotBox2(wd.de.plots, file.name, as.numeric(tpm.gene.lung.log2[id,]), as.numeric(tpm.gene.log2[id,]), main=gene, names=c("Lung", "SCLC"))
+}
 
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC, IZ-S and CD genes", paste0("n=616"))
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de2.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text)
+genes <- c("PIF1", "KIF18B", "MARS", "AL049840.1", "GTPBP3", "EIF3B")
+genes <- c("BRCA2")
+genes <- c("IRF2", "PIAS3", "UBE2I", "AAAS")
+genes <- c("TSC2")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotNormal(genes[g], id, tpm.gene.log2, tpm.gene.lung.log2)
+}
+
+
+
 
 
 
@@ -758,6 +859,12 @@ genes <- readTable(paste0(plot.de, "_iz_lung_all.tab"), header=T, rownames=F, se
 file.main <- c("TTR + CTR", paste0("(n=31,207)"))
 file.de <- paste0(plot.de, "_iz_lung_all.pdf")
 plotVolcano(de2.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text)
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # 

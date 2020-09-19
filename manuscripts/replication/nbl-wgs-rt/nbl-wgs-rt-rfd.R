@@ -34,7 +34,8 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -85,6 +86,31 @@ boundary.break <-  45   ## 45 breaks each centering 500
 ##
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
+genes <- c("MRPL47", "ANAPC11", "C20orf24", "MED10", "RPL38", "TRIAP1", "ICT1", "SDHAF2")
+genes <- c("TERT", "MDM2", "ALK", "ATRX")
+for (g in 1:length(genes)) {
+   chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   start_position <- subset(ensGene, external_gene_name == genes[g])$start_position
+   end_position   <- subset(ensGene, external_gene_name == genes[g])$end_position
+   strand <- subset(ensGene, external_gene_name == genes[g])$strand
+ 
+   size  <- 2000000
+   start <- start_position + size
+   end   <- start_position - size
+   if (strand < 0) {
+      start <- end_position + size
+      end   <- end_position - size
+   }
+ 
+   file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
+   plotBootstrapRFD(file.name, BASE, chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, F, genes[g])
+}
+
+
+
+
 
 ## Chr17 (BIRC5)
 c <- 17

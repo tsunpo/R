@@ -39,41 +39,12 @@ samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt"), header=T, rownames=
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
-samples <- samples[rownames(subset(samples, GROUP_ID != 2)),]
-tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+samples <- samples[rownames(subset(samples, GROUP_ID != 0)),]
+tr <- rownames(subset(samples, GROUP_ID == 1))
+n  <- rownames(subset(samples, GROUP_ID == 2))
+samples[n,]$GROUP_ID  <- 0
+samples[tr,]$GROUP_ID <- 1
 
-###
-##
-tpm.gene.un <- tpm.gene[, rownames(subset(samples, GROUP_ID == 0))]
-tpm.gene.un <- removeMedian0(tpm.gene.un)
-nrow(tpm.gene.un)
-# [1] 156
-
-tpm.gene.tr <- tpm.gene[, rownames(subset(samples, GROUP_ID == 1))]
-tpm.gene.tr <- removeMedian0(tpm.gene.tr)
-nrow(tpm.gene.tr)
-# [1] 412
-
-tpm.gene.n <- tpm.gene[, rownames(subset(samples, GROUP_ID == 2))]
-tpm.gene.n <- removeMedian0(tpm.gene.n)
-nrow(tpm.gene.n)
-# [1] 984
-
-overlaps <- intersect(intersect(rownames(tpm.gene.un), rownames(tpm.gene.tr)), rownames(tpm.gene.n))
-length(overlaps)
-tpm.gene <- tpm.gene[overlaps,]
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.median0.RData")))
-nrow(tpm.gene)
-# [1] 14334
-
-###
-##
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.median0.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
-
-samples <- samples[rownames(subset(samples, GROUP_ID != 1)),]
-samples$GROUP_ID <- samples$GROUP_ID - 2
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 
 # -----------------------------------------------------------------------------
@@ -85,8 +56,8 @@ tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 ## FDR : Q/BH
 ## DE  : TR (1) vs UN (0) as factor
 argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0-median0_N-vs-UN_wilcox_q_n45")
-file.main <- paste0("TR (n=22) vs UN (n=23) in ", BASE)
+file.name <- paste0("de_", base, "_tpm-gene-median0_TR-vs-N_wilcox_q_n45")
+file.main <- paste0("TR (n=22) vs N (n=23) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -96,33 +67,6 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# PCA
-# Last Modified: 23/08/20
-# -----------------------------------------------------------------------------
-test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.de <- getPCA(t(test))
-
-trait <- as.numeric(samples[, "GROUP_ID"])
-trait[which(trait == 0)] <- "B"
-trait[which(trait == 1)] <- "X"
-trait[which(trait == 2)] <- "N"
-
-file.main <- c("ESAD samples (n=68)", "")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_ESAD_N-B-X_median0_n68", size=6.5, file.main, "topright", c("red", "#01DF01", "dodgerblue"), NA, flip.x=-1, flip.y=1, legend.title=NA)
-
-##
-test <- tpm.gene.res[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.res <- getPCA(t(test))
-
-trait <- as.numeric(samples[, "GROUP_ID"])
-trait[which(trait == 0)] <- "B"
-trait[which(trait == 1)] <- "X"
-trait[which(trait == 2)] <- "N"
-
-file.main <- c("ESAD samples (n=68)", "After controlling for cell cycle")
-plotPCA(1, 2, pca.res, trait, wd.de.plots, "PCA_ESAD_TR-T-N_median0_RES_n68", size=6.5, file.main, "topleft", c("red", "#01DF01", "dodgerblue"), NA, flip.x=1, flip.y=1, legend.title=NA)
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC
@@ -140,7 +84,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    ymax <- max(de$log10P)
  
    pdf(file.de, height=7, width=7)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(TR/T)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(T/N)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
    abline(h=c(-log10(pvalue)), lty=5)
    #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
@@ -151,7 +95,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="#01DF01")
    de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="red")
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="dodgerblue")
  
    for (g in 1:nrow(genes)) {
       gene <- subset(de, external_gene_name == genes[g,]$GENE)
@@ -175,16 +119,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    }
    
    mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Upregulated in TR", "Downregulated in TR"), col=c("#01DF01", "red"), pch=19)
+   legend("topleft", legend=c("Upregulated in TR", "Downregulated in TR"), col=c("#01DF01", "dodgerblue"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "368 differentially expressed genes before and after treatment"
-plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_median0_TR-vs-T_p1e-6")
+plot.main <- "197 differentially expressed genes after treatment"
+plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_TR-vs-N_p1e-6")
 
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "TR vs. T")
+file.main <- c(plot.main, "TR vs. N")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
 
@@ -200,6 +144,7 @@ list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
 reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
 colnames(reactome) <- gsub("X.", "", colnames(reactome))
 reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+reactome$Pathway.name             <- as.vector(reactome$Pathway.name)
 for (r in 1:nrow(reactome)) {
    ids <- as.vector(reactome$Submitted.entities.found[r])
    ids <- unlist(strsplit(ids, ";"))
@@ -214,38 +159,42 @@ writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownam
 
 ###
 ## Link: https://www.statmethods.net/graphs/bar.html
+#wd.de.reactome <- file.path(wd.de.pathway, "reactome_p1e-6_up")
+#reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
 reactome.up <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
 reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
 reactome.up <- reactome.up[order(reactome.up$log10P),]
+reactome.up[4, 1] <- "Assembly of collagen fibrils and multimeric structures"
 
-main.text <- c("Up-regulated pathways after treatment", "224 genes")
-file.de <- file.path(wd.de.reactome, "genes_tr_p1e-6_n224_up.pdf")
+main.text <- c("Up-regulated pathways after treatment", "81 genes")
+file.de <- file.path(wd.de.reactome, "genes_T-vs-N_p1e-6_n81_up.pdf")
 
-pdf(file.de, height=3, width=7.5)
-par(mar=c(4,18,4,3.1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 15), xaxt="n", names.arg=reactome.up$Pathway.name, col="#01DF01", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+pdf(file.de, height=2.7, width=7.5)
+par(mar=c(4,21,4,2))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col="#01DF01", xlab="-log10(p-value)", width=1)   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 
-axis(side=1, at=seq(0, 14, by=2))
+axis(side=1, at=seq(0, 12, by=2))
 mtext(main.text[2], line=0.3)
 dev.off()
 
 ##
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_TR-vs-T_p1e-6_down")
-reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+#wd.de.reactome <- file.path(wd.de.pathway, "reactome_p1e-6_down")
+#reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
 
 reactome.down <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
 reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
 reactome.down <- reactome.down[order(reactome.down$log10P),]
 reactome.down$log10P <- reactome.down$log10P * -1
 
-main.text <- c("Down-regulated pathways after treatment", "144 genes")
-file.de <- file.path(wd.de.reactome, "genes_TR-vs-T_p1e-6_n144_down.pdf")
+main.text <- c("Down-regulated pathways after treatment", "116 genes")
+file.de <- file.path(wd.de.reactome, "genes_T-vs-N_p1e-6_n116_down.pdf")
 
-pdf(file.de, height=5.8, width=7.5)
-par(mar=c(4,2,4,18))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col="red", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+pdf(file.de, height=2.1, width=7.5)
+par(mar=c(4,3,4,20))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col="dodgerblue", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
 
-axis(side=1, at=seq(-14, 0, by=2), labels=c(14, 12, 10, 8, 6, 4, 2, 0))
+axis(side=1, at=seq(-12, 0, by=2), labels=c(12, 10, 8, 6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()

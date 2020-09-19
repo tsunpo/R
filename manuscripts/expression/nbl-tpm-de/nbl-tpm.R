@@ -101,19 +101,19 @@ nrow(tpm.gene)
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
 # Figure(s)    : Figure S2 (A and B)
-# Last Modified: 29/05/20
+# Last Modified: 06/09/20; 29/05/20
 # =============================================================================
 ## All genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "All")
-
-## Detected genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
-load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Detected")
+plotDensityHistogram(tpm.gene, file.main, "Total Ensembl")
 
 ## Expressed genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Expressed")
+
+## Consistently expressed genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "Consistently expressed")

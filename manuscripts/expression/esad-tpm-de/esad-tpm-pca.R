@@ -40,8 +40,8 @@ isNA <- function(input) {
 plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
-   #trait.v <- sort(unique(trait), decreasing=T)
-   trait.v <- c("T", "TR", "N")
+   #trait.v <- sort(unique(trait), decreasing=F)
+   trait.v <- c("B", "X", "N")
    
    if (isNA(cols))
       cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
@@ -59,14 +59,21 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
    plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
-   idx <- which(trait == "T")
+   idx <- which(trait == "B")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
-   idx <- which(trait == "TR")
+   idx <- which(trait == "X")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
    idx <- which(trait == "N")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
 
-   mtext(file.main[2], cex=1.2, line=0.3)
+   #if (!is.null(samples))
+   #   for (s in 1:length(samples)) {
+   #      sample <- samples[s]
+   #      if (sample == "S125650" || sample == "S125652")
+   #        text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.5), cex=1)
+   #   }
+   
+   mtext(file.main[2], cex=1.3, line=0.3)
    for (l in 1:length(trait.v))
       trait.v[l] <- trait.v[l]
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")

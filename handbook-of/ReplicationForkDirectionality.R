@@ -441,11 +441,11 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    
    #rfds$TTR0 <- c(87.8, 80.7, 76.9, 75.5)
-   points(rfds$X, rfds$TTR0, col="#01DF01", pch=rfds$pch, cex=1.5)
-   lines(x=rfds$X[1:4], y=rfds$TTR0[1:4], type="l", lty=5, lwd=2.5, col="#01DF01")
-   text(8, rfds$TTR0[n], "       TTR+CTR", cex=1.2, col="#01DF01")
-   for (n in 1:length(names))
-      text(rfds$X[n], rfds$TTR0[n], rfds$TTR0[n], col="#01DF01", pos=rfds$pos1[n], cex=1.2)
+   #points(rfds$X, rfds$TTR0, col="#01DF01", pch=rfds$pch, cex=1.5)
+   #lines(x=rfds$X[1:4], y=rfds$TTR0[1:4], type="l", lty=5, lwd=2.5, col="#01DF01")
+   #text(8, rfds$TTR0[n], "       TTR+CTR", cex=1.2, col="#01DF01")
+   #for (n in 1:length(names))
+   #   text(rfds$X[n], rfds$TTR0[n], rfds$TTR0[n], col="#01DF01", pos=rfds$pos1[n], cex=1.2)
 
    text(8, rfds$TTR[n], " TTR ", cex=1.2, col="black")
    #abline(v=2, lty=5, lwd=1, col="black")
@@ -556,6 +556,155 @@ plotReportNRFDEL <- function(report.rfds, names, file.name, main.text) {
    dev.off()
 }
 
+###
+## Distribution of expressed genes
+plotReportEG <- function(report.rfds, names, file.name, main.text) {
+   titles <- c("TTR", "CTR_IZ", "CTR_TZ")
+   cols <- c("black", "red", "blue")
+   n <- length(names)
+ 
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7)
+   rfds$pch  <- c(19, 17, 17, 17)
+   rfds$pos1 <- c(3, 3, 3, 3)
+   rfds$pos2 <- c(3, 3, 3, 3)
+   rfds$pos3 <- c(3, 3, 3, 3)
+   for (r in 1:length(names)) {
+      rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
+      rfds$CTR_IZ[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
+      rfds$CTR_TZ[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
+   }
+ 
+   ##
+   pdf(file.name, height=5, width=5.1)
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(1,4,3.6,1))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
+   lines(x=rfds$X[2:4], y=rfds$TTR[2:4], type="l", lwd=3, col=cols[1])
+   #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
+ 
+   text(8, rfds$TTR[n], " TTR ", cex=1.2, col="black")
+   #abline(v=4, lty=5, lwd=1, col="black")
+   #abline(v=8,  lty=5, lwd=1, col="black")
+   for (n in 2:length(names))
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
+ 
+   ##
+   axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
+   legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
+   legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
+   #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
+   #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
+   mtext("[%]                ", side=2, line=2.8, cex=1.2)
+ 
+   ##
+   par(mar=c(5,4,0,1))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(8, 17.5), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
+   points(rfds$X, rfds$CTR_TZ, col=cols[3], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[2:4], y=rfds$CTR_TZ[2:4], type="l", lwd=3, col=cols[3])
+   #lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
+ 
+   points(rfds$X, rfds$CTR_IZ, col=cols[2], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[2:4], y=rfds$CTR_IZ[2:4], type="l", lwd=3, col=cols[2])
+   #lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
+ 
+   text(8, rfds$CTR_IZ[n], "        CTR (IZ)", cex=1.2, col="red") 
+   text(8, rfds$CTR_TZ[n], "         CTR (TZ)", cex=1.2, col="blue")
+   #abline(v=4, lty=5, lwd=1, col="black")
+   #abline(v=8,  lty=5, lwd=1, col="black")
+   for (n in 2:length(names)) {
+      text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_TZ[n], rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
+   }
+   #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
+ 
+   ##
+   #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
+   #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.2)
+   axis(side=1, at=seq(3, 7, by=2), labels=c("n=70", "n=53", "n=71"), line=1.2, col=NA, cex.axis=1.2)
+   #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
+   #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
+ 
+   mtext("                        Frequency", side=2, line=2.8, cex=1.2)
+   dev.off()
+}
+
+plotReportEGEL <- function(report.rfds, names, file.name, main.text) {
+   titles <- c("IZ_E", "IZ_L", "TZ_E", "TZ_L")
+   cols <- c("red", "red", "blue", "blue")
+   n <- length(names)
+ 
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7)
+   rfds$pch  <- c(19, 17, 17, 17)
+   rfds$pos1 <- c(3, 3, 3, 3)
+   rfds$pos2 <- c(3, 3, 3, 3)
+   rfds$pos3 <- c(3, 3, 3, 3)
+   rfds$pos4 <- c(3, 3, 3, 3)
+   for (r in 1:length(names)) {
+      rfds$IZ_E[r] <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
+      rfds$IZ_L[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
+      rfds$TZ_E[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
+      rfds$TZ_L[r] <- as.numeric(round0(report.rfds[[r]][4]*100, digit=1))
+   }
+ 
+   ##
+   pdf(file.name, height=5, width=5.1)
+   layout(matrix(c(1,2), ncol=1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(0,4,4.6,1))
+ 
+   plot(NULL, xlim=c(0.5, 9), ylim=c(-1, 15), ylab="", xlab="", main=main.text, col=cols[1], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
+   points(rfds$X, rfds$IZ_E, col=cols[1], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[2:4], y=rfds$IZ_E[2:4], type="l", lwd=3, col=cols[1])
+   points(rfds$X, rfds$IZ_L, col=cols[2], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[2:4], y=rfds$IZ_L[2:4], type="l", lty=5, lwd=3, col=cols[2])
+ 
+   text(8, rfds$IZ_E[n], "      IZ (Early)", cex=1.2, col="red") 
+   text(8, rfds$IZ_L[n], "     IZ (Late)", cex=1.2, col="red")
+   for (n in 2:length(names)) {
+      text(rfds$X[n], rfds$IZ_E[n], rfds$IZ_E[n], col=cols[1], pos=rfds$pos1[n], cex=1.2)
+      text(rfds$X[n], rfds$IZ_L[n], rfds$IZ_L[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
+   }
+ 
+   ##
+   #axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
+   #legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
+   #legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
+ 
+   ##
+   mtext("[%]         ", side=2, line=2.8, cex=1.2)
+ 
+   ##
+   par(mar=c(5,4,0,1))
+   plot(NULL, xlim=c(0.5, 9), ylim=c(-1, 14), ylab="", xlab="", col=cols[3], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
+   points(rfds$X, rfds$TZ_E, col=cols[3], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[2:4], y=rfds$TZ_E[2:4], type="l", lwd=3, col=cols[3])
+   points(rfds$X, rfds$TZ_L, col=cols[4], pch=rfds$pch, cex=1.5)
+   lines(rfds$X[2:4], y=rfds$TZ_L[2:4], type="l", lty=5, lwd=3, col=cols[4])
+ 
+   text(8, rfds$TZ_E[n], "      TZ (Early)", cex=1.2, col="blue") 
+   text(8, rfds$TZ_L[n], "     TZ (Late)", cex=1.2, col="blue")
+   #abline(v=4, lty=5, lwd=1, col="black")
+   #abline(v=8,  lty=5, lwd=1, col="black")
+   for (n in 2:length(names)) {
+      text(rfds$X[n], rfds$TZ_E[n], rfds$TZ_E[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
+      text(rfds$X[n], rfds$TZ_L[n], rfds$TZ_L[n], col=cols[4], pos=rfds$pos4[n], cex=1.2)
+   }
+   #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
+ 
+   axis(side=2, at=seq(0, 10, by=5), labels=c(0, 5, 10), cex.axis=1.2)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.2)
+   axis(side=1, at=seq(3, 7, by=2), labels=c("n=70", "n=53", "n=71"), line=1.2, col=NA, cex.axis=1.2)
+   mtext("                        Frequency", side=2, line=2.8, cex=1.2)
+   dev.off()
+}
+
 plotSNR <- function(n, snr, file.name, main.text, xlab.text, ylab.text, col, pos) {
    unit <- (max(snr) - min(snr))/10
    xlim <- c(min(snr) - unit, max(snr) + unit)
@@ -640,13 +789,13 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    dev.off()
 }
 
-boundary.upper <- 950   ## 500-520 breaks
-boundary.lower <-  50   ## 480-500 breaks
-boundary.break <-  45   ## 1 breaks each centering 500
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), "Chr1-22 (1-kbs)")
-xlab.text <- "Number of rightward-moving forks"
-plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
+#boundary.upper <- 950   ## 500-520 breaks
+#boundary.lower <-  50   ## 480-500 breaks
+#boundary.break <-  45   ## 1 breaks each centering 500
+#file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
+#main.text <- c(paste0(BASE, " bootstrap distribution"), "Chr1-22 (1-kbs)")
+#xlab.text <- "Number of rightward-moving forks"
+#plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
 # -----------------------------------------------------------------------------
 # Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)
@@ -671,7 +820,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    unclassified <- c(unclassified, rownames(nrds.RT.NRFD.chr[boundaries,])[which(is.na(nrds.RT.NRFD.chr[boundaries,]$NRFD) == T)])
       
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
-   else main.text <- paste0(BASE, " bootstrap RFD")
+   else main.text <- paste0(BASE, "")
    if (withUnclassified)
       main.text <- paste0(main.text, " (", kb, " kb)")
    
@@ -696,7 +845,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    par(mar=c(1,4,4,1))
    ylab.text <- "RT [log2]"
 
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.35)
    points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.35)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)
@@ -731,10 +880,10 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
    
-   if (width == 10) {
+   #if (width == 10) {
       legend("topleft", "Early", bty="n", text.col="black", cex=1.2, x.intersp=0)   
       legend("bottomleft", "Late", bty="n", text.col="black", cex=1.2, x.intersp=0)
-   }
+      #}
    
    ###
    ## Initiate RFD plot

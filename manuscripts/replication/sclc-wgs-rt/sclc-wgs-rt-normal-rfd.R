@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/09/19; 12/11/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
@@ -22,9 +22,9 @@ load(file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
 # 
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
 PAIR1 <- "M2"
 PAIR0 <- "M1"
@@ -38,7 +38,8 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -194,6 +195,32 @@ boundary.break <-  45   ## 45 breaks each centering 500
 ##
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
+genes <- c("PIF1", "MARS", "KIF18B", "GTPBP3", "EIF3B", "AL049840.1", "RP3-407E4.3")
+genes <- c("BRCA2", "MYC", "MYCN", "MYCL", "B2M", "RB1", "TP53", "BRD9", "RAD9A", "IFI6", "RSAD2", "PINK1", "CXXC1", "GRB7", "IRF2", "PIAS3", "UBE2I", "AAAS")
+genes <- c("TSC2")
+genes <- c("AL807752.1", "TOR1AIP1", "ECH1", "NMRK1", "PHPT1")
+genes <- c("B2M")
+for (g in 1:length(genes)) {
+   chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   start_position <- subset(ensGene, external_gene_name == genes[g])$start_position
+   end_position   <- subset(ensGene, external_gene_name == genes[g])$end_position
+   strand <- subset(ensGene, external_gene_name == genes[g])$strand
+ 
+   size  <- 2000000
+   start <- start_position + size
+   end   <- start_position - size
+   if (strand < 0) {
+      start <- end_position + size
+      end   <- end_position - size
+   }
+ 
+   file.name <- file.path(wd.rt.plots, paste0("NRFD_", paste0(BASE, "\u2212NL"), "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
+   plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, F, genes[g])
+}
+
+
 
 ## Chr2
 c <- 2
@@ -790,6 +817,17 @@ report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.num
 file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L.pdf"))
 plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution (CTR)")
 
+###
+## 30/08/2020
+report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG.txt")), header=T, rownames=T, sep="")
+report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG.pdf"))
+plotReportEG(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of genes")
+
+report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_E+L.txt")), header=T, rownames=T, sep="")
+report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L.pdf"))
+plotReportEGEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of genes (CTR)")
 
 
 
