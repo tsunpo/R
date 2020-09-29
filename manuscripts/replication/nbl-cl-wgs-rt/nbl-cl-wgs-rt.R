@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "Transcription.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -126,16 +126,16 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3_gray50-70-85.pdf"), height=6, width=4)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3.pdf"), height=6, width=4)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5)
 
-points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="gray70", pch=19, cex=2)
-points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="gray85", pch=19, cex=2)
-points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="gray50", pch=19, cex=2)
-points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="black", pch=19, cex=2)
+points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="lightskyblue2", pch=19, cex=2)
+points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=2)
+points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="lightpink1", pch=19, cex=2)
+points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="red", pch=19, cex=2)
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
@@ -151,10 +151,10 @@ for (s in 1:nrow(samples)) {
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.5)
 }
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("black", "gray50", "gray70", "gray85"), cex=1.5)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.5)
 
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
-mtext("Overall correlation with LCL RT", side=2, line=2.75, cex=1.6)
+mtext("Overall correlation with LCL RT [rho]", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="NBL-CL", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
@@ -209,9 +209,7 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[3], pch=19, cex=2, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-   points(n1 ~ snr1, col=col[1], pch=19, cex=2)
-   points(n2 ~ snr2, col=col[2], pch=19, cex=2)
-   
+
    lm.fit <- lm(n1 ~ snr1)
    abline(lm.fit, col=col[1], lwd=3)
    lm.fit <- lm(n2 ~ snr2)
@@ -219,6 +217,9 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col[3], lwd=3)
 
+   points(n1 ~ snr1, col=col[1], pch=19, cex=2)
+   points(n2 ~ snr2, col=col[2], pch=19, cex=2)
+   
    cor2 <- cor.test(n2, snr2, method="spearman", exact=F)
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
    cor1 <- cor.test(n1, snr1, method="spearman", exact=F)
@@ -248,21 +249,21 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_red")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
-ylab.text <- "Overall correlation with LCL RT"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "#01DF01"), "topright")
+ylab.text <- "Overall correlation with LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "darkgray"), "topright")
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_3.7+4.0_red")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_3.7+4.0")
 main.text <- c("Flow cytometry validation in vitro (Dean-Jett-Fox)", "")
 xlab.text <- ""
 ylab.text <- "Proportion of cells [%]"
 blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
 red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
-green <- "#01DF01"   ## adjustcolor("#00BA38", alpha.f=0.9)
+green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
 cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
 facs1 <- t(as.matrix(facs[,-1]))
 

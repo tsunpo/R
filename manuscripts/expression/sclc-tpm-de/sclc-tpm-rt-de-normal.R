@@ -691,9 +691,6 @@ plotVolcano0 <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=
  
    pdf(file.de, height=6, width=6)
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
-   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
-   
-   abline(h=c(-log10(pvalue)), lty=5)
    #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.15)    ## SCLC (IZ)
    #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
    #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
@@ -704,6 +701,9 @@ plotVolcano0 <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=
    de.down <- subset(de.sig, LOG2_FC < 0)
    points(de.down$LOG2_FC, de.down$log10P, pch=16, col="steelblue1", cex=1.4)
  
+   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
+   abline(h=c(-log10(pvalue)), lty=5)
+   
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
          gene <- subset(de, external_gene_name == genes[g,]$GENE)

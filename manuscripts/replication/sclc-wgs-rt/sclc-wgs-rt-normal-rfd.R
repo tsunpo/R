@@ -201,6 +201,7 @@ genes <- c("BRCA2", "MYC", "MYCN", "MYCL", "B2M", "RB1", "TP53", "BRD9", "RAD9A"
 genes <- c("TSC2")
 genes <- c("AL807752.1", "TOR1AIP1", "ECH1", "NMRK1", "PHPT1")
 genes <- c("B2M")
+genes <- c("BLM")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
