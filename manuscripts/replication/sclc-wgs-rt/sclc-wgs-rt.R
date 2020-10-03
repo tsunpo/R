@@ -16,7 +16,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
-load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
+#load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -56,8 +56,8 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2656170 - 22
 nrds.sclc <- nrds
 
-ymax <- 0.6
-ymin <- 0.14
+ymax <- 0.7
+ymin <- 0.1
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -166,8 +166,8 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_
 # [1] 0.8088429
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman_2")
-main.text <- c("SCLC read depth vs. LCL RT", "")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
+main.text <- c("SCLC read depth vs. RT", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
 plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
@@ -286,10 +286,10 @@ samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_3.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_pptx.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="Overall read depth vs. LCL RT", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="In silico sorting", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
 abline(h=0, lty=5)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=19, add=T)
@@ -300,7 +300,7 @@ beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=19, add=T)
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.8)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
-mtext("In silico sorting prediction", side=2, line=2.75, cex=1.8)
+mtext("Correlation [rho]", side=2, line=2.75, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
 mtext(text=c("SCLC", "NBL", "CLL"), side=1, cex=1.8, line=1.3, at=c(1,2,3))
 mtext(text=c("n=101", "n=56", "n=96"), side=1, cex=1.8, line=3, at=c(1,2,3))

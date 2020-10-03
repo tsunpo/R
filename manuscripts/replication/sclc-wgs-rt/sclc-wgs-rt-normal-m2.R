@@ -57,21 +57,21 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 nrds.sclc.nl.m2 <- nrds
 
 ymax <- 0.6
-ymin <- 0.14
+ymin <- 0.15
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
    #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
-   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   #nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, "\u2212", "NL M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") lung tissues")  
+   main.text <- paste0(BASE, "\u2212", "NL M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") samples")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 normal", "M1 normal"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 
-   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 normal", "M1 normal"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   #file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 normal", "M1 normal"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
@@ -131,6 +131,14 @@ cors <- getRTvsRT(nrds, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 
+##
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman")
+main.text <- paste0("SCLC-NL M2/M1 vs. LCL S/G1")
+ymin <- -1.1
+ymax <- 1.1
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
+
+##
 ylab.text <- "Spearman's rho"
 xlab.text <- "Chromosome"
 file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman_test")
@@ -139,8 +147,3 @@ ymin <- 0.25
 ymax <- 1.05
 plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
 
-##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman")
-ymin <- -1.1
-ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)

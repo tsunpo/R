@@ -379,7 +379,7 @@ plotCYS0 <- function(file.name, main.text, ylab.text, xlab.text, cn, snr, pos) {
    plot(cn ~ snr, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
  
    lm.fit <- lm(cn ~ snr)
-   abline(lm.fit, lwd=5)
+   abline(lm.fit, lwd=2.5)
  
    cor <- cor.test(cn, snr, method="spearman", exact=F)
    legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.9)

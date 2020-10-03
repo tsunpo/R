@@ -126,7 +126,7 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_6_2.3.pdf"), height=6, width=4)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl.pdf"), height=6, width=4)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
@@ -154,7 +154,7 @@ for (s in 1:nrow(samples)) {
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.5)
 
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
-mtext("Overall correlation with LCL RT [rho]", side=2, line=2.75, cex=1.6)
+mtext("Overall read depth vs. RT [rho]", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="NBL-CL", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
@@ -203,27 +203,26 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 }
 
 # https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
-plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.text, ylab.text, col, pos) {
+plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos) {
    xlim <- c(0, 115)
    ylim <- c(-0.367, 0.5)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[3], pch=19, cex=2, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-
+   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col2[3], pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   points(n1 ~ snr1, col=col2[1], pch=15, cex=2, lwd=0)
+   points(n2 ~ snr2, col=col2[2], pch=15, cex=2, lwd=0)
+   
    lm.fit <- lm(n1 ~ snr1)
    abline(lm.fit, col=col[1], lwd=3)
    lm.fit <- lm(n2 ~ snr2)
    abline(lm.fit, col=col[2], lwd=3)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col[3], lwd=3)
-
-   points(n1 ~ snr1, col=col[1], pch=19, cex=2)
-   points(n2 ~ snr2, col=col[2], pch=19, cex=2)
    
    cor2 <- cor.test(n2, snr2, method="spearman", exact=F)
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
    cor1 <- cor.test(n1, snr1, method="spearman", exact=F)
-   legend(pos, c(paste0("S   (rho = ", round0(cor2[[4]], digits=1), ")"), paste0("G2 (rho = ", round0(cor3[[4]], digits=1), ")"), paste0("G1 (rho = ", round0(cor1[[4]], digits=1), ")")), text.col=c(col[2], col[3], col[1]), pch=c(19, 19, 19), col=c(col[2], col[3], col[1]), cex=1.5)
+   legend(pos, c(paste0("S   (rho = ", round0(cor2[[4]], digits=1), ")"), paste0("G2 (rho = ", round0(cor3[[4]], digits=1), ")"), paste0("G1 (rho = ", round0(cor1[[4]], digits=1), ")")), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), cex=1.5, pt.lwd=0)
    #
    #cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], paste0("G1 (rho = ", round0(cor[[4]], digits=1), ")     "), text.col=col[1], pch=c(NA), col=col[1], bty="n", cex=1.5)
@@ -249,22 +248,29 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
-ylab.text <- "Overall correlation with LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, c("blue", "red", "darkgray"), "topright")
+ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- c("blue", "red", "dimgray")
+blue <- "#989aff"
+red  <- "#ff9899"
+dimgray <- "#b7b7b7"
+#cols2 <- c(adjustcolor(blue, alpha.f=0.6), adjustcolor(red, alpha.f=0.6), adjustcolor(dimgray, alpha.f=0.6))
+cols2 <- c(blue, red, dimgray)
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_3.7+4.0")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart")
 main.text <- c("Flow cytometry validation in vitro (Dean-Jett-Fox)", "")
 xlab.text <- ""
 ylab.text <- "Proportion of cells [%]"
-blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
-red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
-green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
-cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
+#blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
+#red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
+#green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
+#cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
+cols <- c(blue, red, dimgray)
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)

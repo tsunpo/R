@@ -307,7 +307,7 @@ genes <- c("BLM", "POLE")
 genes <- c("PIF1", "MARS", "KIF18B", "BRCA2")
 genes <- c("RP3-407E4.3", "BRD9")
 genes <- c("RP11-730B22.1")
-genes <- c("RAD9A")
+genes <- c("RAD9A", "PIF1", "AL049840.1", "KIF18B", "BRCA2")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")

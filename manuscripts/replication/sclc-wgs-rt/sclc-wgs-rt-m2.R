@@ -16,7 +16,7 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
-#load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
+load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -58,22 +58,22 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2657164
 nrds.sclc.m2 <- nrds
 
-ymax <- 0.6
-ymin <- 0.14
+ymax <- 0.65
+ymin <- 0.2
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
-   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
    nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   #file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 
    file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))  
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#00FF00"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ for (c in 1:22) {
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
 }
 
-## Teplication timing skew (RTS)
+## Replication timing skew (RTS)
 file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
 ylab.text <- "SCLC M2/M1"
@@ -230,6 +230,7 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s
 
 ##
 file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman")
+main.text <- paste0("SCLC M2/M1 vs. LCL S/G1")
 ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
@@ -254,7 +255,10 @@ file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman
 main.text <- paste0(BASE, " M2/M1")
 ymin <- 0.85
 ymax <- 1
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "goldenrod2"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL"))
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL"))   #00BA38 green for LCL RT??
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman0")   ## gold (#f6c700)
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL"))
 
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT3_SCLC-M2-M1-vs-ALL_spline_spearman")
 #main.text <- paste0(BASE, " M2/M1")

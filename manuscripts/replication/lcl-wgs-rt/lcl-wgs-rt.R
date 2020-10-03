@@ -56,11 +56,11 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2582940 - 22
 nrds.lcl <- nrds
 
-load(file.path("/projects/cangen/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("lcl", "_", "rpkm", ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
+load(file.path(wd.rt.data, paste0("lcl", "_", "rpkm", ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
 nrds.lcl <- nrds
 
 ymax <- 0.6
-ymin <- 0.14
+ymin <- 0.15
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -81,6 +81,7 @@ sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+sprs.lcl <- sprs
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -91,17 +92,17 @@ for (c in 1:22) {
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
-   xlab.text <- "RT (S/G1 ratio) [log2]"
+   xlab.text <- "RT [log2]"
    ylab.text <- "Read depth [RPKM]"
-   main.text <- c(paste0("LCL read depth vs. LCL RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   main.text <- c(paste0("LCL read depth vs. RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("S", "G1"), method="spearman")
 
-   main.text <- c(paste0("LCL G1 read depth vs. LCL RT (", "Chr", c, ")"), "")
+   main.text <- c(paste0("G1 read depth vs. RT (", "Chr", c, ")"), "")
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
    plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("blue", adjustcolor("lightskyblue2", alpha.f=0.08)), c("S", "G1"), method="spearman")
    
-   main.text <- c(paste0("LCL S read depth vs. LCL RT (", "Chr", c, ")"), "")
+   main.text <- c(paste0("S read depth vs. RT (", "Chr", c, ")"), "")
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
    plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", adjustcolor("lightpink1", alpha.f=0.08)), c("S", "G1"), method="spearman")
 }
@@ -126,16 +127,16 @@ plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(4, 13, 17, 19, 22), 
 
 ## Fighte 2C
 file.name <- file.path(wd.rt.plots, "RD-vs-RT_LCL_spline_spearman")
-main.text <- paste0("LCL read depth vs. LCL RT")
-ymin <- -0.8
-ymax <- 0.8
+main.text <- paste0("LCL read depth vs. RT")
+ymin <- -0.8773492
+ymax <- 0.8392611
 plotRD2vsRTALL(sprs, file.name, main.text, ymin, ymax, cols=c("red", "blue"), c("S", "G1"), c=2)
 
 ###
 ##
 file.name <- file.path(wd.rt.plots, "RD2_LCL-S-G1-vs-LCL-S-G1_spline_spearman")
 main.text <- "LCL S/G1"
-plotRD2(sprs, file.name, main.text, 0.14, 0.72)
+plotRD2(sprs, file.name, main.text, 0.1, 0.75)
 
 # -----------------------------------------------------------------------------
 # Mapping replication origins

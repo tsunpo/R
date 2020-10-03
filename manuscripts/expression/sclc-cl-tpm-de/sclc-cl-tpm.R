@@ -56,11 +56,11 @@ so <- sleuth_prep(s2c, target_mapping=t2g, gene_mode=T, aggregation_column="ens_
 # dropping unused factor levels
 # .....................................................................
 # normalizing est_counts
-#  targets passed the filter
+# 88247 targets passed the filter
 # normalizing tpm
 # merging in metadata
 # aggregating by column: ens_gene
-#  genes passed the filter
+# 19378 genes passed the filter
 # summarizing bootstraps
 
 ## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## See line 30 in guide-to-the/hg19.R
@@ -77,31 +77,18 @@ writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1
 nrow(tpm.gene)
 # [1] 34908
 
-read.gene <- getGeneTPM(list2Matrix(tpm.norm$scaled_reads_per_base, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
-save(read.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_read.gene.RData")))
-writeTable(read.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_read.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrow(read.gene)
-# [1] 34908
-
 ## Gene-level TPMs (Expressed)
 load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene <- removeMedian0(tpm.gene)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 nrow(tpm.gene)
-# [1] 14787 (lengths; sd=20)
-# [1] 15658 (length=200; sd=20)
-
-
-
-
-
+# [1] 22115
 
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 nrow(tpm.gene)
-# [1] 12703 (lengths; sd=20)
-# [1] 13569 (length=200; sd=20)
+# [1] 17921
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
@@ -122,29 +109,3 @@ plotDensityHistogram(tpm.gene, file.main, "Expressed")
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Consistently expressed")
-
-###
-## 13/09/20
-load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-new <- getLog2andMedian(tpm.gene, 0.01)
-nrow(new)
-# [1] 14787
-load("/Users/tpyang/Work/uni-koeln/tyang2/ESAD/analysis/expression/kallisto/esad-tpm-de_old/data/esad_kallisto_0.43.1_tpm.gene.median0.RData")
-old <- getLog2andMedian(tpm.gene, 0.01)
-nrow(old)
-# [1] 15658
-overlaps <- intersect(rownames(new), rownames(old))
-length(overlaps)
-# [1] 14752
-
-file.name <- file.path(wd.de.plots, paste0("kalisto_tpm_new-vs-old"))
-pdf(paste0(file.name, ".pdf"), height=6, width=6)
-plot(new[overlaps,]$MEDIAN ~ old[overlaps,]$MEDIAN, ylab="NEW (Fragment sizes; sd=20)", xlab="OLD (size=200; sd=20)", main="ESAD 3'RNA")
-
-lm.fit <- lm(new[overlaps,]$MEDIAN ~ old[overlaps,]$MEDIAN)
-abline(lm.fit, lwd=5)
-
-cor <- cor.test(new[overlaps,]$MEDIAN, old[overlaps,]$MEDIAN, method="spearman", exact=F)
-legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n")
-mtext("[log2(TPM + 0.01)]", line=0.3)
-dev.off()
