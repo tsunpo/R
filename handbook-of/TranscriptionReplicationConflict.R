@@ -404,13 +404,13 @@ plotCYS <- function(gene, cn, snr, pch, col, pos) {
    file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col=col, pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
  
    lm.fit <- lm(cn ~ snr)
-   abline(lm.fit, col="gold", lwd=5)
+   abline(lm.fit, col=col, lwd=5)
  
    cor <- cor.test(cn, snr, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, bty="n", cex=1.9)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col="black", bty="n", cex=1.9)
  
    axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
    #axis(side=2, at=seq(6, 8, by=1), labels=c(6, 7, 8), cex.axis=1.7)   ## MARS

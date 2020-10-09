@@ -308,9 +308,10 @@ genes <- c("PIF1", "MARS", "KIF18B", "BRCA2")
 genes <- c("RP3-407E4.3", "BRD9")
 genes <- c("RP11-730B22.1")
 genes <- c("RAD9A", "PIF1", "AL049840.1", "KIF18B", "BRCA2")
+genes <- c("RSAD2", "IRF2", "IFI35", "IFI6")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
-   plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
+   plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "steelblue1", "bottomright")
 }
 
 ##
@@ -498,9 +499,9 @@ plotVolcano(de.tpm.gene.rfd.ttr.e.ho, 0.01, genes, file.de, file.main, xlab.text
 ###
 ## SCLC ALL genes
 xlab.text <- "SCLC S/G1 [log2 fold change]"
+file.main <- c("SCLC expressed genes (n=23,572)", "Correlation between expression and in-silico sorting")
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-2_all")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC expressed genes (n=23,572)", "Correlation between expression and in-silico sorting")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
 
@@ -514,8 +515,16 @@ genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
 
+##
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-2_all_down_IRF3")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
 
-
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-2_all_down_BBC3")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
 
 
 # -----------------------------------------------------------------------------
