@@ -491,7 +491,7 @@ plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.na
 # Last Modified: 23/03/20
 # -----------------------------------------------------------------------------
 getBootstrapSummary <- function(report.sclc.nl.vs.sclc) {
-   colnames <- c("Conserved", "Specific", "Fold")
+   colnames <- c("Conserved", "Preserved", "Fold")
    summary <- toTable(0, length(colnames), 3, colnames)
    rownames(summary) <- c("TTR", "IZ", "TZ")
    
@@ -499,15 +499,15 @@ getBootstrapSummary <- function(report.sclc.nl.vs.sclc) {
    summary$Conserved[2] <- report.sclc.nl.vs.sclc$Overlapping_P[3]
    summary$Conserved[3] <- report.sclc.nl.vs.sclc$Overlapping_P[5]
    
-   summary$Specific[1] <- (report.sclc.nl.vs.sclc$RFD_N[1] - report.sclc.nl.vs.sclc$Overlapping_N[1])/report.sclc.nl.vs.sclc$Mappable[1]
-   summary$Specific[2] <- (report.sclc.nl.vs.sclc$RFD_N[3] - report.sclc.nl.vs.sclc$Overlapping_N[3])/report.sclc.nl.vs.sclc$Mappable[3]
-   summary$Specific[3] <- (report.sclc.nl.vs.sclc$RFD_N[5] - report.sclc.nl.vs.sclc$Overlapping_N[5])/report.sclc.nl.vs.sclc$Mappable[5]
+   summary$Preserved[1] <- (report.sclc.nl.vs.sclc$RFD_N[1] - report.sclc.nl.vs.sclc$Overlapping_N[1])/report.sclc.nl.vs.sclc$Mappable[1]
+   summary$Preserved[2] <- (report.sclc.nl.vs.sclc$RFD_N[3] - report.sclc.nl.vs.sclc$Overlapping_N[3])/report.sclc.nl.vs.sclc$Mappable[3]
+   summary$Preserved[3] <- (report.sclc.nl.vs.sclc$RFD_N[5] - report.sclc.nl.vs.sclc$Overlapping_N[5])/report.sclc.nl.vs.sclc$Mappable[5]
    
    for (c in 1:3) {
-      if (summary$Conserved[c] < summary$Specific[c])
-         summary$Fold[c] <- summary$Specific[c]/summary$Conserved[c]
+      if (summary$Conserved[c] < summary$Preserved[c])
+         summary$Fold[c] <- summary$Preserved[c]/summary$Conserved[c]
       else
-         summary$Fold[c] <- summary$Conserved[c]/summary$Specific[c]
+         summary$Fold[c] <- summary$Conserved[c]/summary$Preserved[c]
    }
    return(summary)
 }
@@ -523,9 +523,10 @@ summary.sclc.nl.vs.cll  <- getBootstrapSummary(report.sclc.nl.vs.cll)
 ## https://stackoverflow.com/questions/40919759/stacked-barplot-using-r-base-how-to-add-values-inside-each-stacked-bar
 plotBootstrapSummary <- function(summary, file.name, main.text) {
    xlab.text <- "Percentage [%]"
-   cols <- c(adjustcolor("#00BA38", alpha.f=0.7), adjustcolor("#F8766D", alpha.f=0.7))
+   #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
+   cols <- c(green, yellow)
    summary$Conserved <- summary$Conserved*100
-   summary$Specific <- summary$Specific*100
+   summary$Preserved <- summary$Preserved*100
    summary <- t(as.matrix(summary[,-3]))
    summary <- summary[,3:1]
    
@@ -534,21 +535,22 @@ plotBootstrapSummary <- function(summary, file.name, main.text) {
    bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 
    h <- summary
-   h[1,] <- as.numeric(round0(summary[1,], digits=1))
-   h[2,] <- as.numeric(round0(summary[2,], digits=1))
+   h[1,] <- as.numeric(round0(summary[1,], digits=0))
+   h[2,] <- as.numeric(round0(summary[2,], digits=0))
    H <- apply(summary, 2L, cumsum) - summary/2
    text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
 
-   legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
+   legend("bottomright", rownames(summary), pt.cex=2.5, cex=1.6, fill=cols, horiz=T, bty="n")
    #mtext(ylab.text, side=2, line=2.75, cex=1.6)
    dev.off()
 }
 
 plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    xlab.text <- "Percentage [%]"
-   cols <- c(adjustcolor("#00BA38", alpha.f=0.7), adjustcolor("#F8766D", alpha.f=0.7))
+   #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
+   cols <- c(green, yellow)
    summary$Conserved <- summary$Conserved*100
-   summary$Specific <- summary$Specific*100
+   summary$Preserved <- summary$Preserved*100
    summary <- as.data.frame(t(summary[,-3]))
    summary <- summary[,3:1]
    summary$Total <- 0
@@ -561,8 +563,8 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    bp <- barplot(summary, col=cols, xlim=c(0, 100), xlab=xlab.text, names.arg="", main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
  
    h <- summary
-   h[1,] <- as.numeric(round0(summary[1,], digits=1))
-   h[2,] <- as.numeric(round0(summary[2,], digits=1))
+   h[1,] <- as.numeric(round0(summary[1,], digits=0))
+   h[2,] <- as.numeric(round0(summary[2,], digits=0))
    H <- apply(summary, 2L, cumsum) - summary/2
    text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
    
@@ -571,20 +573,20 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-SCLC_barchart")
-main.text <- c("SCLC-NL landscape domains conserved with SCLC", "")
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-SCLC_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("SCLC-NL vs. SCLC replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.sclc, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "Between SCLC-NL and SCLC")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "SCLC-NL vs. SCLC")
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-NBL_barchart")
-main.text <- c("SCLC-NL landscape domains conserved with NBL", "")
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-NBL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("SCLC-NL vs. NBL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.nbl, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "Between SCLC-NL and NBL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "SCLC-NL vs. NBL")
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-CLL_barchart")
-main.text <- c("SCLC-NL landscape domains conserved with CLL", "")
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-CLL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("SCLC-NL vs. CLL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.cll, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "Between SCLC-NL and CLL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "SCLC-NL vs. CLL")
 
 # -----------------------------------------------------------------------------
 # Report (between SCLC and others)
@@ -755,15 +757,16 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=2)
    points(n2 ~ snr2, col=col[2], pch=19, cex=2)
    
-   lm.fit <- lm(n1 ~ snr1)
-   abline(lm.fit, col=col[1], lwd=3)
-   lm.fit <- lm(n2 ~ snr2)
-   abline(lm.fit, col=col[2], lwd=3)
- 
    samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
    text(snr1, n1, samples, col=col[1], pos=c(1,2,2,2), cex=1.8)
    text(snr2, n2, samples, col=col[2], pos=c(1,4,4,4), cex=1.8)
+   
+   lm.fit <- lm(n2 ~ snr2)
+   abline(lm.fit, col=col[2], lwd=4.5)
 
+   lm.fit <- lm(n1 ~ snr1)
+   abline(lm.fit, col=col[1], lwd=4.5)
+   
    cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[1], bty="n", cex=1.75)
    legend(pos[1], c("M2/M1", "(rho = 0.8)"), text.col=col[1], pch=c(19, NA), bty="n", cex=1.8)
@@ -781,7 +784,7 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 snr    <- readTable(file.path(wd.rt.data, paste0("SNR_ALL.txt")), header=T, rownames=T, sep="\t")
 snr.q4 <- readTable(file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), header=T, rownames=T, sep="\t")
 
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray")
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray_lwd=4.5")
 main.text <- c("Signal-to-noise", "")
 xlab.text <- "Signal-to-noise ratio"
 ylab.text <- "Sample size"

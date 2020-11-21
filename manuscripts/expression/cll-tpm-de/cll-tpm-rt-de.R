@@ -289,6 +289,17 @@ for (g in 1:length(genes)) {
 # 
 # Last Modified: 18/09/20
 # -----------------------------------------------------------------------------
+## SCLC's top genes   ## ADD: 04/11/20
+xlab.text <- "CLL S/G1 [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_cll_median0_rfd_p1e-2_all_PIF1")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("CLL expressed genes (n=22,807)", "Correlation between expression and in-silico sorting")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=7)
+
+
+
+
 ## CLL IZ-E, CD genes
 xlab.text <- "CLL S/G1 [log2 fold change]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_cll_median0_rfd_p1e-2_iz_e_cd")

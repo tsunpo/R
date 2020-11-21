@@ -677,7 +677,7 @@ plotTRC(-log10(de.tpm.gene.iz.cd$P), tpm.gene.log2.m.rfd.ctr.iz.cd$GENE_NRFD, c(
 
 # -----------------------------------------------------------------------------
 # D.E. LUNG vs. SCLC
-# Last Modified: 01/09/20; 08/01/20
+# Last Modified: 25/10/20; 01/09/20; 08/01/20
 # -----------------------------------------------------------------------------
 plotVolcano0 <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
    #pvalue <- fdrToP(fdr, de)
@@ -815,7 +815,72 @@ for (g in 1:length(genes)) {
    plotNormal(genes[g], id, tpm.gene.log2, tpm.gene.lung.log2)
 }
 
+# -----------------------------------------------------------------------------
+# D.E. LUNG vs. SCLC
+# Last Modified: 25/10/20; 01/09/20; 08/01/20
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/LUSC/analysis/expression/kallisto/normal-tpm-de/data/lusc_kallisto_0.43.1_tpm.gene.RData")
+tpm.gene.lung.log2   <- log2(tpm.gene + 0.01)
+# > dim(tpm.gene.lung.log2)
+# [1] 34908    41
 
+de.tpm.gene.down <- subset(subset(de.tpm.gene, P < 0.01), LOG2_FC < 0)
+overlaps <- intersect(rownames(de.tpm.gene.down), rownames(tpm.gene.lung.log2))
+length(overlaps)
+# [1] 267
+tpm.gene.log2.0      <- tpm.gene.log2[overlaps,]
+tpm.gene.lung.log2.0 <- tpm.gene.lung.log2[overlaps,]
+
+colnames <- c("P", "FDR", "N", "T", "LOG2_FC")
+de2 <- toTable(0, length(colnames), nrow(tpm.gene.log2.0), colnames)
+rownames(de2) <- rownames(tpm.gene.log2.0)
+
+## SRC
+de2$P <- mapply(x = 1:nrow(tpm.gene.log2.0), function(x) testU(as.numeric(tpm.gene.log2.0[x,]), as.numeric(tpm.gene.lung.log2.0[x,])))
+
+## Log2 fold change
+de2$N <- mapply(x = 1:nrow(tpm.gene.log2.0), function(x) median(as.numeric(tpm.gene.lung.log2.0[x,])))
+de2$T <- mapply(x = 1:nrow(tpm.gene.log2.0), function(x) median(as.numeric(tpm.gene.log2.0[x,])))
+de2$LOG2_FC <- de2$T - de2$N
+
+## FDR
+#library(qvalue)
+#de2$Q   <- qvalue(de2$P)$qvalue
+de2$FDR <- p.adjust(de2$P, method="BH", n=length(de2$P))
+#de$ANOVA_Q <- qvalue(de$ANOVA_P)$qvalue
+de2 <- de2[order(de2$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de2.tpm.gene <- cbind(annot[rownames(de2),], de2)   ## BE EXTRA CAREFUL!!
+
+save(de2.tpm.gene, samples, file=file.path(wd.de.data, "de2_sclc_tpm-gene-median0-lung_U_BH_n70+41_down_n267.RData"))
+writeTable(de2.tpm.gene, file.path(wd.de.data, "de2_sclc_tpm-gene-median0-lung_U_BH_n70+41_iz_e_cd.txt"), colnames=T, rownames=F, sep="\t")
+nrow(de2.tpm.gene)
+# [1] 267
+
+###
+##
+plotNormal <- function(gene, id, tpm.gene.log2, tpm.gene.lung.log2) {
+   file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_gene_", gene)
+   plotBox2(wd.de.plots, file.name, as.numeric(tpm.gene.lung.log2[id,]), as.numeric(tpm.gene.log2[id,]), main=gene, names=c("Lung", "SCLC"))
+}
+
+genes <- c("RSAD2", "IRF2", "IFI35", "IFI6", "IFIT1", "IFIT2", "IFIT3", "IFIT5")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotNormal(genes[g], id, tpm.gene.log2, tpm.gene.lung.log2)
+}
+
+###
+## Volcano
+xlab.text <- "SCLC/Lung [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_iz_e_cd_p1e-15_down")
+
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("Differential expression between SCLC and normal lung", paste0("SCLC negatively-correlated genes (n=267)"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano0(de2.tpm.gene, 1E-6, genes, file.de, file.main, xlab.text, ymax=21)
 
 
 

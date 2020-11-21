@@ -399,6 +399,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    dev.off()
 }
 
+## SCLC's top genes   ## ADD: 04/11/20
+xlab.text <- "NBL S/G1 [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_rfd_p1e-2_all_PIF1")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL expressed genes (n=22,899)", "Correlation between expression and in-silico sorting")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=11)
+
+
+
 ## SCLC IZ-E, CD genes
 xlab.text <- "NBL S/G1 [log2 fold change]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_rfd_p1e-5_iz_e_cd")

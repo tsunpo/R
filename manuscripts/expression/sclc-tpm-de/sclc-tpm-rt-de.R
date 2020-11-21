@@ -436,7 +436,8 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    }
    
    #axis(side=1, at=seq(-3, 6, by=1), labels=c(-3, -2, -1, 0, 1, 2, 3, 4, 5, 6), cex.axis=1.1)
-   axis(side=1, at=seq(-6, 10, by=2), labels=c(-6, -4, -2, 0, 2, 4, 6, 8, 10), cex.axis=1.1)
+   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.1)
+   axis(side=1, at=seq(-10, 10, by=4), labels=c(-10, -6, -2, 2, 6, 10), cex.axis=1.1)
    mtext(file.main[2], cex=1.25, line=0.3)
    legend("topright", legend=c("Positively-correlated", "Negatively-correlated"), col=c("gold", "steelblue1"), pch=19, pt.cex=1.1, cex=1.1)
    dev.off()
@@ -498,6 +499,14 @@ plotVolcano(de.tpm.gene.rfd.ttr.e.ho, 0.01, genes, file.de, file.main, xlab.text
 
 ###
 ## SCLC ALL genes
+xlab.text <- "SCLC S/G1 [log2 fold change]"
+file.main <- c("SCLC expressed genes (n=23,572)", "Correlation between expression and in-silico sorting")
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-2_all_PIF1")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
+
+
 xlab.text <- "SCLC S/G1 [log2 fold change]"
 file.main <- c("SCLC expressed genes (n=23,572)", "Correlation between expression and in-silico sorting")
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-2_all")

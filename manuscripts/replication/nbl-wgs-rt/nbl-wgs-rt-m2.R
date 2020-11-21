@@ -69,8 +69,8 @@ for (c in 1:22) {
    
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_lty=5_lwd=1.5_pch=16_cex=0.3_lwd=3_cex=1.3"))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 
    #file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
    #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
@@ -135,13 +135,13 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman_nasa.blue_google.red_text.font=2")
 main.text <- paste0("NBL M2/M1 vs. LCL S/G1")
 #ylab.text <- "Spearman's rho"
 #xlab.text <- "Chromosome"
 ymin <- -1.1
 ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
 
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman_test")
 #ymin <- 0.25
@@ -156,20 +156,36 @@ cors <- getRTvsRT3(nrds.nbl.m2, nrds.nbl.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_NBL-M2-M1-vs-ALL_spline_spearman")   ## gold (#f6c700)
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_NBL-M2-M1-vs-ALL_spline_spearman_dhl.yellow_cex=1.5_text.font=2")   ## gold (#f6c700)
 main.text <- paste0(BASE, " M2/M1")
 ymin <- 0.85
 ymax <- 1
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "#01DF01"), c("M2/M1 vs. Q4/Q1   ", "NBL vs. SCLC-NL   "))
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", yellow), c("M2/M1 vs. Q4/Q1", "NBL vs. SCLC-NL   "))
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_NBL-M2-M1-vs-ALL_spline_spearman0")   ## gold (#f6c700)
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1   ", "NBL vs. SCLC-NL   "))
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_NBL-M2-M1-vs-ALL_spline_spearman_dhl.yellow_cex=1.5_text.font=2_0")   ## gold (#f6c700)
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1", "NBL vs. SCLC-NL   "))
 
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT3_NBL-M2-M1-vs-ALL_spline_spearman")
 #main.text <- paste0(BASE, " M2/M1")
 #ymin <- 0.55
 #ymax <- 1.0
 #plotRTvsRT3(cors, file.name, main.text, ymin, ymax, cols=c("gold", "black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "NBL vs. SCLC-NL", "NBL vs. LCL S/G1"))
+
+# -----------------------------------------------------------------------------
+# M2/M1 vs. NBL-CL RTs
+# Last Modified: 14/11/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.nbl.m2, nrds.nbl.m2, nrds.nbl.cl.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_NBL-M2-M1-vs-NBL-CL_spline_spearman")   ## gold (#f6c700)
+main.text <- paste0(BASE, " M2/M1")
+ymin <- 0.2
+ymax <- 1
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", selectiveyellow), c("M2/M1 vs. Q4/Q1", "NBL vs. NBL-CL"))   #00BA38 green for LCL RT??
+
+
 
 # -----------------------------------------------------------------------------
 # WGD

@@ -75,9 +75,12 @@ for (c in 1:22) {
    
    ## Plot RT
    main.text <- paste0(BASE, " Q4/Q1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4 tumour", "Q1 tumour"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
-   plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("Q4", "Q1"), c("lightpink1", "lightskyblue2"), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_lty=5_lwd=1.5_pch=16_cex=0.3_lwd=3_cex=1.3"))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4 tumour", "Q1 tumour"), c(red, blue), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   
+   ## Plot RT
+   main.text <- paste0(BASE, "") 
+   plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 }
 
 # -----------------------------------------------------------------------------
@@ -138,13 +141,13 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman_nasa.blue_google.red_text.font=2")
 main.text <- paste0("NBL Q4/Q1 vs. LCL S/G1")
 ylab.text <- "Correlation [rho]"
 xlab.text <- "Chromosome"
 ymin <- -1.1
 ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
 
 #ylab.text <- "Spearman's rho"
 #xlab.text <- "Chromosome"
@@ -156,7 +159,7 @@ plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "bl
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman_2")
 main.text <- "NBL Q4/Q1"
 plotRD2(cors, file.name, main.text, 0.3, 0.85)
 

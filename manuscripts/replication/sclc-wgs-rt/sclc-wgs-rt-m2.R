@@ -58,9 +58,16 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2657164
 nrds.sclc.m2 <- nrds
 
-ymax <- 0.65
-ymin <- 0.2
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
+nrds.lcl <- nrds
+load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+
+ymax <- 0.6
+ymin <- 0.15
 for (c in 1:22) {
+   ymax <- 0.6
+   ymin <- 0.15
+   c <- 2
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
@@ -69,11 +76,30 @@ for (c in 1:22) {
    
    ## Plot RT
    main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   #file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_lty=5_lwd=1.5_pch=16_cex=0.3_lwd=3_cex=1.3"))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, lightgreen), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 
-   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))  
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#00FF00"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_basf.green_lty=5_lwd=1.5_pch=16_cex=0.3_lwd=3_cex=1.25"))  
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+ 
+   ##
+   ymax <- 0.65
+   ymin <- 0.2
+   c <- 13
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chr)
+   nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   
+   ## Plot RT
+   main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
+   #file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_google.red+blue+green"))   
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, lightgreen), c("M2 tumour", "M1 tumour"), c(lightpink, lightskyblue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   
+   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_basf.green_lty=5_lwd=1.5_pch=16_cex=0.3_lwd=3_cex=1.25"))  
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+
 }
 
 # -----------------------------------------------------------------------------
@@ -103,18 +129,18 @@ for (c in 1:22) {
 }
 
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_nasa.blue_google.red_cex=1.2_lwd=1.3")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
 ylab.text <- "SCLC M2/M1"
-plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text)
+plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2)
 
 ### Figure 4D
 ## SCLC vs. LCL
-file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman_nasa.blue_google.red_microsoft.green_cex=1.2_lwd=3_lwd=1.3")
 main.text <- c("Replication timing skew", "")
 xlab.text <- "LCL S/G1"
 ylab.text <- "SCLC M2/M1"
-plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)
 
 ## SCLC vs. SCLC-NL
 #file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_SCLC-NL_spline_spearman")
@@ -250,21 +276,40 @@ plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "bl
 cors <- getRTvsRT3(nrds.sclc.m2, nrds.sclc.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
+#green   <- "#01DF01"
+#twitterblue  <- "#00ACEE"
+#googleyellow <- "#FBBC05"
+#orange <- "#E98300"
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman")   ## gold (#f6c700)
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman_dhl.yellow_cex=1.5_text.font=1.2")   ## gold (#f6c700)
 main.text <- paste0(BASE, " M2/M1")
 ymin <- 0.85
 ymax <- 1
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL"))   #00BA38 green for LCL RT??
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", yellow), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL "))   #00BA38 green for LCL RT??
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman0")   ## gold (#f6c700)
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL"))
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-ALL_spline_spearman_google.yellow_cex=1.5_text.font=1.2_0")   ## gold (#f6c700)
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL "))
 
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT3_SCLC-M2-M1-vs-ALL_spline_spearman")
 #main.text <- paste0(BASE, " M2/M1")
 #ymin <- 0.55
 #ymax <- 1
 #plotRTvsRT3(cors, file.name, main.text, ymin, ymax, cols=c("gold", "black", "#01DF01"), c("M2/M1 vs. Q4/Q1", "SCLC vs. SCLC-NL", "SCLC vs. LCL S/G1"))
+
+# -----------------------------------------------------------------------------
+# M2/M1 vs. NBL-CL RTs
+# Last Modified: 14/11/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.sclc.m2, nrds.sclc.m2, nrds.nbl.cl.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-M2-M1-vs-NBL-CL_spline_spearman")   ## gold (#f6c700)
+main.text <- paste0(BASE, " M2/M1")
+ymin <- 0.2
+ymax <- 1
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", selectiveyellow), c("M2/M1 vs. Q4/Q1", "SCLC vs. NBL-CL"))   #00BA38 green for LCL RT??
+
 
 # -----------------------------------------------------------------------------
 # WGD
@@ -321,7 +366,7 @@ max(bed.gc.chr[rownames((nrds.chr.RT.peak)),]$END)
 
 #load(file.path(wd.rt.data, paste0("nrds_", base, "-t-t_", method, ".RData")))
 ymax <- 0.6
-ymin <- 0.14
+ymin <- 0.15
 for (c in 1:22) {
  chr <- chrs[c]
  bed.gc.chr <- subset(bed.gc, CHR == chr)

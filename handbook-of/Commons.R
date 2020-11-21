@@ -139,3 +139,81 @@ getGenes <- function(genes) {
    
    return(outs)
 }
+
+# -----------------------------------------------------------------------------
+# Method: My colours
+# Links: https://blog.datawrapper.de/beautifulcolors/
+#        https://medium.com/nightingale/how-to-choose-the-colors-for-your-data-visualizations-50b2557fa335
+#        https://cran.r-project.org/web/packages/unikn/vignettes/colors.html
+#        https://www.rgbtohex.net/
+#        https://www.hexcolortool.com/
+#        https://nasa.github.io/nasawds-site/components/colors/ (NASA)
+#        https://brandportal.basf.com/global/en/create/corporate-design/colors.html (BASF)
+#        https://www.imperial.ac.uk/brand-style-guide/visual-identity/brand-colours/ (Imperial)
+#        https://www.dpdhl-brands.com/dhl/en/guides/design-basics/colors-materials/colors.html (DHL)
+#        http://patricksansom.weebly.com/uploads/2/2/8/6/2286754/bbcnews_printguidelines.pdf (BBC)
+#        https://colorswall.com/palette/38/ (Google)
+#        https://colorswall.com/palette/72/ (Microsoft)
+#        https://en.wikipedia.org/wiki/Shades_of_green#Kelly_green
+# Last Modified: 18/11/20
+# -----------------------------------------------------------------------------
+## Brands
+nasa.blue <- "#105bd8"
+
+dhl.red    <- "#D40511"
+dhl.yellow <- "#FFCC00"
+
+google.red    <- "#EA4335"
+google.yellow <- "#FBBC05"
+google.green  <- "#34A853"
+google.blue   <- "#4285F4"
+
+basf.red        <- "#C50022"
+basf.orange     <- "#F39500"
+basf.lightgreen <- "#65AC1E"
+basf.darkgreen  <- "#00793A"
+basf.lightblue  <- "#21A0D2"
+basf.darkblue   <- "#004A96"
+
+## Color wheel
+colorwheel.orange     <- "#FFA700"
+colorwheel.lightblue  <- "#7DC0F7"
+colorwheel.mediumblue <- "#005FCF"
+
+## RT/RFD
+red       <- google.red
+orange    <- colorwheel.orange
+yellow    <- dhl.yellow
+green     <- basf.lightgreen
+lightblue <- colorwheel.lightblue
+blue      <- nasa.blue
+
+## PCA
+google.red.lighter.50 <- "#FFC2B4"
+nasa.blue.lighter.50  <- "#8FDAFF"
+
+red.lighter  <- google.red.lighter.50
+blue.lighter <- nasa.blue.lighter.50
+
+#green      <- "#01DF01"
+#lightgreen <- "#55C8A9"
+#limegreen  <- "limegreen"
+#darkgreen  <- "#00A64C"
+#imperial.green.lime   <- "#BBCEOO"
+#wiki.kelly.green      <- "#4CBB17"
+#imperial.green.kermit <- "#66A40A"
+#microsoft.green <- "#7FBA00"
+#twitter.blue <- "#00ACEE"
+
+#basf.red.lighter.50   <- "#FF7FA1"
+#dhl.red    <- "#D40511"
+#dhl.red.lighter.50    <- "#FF8490"
+
+#pinky1   <- "#F3BFCB"
+#pinky2   <- "#ECA0B2"
+#seablau2 <- "#A6E1F4"
+#seablau3 <- "#59C7EB"
+
+#bbc.red    <- "#BE002C"
+#bbc.sports <- "#ffd230"
+#bbc.science.blue <- "#0066c2"

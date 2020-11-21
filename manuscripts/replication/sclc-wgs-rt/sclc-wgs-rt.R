@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "Transcription.R", "ReplicationTiming.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -56,8 +56,8 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2656170 - 22
 nrds.sclc <- nrds
 
-ymax <- 0.7
-ymin <- 0.1
+ymax <- 0.6
+ymin <- 0.15
 for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -259,7 +259,7 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC", size=6, file.main, "bottomright", c("red", "lightpink1", "lightskyblue2", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_nasa.blue_google.red_lighter.50_pch=19_pt.cex=2.5_pch=19_1234", size=6, file.main, "bottomright", c(red, red.lighter, blue.lighter, blue), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1
@@ -286,18 +286,18 @@ samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_pptx.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_nasa.blue_basf.red.lighter.50_pch=19_lwd=2_pt.cex=2.5_cex=1.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="In silico sorting", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
-abline(h=0, lty=5)
+abline(h=0, lty=5, lwd=2)
 
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=19, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="lightskyblue2", pch=19, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightpink1", pch=19, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=19, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col=blue, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col=blue.lighter, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col=red.lighter, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col=red, pch=19, cex=1, add=T)
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.8)
+legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.8)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
 mtext("Correlation [rho]", side=2, line=2.75, cex=1.8)

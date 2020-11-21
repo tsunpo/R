@@ -335,7 +335,7 @@ getReportRFD12 <- function(report, name) {
 
 plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    titles <- c("TTR", "CTR_IZ", "CTR_TZ")
-   cols <- c("black", "red", "blue")
+   cols <- c("black", red, blue)
    n <- length(names)
    
    colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", titles)
@@ -343,6 +343,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    rfds$NAME <- names
    rfds$X    <- c(1, 3, 5, 7)
    rfds$pch  <- c(19, 17, 17, 17)
+   rfds$cex  <- c(1.8, 1.6, 1.6, 1.6)
    rfds$pos1 <- c(3, 3, 3, 3)
    rfds$pos2 <- c(3, 1, 3, 1)
    rfds$pos3 <- c(1, 3, 1, 3)
@@ -353,15 +354,15 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    }
    
    ##
-   pdf(file.name, height=5, width=5.1)
+   pdf(file.name, height=5, width=5.2)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
-   par(mar=c(1,4,3.6,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=1.5)
+   par(mar=c(1,3.6,3.6,0))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 110), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=rfds$cex)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
    
-   text(8, rfds$TTR[n], " TTR ", cex=1.2, col="black")
+   text(8, rfds$TTR[n], " TTR ", cex=1.25, col="black")
    #abline(v=4, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names))
@@ -369,42 +370,42 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
  
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
-   legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
-   legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
+   legend("top", "Normal                              ", col="black", bty="n", pch=1, pt.cex=1.8, horiz=T, cex=1.25)
+   legend("topright", "Tumour                    ", col="black", bty="n", pch=2, pt.cex=1.4, horiz=T, cex=1.25)
    #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
-   mtext("[%]                ", side=2, line=2.8, cex=1.2)
+   mtext("[%]              ", side=2, line=2.6, cex=1.2)
    
    ##
-   par(mar=c(5,4,0,1))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.1, cex.lab=1.2, cex.main=1.3)
-   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=1.5)
+   par(mar=c(5,3.6,0,0))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=rfds$cex)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
    lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
    
-   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=1.5)
+   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=rfds$cex)
    lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
    lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
    
-   text(8, rfds$CTR_E[n], "        CTR (IZ)", cex=1.2, col="red", pos=1) 
-   text(8, rfds$CTR_L[n], "         CTR (TZ)", cex=1.2, col="blue", pos=3)
+   text(8, rfds$CTR_E[n], "        CTR (IZ)", cex=1.25, col=red, pos=1) 
+   text(8, rfds$CTR_L[n], "         CTR (TZ)", cex=1.25, col=blue, pos=3)
    #abline(v=4, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
-      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=cols[2], pos=rfds$pos2[n], cex=1.2)
-      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=cols[3], pos=rfds$pos3[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=red, pos=rfds$pos2[n], cex=1.2)
+      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=blue, pos=rfds$pos3[n], cex=1.2)
    }
    #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
 
    ##
    #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
    #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
-   axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.2)
-   axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.2)
+   axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.25)
+   axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.25)
    #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
    #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
    
-   mtext("                        Frequency", side=2, line=2.8, cex=1.2)
+   mtext("                        Frequency", side=2, line=2.6, cex=1.25)
    dev.off()
 }
 
@@ -738,11 +739,11 @@ plotSNR <- function(n, snr, file.name, main.text, xlab.text, ylab.text, col, pos
 ## https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
 ## https://stackoverflow.com/questions/15717545/set-the-intervals-of-x-axis-using-r
 plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, breaks, boundary.break) {
-   adjustcolor.blue <- adjustcolor("steelblue1", alpha.f=0.15)
-   adjustcolor.orange <- adjustcolor("sandybrown", alpha.f=0.15)
+   adjustcolor.blue <- adjustcolor(lightblue, alpha.f=0.15)
+   adjustcolor.orange <- adjustcolor(orange, alpha.f=0.15)
  
-   cols <- rep("steelblue1", breaks)
-   cols[(breaks/2 + boundary.break):breaks] <- "sandybrown"
+   cols <- rep(lightblue, breaks)
+   cols[(breaks/2 + boundary.break):breaks] <- orange
    cols[(breaks/2 - boundary.break + 1):50] <- "white"
    cols[51:(breaks/2 + boundary.break)] <- "white"
    #cols[51:breaks] <- "sandybrown"
@@ -763,14 +764,14 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    } else
       ylim[1] <- floor(ylim[1])
    par(mar=c(1,4,3.6,1))
-   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, col=cols, xaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
+   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, border="darkgray", col=cols, xaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
    #abline(v=500, lty=5, lwd=1, col="black")
-   abline(v=950, lty=5, lwd=1, col="black")
-   abline(v=50,  lty=5, lwd=1, col="black")
+   abline(v=950, lty=5, lwd=1.5, col="black")
+   abline(v=50,  lty=5, lwd=1.5, col="black")
 
    ##
    par(mar=c(5,4,0,1))
-   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F, cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
+   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, border="darkgray", col=cols, las=1, axes=F, cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
    if (ymax < 1000) {
       axis(side=2, at=seq(0, ymax, by=250), cex.axis=1.2)
    } else if (ymax < 3000) {
@@ -781,8 +782,8 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
       axis(side=2, at=seq(0, ymax, by=1000), cex.axis=1.2)
    axis(side=1, at=seq(0, 1000, by=250), cex.axis=1.2)
    #abline(v=500, lty=5, lwd=1, col="black")
-   abline(v=950, lty=5, lwd=1, col="black")
-   abline(v=50,  lty=5, lwd=1, col="black")
+   abline(v=950, lty=5, lwd=1.5, col="black")
+   abline(v=50,  lty=5, lwd=1.5, col="black")
    text(500, ymax*4/5, "|RFD| > 0.9 (80.7%)", cex=1.3, col="black") 
    
    mtext(main.text[2], line=4.7, cex=1.25)   ## separator(nrow(nrds.RT.BSTRPS)),
@@ -805,7 +806,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    overlaps <- intersect(rownames(bed.gc.chr), nrds.RT.NRFD$BED)
    nrds.RT.NRFD.chr <- nrds.RT.NRFD[overlaps,]
    bed.gc.chr <- bed.gc.chr[overlaps,]
- 
+
    adjustcolor.gray <- adjustcolor("darkgray", alpha.f=0.08)
      
    rights <- rownames(subset(nrds.RT.NRFD.chr, RFD >= 0.9))
@@ -846,11 +847,11 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ylab.text <- "RT [log2]"
 
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
-   points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.35)
+   points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.3)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.2)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.2)
-   abline(h=0, lty=5, lwd=1, col="black")
+   abline(h=0, lty=5, lwd=1.5, col="black")
 
    ##
    if (gene != "") {
@@ -864,26 +865,26 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ## Plot cytobands (before smoothing spline)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey") 
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey") 
    
    ## Plot smoothing spline with right-/left-leading positions
-   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$SPLINE, col="steelblue1", cex=0.4)
-   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col="sandybrown", cex=0.4)
-   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col="blue", pch=19, cex=0.4)
-   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col="red", pch=19, cex=0.4)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$SPLINE, col=lightblue, pch=19, cex=0.5)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col=orange, pch=19, cex=0.5)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col=blue, pch=19, cex=0.5)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col=red, pch=19, cex=0.5)
    if (withUnclassified && length(unclassified) != 0)
       points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="#01DF01", pch=19, cex=0.5)
    
    ## Plot legend
-   legend("topright", "CTR (IZ)", col="red", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   legend("bottomright", "CTR (TZ)", col="blue", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("topright", "CTR (IZ)", col=red, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
+   legend("bottomright", "CTR (TZ)", col=blue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
+   if (withUnclassified) legend("bottomleft", "CTR (UN)", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
    mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
    
    #if (width == 10) {
       legend("topleft", "Early", bty="n", text.col="black", cex=1.2, x.intersp=0)   
       legend("bottomleft", "Late", bty="n", text.col="black", cex=1.2, x.intersp=0)
-      #}
+   #}
    
    ###
    ## Initiate RFD plot
@@ -894,14 +895,14 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.2, cex.lab=1.25)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.2)
    #abline(h=0, lty=5, lwd=1, col="black")
-   abline(h=0.9, lty=5, lwd=1, col="black")
-   abline(h=-0.9, lty=5, lwd=1, col="black")
+   abline(h=0.9, lty=5, lwd=1.5, col="black")
+   abline(h=-0.9, lty=5, lwd=1.5, col="black")
    
    ##
    if (gene != "") {
       g <- getGene(gene)
-      abline(v=g$start_position/1E6, lty=2, lwd=1, col="#01DF01")
-      abline(v=g$end_position/1E6, lty=2, lwd=1, col="#01DF01")
+      abline(v=g$start_position/1E6, lty=5, lwd=1.5, col="#01DF01")
+      abline(v=g$end_position/1E6, lty=5, lwd=1.5, col="#01DF01")
    }
    #abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
    #abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
@@ -910,17 +911,17 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ## Plot cytobands (before points)
    cytoBand.chr <- subset(cytoBand, chrom == chr)
    for (c in 1:nrow(cytoBand.chr))
-      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.4, col="lightgrey")
+      abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey")
 
-   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col="steelblue1", cex=0.4)
-   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col="sandybrown", cex=0.4)
-   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col="blue", pch=19, cex=0.4)
-   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col="red",  pch=19, cex=0.4)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col=lightblue, pch=19, cex=0.5)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col=orange, pch=19, cex=0.5)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col=blue, pch=19, cex=0.5)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col=red,  pch=19, cex=0.5)
    if (withUnclassified && length(unclassified) != 0)
       points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="#01DF01", pch=19, cex=0.5)
-   
+  
    ## Plot legend
-   legend("topright", "TTR (R)", col="sandybrown", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
-   legend("bottomright", "TTR (L)", col="steelblue1", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.2)
+   legend("topright", "TTR (R)", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
+   legend("bottomright", "TTR (L)", col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
    dev.off()
 }

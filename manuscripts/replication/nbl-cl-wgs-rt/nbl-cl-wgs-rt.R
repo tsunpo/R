@@ -126,16 +126,16 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl.pdf"), height=6, width=4)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_google.red_nasa.blue_lwd=2_pt.cex=2.5.pdf"), height=6, width=4.2)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-abline(h=0, lty=5)
+abline(h=0, lty=5, lwd=2)
 
-points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col="lightskyblue2", pch=19, cex=2)
-points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col="blue", pch=19, cex=2)
-points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col="lightpink1", pch=19, cex=2)
-points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col="red", pch=19, cex=2)
+points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col=blue.lighter, pch=19, cex=2)
+points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col=blue, pch=19, cex=2)
+points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col=red.lighter, pch=19, cex=2)
+points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, pch=19, cex=2)
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
@@ -151,7 +151,7 @@ for (s in 1:nrow(samples)) {
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.5)
 }
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.5)
+legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.5)
 
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
 mtext("Overall read depth vs. RT [rho]", side=2, line=2.75, cex=1.6)
@@ -209,20 +209,20 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col2[3], pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   lm.fit <- lm(n3 ~ snr3)
+   abline(lm.fit, col=col[3], lwd=4)
+   
    points(n1 ~ snr1, col=col2[1], pch=15, cex=2, lwd=0)
    points(n2 ~ snr2, col=col2[2], pch=15, cex=2, lwd=0)
-   
    lm.fit <- lm(n1 ~ snr1)
-   abline(lm.fit, col=col[1], lwd=3)
+   abline(lm.fit, col=col[1], lwd=4)
    lm.fit <- lm(n2 ~ snr2)
-   abline(lm.fit, col=col[2], lwd=3)
-   lm.fit <- lm(n3 ~ snr3)
-   abline(lm.fit, col=col[3], lwd=3)
-   
+   abline(lm.fit, col=col[2], lwd=4)
+
    cor2 <- cor.test(n2, snr2, method="spearman", exact=F)
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
    cor1 <- cor.test(n1, snr1, method="spearman", exact=F)
-   legend(pos, c(paste0("S   (rho = ", round0(cor2[[4]], digits=1), ")"), paste0("G2 (rho = ", round0(cor3[[4]], digits=1), ")"), paste0("G1 (rho = ", round0(cor1[[4]], digits=1), ")")), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), cex=1.5, pt.lwd=0)
+   legend(pos, c(paste0("S   (rho = ", round0(cor2[[4]], digits=1), ")"), paste0("G2 (rho = ", round0(cor3[[4]], digits=1), ")"), paste0("G1 (rho = ", round0(cor1[[4]], digits=1), ")")), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), pt.cex=2.5, cex=1.5, pt.lwd=0)
    #
    #cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], paste0("G1 (rho = ", round0(cor[[4]], digits=1), ")     "), text.col=col[1], pch=c(NA), col=col[1], bty="n", cex=1.5)
@@ -248,16 +248,16 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-cols <- c("blue", "red", "dimgray")
-blue <- "#989aff"
-red  <- "#ff9899"
-dimgray <- "#b7b7b7"
+cols <- c(blue, red, "#b7b7b7")
+facs.blue <- "#989aff"
+facs.red  <- "#ff9899"
+facs.dimgray <- "#b7b7b7"
 #cols2 <- c(adjustcolor(blue, alpha.f=0.6), adjustcolor(red, alpha.f=0.6), adjustcolor(dimgray, alpha.f=0.6))
-cols2 <- c(blue, red, dimgray)
+cols2 <- c(facs.blue, facs.red, facs.dimgray)
 plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
 
 ###
