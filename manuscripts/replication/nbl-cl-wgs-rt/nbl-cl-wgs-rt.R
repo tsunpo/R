@@ -252,17 +252,22 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4_rho_102.5_gray65")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4_rho_102.5_aviva.grey")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-cols <- c(blue, red, "gray65")
+cols <- c(blue, red, grey)
 facs.blue <- "#989aff"
 facs.red  <- "#ff9899"
-facs.dimgray <- "#b7b7b7"
+facs.grey <- "#b7b7b7"
 #cols2 <- c(adjustcolor(blue, alpha.f=0.6), adjustcolor(red, alpha.f=0.6), adjustcolor(dimgray, alpha.f=0.6))
-cols2 <- c(facs.blue, facs.red, facs.dimgray)
+cols2 <- c(facs.blue, facs.red, facs.grey)
 plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 102.5)
+
+
+
+
+
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
@@ -274,7 +279,7 @@ ylab.text <- "Proportion of cells [%]"
 #red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
 #green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
 #cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
-cols <- c(blue, red, dimgray)
+cols <- c(blue, red, gray)
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)

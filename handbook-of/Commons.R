@@ -155,20 +155,36 @@ getGenes <- function(genes) {
 #        https://colorswall.com/palette/38/ (Google)
 #        https://colorswall.com/palette/72/ (Microsoft)
 #        https://en.wikipedia.org/wiki/Shades_of_green#Kelly_green
-# Last Modified: 18/11/20
+# Last Modified: 22/11/20
 # -----------------------------------------------------------------------------
-## Brands
+## AVIVA
 aviva.red         <- "#B10101"
 aviva.orange      <- "#FFA000"
+
 aviva.lightyellow <- "#FFE340"
 aviva.yellow      <- "#FFD900"
 aviva.darkyellow  <- "#FFC100"
+
 aviva.green       <- "#3E812C"
 aviva.skyblue     <- "#44C0FF"
+
 aviva.lightblue   <- "#407BC9"
 aviva.blue        <- "#004FB6"
 aviva.darkblue    <- "#00359D"
 
+aviva.lightplum   <- "#7B5182"
+aviva.plum        <- "#4E1758"
+aviva.darkplum    <- "#340D3D"
+
+aviva.lightwarmgrey <- "#858392"
+aviva.warmgrey      <- "#5C596D"
+aviva.darkwarmgrey  <- "#4B485B"
+
+aviva.lightdarkgrey <- "#737373"
+aviva.darkgrey      <- "#444444"
+aviva.darkdarkgrey  <- "#2D2D2D"
+
+## BASF
 basf.red        <- "#C50022"
 basf.orange     <- "#F39500"
 basf.lightgreen <- "#65AC1E"
@@ -176,21 +192,33 @@ basf.darkgreen  <- "#00793A"
 basf.lightblue  <- "#21A0D2"
 basf.darkblue   <- "#004A96"
 
+## Google
 google.red    <- "#EA4335"
 google.yellow <- "#FBBC05"
 google.green  <- "#34A853"
 google.blue   <- "#4285F4"
 
+## DHL
 dhl.red      <- "#D40511"
 dhl.yellow   <- "#FFCC00"
 
+## NASA
 nasa.blue <- "#105bd8"
+
+## FACS
+facs.blue <- "#989aff"
+facs.red  <- "#ff9899"
+facs.grey <- "#b7b7b7"
 
 ## Color wheel
 colorwheel.orange     <- "#FFA700"
 colorwheel.lightblue  <- "#7DC0F7"
 colorwheel.mediumblue <- "#005FCF"
 
+# -----------------------------------------------------------------------------
+# Method: My colours
+# Last Modified: 22/11/20
+# -----------------------------------------------------------------------------
 ## RT/RFD
 red       <- google.red
 orange    <- colorwheel.orange
@@ -198,18 +226,21 @@ yellow    <- dhl.yellow
 green     <- basf.lightgreen
 lightblue <- colorwheel.lightblue
 blue      <- nasa.blue
+purple    <- aviva.lightplum
+grey      <- aviva.lightwarmgrey
 
 ## PCA
-google.red.lighter.50 <- "#FFC2B4"
-nasa.blue.lighter.50  <- "#8FDAFF"
+google.red.lighter50 <- "#FFC2B4"
+nasa.blue.lighter50  <- "#8FDAFF"
 
-lighterred  <- google.red.lighter.50
-lighterblue <- nasa.blue.lighter.50
+lighterred  <- google.red.lighter50
+lighterblue <- nasa.blue.lighter50
 
-###
-##
-#basf.red.lighter.50 <- "#FF7FA1"
-#dhl.red.lighter.50  <- "#FF8490"
+# -----------------------------------------------------------------------------
+# TEMP
+# -----------------------------------------------------------------------------
+#basf.red.lighter50 <- "#FF7FA1"
+#dhl.red.lighter50  <- "#FF8490"
 
 #green      <- "#01DF01"
 #lightgreen <- "#55C8A9"

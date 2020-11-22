@@ -191,8 +191,9 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 snr    <- readTable(file.path(wd.rt.data, paste0("SNR_ALL.txt")), header=T, rownames=T, sep="\t")
 snr.q4 <- readTable(file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), header=T, rownames=T, sep="\t")
 
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray_lwd=4.5_bty_gray65")
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray_lwd=4.5_bty_aviva.grey")
 main.text <- c("Signal-to-noise", "")
 xlab.text <- "Signal-to-noise ratio"
 ylab.text <- "Sample size"
-plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", "gray65"), c("topleft", "bottomright"))
+plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", grey), c("topleft", "bottomright"))
+
