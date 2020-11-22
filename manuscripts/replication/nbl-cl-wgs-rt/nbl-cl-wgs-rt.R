@@ -203,8 +203,8 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 }
 
 # https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
-plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos) {
-   xlim <- c(0, 115)
+plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
+   xlim <- c(0, xlim.max)
    ylim <- c(-0.367, 0.5)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
@@ -220,9 +220,13 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    abline(lm.fit, col=col[2], lwd=4)
 
    cor2 <- cor.test(n2, snr2, method="spearman", exact=F)
+   cor2 <- round0(cor2[[4]], digits=1)
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
+   cor3 <- round0(cor3[[4]], digits=1)
    cor1 <- cor.test(n1, snr1, method="spearman", exact=F)
-   legend(pos, c(paste0("S   (rho = ", round0(cor2[[4]], digits=1), ")"), paste0("G2 (rho = ", round0(cor3[[4]], digits=1), ")"), paste0("G1 (rho = ", round0(cor1[[4]], digits=1), ")")), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), pt.cex=2.5, cex=1.5, pt.lwd=0)
+   cor1 <- round0(cor1[[4]], digits=1)
+   
+   legend(pos, c(expression(paste("S   (", rho, " = 0.8)")), expression(paste("G2 (", rho, " = 0.4)")), expression(paste("G1 (", rho, " = -0.8)"))), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), pt.cex=2.5, cex=1.5, pt.lwd=0, text.font=c(2,1,2))
    #
    #cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], paste0("G1 (rho = ", round0(cor[[4]], digits=1), ")     "), text.col=col[1], pch=c(NA), col=col[1], bty="n", cex=1.5)
@@ -248,17 +252,17 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4_rho_102.5_gray50")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-cols <- c(blue, red, "#b7b7b7")
+cols <- c(blue, red, "gray50")
 facs.blue <- "#989aff"
 facs.red  <- "#ff9899"
 facs.dimgray <- "#b7b7b7"
 #cols2 <- c(adjustcolor(blue, alpha.f=0.6), adjustcolor(red, alpha.f=0.6), adjustcolor(dimgray, alpha.f=0.6))
 cols2 <- c(facs.blue, facs.red, facs.dimgray)
-plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
+plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 102.5)
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names

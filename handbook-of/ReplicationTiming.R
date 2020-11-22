@@ -657,8 +657,8 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
             text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), col="blue", pos=1, cex=1.2)
             #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
-   legend("topleft", "Earlier than chr2", bty="n", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.25)   
-   legend("bottomleft", "Later than", bty="n", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.25)
+   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.25)   
+   legend("bottomleft", "Later than", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.25)
 
    axis(side=1, at=seq(2, 22, by=4), cex.axis=1.2)
    axis(side=1, at=seq(4, 20, by=4), cex.axis=1.2)
@@ -706,8 +706,8 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    cor <- cor.test(sprs, means, method="spearman", exact=F)
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
-   legend(legends[1], "Earlier than chr2", bty="n", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.25)   ## bty="n"
-   legend(legends[2], "Later than", bty="n", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.25)
+   legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.25)   ## bty="n"
+   legend(legends[2], "Later than", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.25)
    
    #legend("bottomright", paste0("rho = ", round0(cor[[4]], digits=2)), text.col=cols[4], bty="n", cex=1.2)
    legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.25)
