@@ -141,12 +141,10 @@ getGenes <- function(genes) {
 }
 
 # -----------------------------------------------------------------------------
-# Method: My colours
+# Method: Brand colours
 # Links: https://blog.datawrapper.de/beautifulcolors/
 #        https://medium.com/nightingale/how-to-choose-the-colors-for-your-data-visualizations-50b2557fa335
 #        https://cran.r-project.org/web/packages/unikn/vignettes/colors.html
-#        https://www.rgbtohex.net/
-#        https://www.hexcolortool.com/
 #        https://standards.aviva.com/global-experience-principles/style-guide/colour/ (AVIVA)
 #        https://brandportal.basf.com/global/en/create/corporate-design/colors.html (BASF)
 #        https://nasa.github.io/nasawds-site/components/colors/ (NASA)
@@ -155,34 +153,28 @@ getGenes <- function(genes) {
 #        https://colorswall.com/palette/38/ (Google)
 #        https://colorswall.com/palette/72/ (Microsoft)
 #        https://en.wikipedia.org/wiki/Shades_of_green#Kelly_green
+#        https://www.rgbtohex.net/
+#        https://www.hexcolortool.com/
 # Last Modified: 22/11/20
 # -----------------------------------------------------------------------------
 ## AVIVA
-aviva.red         <- "#B10101"
-aviva.orange      <- "#FFA000"
+aviva.red     <- "#B10101"
+aviva.orange  <- "#FFA000"
 
 aviva.lightyellow <- "#FFE340"
 aviva.yellow      <- "#FFD900"
 aviva.darkyellow  <- "#FFC100"
 
-aviva.green       <- "#3E812C"
-aviva.skyblue     <- "#44C0FF"
+aviva.green   <- "#3E812C"
+aviva.skyblue <- "#44C0FF"
 
-aviva.lightblue   <- "#407BC9"
-aviva.blue        <- "#004FB6"
-aviva.darkblue    <- "#00359D"
+aviva.lightblue <- "#407BC9"
+aviva.blue      <- "#004FB6"
+aviva.darkblue  <- "#00359D"
 
-aviva.lightplum   <- "#7B5182"
-aviva.plum        <- "#4E1758"
-aviva.darkplum    <- "#340D3D"
-
-aviva.lightwarmgrey <- "#858392"
-aviva.warmgrey      <- "#5C596D"
-aviva.darkwarmgrey  <- "#4B485B"
-
-aviva.lightdarkgrey <- "#737373"
-aviva.darkgrey      <- "#444444"
-aviva.darkdarkgrey  <- "#2D2D2D"
+aviva.lightplum <- "#7B5182"
+aviva.plum      <- "#4E1758"
+aviva.darkplum  <- "#340D3D"
 
 ## BASF
 basf.red        <- "#C50022"
@@ -199,16 +191,16 @@ google.green  <- "#34A853"
 google.blue   <- "#4285F4"
 
 ## DHL
-dhl.red      <- "#D40511"
-dhl.yellow   <- "#FFCC00"
+dhl.red    <- "#D40511"
+dhl.yellow <- "#FFCC00"
 
 ## NASA
 nasa.blue <- "#105bd8"
 
-## FACS
-facs.blue <- "#989aff"
-facs.red  <- "#ff9899"
-facs.grey <- "#b7b7b7"
+## FlowJo
+flowjo.blue <- "#989aff"
+flowjo.red  <- "#ff9899"
+flowjo.grey <- "#b7b7b7"
 
 ## Color wheel
 colorwheel.orange     <- "#FFA700"
@@ -227,7 +219,7 @@ green     <- basf.lightgreen
 lightblue <- colorwheel.lightblue
 blue      <- nasa.blue
 purple    <- aviva.lightplum
-grey      <- aviva.lightwarmgrey
+grey      <- "darkgray"
 
 ## PCA
 google.red.lighter50 <- "#FFC2B4"
@@ -259,3 +251,14 @@ lighterblue <- nasa.blue.lighter50
 #bbc.red    <- "#BE002C"
 #bbc.sports <- "#ffd230"
 #bbc.science.blue <- "#0066c2"
+
+#aviva.lightwarmgrey <- "#858392"
+#aviva.warmgrey      <- "#5C596D"
+#aviva.darkwarmgrey  <- "#4B485B"
+
+#aviva.lightdarkgrey <- "#737373"
+#aviva.darkgrey      <- "#444444"
+#aviva.darkdarkgrey  <- "#2D2D2D"
+
+#nasa.gray      <- "#5b616b"
+#nasa.lightgray <- "#aeb0b5"

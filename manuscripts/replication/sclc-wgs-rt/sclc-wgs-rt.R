@@ -286,7 +286,7 @@ samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_nasa.blue_basf.red.lighter.50_pch=19_lwd=2_pt.cex=2.5_cex=1.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_nasa.blue_google.red.lighter.50_pch=19_lwd=2_pt.cex=2.5_cex=1.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="In silico sorting", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
@@ -300,7 +300,7 @@ beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col=red, pch=19, cex=1, ad
 legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.8)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
-mtext("Correlation [rho]", side=2, line=2.75, cex=1.8)
+mtext("Overall read depth vs. RT [rho]", side=2, line=2.75, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
 mtext(text=c("SCLC", "NBL", "CLL"), side=1, cex=1.8, line=1.3, at=c(1,2,3))
 mtext(text=c("n=101", "n=56", "n=96"), side=1, cex=1.8, line=3, at=c(1,2,3))
