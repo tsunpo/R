@@ -252,11 +252,11 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4_rho_102.5_gray50")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4_rho_102.5_gray65")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-cols <- c(blue, red, "gray50")
+cols <- c(blue, red, "gray65")
 facs.blue <- "#989aff"
 facs.red  <- "#ff9899"
 facs.dimgray <- "#b7b7b7"

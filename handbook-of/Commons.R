@@ -147,26 +147,27 @@ getGenes <- function(genes) {
 #        https://cran.r-project.org/web/packages/unikn/vignettes/colors.html
 #        https://www.rgbtohex.net/
 #        https://www.hexcolortool.com/
-#        https://nasa.github.io/nasawds-site/components/colors/ (NASA)
+#        https://standards.aviva.com/global-experience-principles/style-guide/colour/ (AVIVA)
 #        https://brandportal.basf.com/global/en/create/corporate-design/colors.html (BASF)
-#        https://www.imperial.ac.uk/brand-style-guide/visual-identity/brand-colours/ (Imperial)
+#        https://nasa.github.io/nasawds-site/components/colors/ (NASA)
 #        https://www.dpdhl-brands.com/dhl/en/guides/design-basics/colors-materials/colors.html (DHL)
-#        http://patricksansom.weebly.com/uploads/2/2/8/6/2286754/bbcnews_printguidelines.pdf (BBC)
+#        https://www.imperial.ac.uk/brand-style-guide/visual-identity/brand-colours/ (Imperial)
 #        https://colorswall.com/palette/38/ (Google)
 #        https://colorswall.com/palette/72/ (Microsoft)
 #        https://en.wikipedia.org/wiki/Shades_of_green#Kelly_green
 # Last Modified: 18/11/20
 # -----------------------------------------------------------------------------
 ## Brands
-nasa.blue <- "#105bd8"
-
-dhl.red    <- "#D40511"
-dhl.yellow <- "#FFCC00"
-
-google.red    <- "#EA4335"
-google.yellow <- "#FBBC05"
-google.green  <- "#34A853"
-google.blue   <- "#4285F4"
+aviva.red         <- "#B10101"
+aviva.orange      <- "#FFA000"
+aviva.lightyellow <- "#FFE340"
+aviva.yellow      <- "#FFD900"
+aviva.darkyellow  <- "#FFC100"
+aviva.green       <- "#3E812C"
+aviva.skyblue     <- "#44C0FF"
+aviva.lightblue   <- "#407BC9"
+aviva.blue        <- "#004FB6"
+aviva.darkblue    <- "#00359D"
 
 basf.red        <- "#C50022"
 basf.orange     <- "#F39500"
@@ -174,6 +175,16 @@ basf.lightgreen <- "#65AC1E"
 basf.darkgreen  <- "#00793A"
 basf.lightblue  <- "#21A0D2"
 basf.darkblue   <- "#004A96"
+
+google.red    <- "#EA4335"
+google.yellow <- "#FBBC05"
+google.green  <- "#34A853"
+google.blue   <- "#4285F4"
+
+dhl.red      <- "#D40511"
+dhl.yellow   <- "#FFCC00"
+
+nasa.blue <- "#105bd8"
 
 ## Color wheel
 colorwheel.orange     <- "#FFA700"
@@ -192,22 +203,22 @@ blue      <- nasa.blue
 google.red.lighter.50 <- "#FFC2B4"
 nasa.blue.lighter.50  <- "#8FDAFF"
 
-red.lighter  <- google.red.lighter.50
-blue.lighter <- nasa.blue.lighter.50
+lighterred  <- google.red.lighter.50
+lighterblue <- nasa.blue.lighter.50
+
+###
+##
+#basf.red.lighter.50 <- "#FF7FA1"
+#dhl.red.lighter.50  <- "#FF8490"
 
 #green      <- "#01DF01"
 #lightgreen <- "#55C8A9"
-#limegreen  <- "limegreen"
 #darkgreen  <- "#00A64C"
 #imperial.green.lime   <- "#BBCEOO"
 #wiki.kelly.green      <- "#4CBB17"
 #imperial.green.kermit <- "#66A40A"
 #microsoft.green <- "#7FBA00"
 #twitter.blue <- "#00ACEE"
-
-#basf.red.lighter.50   <- "#FF7FA1"
-#dhl.red    <- "#D40511"
-#dhl.red.lighter.50    <- "#FF8490"
 
 #pinky1   <- "#F3BFCB"
 #pinky2   <- "#ECA0B2"
