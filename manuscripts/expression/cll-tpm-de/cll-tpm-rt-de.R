@@ -117,8 +117,8 @@ nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 ## TTR and CTR (IZ +TZ)
 save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd0.RData"))
 
-#file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
-file.name <- file.path(wd.de.data, "tpm-gene-median0_log2_m_de_rfd.RData")
+file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
+#file.name <- file.path(wd.de.data, "tpm-gene-median0_log2_m_de_rfd.RData")
 setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
 load(file.name)
 
@@ -208,21 +208,21 @@ nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/20281
 # -----------------------------------------------------------------------------
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
-file.name <- paste0("boxplot_cll_tpm.gene_rfd_TTR+IZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="CLL genes", names=c("TTR", "IZ"), cols=c("black", "red"), ylim)
+file.name <- paste0("boxplot_cll_tpm.gene_rfd_TTR+IZ_nasa.blue")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="CLL genes", names=c("TTR", "IZ"), cols=c("black", red), ylim)
 
-file.name <- paste0("boxplot_cll_tpm.gene_rfd_TTR+TZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, main="CLL genes", names=c("TTR", "TZ"), cols=c("black", "blue"), ylim)
+file.name <- paste0("boxplot_cll_tpm.gene_rfd_TTR+TZ_nasa.blue")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, main="CLL genes", names=c("TTR", "TZ"), cols=c("black", blue), ylim)
 
-file.name <- paste0("boxplot_cll_tpm.gene_rfd_TZ+IZ")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="CLL genes (CTR)", names=c("TZ", "IZ"), cols=c("blue", "red"), ylim)
+file.name <- paste0("boxplot_cll_tpm.gene_rfd_TZ+IZ_nasa.blue")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="CLL genes (CTR)", names=c("TZ", "IZ"), cols=c(blue, red), ylim)
 
 ##
-file.name <- paste0("boxplot_cll_tpm.gene_rfd_IZ_E+L")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL IZ genes", names=c("Late", "Early"), cols=c("red", "red"), ylim)
+file.name <- paste0("boxplot_cll_tpm.gene_rfd_IZ_E+L_nasa.blue")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL IZ genes", names=c("Late", "Early"), cols=c(red, red), ylim)
 
-file.name <- paste0("boxplot_cll_tpm.gene_rfd_TZ_E+L")
-plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, main="CLL TZ genes", names=c("Late", "Early"), cols=c("blue", "blue"), ylim)
+file.name <- paste0("boxplot_cll_tpm.gene_rfd_TZ_E+L_nasa.blue")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, main="CLL TZ genes", names=c("Late", "Early"), cols=c(blue, blue), ylim)
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (median0)

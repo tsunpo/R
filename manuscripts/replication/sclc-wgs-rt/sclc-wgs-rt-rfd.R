@@ -50,7 +50,7 @@ save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.R
 # [1] 2650083
 
 ##
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_orange_darkgray.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_orange_darkgray_font=2_line=4.5.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
 xlab.text <- "Number of rightward forks per kb window"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
@@ -225,7 +225,7 @@ c <- 12
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_nasa.blue_google.red_orange_cex=0.5_pch=19"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_nasa.blue_google.red_orange_cex=0.5_pch=19_testorange"))
 plotBootstrapRFD(file.name, BASE, chr,  97500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_nasa.blue_google.red_orange_cex=0.5_pch=19_L+R"))
@@ -236,7 +236,7 @@ c <- 2
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_nasa.blue_google.red_orange_cex=0.5_pch=19"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_nasa.blue_google.red_orange_cex=0.5_pch=19_testorange"))
 plotBootstrapRFD(file.name, BASE, chr, 110000000, 160000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10_new"))

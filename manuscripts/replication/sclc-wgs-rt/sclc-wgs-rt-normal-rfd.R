@@ -438,7 +438,7 @@ save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, repor
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
 file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_nasa.blue_google.red.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution           ")
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
 file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_1.3_test.pdf"))
@@ -471,8 +471,8 @@ writeTable(report.cll.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_CLL_20KB.
 save(report.sclc.nl.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB_random12.RData")))
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12_1.3.pdf"))
-plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD         ")
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12_nasa.blue_google.red.pdf"))
+plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD           ")
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
 file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_random12_1.3.pdf"))
@@ -771,7 +771,7 @@ nrow(nrds.RT.NRFD.sclc.nl.ctr.tz.l)/nrow(nrds.RT.NRFD.sclc.nl)
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_CTR_E-L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
 file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L_nasa.blue_google.red.pdf"))
-plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution (CTR)")
+plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution (CTR)  ")
 
 ###
 ## 30/08/2020

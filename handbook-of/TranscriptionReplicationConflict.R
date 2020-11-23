@@ -101,10 +101,6 @@ setTRC <- function(tpm.gene.log2.m.rfd, rfd, file.name) {
    save(file=file.name, tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e.cd, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.l.cd, tpm.gene.log2.m.rfd.ttr.l.ho, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.iz.cd, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.tz.cd, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ctr.iz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.iz.e.cd, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.l.cd, tpm.gene.log2.m.rfd.ctr.iz.l.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.l.cd, tpm.gene.log2.m.rfd.ctr.tz.l.ho)
 }
 
-plotBox0 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim) {
-   plotBox(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.2)
-}
-
 plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3) {
    trait <- rep(0, nrow(tpm.1))
    trait <- c(trait, rep(1, nrow(tpm.2)))
@@ -113,7 +109,7 @@ plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yli
    expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex=1.3, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
    text <- ""
@@ -130,11 +126,15 @@ plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yli
  
    axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.2)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
-   axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
-   axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
+   axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
+   axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
    
    mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.25, line=0.3)
    dev.off()
+}
+
+plotBox0 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim) {
+   plotBox(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.2)
 }
 
 plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names) {
