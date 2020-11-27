@@ -171,7 +171,7 @@ plotBox20 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names) {
    dev.off()
 }
 
-plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=5, width=3.2) {
+plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=5, width=3.5) {
    trait <- rep(0, nrow(tpm.1))
    trait <- c(trait, rep(1, nrow(tpm.2)))
    trait <- c(trait, rep(2, nrow(tpm.3)))
@@ -185,14 +185,14 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(2, ylim[2], text, cex=2.5)
+   text(2, ylim[2], text, cex=2, font=2)
    lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
    
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2]-1.6, text, cex=2.5)
+   text(1.5, ylim[2]-1.6, text, cex=2, font=2)
    lines(c(1, 2), y=c(ylim[2]-2.4, ylim[2]-2.4), type="l", lwd=2)
    
    axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.25)
@@ -219,26 +219,27 @@ plotBox4 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, main, n
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2], text, cex=2.5)
+   text(1.5, ylim[2], text, cex=2, font=2)
    lines(c(1, 2), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.3$MEDIAN, tpm.4$MEDIAN)
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(3.5, ylim[2], text, cex=2.5)
+   text(3.5, ylim[2], text, cex=2, font=2)
    lines(c(3, 4), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
-   axis(side=1, at=seq(1, 4, by=1), labels=c("L", "E", "L", "E"), cex.axis=1.2)
-   #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
-   axis(side=1, at=1.5, labels="TZ", line=1.2, col=NA, font=2, cex.axis=1.25)
-   axis(side=1, at=3.5, labels="IZ", line=1.2, col=NA, font=2, cex.axis=1.25)
+   #axis(side=1, at=seq(1, 4, by=1), labels=c("L", "E", "L", "E"), cex.axis=1.2)
+   #axis(side=1, at=1.5, labels="TZ", line=1.2, col=NA, font=2, cex.axis=1.25)
+   #axis(side=1, at=3.5, labels="IZ", line=1.2, col=NA, font=2, cex.axis=1.25)
+   axis(side=1, at=seq(1.5, 3.5, by=2), labels=c("TZ", "IZ"), font=2, cex.axis=1.25)
+   axis(side=1, at=seq(1, 4, by=1), labels=c("(L)", "(E)", "(L)", "(E)"), line=1.2, col=NA, cex.axis=1.25)
  
-   #mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
+   mtext(paste0("(L)ate vs. (E)arly"), cex=1.2, line=0.3)
    dev.off()
 }
 
-plotBox6 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, tpm.5, tpm.6, main, names, cols, ylim, height=5, width=3.3) {
+plotBox6 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, tpm.5, tpm.6, main, names, cols, ylim, height=5, width=3.5) {
    trait <- rep(0, nrow(tpm.1))
    trait <- c(trait, rep(1, nrow(tpm.2)))
    trait <- c(trait, rep(2, nrow(tpm.3)))
@@ -255,30 +256,32 @@ plotBox6 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, tpm.5, 
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2], text, cex=2.5)
+   text(1.5, ylim[2], text, cex=2, font=2)
    lines(c(1, 2), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.3$MEDIAN, tpm.4$MEDIAN)
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(3.5, ylim[2], text, cex=2.5)
+   text(3.5, ylim[2], text, cex=2, font=2)
    lines(c(3, 4), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.5$MEDIAN, tpm.6$MEDIAN)
    if (p < 1E-3)  text <- "*"
    if (p < 1E-9)  text <- "**"
    if (p < 1E-15) text <- "***"
-   text(3.5, ylim[2], text, cex=2.5)
+   text(5.5, ylim[2], text, cex=2, font=2)
    lines(c(5, 6), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
    
-   axis(side=1, at=seq(1, 6, by=1), labels=c("L", "E", "L", "E", "L", "E"), cex.axis=1.2)
-   #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
-   axis(side=1, at=0.5, labels="TTR", line=1.2, col=NA, font=2, cex.axis=1.25)
-   axis(side=1, at=1.5, labels="TZ", line=1.2, col=NA, font=2, cex.axis=1.25)
-   axis(side=1, at=3.5, labels="IZ", line=1.2, col=NA, font=2, cex.axis=1.25)
- 
-   #mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
+   #axis(side=1, at=seq(1, 6, by=1), labels=c("L", "E", "L", "E", "L", "E"), cex.axis=1.2)
+   #axis(side=1, at=1.5, labels="TTR", line=1.2, col=NA, font=2, cex.axis=1.25)
+   #axis(side=1, at=3.5, labels="TZ", line=1.2, col=NA, font=2, cex.axis=1.25)
+   #axis(side=1, at=5.5, labels="IZ", line=1.2, col=NA, font=2, cex.axis=1.25)
+   axis(side=1, at=seq(1.5, 5.5, by=2), labels=c("TTR", "TZ", "IZ"), font=2, cex.axis=1.25)
+   axis(side=1, at=seq(1, 5, by=2), labels=c("(L)", "(L)", "(L)"), line=1.2, col=NA, cex.axis=1.25)
+   axis(side=1, at=seq(2, 6, by=2), labels=c("(E)", "(E)", "(E)"), line=1.2, col=NA, cex.axis=1.25)
+   
+   mtext(paste0("(L)ate vs. (E)arly"), cex=1.2, line=0.3)
    dev.off()
 }
 

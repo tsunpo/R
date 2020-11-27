@@ -211,14 +211,14 @@ load(file.name)
 
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
-file.name <- paste0("boxplot3_cll_tpm.gene_RFD")
+file.name <- paste0("boxplot3_cll_tpm.gene_RFD_3.5_font=2")
 plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="CLL expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
 
-file.name <- paste0("boxplot4_cll_tpm.gene_RFD")
+file.name <- paste0("boxplot4_cll_tpm.gene_RFD_3.2_font=2")
 plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL expression (CTR)", names=c("L", "E", "L", "E"), cols=c(blue, blue, red, red), ylim)
 
-#file.name <- paste0("boxplot6_cll_tpm.gene_RFD")
-#plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
+file.name <- paste0("boxplot6_cll_tpm.gene_RFD_3.5_font=2")
+plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
 
 
 

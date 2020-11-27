@@ -711,7 +711,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    legend(legends[2], "Later than", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.25)
    
    #legend("bottomright", paste0("rho = ", round0(cor[[4]], digits=2)), text.col=cols[4], bty="n", cex=1.2)
-   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], bty="n", cex=1.25)
+   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]]))), text.col=cols[4], text.font=2, bty="n", cex=1.25)
    #legend("bottomright", c(paste0("R^2 = ", round0(summary(lm.fit)$r.squared, digits=2)), paste0("p-value = ", scientific(summary(lm.fit)$coefficients[2, 4]))), text.col=cols[4], bty="n", cex=1.1)
    #axis(side=1, at=seq(2, 22, by=2))
    axis(side=1, at=seq(-0.4, 0.8, by=0.4), labels=c(-0.4, 0, 0.4, 0.8), cex.axis=1.2)
