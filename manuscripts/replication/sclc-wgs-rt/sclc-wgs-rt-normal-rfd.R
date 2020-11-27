@@ -437,7 +437,7 @@ save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, repor
 #load(file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_nasa.blue_google.red.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_nasa.blue_google.red_cex=1.25_1.3_115.pdf"))
 plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
@@ -469,9 +469,10 @@ writeTable(report.cll.1.2, file.path(wd.rt.data, paste0("NRFD_R1_vs_R2_CLL_20KB.
 # Last Modified: 08/12/19; 28/11/19
 # -----------------------------------------------------------------------------
 save(report.sclc.nl.1.2, report.sclc.1.2, report.nbl.1.2, report.cll.1.2, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB_random12.RData")))
+#load(file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB_random12.RData")))
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12_nasa.blue_google.red.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20KB_random12_nasa.blue_google.red_cex=1.25_1.3_115.pdf"))
 plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Shared random-downsampling RFD           ")
 
 report.rfds.random <- list(getReportRFD12(report.sclc.nl.1.2, "SCLC-NL-R1"), getReportRFD12(report.sclc.1.2, "SCLC-R1"), getReportRFD12(report.nbl.1.2, "NBL-R1"), getReportRFD12(report.cll.1.2, "CLL-R1"))

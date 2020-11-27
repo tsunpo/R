@@ -61,7 +61,7 @@ nrds.lcl <- nrds
 
 ymax <- 0.6
 ymin <- 0.15
-for (c in 1:22) {
+for (c in 3:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
@@ -69,8 +69,9 @@ for (c in 1:22) {
    
    ## Plot RT
    main.text <- paste0(BASE, " S/G1 read depth ratio between S phase (n=", n1, ") and G1 phase (n=", n0, ") cells")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_lty=5_lwd=1.5_pch=16_cex=0.3_lwd=3_cex=1.3"))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(google.red, nasa.blue), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="bottomright")
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL)
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="bottomright")
 }
 
 # -----------------------------------------------------------------------------
@@ -92,19 +93,27 @@ for (c in 1:22) {
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
+   ## Figure 1
+   #xlab.text <- "RT [log2]"
+   #ylab.text <- "Read depth [RPKM]"
+   #main.text <- c(paste0("LCL read depth vs. RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman_nasa.blue_google.red_lwd=1.3_lwd=3"))
+   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
+
+   ## SFigure 1
    xlab.text <- "RT [log2]"
    ylab.text <- "Read depth [RPKM]"
-   main.text <- c(paste0("LCL read depth vs. RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman_nasa.blue_google.red_lwd=1.3_lwd=3"))
+   main.text <- c(paste0("LCL vs. RT (Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
-
-   main.text <- c(paste0("G1 read depth vs. RT (", "Chr", c, ")"), "")
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman_google.red_nasa.blue"))
-   plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.05)), c("S", "G1"), method="spearman")
    
-   main.text <- c(paste0("S read depth vs. RT (", "Chr", c, ")"), "")
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman_google.red_nasa.blue"))
-   plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.05)), c("S", "G1"), method="spearman")
+   main.text <- c(paste0("G1 vs. RT (Chr", c, ")"), "")
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
+   plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+   
+   main.text <- c(paste0("S vs. RT (Chr", c, ")"), "")
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
+   plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
 }
 
 ## S-phase progression rate (SPR)
@@ -134,7 +143,7 @@ plotRD2vsRTALL(sprs, file.name, main.text, ymin, ymax, cols=c(red, blue), cols2=
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "RD2_LCL-S-G1-vs-LCL-S-G1_spline_spearman_2")
+file.name <- file.path(wd.rt.plots, "RD2_LCL-S-G1-vs-LCL-S-G1_spline_spearman_nasa.blue_google.red")
 main.text <- "LCL S/G1"
 plotRD2(sprs, file.name, main.text, 0.1, 0.75)
 

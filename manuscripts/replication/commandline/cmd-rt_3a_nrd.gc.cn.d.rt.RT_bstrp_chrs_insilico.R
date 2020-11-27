@@ -94,7 +94,7 @@ for (c in 1:22) {
    ## Read in replicaiton time
    overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds))   ## 29/11/19: Changed from intersect(rownames(nrds), rownames(bed.gc.chr))
    nrds.chr <- nrds[overlaps,]
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT", removeCentromere=F, returnAll=F)   ## Changed 29/11/19
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT", returnAll=F)   ## Changed 29/11/19
 
    nrds.RT <- rbind(nrds.RT, nrds.chr.RT)
 }

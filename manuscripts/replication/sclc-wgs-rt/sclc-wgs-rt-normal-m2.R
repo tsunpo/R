@@ -56,6 +56,10 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2658679
 nrds.sclc.nl.m2 <- nrds
 
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
+nrds.lcl <- nrds
+load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+
 ymax <- 0.6
 ymin <- 0.15
 for (c in 1:22) {
@@ -63,15 +67,15 @@ for (c in 1:22) {
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
    #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
-   #nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, "\u2212", "NL M2/M1 read depth ratio between normal (n=", n1, ") and normal (n=", n0, ") samples")  
+   main.text <- paste0(BASE, "\u2212", "NL M2/M1 read depth ratio between M2 (n=", n1, ") and M1 (n=", n0, ") normal samples")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 normal", "M1 normal"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
-
-   #file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 normal", "M1 normal"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 normal", "M1 normal"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   
+   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))  
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 normal", "M1 normal"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
@@ -191,9 +195,40 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 snr    <- readTable(file.path(wd.rt.data, paste0("SNR_ALL.txt")), header=T, rownames=T, sep="\t")
 snr.q4 <- readTable(file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), header=T, rownames=T, sep="\t")
 
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray_lwd=4.5_bty_nasa.darkgray")
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray_lwd=4.5_bty_darkgray")
 main.text <- c("Signal-to-noise", "")
 xlab.text <- "Signal-to-noise ratio"
 ylab.text <- "Sample size"
 plotSNR2(c(92, 101, 56, 96), snr$SNR, c(46, 51, 28, 48), snr.q4$SNR, file.name, main.text, xlab.text, ylab.text, c("black", grey), c("topleft", "bottomright"))
 
+# -----------------------------------------------------------------------------
+# M2/M1 vs. NBL-CL RTs
+# Last Modified: 14/11/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.sclc.nl.m2, nrds.sclc.nl.m2, nrds.nbl.cl.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-NL-M2-M1-vs-NBL-CL_spline_spearman")   ## gold (#f6c700)
+main.text <- paste0(BASE, "-NL M2/M1")
+ymin <- 0.2
+ymax <- 1
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", yellow), c("", "SCLC-NL vs. NBL-CL "))   #00BA38 green for LCL RT??
+# > median(cors$cor1)
+# [1] 0.7754852
+
+# -----------------------------------------------------------------------------
+# M2/M1 vs. LUAD RTs
+# Last Modified: 26/11/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.sclc.nl.m2, nrds.sclc.nl.m2, nrds.luad.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-LUAD_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-LUAD_spline_spearman.RData")))
+
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_SCLC-NL-M2-M1-vs-LUAD_spline_spearman")   ## gold (#f6c700)
+main.text <- paste0(BASE, "-NL M2/M1")
+ymin <- 0.55
+ymax <- 0.9
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", yellow), c("", "SCLC-NL vs. LUAD "))   #00BA38 green for LCL RT??
+# > median(cors$cor1)
+# [1] 0.7838435

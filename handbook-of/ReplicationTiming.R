@@ -252,9 +252,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ylab.text <- "Read depth [RPKM]"
    if (is.null(ylim)) {
       rds <- c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.15, cex.lab=1.2, cex.main=1.3)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.2, cex.lab=1.2, cex.main=1.3)
    } else
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.15, cex.lab=1.2, cex.main=1.3)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    #points(bed.gc.chr$START/1E6, nrds.chr, col=colours[1], cex=0.3)
    #abline(h=0, lty=5, lwd=1.5, col="lightgrey")
  
@@ -284,7 +284,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    par(mar=c(5.5,4,0,1))
    ylab.text <- "RT [log2]"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.15, cex.lab=1.2, cex.main=1.3)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    idx <- which(nrds.chr.RT$RT == 0)
    points(bed.gc.chr[idx,]$START/1E6, nrds.chr.RT[idx,]$RT, col="lightgrey", cex=0.3)
    idx <- which(nrds.chr.RT$RT < 0)
@@ -534,8 +534,9 @@ plotRTvsRT2 <- function(cors, file.name, main.text, ymin, ymax, cols, legends) {
    axis(side=1, at=seq(4, 20, by=4), cex.axis=1.7)
 
    mtext(ylab.text, side=2, line=2.75, cex=1.8)
-   axis(side=2, at=seq(0.8, 1, by=0.05), labels=c(0.8, 0.85, 0.9, 0.95, 1), cex.axis=1.7)
-   #axis(side=2, at=seq(0.2, 1, by=0.2), labels=c(0.2, 0.4, 0.6, 0.8, 1), cex.axis=1.7)
+   #axis(side=2, at=seq(0.8, 1, by=0.05), labels=c(0.8, 0.85, 0.9, 0.95, 1), cex.axis=1.7)
+   #axis(side=2, at=seq(0.2, 1, by=0.2), labels=c(0.2, 0.4, 0.6, 0.8, 1), cex.axis=1.7)   ## NBL-CL 
+   axis(side=2, at=seq(0.6, 0.9, by=0.1), labels=c(0.6, 0.7, 0.8, 0.9), cex.axis=1.7)   ## LUAD 0.6 ~ 0.9
    dev.off()
 }
 
@@ -555,10 +556,10 @@ plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
    
    for (c in 1:22)
       if (cors$cor1[c] > abs(cors$cor2[c])) {
-         text(abs(cors$cor2[c]), cors$cor1[c], paste0("Chr", c), col="black", pos=3, cex=1.7)
-         points(abs(cors$cor2[c]), cors$cor1[c], col="red", pch=19, cex=1.5)
+         text(abs(cors$cor2[c]), cors$cor1[c], paste0("Chr", c), col="red", pos=3, cex=1.7)
+         points(abs(cors$cor2[c]), cors$cor1[c], col=red, pch=19, cex=1.5)
       } else
-         points(abs(cors$cor2[c]), cors$cor1[c], col="blue", pch=19, cex=1.5)
+         points(abs(cors$cor2[c]), cors$cor1[c], col=blue, pch=19, cex=1.5)
 
    #axis(side=2, at=seq(0.3, 0.8, by=0.1), labels=c("", 0.4, "", 0.6, "", 0.8), cex.axis=1.6)
    #axis(side=1, at=seq(0.3, 0.8, by=0.1), labels=c("", -0.4, "", -0.6, "", -0.8), cex.axis=1.6)

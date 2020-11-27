@@ -74,8 +74,8 @@ for (c in 1:22) {
    #nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, " Q4/Q1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_nasa.blue_google.red_lty=5_lwd=1.5_pch=16_cex=0.4_lwd=3_cex=1."))   
+   main.text <- paste0(BASE, " Q4/Q1 read depth ratio between Q4 (n=", n1, ") and Q1 (n=", n0, ") tumour samples")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4 tumour", "Q1 tumour"), c(red, blue), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
    
    ## Plot RT
@@ -159,7 +159,7 @@ plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman_2")
+file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman_nasa.blue_google.red")
 main.text <- "NBL Q4/Q1"
 plotRD2(cors, file.name, main.text, 0.3, 0.85)
 

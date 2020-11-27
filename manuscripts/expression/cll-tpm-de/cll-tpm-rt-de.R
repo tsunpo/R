@@ -204,6 +204,27 @@ nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/20281
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (All)
+# Last Modified: 27/11/20; 01/09/20; 29/05/20
+# -----------------------------------------------------------------------------
+file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
+load(file.name)
+
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
+
+file.name <- paste0("boxplot3_cll_tpm.gene_RFD")
+plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="CLL expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
+
+file.name <- paste0("boxplot4_cll_tpm.gene_RFD")
+plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL expression (CTR)", names=c("L", "E", "L", "E"), cols=c(blue, blue, red, red), ylim)
+
+#file.name <- paste0("boxplot6_cll_tpm.gene_RFD")
+#plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="CLL expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
+
+
+
+
+# -----------------------------------------------------------------------------
+# RFD vs. TPM (All)
 # Last Modified: 01/09/20; 29/05/20
 # -----------------------------------------------------------------------------
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)

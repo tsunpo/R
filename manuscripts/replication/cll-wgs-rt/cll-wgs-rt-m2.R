@@ -58,6 +58,10 @@ save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log
 # [1] 2653842
 nrds.cll.m2 <- nrds
 
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
+nrds.lcl <- nrds
+load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+
 ymax <- 0.6
 ymin <- 0.15
 for (c in 1:22) {
@@ -65,15 +69,15 @@ for (c in 1:22) {
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
    #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
-   #nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+   nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, " M2/M1 read depth ratio between tumour (n=", n1, ") and tumour (n=", n0, ") cells")  
+   main.text <- paste0(BASE, " M2/M1 read depth ratio between M2 (n=", n1, ") and M1 (n=", n0, ") tumour cells")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 
-   #file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
-   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c("red", "blue", "#01DF01"), c("M2 tumour", "M1 tumour"), c("lightpink1", "lightskyblue2"), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))  
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 }
 
 # -----------------------------------------------------------------------------
@@ -179,14 +183,30 @@ plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c(
 cors <- getRTvsRT3(nrds.cll.m2, nrds.cll.m2, nrds.nbl.cl.m2, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-NBL-CL_spline_spearman.RData")))
+# > median(cors$cor1)
+# [1] 0.6621615
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-NBL-CL_spline_spearman_dhl.yellow")   ## gold (#f6c700)
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-NBL-CL_spline_spearman")   ## gold (#f6c700)
 main.text <- paste0(BASE, " M2/M1")
 ymin <- 0.2
 ymax <- 1
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", yellow), c("M2/M1 vs. Q4/Q1", "CLL vs. NBL-CL"))   #00BA38 green for LCL RT??
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", yellow), c("", "CLL vs. NBL-CL   "))   #00BA38 green for LCL RT??
 
+# -----------------------------------------------------------------------------
+# M2/M1 vs. LUAD RTs
+# Last Modified: 26/11/20
+# -----------------------------------------------------------------------------
+cors <- getRTvsRT3(nrds.cll.m2, nrds.cll.m2, nrds.luad.m2, nrds.lcl, bed.gc)
+save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-LUAD_spline_spearman.RData")))
+#load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-LUAD_spline_spearman.RData")))
 
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-LUAD_spline_spearman")   ## gold (#f6c700)
+main.text <- paste0(BASE, " M2/M1")
+ymin <- 0.55
+ymax <- 0.9
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("white", yellow), c("", "CLL vs. LUAD "))   #00BA38 green for LCL RT??
+# median(cors$cor1)
+# [1] 0.8061612
 
 
 
