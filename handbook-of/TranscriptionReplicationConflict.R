@@ -106,9 +106,12 @@ setTRC <- function(tpm.gene.log2.m.rfd, rfd, file.name) {
 # Last Modified: 27/11/20
 # -----------------------------------------------------------------------------
 getPvalueSignificanceLevel <- function(p) {
-   if (p < 1E-3)  return("*")
-   if (p < 1E-9)  return("**")
-   if (p < 1E-15) return("***")
+   text <- ""
+   if (p < 1E-3)  text <- "*"
+   if (p < 1E-9)  text <- "**"
+   if (p < 1E-15) text <- "***"
+   
+   return(text)
 }
 
 plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3) {
@@ -149,11 +152,7 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names) {
    boxplot(expr ~ trait, outline=T, names=names, ylab=paste0("log2(TPM + 0.01)"), main=main, xaxt="n", ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
-   text <- ""
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2], text, col="black", cex=2.5)
+   text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)
    
    axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.2)
    #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
@@ -189,18 +188,16 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
  
    p <- testU(tpm.1$MEDIAN, tpm.3$MEDIAN)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(2, ylim[2], text, cex=2.5)
+   text(2, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
    
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2]-1.6, text, cex=2.5)
+   text(1.5, ylim[2]-1.6, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 2), y=c(ylim[2]-2.4, ylim[2]-2.4), type="l", lwd=2)
+   
+   p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
+   text(2.5, ylim[2]-3.2, getPvalueSignificanceLevel(p), cex=2.5)
+   lines(c(2, 3), y=c(ylim[2]-4, ylim[2]-4), type="l", lwd=2)
    
    axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.25)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
@@ -223,18 +220,11 @@ plotBox4 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, main, n
    boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
  
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   text <- getPvalueSignificanceLevel(p)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2], text, cex=2.5)
+   text(1.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 2), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.3$MEDIAN, tpm.4$MEDIAN)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(3.5, ylim[2], text, cex=2.5)
+   text(3.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(3, 4), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    #axis(side=1, at=seq(1, 4, by=1), labels=c("L", "E", "L", "E"), cex.axis=1.2)
@@ -261,24 +251,15 @@ plotBox6 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, tpm.5, 
    boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
  
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(1.5, ylim[2], text, cex=2.5)
+   text(1.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 2), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.3$MEDIAN, tpm.4$MEDIAN)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(3.5, ylim[2], text, cex=2.5)
+   text(3.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(3, 4), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.5$MEDIAN, tpm.6$MEDIAN)
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
-   text(5.5, ylim[2], text, cex=2.5)
+   text(5.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(5, 6), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
    
    #axis(side=1, at=seq(1, 6, by=1), labels=c("L", "E", "L", "E", "L", "E"), cex.axis=1.2)

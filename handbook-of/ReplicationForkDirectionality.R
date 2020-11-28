@@ -86,10 +86,14 @@ getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc, kb) {
       ## NRFD
       ## https://stackoverflow.com/questions/41061140/how-to-calculate-the-average-slope-within-a-moving-window-in-r
       ## https://www.rdocumentation.org/packages/zoo/versions/1.8-6/topics/rollapply
+      rollingSlope.lm <- function(vector) {
+         return(coef(lm(vector ~ seq(vector)))[2])
+      }
       rollingSlope.lm.fit <- function(vector) {
          return(coef(.lm.fit(cbind(1, seq(vector)), vector))[2])
       }
-      Slope.lm.fit = rollapply(nrds.chr.o$RFD, width=kb, FUN=rollingSlope.lm.fit, fill=NA, partial=T)
+      
+      Slope.lm.fit = rollapply(nrds.chr.o$RFD, width=kb, FUN=rollingSlope.lm, fill=NA, partial=T)
       nrds.chr.o$NRFD <- Slope.lm.fit
       #nrow(subset(subset(subset(nrds.chr.o, RFD < 0.9), RFD > -0.9), NRFD == 0))
       
@@ -741,8 +745,8 @@ plotSNR <- function(n, snr, file.name, main.text, xlab.text, ylab.text, col, pos
 ## https://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
 ## https://stackoverflow.com/questions/15717545/set-the-intervals-of-x-axis-using-r
 plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, breaks, boundary.break) {
-   adjustcolor.blue <- adjustcolor(lightblue, alpha.f=0.15)
-   adjustcolor.orange <- adjustcolor(orange, alpha.f=0.15)
+   adjustcolor.blue <- lightblue   ## adjustcolor(lightblue, alpha.f=0.15)
+   adjustcolor.orange <- orange    ## adjustcolor(orange, alpha.f=0.15)
  
    cols <- rep(lightblue, breaks)
    cols[(breaks/2 + boundary.break):breaks] <- orange
@@ -786,7 +790,8 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    #abline(v=500, lty=5, lwd=1, col="black")
    abline(v=950, lty=5, lwd=1.5, col="black")
    abline(v=50,  lty=5, lwd=1.5, col="black")
-   text(500, ymax*4/5, "|RFD| > 0.9 (80.7%)", cex=1.3, col="black", font=2) 
+   ctr <- (nrow(subset(nrds.RT.BSTRPS, RFD >= 0.9)) + nrow(subset(nrds.RT.BSTRPS, RFD <= -0.9))) / nrow(nrds.RT.BSTRPS)
+   text(500, ymax*4/5, paste0("|RFD| > 0.9 (", round0(ctr*100, digits=1), "%)"), cex=1.3, col="black", font=2) 
    
    mtext(main.text[2], line=4.7, cex=1.25)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()

@@ -25,20 +25,16 @@ wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
-PAIR1 <- "M2"
-PAIR0 <- "M1"
 base <- tolower(BASE)
 method <- "rpkm"
-n1 <- 50
-n0 <- 51
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
-#wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
+#wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
+wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -50,7 +46,10 @@ save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.R
 # [1] 2650083
 
 ##
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_orange_darkgray_font=2_line=4.5.pdf"))
+nrds.RT.BSTRPS$RFD <- NA
+nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
+
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9_orange_darkgray_font=2_line=4.5_test.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
 xlab.text <- "Number of rightward forks per kb window"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
@@ -242,6 +241,61 @@ plotBootstrapRFD(file.name, BASE, chr, 110000000, 160000000, nrds.RT.NRFD, bed.g
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10_new"))
 plotBootstrapRFD(file.name, BASE, chr, 100000000, 200000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 
+# -----------------------------------------------------------------------------
+# Report (between T and TN)
+# Last Modified: 28/11/20; 24/11/19
+# -----------------------------------------------------------------------------
+boundary.upper <- 950   ## RFD > +0.9
+boundary.lower <-  50   ## RFD < -0.9
+
+report.sclc.vs.sclc.nl <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.sclc.nl, "SCLC", "SCL-NL")
+writeTable(report.sclc.vs.sclc.nl, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_SCLC-NL_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.vs.nbl <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.nbl, "SCLC", "NBL")
+writeTable(report.sclc.vs.nbl, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_NBL_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+report.sclc.vs.cll <- getBootstrapReport(rfd, nrds.RT.NRFD.sclc, nrds.RT.NRFD.cll, "SCLC", "CLL")
+writeTable(report.sclc.vs.cll, file.path(wd.rt.data, paste0("NRFD_SCLC_vs_CLL_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl,  nrds.RT.NRFD.cll, "NBL",  "CLL")
+writeTable(report.nbl.vs.cll, file.path(wd.rt.data, paste0("NRFD_NBL_vs_CLL_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Plot report (between NL, Ts)
+# Last Modified: 27/11/19
+# -----------------------------------------------------------------------------
+save(report.sclc.vs.sclc.nl, report.sclc.vs.nbl, report.sclc.vs.cll, report.nbl.vs.cll, file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
+#load(file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
+
+# -----------------------------------------------------------------------------
+# Report (between LUAD and Ts)
+# Last Modified: 28/11/20; 23/03/20
+# -----------------------------------------------------------------------------
+summary.sclc.vs.sclc.nl <- getBootstrapSummary(report.sclc.vs.sclc.nl)
+summary.sclc.vs.nbl     <- getBootstrapSummary(report.sclc.vs.nbl)
+summary.sclc.vs.cll     <- getBootstrapSummary(report.sclc.vs.cll)
+summary.nbl.vs.cll      <- getBootstrapSummary(report.nbl.vs.cll)
+
+##
+file.name <- file.path(wd.rt.plots, "F7_SCLC-vs-SCLC-NL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("SCLC vs. SCLC-NL replication-domain landscape", "")
+plotBootstrapSummary(summary.sclc.vs.sclc.nl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.sclc.nl, file.name, "SCLC vs. SCLC-NL")
+
+file.name <- file.path(wd.rt.plots, "F7_SCLC-vs-NBL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("SCLC vs. NBL replication-domain landscape", "")
+plotBootstrapSummary(summary.sclc.vs.nbl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.nbl, file.name, "SCLC vs. NBL")
+
+file.name <- file.path(wd.rt.plots, "F7_SCLC-vs-CLL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("SCLC vs. CLL replication-domain landscape", "")
+plotBootstrapSummary(summary.sclc.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.cll, file.name, "SCLC vs. CLL")
+
+file.name <- file.path(wd.rt.plots, "F7_NBL-vs-CLL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
+main.text <- c("NBL vs. CLL replication-domain landscape", "")
+plotBootstrapSummary(summary.nbl.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.vs.cll, file.name, "NBL vs. CLL")
 
 
 
@@ -447,10 +501,13 @@ plotBootstrapRFD(file.name, BASE, chr, 0,	3892939, nrds.RT.NRFD, bed.gc.chr, bou
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
-# Last Modified: 24/11/19
+# Last Modified: 28/11/20; 24/11/19
 # -----------------------------------------------------------------------------
 boundary.upper <- 950   ## RFD > +0.9
 boundary.lower <-  50   ## RFD < -0.9
+
+report.sclc.vs.sclc.nl <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc, nrds.RT.RFD.sclc.nl, "SCLC", "SCL-NL")
+writeTable(report.sclc.vs.nbl, file.path(wd.rt.data, paste0("rfd_SCLC_vs_SCLC-NL.txt")), colnames=T, rownames=F, sep="\t")
 
 report.sclc.vs.nbl <- getBootstrapReport(boundary.upper, boundary.lower, nrds.RT.RFD.sclc, nrds.RT.RFD.nbl, "SCLC", "NBL")
 writeTable(report.sclc.vs.nbl, file.path(wd.rt.data, paste0("rfd_SCLC_vs_NBL.txt")), colnames=T, rownames=F, sep="\t")

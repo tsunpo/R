@@ -47,13 +47,18 @@ wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 # -----------------------------------------------------------------------------
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+#load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 # > nrow(nrds.RT.BSTRPS)
 # [1] 2651861
 
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "-normal_rpkm.gc.cn.d.rt.rfd.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
-xlab.text <- "Number of right-leading resamplings"
-plotBootstrapHist(nrds.RFD, file.name, main.text, xlab.text, 100, boundary.break)
+##
+nrds.RT.BSTRPS$RFD <- NA
+nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
+
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "-normal_rpkm_SLOPE_RFD>0.9_orange_darkgray_font=2_line=4.5.pdf"))
+main.text <- c(paste0(BASE, "-NL bootstrap distribution"), paste0(""))
+xlab.text <- "Number of rightward forks per kb window"
+plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
 # -----------------------------------------------------------------------------
 # Create RT + RFD data
