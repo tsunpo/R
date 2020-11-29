@@ -33,9 +33,10 @@ PAIR0 <- "G1"
 base  <- tolower(BASE)
 method <- "rpkm"
 
-wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
-wd.anlys <- file.path(wd, BASE, "analysis")
+wd.ngs      <- file.path(wd, BASE, "ngs/WGS")
+wd.ngs.data <- file.path(wd.ngs, "data")
 
+wd.anlys    <- file.path(wd, BASE, "analysis")
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
@@ -50,9 +51,10 @@ n0 <- length(samples0)
 # Last Modified: 07/08/19; 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, bed.gc)
-save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
-#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "s-g1", ".RData")))
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "s-g1", ".RData")))
 # > nrow(nrds)
+# [1] 2684771
 # [1] 2582940 - 22
 nrds.lcl <- nrds
 

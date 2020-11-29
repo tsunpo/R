@@ -75,7 +75,7 @@ getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc, kb) {
    nrds.RT <- cbind(nrds.RT[overlaps,], nrds.RT.BSTRPS[overlaps,])
 
    nrds.RT.NRFD <- NULL
-   for (c in 1:22) {
+   for (c in 2:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
       
@@ -103,6 +103,11 @@ getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc, kb) {
          nrds.RT.NRFD <- rbind(nrds.RT.NRFD, nrds.chr.o)
       }
    }
+   
+   ## Test lm
+   save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1_fit", ".RData")))
+   writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1_fit", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
+   nrds.RT.NRFD.sclc <- nrds.RT.NRFD
    
    return(nrds.RT.NRFD)
 }

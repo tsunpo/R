@@ -103,16 +103,25 @@ initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
 # Methods: Bootstraps (in 2a_cmd-rt_rpkm.corr.gc.d_bstrp.R)
 # Last Modified: 15/05/17
 # -----------------------------------------------------------------------------
-getDetectedRD <- function(rds) {   ## Find not dected (RD_CN = 0) windows in any of the samples 
-   return(mapply(x = 1:nrow(rds), function(x) !any(as.numeric(rds[x, -1]) == 0)))   ## ADD 15/02/19; To skip the first column "BED"
-}
+#getDetectedRD <- function(rds) {   ## Find not dected (RD_CN = 0) windows in any of the samples 
+#   return(mapply(x = 1:nrow(rds), function(x) !any(as.numeric(rds[x, -1]) == 0)))   ## ADD 15/02/19; To skip the first column "BED"
+#}
 
 ## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
-pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
+#pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
+#   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+#   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr),]   ## ADD 13/06/17; getDetectedRD()
+# 
+#   return(nrds.chr.d)
+#}
+
+pipeMedianRD <- function(wd.ngs.data, BASE, chr, PAIR, method, samples) {
    nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
-   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr),]   ## ADD 13/06/17; getDetectedRD()
- 
-   return(nrds.chr.d)
+   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))   ## ADD 29/11/20; 05/10/19
+   nrds.chr <- nrds.chr[,c("BED", samples)]
+   
+   nrds.chr$MEDIAN <- mapply(x = 1:nrow(nrds.chr), function(x) median(as.numeric(nrds.chr[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   return(nrds.chr)
 }
 
 outputRT <- function(nrds.chr) {
@@ -129,21 +138,26 @@ outputRT <- function(nrds.chr) {
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
 getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc, isFlip=F) {
-   nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
+   nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RATIO"))
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
-      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.ratio_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
   
       nrds <- rbind(nrds, nrds.chr)
    }
    if (isFlip) {
-      nrds$RT <- nrds$N / nrds$T
+      nrds$RATIO <- nrds$N / nrds$T
    }
-   nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
-   nrds$RT <- scale(nrds$RT)
+
+   noreads <- sort(unique(c(which(nrds$T == 0), which(nrds$N == 0), which(is.infinite(nrds$RATIO) == T), which(is.na(nrds$RATIO) == T))))
+   reads   <- setdiff(seq(1:nrow(nrds)), noreads)
    
-   return(nrds)
+   nrds$RT <- log2(nrds$RATIO)   ## MUY MUY IMPORTANTE!! 2019/10/10
+   nrds$RT[reads] <- scale(nrds$RT[reads])
+   nrds$RT[noreads] <- NA
+   
+   return(nrds[,c("BED", "T", "N", "RT")])
 }
 
 setSpline <- function(nrds.chr, bed.gc.chr, column, kb=1, returnAll=F) {
