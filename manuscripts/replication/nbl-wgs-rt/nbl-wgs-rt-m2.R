@@ -106,6 +106,30 @@ for (c in 1:22) {
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
 }
 
+## Replication timing skew (RTS)
+file.name <- file.path(wd.rt.plots, "RTS_NBL-M2-M1_spline_spearman_chr2")
+main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
+ylab.text <- "NBL M2/M1"
+plotRTS(sprs.nbl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2=-0.05, offset="            ")
+
+### Figure 4D
+## NBL vs. LCL
+file.name <- file.path(wd.rt.plots, "RTS2_NBL-M2-M1_vs_LCL_spline_spearman")
+main.text <- c("Replication timing skew", "")
+xlab.text <- "LCL S/G1"
+ylab.text <- "NBL M2/M1"
+plotRTS2(sprs.nbl$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)
+
+
+
+
+
+
+
+
+
+
+
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "SPR_NBL-M2-M1_spline_spearman")
 main.text <- c("S-phase progression rate (SPR)", "")

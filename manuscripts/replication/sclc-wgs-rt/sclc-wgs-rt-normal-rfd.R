@@ -446,8 +446,8 @@ file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_nasa.blue_go
 plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_1.3_test.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution           ")
+file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_1.3_test_test.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 # -----------------------------------------------------------------------------
 # Report (between random1 and random2)
@@ -776,7 +776,7 @@ nrow(nrds.RT.NRFD.sclc.nl.ctr.tz.l)/nrow(nrds.RT.NRFD.sclc.nl)
 ##
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_CTR_E-L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L_nasa.blue_google.red.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L_3.6_1_9.5.pdf"))
 plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution (CTR)  ")
 
 ###
@@ -788,7 +788,7 @@ plotReportEG(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distri
 
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_E+L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_.pdf"))
 plotReportEGEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of genes (CTR)")
 
 

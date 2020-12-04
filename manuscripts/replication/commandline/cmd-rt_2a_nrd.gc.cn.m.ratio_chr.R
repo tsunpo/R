@@ -14,7 +14,7 @@ method <- tolower(METHOD)
 # =============================================================================
 # Name: cmd-rt_2a_nrd.gc.cn.d_chr.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 23/04/19; 22/10/18
+# Last Modified: 29/11/20; 23/04/19; 22/10/18
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss

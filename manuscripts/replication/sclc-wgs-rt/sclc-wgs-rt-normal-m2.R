@@ -104,23 +104,19 @@ for (c in 1:22) {
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
 }
 
-## S-phase progression rate (SPR)
-ylab.text <- "SPR"
-file.name <- file.path(wd.rt.plots, "SPR_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, "-TN M2/M1 S-phase progression rate"), "SPR = (E-L)/(E+L)")
-plotSPR(sprs, file.name, main.text, c(13, 17), digits=3, unit=5, ylab.text)
+## Replication timing skew (RTS)
+file.name <- file.path(wd.rt.plots, "RTS_SCLC-NL-M2-M1_spline_spearman_chr2")
+main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
+ylab.text <- "SCLC-NL M2/M1"
+plotRTS(sprs.sclc.nl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2="0.00", offset="          ")
 
-## SPR vs Read depth correlation
-file.name <- file.path(wd.rt.plots, "SPR-RDC_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, "-TN M2/M1 SPR vs. Read depths correlation"), "")
-xlab.text <- "M2 vs. M1 [rho]"
-plotSPRRDC(sprs$spr, sprs$cor, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text)
-
-## SPR vs Woodfine 2004
-file.name <- file.path(wd.rt.plots, "SPR-Woodfine_SCLC-M2-M1_spline_spearman")
-main.text <- c(paste0(BASE, "-TN M2/M1 SPR vs. Woodfine 2004"), "Mean replication timing ratio")
-xlab.text <- "Woodfine et al. 2004"
-plotSPRRDC(sprs$spr, lcl.mean$Mean, file.name, main.text, c(13, 17, 19, 22), xlab.text, unit=5, ylab.text)
+### Figure 4D
+## SCLC vs. LCL
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-NL-M2-M1_vs_LCL_spline_spearman")
+main.text <- c("Replication timing skew", "")
+xlab.text <- "LCL S/G1"
+ylab.text <- "SCLC-NL M2/M1"
+plotRTS2(sprs.sclc.nl$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)
 
 # -----------------------------------------------------------------------------
 # RT vs LCL S/G1
@@ -136,20 +132,11 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-NL-M2-M1-vs-LCL-S-G1_spline_spearman")
 main.text <- paste0("SCLC-NL M2/M1 vs. LCL S/G1")
 ymin <- -1.1
 ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
-
-##
-ylab.text <- "Spearman's rho"
-xlab.text <- "Chromosome"
-file.name <- file.path(wd.rt.plots, "RT-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spearman_test")
-main.text <- paste0("SCLC-NL M2/M1 vs. LCL S/G1")
-ymin <- 0.25
-ymax <- 1.05
-plotRTvsRTALL(cors, file.name, main.text, ylab.text, xlab.text, ymin, ymax, col="black", c=2, pos=1)
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
 
 # -----------------------------------------------------------------------------
 # Plot signal-to-noice

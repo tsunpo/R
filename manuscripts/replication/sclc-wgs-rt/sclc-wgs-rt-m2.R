@@ -125,10 +125,10 @@ for (c in 1:22) {
 }
 
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_nasa.blue_google.red_cex=1.2_lwd=1.3_bty")
+file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_chr2")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
 ylab.text <- "SCLC M2/M1"
-plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2)
+plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2="0.00", offset="          ")
 
 ### Figure 4D
 ## SCLC vs. LCL
@@ -137,6 +137,11 @@ main.text <- c("Replication timing skew", "")
 xlab.text <- "LCL S/G1"
 ylab.text <- "SCLC M2/M1"
 plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)
+
+
+
+
+
 
 ## SCLC vs. SCLC-NL
 #file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_SCLC-NL_spline_spearman")
@@ -255,7 +260,7 @@ file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-M2-M1-vs-LCL-S-G1_spline_spe
 main.text <- paste0("SCLC M2/M1 vs. LCL S/G1")
 ymin <- -1.1
 ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("M2", "M1", "M2/M1"), c=NA, isRT=T)
 
 #ylab.text <- "Spearman's rho"
 #xlab.text <- "Chromosome"

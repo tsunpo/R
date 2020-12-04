@@ -140,7 +140,7 @@ file.name <- file.path(wd.rt.plots, "RTD-vs-RT_SCLC-Q4-Q1-vs-LCL-S-G1_spline_spe
 main.text <- paste0("SCLC Q4/Q1 vs. LCL S/G1")
 ymin <- -1.1
 ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
 
 
 

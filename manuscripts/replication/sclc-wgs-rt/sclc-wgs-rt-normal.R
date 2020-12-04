@@ -115,7 +115,7 @@ for (c in 2:22) {
 ##
 test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
 pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc-tn_chrs.RData")))
+save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc-nl_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_sclc-nl_chrs.RData")))
 file.main <- c("SCLC-NL overall read depth", "")
@@ -124,7 +124,7 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC-NL_chrs", size=6, file.main, "bottomright", c("red", "lightpink1", "lightskyblue2", "blue"), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC-NL_chrs", size=6, file.main, "bottomright", c(red, lighterred, lighterblue, blue), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1
@@ -134,9 +134,9 @@ plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC-NL_chrs", size=6, file.main,
 # Beeswarm plots
 # Last Modified: 21/04/19
 # -----------------------------------------------------------------------------
-#samples.sclc <- readTable("/projects/cangen/tyang2/SCLC/ngs/WGS/sclc_wgs_n92_NL.txt", header=T, rownames=T, sep="")
-#samples.nbl  <- readTable("/projects/cangen/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1_N.txt", header=T, rownames=T, sep="")
-#samples.cll  <- readTable("/projects/cangen/tyang2/CLL/ngs/WGS/cll_wgs_n96_N.txt", header=T, rownames=T, sep="")
+samples.sclc.nl <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/SCLC/ngs/WGS/sclc_wgs_n92_NL.txt", header=T, rownames=T, sep="")
+samples.nbl.wb  <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/NBL/ngs/WGS/nbl_wgs_n57-1_N.txt", header=T, rownames=T, sep="")
+samples.cll.wb  <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/CLL/ngs/WGS/cll_wgs_n96_N.txt", header=T, rownames=T, sep="")
 n.sclc.nl <- nrow(samples.sclc.nl)
 n.nbl.wb  <- nrow(samples.nbl.wb)
 n.cll.wb  <- nrow(samples.cll.wb)
@@ -154,18 +154,18 @@ library(beeswarm)
 pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_normal.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="Overall correlation with LCL RT", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
-abline(h=0, lty=5)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="In silico sorting", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
+abline(h=0, lty=5, lwd=2)
 
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col="blue", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col="lightskyblue2", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col="lightpink1", pch=16, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col="red", pch=16, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col=blue, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col=lighterblue, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col=lighterred, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col=red, pch=19, cex=1, add=T)
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=16, col=c("red", "lightpink1", "lightskyblue2", "blue"), cex=1.8)
+legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=16, pt.cex=2.5, col=c(red, lighterred, lighterblue, blue), cex=1.8)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
-mtext("Spearman's rho", side=2, line=2.75, cex=1.8)
+mtext("Overall read depth vs. RT", side=2, line=2.75, cex=1.8)
 mtext("", cex=1.2, line=0.3)
 mtext(text=c("SCLC-NL", "NBL-WB", "CLL-WB"), side=1, cex=1.8, line=1.3, at=c(1,2,3))
 mtext(text=c("n=92", "n=56", "n=96"), side=1, cex=1.8, line=3, at=c(1,2,3))

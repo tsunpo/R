@@ -2,7 +2,7 @@
 # Library      : Replication Timing
 # Name         : handbook-of/ReplicationTiming.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 01/08/19; 11/07/19; 05/03/19; 15/11/18
+# Last Modified: 29/11/20; 01/08/19; 11/07/19; 05/03/19; 15/11/18
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -103,26 +103,36 @@ initReadDepthPerChromosome <- function(samples, bed.gc.chr) {
 # Methods: Bootstraps (in 2a_cmd-rt_rpkm.corr.gc.d_bstrp.R)
 # Last Modified: 15/05/17
 # -----------------------------------------------------------------------------
-#getDetectedRD <- function(rds) {   ## Find not dected (RD_CN = 0) windows in any of the samples 
-#   return(mapply(x = 1:nrow(rds), function(x) !any(as.numeric(rds[x, -1]) == 0)))   ## ADD 15/02/19; To skip the first column "BED"
-#}
+getDetectedRD <- function(rds) {   ## Find not dected (RD_CN = 0) windows in any of the samples 
+   return(mapply(x = 1:nrow(rds), function(x) !any(as.numeric(rds[x,]) == 0)))   ## REMOVED rds[x, -1] 30/11/20; ADD 15/02/19; To skip the first column "BED"
+}
 
 ## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
-#pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
-#   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
-#   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr),]   ## ADD 13/06/17; getDetectedRD()
+pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
+   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr),]   ## ADD 13/06/17; getDetectedRD()
+ 
+   return(nrds.chr.d)
+}
+
+## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
+#pipeGetDetectedRD <- function(wd.rt.data, BASE, chr, PAIR, n, method, samples) {
+#   nrds.chr <- readTable(file.path(wd.rt.data, paste0(tolower(BASE), "_", method, ".gc.cn.m_", chr, "_", PAIR, "_n", n, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+#   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))    ## ADD 29/11/20; 05/10/19
+#   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr[, samples]),]   ## ADD 13/06/17; getDetectedRD()
 # 
 #   return(nrds.chr.d)
 #}
 
-pipeMedianRD <- function(wd.ngs.data, BASE, chr, PAIR, method, samples) {
-   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
-   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))   ## ADD 29/11/20; 05/10/19
-   nrds.chr <- nrds.chr[,c("BED", samples)]
-   
-   nrds.chr$MEDIAN <- mapply(x = 1:nrow(nrds.chr), function(x) median(as.numeric(nrds.chr[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
-   return(nrds.chr)
-}
+#pipeMedianRD <- function(wd.ngs.data, BASE, chr, PAIR, method, samples=NULL) {
+#   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+#   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))   ## ADD 29/11/20; 05/10/19
+#   if (!is.null(samples))
+#      nrds.chr <- nrds.chr[,c("BED", samples)]
+#   
+#   nrds.chr$MEDIAN <- mapply(x = 1:nrow(nrds.chr), function(x) median(as.numeric(nrds.chr[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+#   return(nrds.chr)
+#}
 
 outputRT <- function(nrds.chr) {
    samples <- colnames(nrds.chr)
@@ -132,35 +142,113 @@ outputRT <- function(nrds.chr) {
 }
 
 # -----------------------------------------------------------------------------
+# Get overall read depth
+# Last Modified: 30/11/20
+# -----------------------------------------------------------------------------
+#getOverallRD <- function(wd.rt.data, base, method, PAIR1, n1) {
+#   nrds.m <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+#   for (c in 2:22) {
+#      chr <- chrs[c]
+#      nrds.chr.m <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+#  
+#      nrds.m <- rbind(nrds.m, nrds.chr.m)
+#   }
+# 
+#   colnames(nrds.m) <- gsub("\\.", "-", colnames(nrds.m))   ## ADD 29/11/20; 05/10/19
+#   #return(nrds.m[, -1])   ## BUG 2019/10/14: Remove column BED
+#   return(nrds.m)
+#}
+
+#getOverallDetectedRD <- function(wd.rt.data, base, method, PAIR1, n1, samples) {
+#   nrds.d <- pipeGetDetectedRD(wd.rt.data, base, "chr1", PAIR1, n1, method, samples)
+#   for (c in 2:22) {
+#     chr <- chrs[c]
+#      nrds.chr.d <- pipeGetDetectedRD(wd.rt.data, base, chr, PAIR1, n1, method, samples)
+#  
+#      nrds.d <- rbind(nrds.d, nrds.chr.d)
+#   }
+# 
+#   return(nrds.d)
+#}
+
+# -----------------------------------------------------------------------------
 # Plot RD and RT in sclc-wgs-rt.R (also refer to plotBootstrapsRT)
 # Link(s): http://www.mun.ca/biology/scarr/2250_DNA_replication_&_transcription.html
 #          https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
 # Last Modified: 14/02/19
 # -----------------------------------------------------------------------------
+#getLog2ScaledDetectedRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc, isFlip=F) {
+#   nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
+#   for (c in 1:22) {
+#      chr <- chrs[c]
+#      bed.gc.chr <- subset(bed.gc, CHR == chr)
+#      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+#  
+#      nrds <- rbind(nrds, nrds.chr)
+#   }
+#   if (isFlip) {
+#      nrds$RT <- nrds$N / nrds$T
+#   }
+#
+#   nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
+#   nrds$RT <- scale(nrds$RT)
+#
+#   return(nrds[,c("BED", "T", "N", "RT")])
+#}
+
+#getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc, isFlip=F) {
+#   nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RATIO"))
+#   for (c in 1:22) {
+#      chr <- chrs[c]
+#      bed.gc.chr <- subset(bed.gc, CHR == chr)
+#      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.ratio_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+#  
+#      nrds <- rbind(nrds, nrds.chr)
+#   }
+#   if (isFlip) {
+#      nrds$RATIO <- nrds$N / nrds$T
+#   }
+#
+#   noreads <- sort(unique(c(which(nrds$T == 0), which(nrds$N == 0), which(is.infinite(nrds$RATIO) == T), which(is.na(nrds$RATIO) == T))))
+#   reads   <- setdiff(seq(1:nrow(nrds)), noreads)
+#   
+#   nrds$RT <- log2(nrds$RATIO)   ## MUY MUY IMPORTANTE!! 2019/10/10
+#   nrds$RT[reads] <- scale(nrds$RT[reads])
+#   nrds$RT[noreads] <- NA
+#   
+#   return(nrds[,c("BED", "T", "N", "RT")])
+#}
+
 getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc, isFlip=F) {
-   nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RATIO"))
+   nrds <- toTable(NA, 4, 0, c("BED", "T", "N", "RT"))
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
-      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.ratio_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
   
       nrds <- rbind(nrds, nrds.chr)
    }
    if (isFlip) {
-      nrds$RATIO <- nrds$N / nrds$T
+      nrds$RT <- nrds$N / nrds$T
    }
-
-   noreads <- sort(unique(c(which(nrds$T == 0), which(nrds$N == 0), which(is.infinite(nrds$RATIO) == T), which(is.na(nrds$RATIO) == T))))
-   reads   <- setdiff(seq(1:nrow(nrds)), noreads)
-   
-   nrds$RT <- log2(nrds$RATIO)   ## MUY MUY IMPORTANTE!! 2019/10/10
-   nrds$RT[reads] <- scale(nrds$RT[reads])
-   nrds$RT[noreads] <- NA
-   
-   return(nrds[,c("BED", "T", "N", "RT")])
+   nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
+   nrds$RT <- scale(nrds$RT)
+ 
+   return(nrds)
 }
 
-setSpline <- function(nrds.chr, bed.gc.chr, column, kb=1, returnAll=F) {
+setSpline <- function(nrds.chr, bed.gc.chr, column) {
+   overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
+   bed.gc.chr.o <- bed.gc.chr[overlaps,]
+   nrds.chr.o   <- nrds.chr[overlaps,]
+ 
+   spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, column])
+   nrds.chr.o$SPLINE <- spline$y
+
+   return(nrds.chr.o[, c("BED", column, "SPLINE")])
+}
+
+setSpline2 <- function(nrds.chr, bed.gc.chr, column, kb=1, returnAll=F) {
    overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
    bed.gc.chr.o <- bed.gc.chr[overlaps,]
    nrds.chr.o <- nrds.chr[overlaps,]
@@ -313,7 +401,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
   
    ## Plot Koren 2012 (before smoothing spline)
    if (!is.null(lcl.rt.chr))
-      points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col=colours[3], pch=16, cex=0.35)
+      points(lcl.rt.chr$POS/1E6, lcl.rt.chr$RT, col=colours[3], pch=16, cex=0.2)
    if (!is.null(nrds.lcl.chr)) {
       points(bed.gc.chr.lcl$START/1E6, nrds.lcl.chr.RT$SPLINE, col=colours[3], pch=16, cex=0.35)
    }
@@ -327,11 +415,11 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[1], cex=1.25)   
    legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[2], cex=1.25)
    if (width != 5)
-      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.25)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " read depth ratio (1 kb)"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.25)
    else
       legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.25)
    if (!is.null(lcl.rt.chr))
-      legend("bottomright", "Koren et al. 2012", col=colours[3], lty=1, lwd=3, bty="n", horiz=T, cex=1.25)
+      legend("bottomright", "Koren et al. (~2 kb)", col=colours[3], lty=1, lwd=3, bty="n", horiz=T, cex=1.25)
    if (!is.null(nrds.lcl.chr))
       legend("bottomright", "LCL S/G1 ratio", col=colours[3], lty=1, lwd=3, bty="n", horiz=T, cex=1.25)
    if (length(peaks) != 0)
@@ -584,10 +672,29 @@ plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
 }
 
 # -----------------------------------------------------------------------------
-# Compare betweeen RT and LCL RT in sclc-wgs-rt.R
-# Last Modified: 03/06/19
+# Comparison betweeen tumour sample's RD and LCL RT in sclc-wgs-rt.R
+# Last Modified: 30/11/20; 03/06/19
 # -----------------------------------------------------------------------------
-plotSAMPLEvsRTALL <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA) {
+getSAMPLEvsRT <- function(wd.rt.data, samples1) {
+   cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
+   cors.samples$chr <- 1:22
+   for (s in 1:length(samples1)) {
+      sample <- samples1[s]
+      load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+  
+      cors.samples[, sample] <- cors$cor
+   }
+ 
+   for (c in 1:22) {
+      cors.samples$mean[c] <- mean(as.numeric(cors.samples[c, samples1]))
+      cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
+      cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
+   }
+   
+   return(cors.samples)
+}
+
+plotSAMPLEvsRT <- function(cors.samples, samples, file.name, main.text=NA, ymin=NA, ymax=NA) {
    cors.samples.plot <- toTable(0, 2, 22*length(samples1), c("chr", "cor"))
    n <- length(samples)
    cnt <- 0
@@ -641,7 +748,7 @@ getSPR <- function(nrds, bed.gc) {
    return(sprs)
 }
 
-plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text, cex) {
+plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text, cex, chr2, offset) {
    xlab.text <- "Chromosome"
    cols <- c(red, blue, "black")
    #ylim <- getYlim(sprs$spr, unit)
@@ -660,7 +767,7 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    points(sprs$spr[idx] ~ sprs$chr[idx], col=cols[2], pch=19, cex=cex)
    points(sprs$spr[2] ~ sprs$chr[2], col=cols[3], pch=19, cex=cex)
  
-   text(sprs$chr[2], sprs$spr[2], paste0("Chr", 2), col=cols[3], pos=3, cex=1.2)
+   text(sprs$chr[2], sprs$spr[2], paste0(offset, "Chr2 (", chr2, ")"), col=cols[3], pos=3, cex=1.2)
    #text(sprs$chr[2]+1.8, sprs$spr[2], paste0("Chr2 (", round0(sprs$spr[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {

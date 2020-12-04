@@ -27,6 +27,7 @@ base <- tolower(BASE)
 wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata", "George 2015")
 
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
@@ -214,9 +215,29 @@ plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.r
 file.name <- paste0("boxplot6_sclc_tpm.gene_RFD_3.5")
 plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
 
+# -----------------------------------------------------------------------------
+# Significant mutated genes (All)
+# Last Modified: 01/12/20
+# -----------------------------------------------------------------------------
+muts <- unique(readTable(file.path(wd.meta, "nature14664-s1_ST6_Figure1.txt"), header=F, rownames=F, sep=""))
+genes <- getGenes(muts)
 
+colnames <- c("TTR", "TZ", "IZ")
+report <- toTable("", length(colnames), 2, colnames)
+rownames(report) <- c("E", "L")
 
+getGeneRFD <- function(genes, tpm.gene.log2.m.rfd.ttr.e) {
+   ids <- intersect(rownames(genes), rownames(tpm.gene.log2.m.rfd.ttr.e))
+   
+   return(tpm.gene.log2.m.rfd.ttr.e[ids,]$external_gene_name)
+}
 
+report["E", "TTR"] <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ttr.e))
+report["L", "TTR"] <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ttr.l))
+report["E", "TZ"]  <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ctr.tz.e))
+report["L", "TZ"]  <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ctr.tz.l))
+report["E", "IZ"]  <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ctr.iz.e))
+report["L", "IZ"]  <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ctr.iz.l))
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (All)

@@ -10,18 +10,20 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Transcription.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
+#load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
 # Last Modified: 04/07/19
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"                   ## tyang2@cheops
+wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "NBL-CL"
 PAIR1 <- "T"
@@ -45,21 +47,8 @@ n1 <- length(samples1)
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
 # Last Modified: 15/11/19; 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
-cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
-cors.samples$chr <- 1:22
-for (s in 1:length(samples1)) {
-   sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
- 
-   cors.samples[, sample] <- cors$cor
-}
-
-for (c in 1:22) {
-   cors.samples$mean[c] <- mean(as.numeric(cors.samples[c, samples1]))
-   cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
-   cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
-}
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-cl-vs-lcl_spline_spearman.RData")))
+cors.samples <- cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.7915794
 # > max(cors.samples[,-c(1:4)])
@@ -70,7 +59,7 @@ file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-CL-vs-LCL_spline_spearman
 main.text <- c("NBL-CL read depth vs. LCL S/G1", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
+plotSAMPLEvsRT(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
@@ -80,6 +69,20 @@ samples.nbl.cl <- setSamplesQ4(wd.rt.data, samples1)
 writeTable(samples.nbl.cl, file.path(wd.ngs, "nbl-cl_wgs_n8.txt"), colnames=T, rownames=F, sep="\t")
 #          0%         25%         50%         75%        100% 
 # -0.32832776 -0.23125788 -0.02602659  0.39228813  0.44813604
+
+# -----------------------------------------------------------------------------
+# Last Modified: 30/11/20; 04/06/19; 21/04/19
+# -----------------------------------------------------------------------------
+nrds <- getOverallReadDepth(wd.rt.data, base, method, PAIR1, n1)
+# > nrow(nrds)
+# [1] 2684771
+nrds.m <- subset(nrds, MEDIAN != 0)   ## ADD 30/11/20
+# > nrow(nrds.m)
+# [1] 2673685
+nrds.d <- getOverallDetectedRD(wd.rt.data, base, method, PAIR1, n1, samples1)
+nrow(nrds.d)
+# > nrow(nrds.d)
+# [1] 2663308
 
 # -----------------------------------------------------------------------------
 # PCA

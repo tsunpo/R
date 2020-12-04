@@ -3,14 +3,14 @@
 # Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/nbl-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 14/10/19; 25/02/19
+# Last Modified: 30/11/20; 14/10/19; 25/02/19
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "DifferentialExpression.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -49,21 +49,8 @@ n0 <- length(samples0)
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
 # Last Modified: 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
-cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
-cors.samples$chr <- 1:22
-for (s in 1:length(samples1)) {
-   sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
- 
-   cors.samples[, sample] <- cors$cor
-}
-
-for (c in 1:22) {
-   cors.samples$mean[c] <- mean(as.numeric(cors.samples[c, samples1]))
-   cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
-   cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
-}
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_nbl-vs-lcl_spline_spearman.RData")))
+cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.8354356
 # > max(cors.samples[,-c(1:4)])
@@ -74,7 +61,21 @@ file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-vs-LCL_spline_spearman")
 main.text <- c("NBL read depth vs. RT", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
+plotSAMPLEvsRT(cors.samples, samples1, file.name, main.text, ymin, ymax)
+
+# -----------------------------------------------------------------------------
+# Last Modified: 30/11/20; 04/06/19; 21/04/19
+# -----------------------------------------------------------------------------
+nrds <- getOverallReadDepth(wd.rt.data, base, method, PAIR1, n1)
+# > nrow(nrds)
+# [1] 2684771
+nrds.m <- subset(nrds, MEDIAN != 0)   ## ADD 30/11/20
+# > nrow(nrds.m)
+# [1] 2674140
+nrds.d <- getOverallDetectedRD(wd.rt.data, base, method, PAIR1, n1, samples1)
+nrow(nrds.d)
+# > nrow(nrds.d)
+# [1] 2659570
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1

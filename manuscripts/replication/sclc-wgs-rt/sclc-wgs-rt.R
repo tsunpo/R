@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Transcription.R", "ReplicationTiming.R")
+handbooks  <- c("Commons.R", "ReplicationTiming.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -145,21 +145,8 @@ plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "bl
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
 # Last Modified: 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
-cors.samples <- toTable(0, length(samples1)+4, 22, c("chr", "mean", "var", "cv2", samples1))
-cors.samples$chr <- 1:22
-for (s in 1:length(samples1)) {
-   sample <- samples1[s]
-   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
- 
-   cors.samples[, sample] <- cors$cor
-}
-
-for (c in 1:22) {
-   cors.samples$mean[c] <- mean(as.numeric(cors.samples[c, samples1]))
-   cors.samples$var[c]  <- var(as.numeric(cors.samples[c, samples1]))
-   cors.samples$cv2[c]  <- cors.samples$var[c]/cors.samples$mean[c]^2
-}
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
+cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.8457817
 # > max(cors.samples[,-c(1:4)])
@@ -170,7 +157,22 @@ file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
 main.text <- c("SCLC read depth vs. RT", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
-plotSAMPLEvsRTALL(cors.samples, samples1, file.name, main.text, ymin, ymax)
+plotSAMPLEvsRT(cors.samples, samples1, file.name, main.text, ymin, ymax)
+
+# -----------------------------------------------------------------------------
+# Last Modified: 30/11/20; 04/06/19; 21/04/19
+# -----------------------------------------------------------------------------
+nrds <- getOverallRD(wd.rt.data, base, method, PAIR1, n1)
+nrow(nrds)
+# > nrow(nrds)
+# [1] 2684771
+nrds.m <- subset(nrds, MEDIAN != 0)   ## ADD 30/11/20
+# > nrow(nrds.m)
+# [1] 2673828
+nrds.d <- getOverallDetectedRD(wd.rt.data, base, method, PAIR1, n1, samples1)
+nrow(nrds.d)
+# > nrow(nrds.d)
+# [1] 2674140
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
@@ -259,7 +261,7 @@ trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_nasa.blue_google.red_lighter.50_pch=19_pt.cex=2.5_pch=19_1234", size=6, file.main, "bottomright", c(red, lighterred, lighterblue, blue), NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC_nasa.blue_google.red_lighter.50_pch=19_pt.cex=2.5_pch=19_2314", size=6, file.main, "bottomright", c(red, lighterred, lighterblue, blue), NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ## SG1
 #trait <- samples.sclc.sg1$SG1
@@ -286,21 +288,21 @@ samples$Q4  <- c(samples.sclc$Q4, samples.nbl$Q4, samples.cll$Q4)
 #install.packages('beeswarm')
 library(beeswarm)
 
-pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_nasa.blue_google.red.lighter.50_pch=19_lwd=2_pt.cex=2.5_cex=1.pdf"), height=6, width=6)
+pdf(file.path(wd.rt.plots, "beeswarm_sclc+nbl+cll_nasa.blue_basf.red.lighter.50_pch=19_lwd=2_pt.cex=2.5_cex=1.pdf"), height=6, width=6)
 ymax <- 0.8   #max(samples$COR)
 ymin <- -ymax
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c("", "", ""), ylim=c(ymin, ymax), ylab="", main="In silico sorting", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
 abline(h=0, lty=5, lwd=2)
 
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col=blue, pch=19, cex=1, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col=blue.lighter, pch=19, cex=1, add=T)
-beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col=red.lighter, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col=lighterblue, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col=lighterred, pch=19, cex=1, add=T)
 beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col=red, pch=19, cex=1, add=T)
 
-legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.8)
+legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, lighterred, lighterblue, blue), cex=1.8)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
-mtext("Overall read depth vs. RT [rho]", side=2, line=2.75, cex=1.8)
+mtext("Correlation [rho]", side=2, line=2.75, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
 mtext(text=c("SCLC", "NBL", "CLL"), side=1, cex=1.8, line=1.3, at=c(1,2,3))
 mtext(text=c("n=101", "n=56", "n=96"), side=1, cex=1.8, line=3, at=c(1,2,3))
