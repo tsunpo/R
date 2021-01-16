@@ -580,20 +580,20 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-SCLC_barchart_dhl.yellow_basf.green_pt.cex=2.5")
-main.text <- c("SCLC-NL vs. SCLC replication-domain landscape", "")
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-SCLC_barchart")
+main.text <- c("SCLC vs. SCLC-NL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.sclc, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "SCLC-NL vs. SCLC")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "SCLC vs. SCLC-NL")
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-NBL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
-main.text <- c("SCLC-NL vs. NBL replication-domain landscape", "")
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-NBL_barchart")
+main.text <- c("NBL vs. SCLC-NL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.nbl, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "SCLC-NL vs. NBL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "NBL vs. SCLC-NL")
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-CLL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
-main.text <- c("SCLC-NL vs. CLL replication-domain landscape", "")
+file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-CLL_barchart")
+main.text <- c("CLL vs. SCLC-NL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.cll, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "SCLC-NL vs. CLL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "CLL vs. SCLC-NL")
 
 # -----------------------------------------------------------------------------
 # Report (between SCLC and others)

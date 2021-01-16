@@ -249,3 +249,82 @@ text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
 axis(side=1, at=seq(-14, 0, by=2), labels=c(14, 12, 10, 8, 6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()
+
+# -----------------------------------------------------------------------------
+# Heatmap
+# Last Modified: 11/01/20
+# -----------------------------------------------------------------------------
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2   <- log2(tpm.gene + 0.01)
+tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
+
+genes <- c("ENSG00000137699", "ENSG00000158825", "ENSG00000196754", "ENSG00000121552", "ENSG00000175906", "ENSG00000108839", "ENSG00000204421", "ENSG00000167768", "ENSG00000205076", "ENSG00000205420", "ENSG00000172005", "ENSG00000170477", "ENSG00000126233", "ENSG00000057149", "ENSG00000229035", "ENSG00000198807", "ENSG00000088002", "ENSG00000170322", "ENSG00000108828")
+tpm.gene.log2.m[genes,]$MEDAIN
+
+## B subgroup
+samples.b <- samples[rownames(subset(samples, GROUP_ID == 0)),]
+tpm.gene.b <- tpm.gene[, rownames(samples.b)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.b.log2   <- log2(tpm.gene.b + 0.01)
+tpm.gene.b.log2.m <- getLog2andMedian(tpm.gene.b, 0.01)
+
+## X subgroup
+samples.x <- samples[rownames(subset(samples, GROUP_ID == 1)),]
+tpm.gene.x <- tpm.gene[, rownames(samples.x)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.x.log2   <- log2(tpm.gene.x + 0.01)
+tpm.gene.x.log2.m <- getLog2andMedian(tpm.gene.x, 0.01)
+
+## N subgroup
+samples.n <- samples[rownames(subset(samples, GROUP_ID == 2)),]
+tpm.gene.n <- tpm.gene[, rownames(samples.n)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.n.log2   <- log2(tpm.gene.n + 0.01)
+tpm.gene.n.log2.m <- getLog2andMedian(tpm.gene.n, 0.01)
+
+# -----------------------------------------------------------------------------
+# Heatmap
+# Links: https://davetang.org/muse/2010/12/06/making-a-heatmap-with-r/
+# Last Modified: 13/01/20
+# -----------------------------------------------------------------------------
+#source("http://bioconductor.org/biocLite.R")
+#biocLite("DESeq")
+#install.packages("gplots")
+
+library("DESeq")
+library(gplots)
+
+genes.rownames <- c("TRIM29", "CDA", "S100A2", "CSTA", "ARL4D", "ALOX12", "LY6G6C", "KRT1", "LGALS7", "KRT6A", "MAL", "KRT4", "SLURP1", "SERPINB3", "SPRR2C", "PAX9", "SULT2B1", "NFRKB", "VAT1")
+b <- tpm.gene.b.log2[genes,]
+colnames(b) <- samples.b$NR_intern
+rownames(b) <- genes.rownames
+b <- data.matrix(b)
+
+x <- tpm.gene.x.log2[genes,]
+colnames(x) <- samples.x$NR_intern
+rownames(x) <- genes.rownames
+x <- data.matrix(x)
+
+n <- tpm.gene.n.log2[genes,]
+colnames(n) <- samples.n$NR_intern
+rownames(n) <- genes.rownames
+n <- data.matrix(n)
+
+xb <- cbind(x, b)
+nb <- cbind(n, b)
+xn <- cbind(x, n)
+
+heatmap(x)
+
+## Returning the values used for the heatmap
+test <- heatmap.2(x, scale="row")
+x[rev(test$rowInd), test$colInd]
+
+##
+hr <- hclust(as.dist(1-cor(t(x), method="pearson")),  method="complete")
+hc <- hclust(as.dist(1-cor(x,    method="spearman")), method="complete")
+
+###
+##
+colfunc <- colorRampPalette(c("green", "black", "red"))
+heatmap.2(xb, col=colfunc(7), scale="row", trace="none")
