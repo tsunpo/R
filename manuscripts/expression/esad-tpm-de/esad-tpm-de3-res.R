@@ -37,10 +37,11 @@ tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 t  <- rownames(subset(samples, GROUP_ID == 0))
 tr <- rownames(subset(samples, GROUP_ID == 1))
 n  <- rownames(subset(samples, GROUP_ID == 2))
-samples[n,]$GROUP_ID  <- 0
-samples[t,]$GROUP_ID  <- 1
-samples[tr,]$GROUP_ID <- 2
-samples$GROUP_ID <- as.numeric(samples$GROUP_ID)
+samples$GROUP_ID2 <- 0
+samples[n,]$GROUP_ID2  <- 0
+samples[t,]$GROUP_ID2  <- 1
+samples[tr,]$GROUP_ID2 <- 2
+samples$GROUP_ID2 <- as.numeric(samples$GROUP_ID2)
 
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 
@@ -49,16 +50,19 @@ tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 # Last Modified: 28/08/20
 # -----------------------------------------------------------------------------
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+scores <- pcaScores(pca.de)
 pc1 <- scores[rownames(samples), "PC1"]
 #as.numeric(resid(lm(as.numeric(tpm.gene.log2[1,]) ~ pc1)))
 
 tpm.gene.res <- t(mapply(x = 1:nrow(tpm.gene), function(x) as.numeric(resid(lm(as.numeric(tpm.gene[x,]) ~ pc1)))))
 colnames(tpm.gene.res) <- rownames(samples)
 rownames(tpm.gene.res) <- rownames(tpm.gene)
+save(tpm.gene.res, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.res.RData")))
 
 tpm.gene.log2.res <- t(mapply(x = 1:nrow(tpm.gene.log2), function(x) as.numeric(resid(lm(as.numeric(tpm.gene.log2[x,]) ~ pc1)))))
 colnames(tpm.gene.log2.res) <- rownames(samples)
 rownames(tpm.gene.log2.res) <- rownames(tpm.gene.log2)
+save(tpm.gene.log2.res, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.log2.res.RData")))
 
 #tpm.gene.log2 <- tpm.gene.log2.res
 

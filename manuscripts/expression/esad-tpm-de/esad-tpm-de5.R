@@ -38,8 +38,8 @@ t  <- rownames(subset(samples, GROUP_ID == 0))
 tr <- rownames(subset(samples, GROUP_ID == 1))
 n  <- rownames(subset(samples, GROUP_ID == 2))
 samples[n,]$GROUP_ID  <- 0
-samples[tr,]$GROUP_ID <- 1
-samples[t,]$GROUP_ID  <- 2
+samples[t,]$GROUP_ID <- 1
+samples[tr,]$GROUP_ID  <- 2
 samples$GROUP_ID <- as.numeric(samples$GROUP_ID)
 
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]

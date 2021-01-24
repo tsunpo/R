@@ -137,25 +137,22 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
-   #ymax <- max(de$log10P)
-   ymax <- 9.5
+   ymax <- max(de$log10P)
  
-   pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="EAC X versus B [log2 fold change]", ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1])
+   pdf(file.de, height=7, width=7)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="log2FC(TR/T)", ylab="-log10(p-value)", col="darkgray", main=file.main[1])
 
+   abline(h=c(-log10(pvalue)), lty=5)
    #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
    #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
    #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
 
    de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="#01DF01")
    de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=orange)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="red")
  
-   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
-   abline(h=c(-log10(pvalue)), lty=5, col="black")
-   
    for (g in 1:nrow(genes)) {
       gene <- subset(de, external_gene_name == genes[g,]$GENE)
       gene <- cbind(gene, genes[g,])
@@ -178,25 +175,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    }
    
    mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Up-regulated (B < X)", "Down-regulated (B > X)"), col=c(red, orange), pch=19)
+   legend("topleft", legend=c("Upregulated in TR", "Downregulated in TR"), col=c("#01DF01", "red"), pch=19)
    dev.off()
 }
 
 ##
-plot.main <- "387 differentially expressed genes in EAC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_X-vs-B_p1e-6_CNA")
+plot.main <- "368 differentially expressed genes before and after treatment"
+plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_median0_TR-vs-T_p1e-6")
 
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "Before (B) vs. After treatment (X)")
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
-
-##
-plot.main <- "387 differentially expressed genes in EAC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_esad_median0_X-vs-B_p1e-6")
-
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "Before (B) vs. After treatment (X)")
+file.main <- c(plot.main, "TR vs. T")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
 
@@ -226,27 +214,23 @@ writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownam
 
 ###
 ## Link: https://www.statmethods.net/graphs/bar.html
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_X-vs-B_p1e-6_up")
-reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
-
 reactome.up <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
 reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
 reactome.up <- reactome.up[order(reactome.up$log10P),]
 
-main.text <- c("Up-regulated pathways after treatment", "228 genes")
-file.de <- file.path(wd.de.reactome, "genes_X-vs-B_p1e-6_n228_up.pdf")
+main.text <- c("Up-regulated pathways after treatment", "224 genes")
+file.de <- file.path(wd.de.reactome, "genes_tr_p1e-6_n224_up.pdf")
 
 pdf(file.de, height=3, width=7.5)
 par(mar=c(4,18,4,3.1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 15), xaxt="n", names.arg=reactome.up$Pathway.name, col=red, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
-abline(v=6, lty=5)
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 15), xaxt="n", names.arg=reactome.up$Pathway.name, col="#01DF01", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 
 axis(side=1, at=seq(0, 14, by=2))
 mtext(main.text[2], line=0.3)
 dev.off()
 
 ##
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_X-vs-B_p1e-6_down")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_TR-vs-T_p1e-6_down")
 reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
 
 reactome.down <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
@@ -254,94 +238,14 @@ reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
 reactome.down <- reactome.down[order(reactome.down$log10P),]
 reactome.down$log10P <- reactome.down$log10P * -1
 
-main.text <- c("Down-regulated pathways after treatment", "159 genes")
-file.de <- file.path(wd.de.reactome, "genes_X-vs-B_p1e-6_n159_down.pdf")
+main.text <- c("Down-regulated pathways after treatment", "144 genes")
+file.de <- file.path(wd.de.reactome, "genes_TR-vs-T_p1e-6_n144_down.pdf")
 
 pdf(file.de, height=5.8, width=7.5)
 par(mar=c(4,2,4,18))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col=orange, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col="red", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
-abline(v=-6, lty=5)
 
 axis(side=1, at=seq(-14, 0, by=2), labels=c(14, 12, 10, 8, 6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()
-
-# -----------------------------------------------------------------------------
-# Heatmap
-# Last Modified: 11/01/20
-# -----------------------------------------------------------------------------
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
-tpm.gene.log2   <- log2(tpm.gene + 0.01)
-tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 0.01)
-
-genes <- c("ENSG00000137699", "ENSG00000158825", "ENSG00000196754", "ENSG00000121552", "ENSG00000175906", "ENSG00000108839", "ENSG00000204421", "ENSG00000167768", "ENSG00000205076", "ENSG00000205420", "ENSG00000172005", "ENSG00000170477", "ENSG00000126233", "ENSG00000057149", "ENSG00000229035", "ENSG00000198807", "ENSG00000088002", "ENSG00000170322", "ENSG00000108828")
-tpm.gene.log2.m[genes,]$MEDAIN
-
-## B subgroup
-samples.b <- samples[rownames(subset(samples, GROUP_ID == 0)),]
-tpm.gene.b <- tpm.gene[, rownames(samples.b)]   ## VERY VERY VERY IMPORTANT!!!
-tpm.gene.b.log2   <- log2(tpm.gene.b + 0.01)
-tpm.gene.b.log2.m <- getLog2andMedian(tpm.gene.b, 0.01)
-
-## X subgroup
-samples.x <- samples[rownames(subset(samples, GROUP_ID == 1)),]
-tpm.gene.x <- tpm.gene[, rownames(samples.x)]   ## VERY VERY VERY IMPORTANT!!!
-tpm.gene.x.log2   <- log2(tpm.gene.x + 0.01)
-tpm.gene.x.log2.m <- getLog2andMedian(tpm.gene.x, 0.01)
-
-## N subgroup
-samples.n <- samples[rownames(subset(samples, GROUP_ID == 2)),]
-tpm.gene.n <- tpm.gene[, rownames(samples.n)]   ## VERY VERY VERY IMPORTANT!!!
-tpm.gene.n.log2   <- log2(tpm.gene.n + 0.01)
-tpm.gene.n.log2.m <- getLog2andMedian(tpm.gene.n, 0.01)
-
-# -----------------------------------------------------------------------------
-# Heatmap
-# Links: https://davetang.org/muse/2010/12/06/making-a-heatmap-with-r/
-# Last Modified: 13/01/20
-# -----------------------------------------------------------------------------
-#source("http://bioconductor.org/biocLite.R")
-#biocLite("DESeq")
-#install.packages("gplots")
-
-library("DESeq")
-library(gplots)
-
-genes.rownames <- c("TRIM29", "CDA", "S100A2", "CSTA", "ARL4D", "ALOX12", "LY6G6C", "KRT1", "LGALS7", "KRT6A", "MAL", "KRT4", "SLURP1", "SERPINB3", "SPRR2C", "PAX9", "SULT2B1", "NFRKB", "VAT1")
-b <- tpm.gene.b.log2[genes,]
-colnames(b) <- samples.b$NR_intern
-rownames(b) <- genes.rownames
-b <- data.matrix(b)
-
-x <- tpm.gene.x.log2[genes,]
-colnames(x) <- samples.x$NR_intern
-rownames(x) <- genes.rownames
-x <- data.matrix(x)
-
-n <- tpm.gene.n.log2[genes,]
-colnames(n) <- samples.n$NR_intern
-rownames(n) <- genes.rownames
-n <- data.matrix(n)
-
-xb <- cbind(x, b)
-nb <- cbind(n, b)
-xn <- cbind(x, n)
-
-heatmap(x)
-
-## Returning the values used for the heatmap
-test <- heatmap.2(x, scale="row")
-x[rev(test$rowInd), test$colInd]
-
-##
-hr <- hclust(as.dist(1-cor(t(x), method="pearson")),  method="complete")
-hc <- hclust(as.dist(1-cor(x,    method="spearman")), method="complete")
-
-###
-##
-colfunc <- colorRampPalette(c("green", "black", "red"))
-heatmap.2(xb, col=colfunc(7), scale="row", trace="none")

@@ -58,13 +58,13 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    idx <- which(trait == "B")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
    idx <- which(trait == "X")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
    idx <- which(trait == "N")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=16, cex=1.7)
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
 
    #if (!is.null(samples))
    #   for (s in 1:length(samples)) {
@@ -85,10 +85,10 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #   cols <- cols[1:4]
    #}
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=16, cex=1.4)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=16, cex=1.4)
-   mtext(ylab.txt, side=2, line=2.75, cex=1.4)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)
+   mtext(ylab.txt, side=2, line=2.75, cex=1.8)
    dev.off()
 }
 
