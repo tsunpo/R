@@ -211,7 +211,7 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    ylim <- c(-0.367, 0.5)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col2[3], pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", col=col2[3], pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col[3], lwd=4)
    
@@ -237,6 +237,7 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    #cor <- cor.test(n2, snr2, method="spearman", exact=F)
    #legend(pos[2], paste0("S (rho = ", round0(cor[[4]], digits=1), ")"), text.col=col[2], pch=c(NA), col=col[2], bty="n", cex=1.5)
  
+   axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
    mtext(ylab.text, side=2, line=2.75, cex=1.6)
    dev.off()
 }
@@ -255,11 +256,11 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_adjustcolor_0.6_google.red_nasa.blue_pt.cex=2.5_lwd=4_rho_102.5_dimgray")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
 main.text <- c("In silico vs. In vitro", "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-cols <- c(blue, red, "dimgray")
+cols <- c(blue, red, "darkgray")
 flowjo.blue <- "#989aff"
 flowjo.red  <- "#ff9899"
 flowjo.grey <- "#b7b7b7"

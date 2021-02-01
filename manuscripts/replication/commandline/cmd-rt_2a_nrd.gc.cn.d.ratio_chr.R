@@ -1,0 +1,76 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(TRUE)
+BASE  <- args[1]   ## Cancer type
+PAIR1 <- args[2]   ## T(umour) or S (phase)
+LIST1 <- args[3]
+PAIR0 <- args[4]   ## N(ormal) or B(lood) or G1 (phase)
+LIST0 <- args[5]
+CHR   <- as.numeric(args[6])
+METHOD <- args[7]
+RATIO  <- args[8]  ## NA or RATIO
+base   <- tolower(BASE)
+method <- tolower(METHOD)
+
+# =============================================================================
+# Name: cmd-rt_2a_nrd.gc.cn.d_chr.R (commandline mode)
+# Author: Tsun-Po Yang (tyang2@uni-koeln.de)
+# Last Modified: 23/04/19; 22/10/18
+# =============================================================================
+wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
+#wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
+
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
+handbooks  <- c("Commons.R", "ReplicationTiming.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
+
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg19.RData"))
+load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
+
+# -----------------------------------------------------------------------------
+# Replication timing
+# Last Modified: 23/04/19; 31/08/18; 13/06/17
+# -----------------------------------------------------------------------------
+wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd.ngs    <- file.path(wd, BASE, "ngs/WGS")
+wd.ngs.data <- file.path(wd.ngs, "data")
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data <- file.path(wd.rt, "data")
+
+samples1 <- readTable(file.path(wd.ngs, LIST1), header=F, rownames=F, sep="")
+samples0 <- readTable(file.path(wd.ngs, LIST0), header=F, rownames=F, sep="")
+samples1 <- gsub("\\.", "-", samples1)
+samples0 <- gsub("\\.", "-", samples0)
+n1 <- length(samples1)
+n0 <- length(samples0)
+
+#for (c in 1:22) {
+   chr <- chrs[CHR]
+
+   ## Read depth
+   nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method, samples1)   ## ADD BACK 09/04/19; REMOVED 15/02/19; if length(samples) == 1
+   nrds.N.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR0, method, samples0)
+   writeTable(nrds.T.chr.d, gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(nrds.N.chr.d, gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR0, "_n", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   
+   ## Replication timing
+   if (RATIO == "RATIO") {
+      nrds.T.chr.d$MEDIAN <- mapply(x = 1:nrow(nrds.T.chr.d), function(x) median(as.numeric(nrds.T.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+      nrds.N.chr.d$MEDIAN <- mapply(x = 1:nrow(nrds.N.chr.d), function(x) median(as.numeric(nrds.N.chr.d[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+
+      overlaps <- intersect(rownames(nrds.T.chr.d), rownames(nrds.N.chr.d))
+      nrds.T.chr.d.o <- nrds.T.chr.d[overlaps,]
+      nrds.N.chr.d.o <- nrds.N.chr.d[overlaps,]
+   
+      nrds.chr <- toTable(NA, 3, length(overlaps), c("T", "N", "RT"))
+      rownames(nrds.chr) <- overlaps
+      nrds.chr$T  <- nrds.T.chr.d.o$MEDIAN
+      nrds.chr$N  <- nrds.N.chr.d.o$MEDIAN
+      nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
+
+      writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.ratio_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
+   }
+#}

@@ -108,9 +108,10 @@ getDetectedRD <- function(rds) {   ## Find not dected (RD_CN = 0) windows in any
 }
 
 ## Read in rpkm.corr.gc.txt.gz and getDetectedRD()
-pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
+pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method, samples) {
    nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
-   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr),]   ## ADD 13/06/17; getDetectedRD()
+   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))    ## ADD 29/11/20; 05/10/19
+   nrds.chr.d <- nrds.chr[getDetectedRD(nrds.chr[, samples]),]   ## ADD 13/06/17; getDetectedRD()
  
    return(nrds.chr.d)
 }
@@ -124,15 +125,15 @@ pipeGetDetectedRD <- function(wd.ngs.data, BASE, chr, PAIR, method) {
 #   return(nrds.chr.d)
 #}
 
-#pipeMedianRD <- function(wd.ngs.data, BASE, chr, PAIR, method, samples=NULL) {
-#   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
-#   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))   ## ADD 29/11/20; 05/10/19
-#   if (!is.null(samples))
-#      nrds.chr <- nrds.chr[,c("BED", samples)]
-#   
-#   nrds.chr$MEDIAN <- mapply(x = 1:nrow(nrds.chr), function(x) median(as.numeric(nrds.chr[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
-#   return(nrds.chr)
-#}
+pipeMedianRD <- function(wd.ngs.data, BASE, chr, PAIR, method, samples=NULL) {
+   nrds.chr <- readTable(file.path(wd.ngs.data, paste0(tolower(BASE), "_", method, ".gc.cn_", chr, "_", PAIR, ".txt.gz")), header=T, rownames=T, sep="")##[, samples]   ## REMOVED 15/02/19; if length(samples) == 1
+   colnames(nrds.chr) <- gsub("\\.", "-", colnames(nrds.chr))   ## ADD 29/11/20; 05/10/19
+   if (!is.null(samples))
+      nrds.chr <- nrds.chr[,c("BED", samples)]
+   
+   nrds.chr$MEDIAN <- mapply(x = 1:nrow(nrds.chr), function(x) median(as.numeric(nrds.chr[x, -1])))   ## ADD 15/02/19; To skip the first column "BED"
+   return(nrds.chr)
+}
 
 outputRT <- function(nrds.chr) {
    samples <- colnames(nrds.chr)
@@ -145,31 +146,31 @@ outputRT <- function(nrds.chr) {
 # Get overall read depth
 # Last Modified: 30/11/20
 # -----------------------------------------------------------------------------
-#getOverallRD <- function(wd.rt.data, base, method, PAIR1, n1) {
-#   nrds.m <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
-#   for (c in 2:22) {
-#      chr <- chrs[c]
-#      nrds.chr.m <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
-#  
-#      nrds.m <- rbind(nrds.m, nrds.chr.m)
-#   }
-# 
-#   colnames(nrds.m) <- gsub("\\.", "-", colnames(nrds.m))   ## ADD 29/11/20; 05/10/19
-#   #return(nrds.m[, -1])   ## BUG 2019/10/14: Remove column BED
-#   return(nrds.m)
-#}
+getOverallRD <- function(wd.rt.data, base, method, PAIR1, n1) {
+   nrds.m <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+   for (c in 2:22) {
+      chr <- chrs[c]
+      nrds.chr.m <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+  
+      nrds.m <- rbind(nrds.m, nrds.chr.m)
+   }
+ 
+   #colnames(nrds.m) <- gsub("\\.", "-", colnames(nrds.m))   ## ADD 29/11/20; 05/10/19
+   #return(nrds.m[, -1])   ## BUG 2019/10/14: Remove column BED
+   return(nrds.m)
+}
 
-#getOverallDetectedRD <- function(wd.rt.data, base, method, PAIR1, n1, samples) {
-#   nrds.d <- pipeGetDetectedRD(wd.rt.data, base, "chr1", PAIR1, n1, method, samples)
-#   for (c in 2:22) {
-#     chr <- chrs[c]
-#      nrds.chr.d <- pipeGetDetectedRD(wd.rt.data, base, chr, PAIR1, n1, method, samples)
-#  
-#      nrds.d <- rbind(nrds.d, nrds.chr.d)
-#   }
-# 
-#   return(nrds.d)
-#}
+getOverallDetectedRD <- function(wd.rt.data, base, method, PAIR1) {
+   nrds.d <- pipeGetDetectedRD(wd.rt.data, base, "chr1", PAIR1, method)
+   for (c in 2:22) {
+      chr <- chrs[c]
+      nrds.chr.d <- pipeGetDetectedRD(wd.rt.data, base, chr, PAIR1, method)
+  
+      nrds.d <- rbind(nrds.d, nrds.chr.d)
+   }
+ 
+   return(nrds.d)
+}
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT in sclc-wgs-rt.R (also refer to plotBootstrapsRT)
