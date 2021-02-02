@@ -38,10 +38,10 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples1 <- readTable(file.path(wd.ngs, "brca_wgs_n18.txt"), header=T, rownames=T, sep="")   ## M2/M1
+samples1 <- readTable(file.path(wd.ngs, "brca_wgs_n27.txt"), header=T, rownames=T, sep="")   ## M2/M1
 #samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n28.txt"), header=T, rownames=T, sep="")    ## Q4/Q1
 samples1 <- subset(samples1, M2 == 1)[,1]
-samples0 <- readTable(file.path(wd.ngs, "brca_wgs_n18.txt"), header=T, rownames=T, sep="")
+samples0 <- readTable(file.path(wd.ngs, "brca_wgs_n27.txt"), header=T, rownames=T, sep="")
 #samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n28.txt"), header=T, rownames=T, sep="")
 samples0 <- subset(samples0, M2 == 0)[,1]
 n1 <- length(samples1)
@@ -52,10 +52,14 @@ n0 <- length(samples0)
 # Last Modified: 09/08/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc)
-save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "m2-m1", ".RData")))
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
 # nrow(nrds)
-# [1] 2404209
+# [1] 2633695
+
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+# nrow(nrds)
+# [1] 2352331
 nrds.brca.m2 <- nrds
 
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
@@ -103,7 +107,7 @@ sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
-sprs.nbl.cl <- sprs
+sprs.brca <- sprs
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -122,15 +126,15 @@ for (c in 1:22) {
 }
 
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_NBL-CL-M2-M1_spline_spearman_chr2")
+file.name <- file.path(wd.rt.plots, "RTS_BRCA-M2-M1_spline_spearman_chr2")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
-ylab.text <- "NBL-CL M2/M1"
-plotRTS(sprs.nbl.cl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2="-0.20", offset="           ")
+ylab.text <- "BRCA M2/M1"
+plotRTS(sprs.brca, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2="-0.13", offset="           ")
 
 ### Figure 4D
 ## SCLC vs. LCL
-file.name <- file.path(wd.rt.plots, "RTS2_NBL-CL-M2-M1_vs_LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTS2_BRCA-M2-M1_vs_LCL_spline_spearman")
 main.text <- c("Replication timing skew", "")
 xlab.text <- "LCL S/G1"
-ylab.text <- "NBL-CL M2/M1"
-plotRTS2(sprs.nbl.cl$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)
+ylab.text <- "BRCA M2/M1"
+plotRTS2(sprs.brca$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)

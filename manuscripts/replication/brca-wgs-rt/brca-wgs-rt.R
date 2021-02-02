@@ -38,7 +38,7 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs.data <- file.path(wd.ngs, "data")
-samples1 <- readTable(file.path(wd.ngs, "brca_wgs_n18.txt"), header=T, rownames=T, sep="\t")
+samples1 <- readTable(file.path(wd.ngs, "brca_wgs_n27.txt"), header=T, rownames=T, sep="\t")
 n1 <- nrow(samples1)
 
 # -----------------------------------------------------------------------------
@@ -63,9 +63,9 @@ samples1 <- samples1[samples4,]
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1[,1])
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
-# [1] -0.835043
+# [1] -0.8376235
 # > max(cors.samples[,-c(1:4)])
-# [1] 0.7159929
+# [1] 0.7286896
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_brca-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_BRCA-CL-vs-LCL_spline_spearman")
@@ -80,9 +80,9 @@ plotSAMPLEvsRT(cors.samples, samples1[,1], file.name, main.text, ymin, ymax)
 # -----------------------------------------------------------------------------
 samples.brca <- setSamplesQ4(wd.rt.data, samples1[,1])
 samples1[,c("COR", "M2", "Q4")] <- samples.brca[,c("COR", "M2", "Q4")] 
-writeTable(samples1, file.path(wd.ngs, "brca_wgs_n18.txt"), colnames=T, rownames=F, sep="\t")
-#          0%         25%         50%         75%        100% 
-# -0.28136620 -0.14326296 -0.07182227  0.08254313  0.19817708 
+writeTable(samples1, file.path(wd.ngs, "brca_wgs_n27.txt"), colnames=T, rownames=F, sep="\t")
+#           0%          25%          50%          75%         100% 
+# -0.318593844 -0.144644811  0.001117642  0.122733386  0.195393937
 
 # -----------------------------------------------------------------------------
 # Last Modified: 30/11/20; 04/06/19; 21/04/19
@@ -145,9 +145,9 @@ samples$CANCER[1:n.brca] <- 1
 #samples$SAMPLE_ID <- samples$SAMPLE_ID
 #rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_brca_n15.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_brca_n27.pdf"), height=6, width=4.2)
 ymax <- 0.25
-ymin <- -0.3
+ymin <- -0.34
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5, lwd=2)
 
@@ -158,17 +158,17 @@ points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, p
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
-   if (sample$SAMPLE_ID == "VHIO179-1" || sample$SAMPLE_ID == "AB521M" || sample$SAMPLE_ID == "PAR1006")
+   if (sample$SAMPLE_ID == "HCI005" || sample$SAMPLE_ID == "VHIO098-1" || sample$SAMPLE_ID == "STG331" || sample$SAMPLE_ID == "PAR1006")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, -0.55), cex=1.5)
-   else if (sample$SAMPLE_ID == "AB577M")
+   else if (sample$SAMPLE_ID == "")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.23, -0.55), cex=1.5)
-   else if (sample$SAMPLE_ID == "AB790")
+   else if (sample$SAMPLE_ID == "")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.3, 0.5), cex=1.5)
    else if (sample$SAMPLE_ID == "AB555M")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 1.17), cex=1.5)
-   else if (sample$SAMPLE_ID == "STG139M-1" || sample$SAMPLE_ID == "STG282M")
+   else if (sample$SAMPLE_ID == "STG139M-1" || sample$SAMPLE_ID == "STG282M" || sample$SAMPLE_ID == "STG195M" || sample$SAMPLE_ID == "AB790" || sample$SAMPLE_ID == "STG143-1")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.19, 1.17), cex=1.5)
-   else if (sample$SAMPLE_ID == "STG139M-2")
+   else if (sample$SAMPLE_ID == "")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.19, 0.5), cex=1.5)
    else
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 0.5), cex=1.5)
@@ -177,12 +177,12 @@ for (s in 1:nrow(samples)) {
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, lighterred, lighterblue, blue), cex=1.5)
 
 axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-axis(side=2, at=seq(-0.1, 0.1, by=0.2), labels=c(-0.1, 0.1), cex.axis=1.5)
+axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
 mtext("Overall read depth vs. RT [rho]", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="BRCA", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
-mtext(text=c("n=15"), side=1, cex=1.6, line=2.3, at=c(1,2,3))
+mtext(text=c("n=27"), side=1, cex=1.6, line=2.3, at=c(1,2,3))
 dev.off()
 
 # -----------------------------------------------------------------------------
@@ -229,7 +229,7 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 # https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
 plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
    xlim <- c(0, xlim.max)
-   ylim <- c(-0.3, 0.25)
+   ylim <- c(-0.34, 0.25)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
@@ -242,8 +242,30 @@ plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col,
    legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
    
    axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-   axis(side=2, at=seq(-0.1, 0.1, by=0.2), labels=c(-0.1, 0.1), cex.axis=1.5)
+   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
    mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   mtext(main.text[2], line=0.3, cex=1.6)
+   dev.off()
+}
+
+plotFACS30 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
+   xlim <- c(0, xlim.max)
+   #ylim <- c(-0.35, 0.25)
+ 
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(n3 ~ snr3, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   lm.fit <- lm(n3 ~ snr3)
+   abline(lm.fit, col=col, lwd=4)
+ 
+   cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
+   #cor3 <- round0(cor3[[4]], digits=2)
+   #legend(pos, paste("rho = ", cor3), text.col=col, pch=15, col=col2, pt.cex=2.5, cex=1.5, pt.lwd=0, text.font=1)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
+ 
+   axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
+   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
+   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   mtext(main.text[2], line=0.3, cex=1.6)
    dev.off()
 }
 
@@ -262,16 +284,30 @@ plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col,
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
 samples.tmp <- samples
-samples <- samples[setdiff(rownames(samples), c("VHIO179-2", "STG139M-2", "STG201-2")),]
+samples <- samples[setdiff(rownames(samples), c("STG139M-2", "STG143-2", "STG201-2", "VHIO098-2", "VHIO179-2")),]
 samples <- samples.tmp
 
-file.name <- file.path(wd.rt.plots, "G4R_BRCA_3P_n15")
-main.text <- c(paste("In silico vs. G4R"), "")
+file.name <- file.path(wd.rt.plots, "G4R_BRCA_3P_n22")
+main.text <- c(paste("In silico vs. G4R"), "n=22")
 xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- "black"
 cols2 <- "darkgray"
 plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
+
+###
+##
+file.name <- file.path(wd.rt.plots, "G4R_READ")
+main.text <- c(paste("Reads vs. G4R"), "n=27")
+xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
+ylab.text <- "Number of reads [log10]"
+cols <- "black"
+cols2 <- "darkgray"
+plotFACS30(log10(samples1$BAM_C), samples1$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
+
+
+
+
 
 
 
