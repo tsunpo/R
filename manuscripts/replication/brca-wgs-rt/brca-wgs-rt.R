@@ -248,12 +248,12 @@ plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col,
    dev.off()
 }
 
-plotFACS30 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
-   xlim <- c(0, xlim.max)
-   #ylim <- c(-0.35, 0.25)
+plotFACS30 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos) {
+   #xlim <- c(0, xlim.max)
+   ylim <- c(-0.35, 0.25)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   plot(n3 ~ snr3, ylim=ylim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col, lwd=4)
  
@@ -287,9 +287,24 @@ samples.tmp <- samples
 samples <- samples[setdiff(rownames(samples), c("STG139M-2", "STG143-2", "STG201-2", "VHIO098-2", "VHIO179-2")),]
 samples <- samples.tmp
 
-file.name <- file.path(wd.rt.plots, "G4R_BRCA_3P_n22")
-main.text <- c(paste("In silico vs. G4R"), "n=22")
-xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
+
+samples$SAMPLE_ID <- gsub("-1", "", samples$SAMPLE_ID)
+
+###
+##
+file.name <- file.path(wd.rt.plots, "BRCA_SORTING-vs-G4R_n22")
+main.text <- c(paste("In silico vs. G4R"), "")
+#xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
+xlab.text <- "Number of G4R [#]"
+ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- "black"
+cols2 <- "darkgray"
+plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
+
+##
+file.name <- file.path(wd.rt.plots, "G4R_BRCA_G4RS")
+main.text <- c(paste("In silico vs. G4R"), "n=27")
+xlab.text <- expression(paste(Delta, "G4R skew = (E-L)/(E+L)"))
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- "black"
 cols2 <- "darkgray"
@@ -297,13 +312,13 @@ plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, 
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "G4R_READ")
-main.text <- c(paste("Reads vs. G4R"), "n=27")
-xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
-ylab.text <- "Number of reads [log10]"
+file.name <- file.path(wd.rt.plots, "BRCA_G4R-vs-G4RS_RHO")
+main.text <- c(paste("In silico vs. G4RS"), "")
+xlab.text <- "G-quadruplex region skew (G4RS) [rho]"
+ylab.text <- "Overall read depth vs. RT [rho]"
 cols <- "black"
 cols2 <- "darkgray"
-plotFACS30(log10(samples1$BAM_C), samples1$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
+plotFACS30(samples$COR, g4rs$rho, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
 
 
 

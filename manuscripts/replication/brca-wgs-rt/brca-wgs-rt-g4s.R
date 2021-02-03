@@ -42,11 +42,28 @@ samples <- readTable(file.path(wd.ngs, "brca_wgs_n27.txt"), header=T, rownames=T
 n <- nrow(samples)
 
 # -----------------------------------------------------------------------------
-# G-quadruplex region skew (GRS)
+# G-quadruplex region skew (G4RS)
 # Last Modified: 02/02/21
 # -----------------------------------------------------------------------------
-g4rs <- getG4RS(wd.meta, samples, nrds.lcl, bed.gc)
+g4rs <- getG4RS(wd.meta, samples, bed.gc, nrds.lcl)
 samples$G4RS <- g4rs$G4RS
+
+g4rs$rho <- 0
+for (s in 1:nrow(g4rs)) {
+   ## G4RS vs. LCL RTS
+   cor3 <- cor.test(as.numeric(g4s[s, paste0("chr", 1:22)]), sprs.lcl$spr, method="spearman", exact=F)
+   g4rs$rho[s] <- cor3[[4]]
+
+   sample <- samples$SAMPLE_ID[s]
+   file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample))
+   main.text <- c("BRCA G4RS vs. LCL RTS", "G4RS = (E-L)/(E+L)")
+   xlab.text <- paste0(sample, " G4RS")
+   ylab.text <- "LCL RTS"
+   cols <- "black"
+   cols2 <- "darkgray"
+   plotG4RS(sprs.lcl$spr, as.numeric(g4s[s, paste0("chr", 1:22)]), file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
+}
+
 
 ## Replication timing skew (RTS)
 file.name <- file.path(wd.rt.plots, "RTS_BRCA-M2-M1_spline_spearman_chr2")
