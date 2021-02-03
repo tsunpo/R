@@ -75,6 +75,28 @@ plotG4RS <- function(snr3, n3, file.name, main.text, xlab.text, ylab.text, col, 
    dev.off()
 }
 
+plotBoxG4R <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=4.2) {
+   trait <- rep(0, length(tpm.1))
+   trait <- c(trait, rep(1, length(tpm.2)))
+   trait <- as.factor(trait)
+   expr <- as.numeric(c(tpm.1, tpm.2))
+ 
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("Number of G4R [#]"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+ 
+   p <- testU(tpm.1, tpm.2)
+   text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)
+ 
+   ##
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.2)
+   #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
+   axis(side=1, at=1, labels=paste0("n=", format(length(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
+   axis(side=1, at=2, labels=paste0("n=", format(length(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
+ 
+   mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
+   dev.off()
+}
+
 # =============================================================================
 # Inner Class  : BED File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)

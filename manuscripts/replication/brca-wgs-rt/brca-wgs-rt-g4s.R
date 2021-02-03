@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationTiming.R", "Transcription.R")
+handbooks  <- c("Commons.R", "GQuadruplex.R", "TranscriptionReplicationConflict.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -63,6 +63,14 @@ for (s in 1:nrow(g4rs)) {
    cols2 <- "darkgray"
    plotG4RS(sprs.lcl$spr, as.numeric(g4s[s, paste0("chr", 1:22)]), file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
 }
+
+## G4RS E vs. L
+ylim <- c(min(c(g4rs$L, g4rs$E)), max(c(g4rs$L, g4rs$E)))
+file.name <- paste0("boxplot_brca_g4rs_E+L")
+plotBoxG4R(wd.rt.plots, file.name, g4rs$L, g4rs$E, main="BRCA G4R", names=c("Late", "Early"), cols=c("darkgray", "darkgray"), ylim)
+
+
+
 
 
 ## Replication timing skew (RTS)
