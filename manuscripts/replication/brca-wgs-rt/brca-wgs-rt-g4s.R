@@ -51,23 +51,25 @@ samples$G4RS <- g4rs$G4RS
 g4rs$rho <- 0
 for (s in 1:nrow(g4rs)) {
    ## G4RS vs. LCL RTS
-   cor3 <- cor.test(as.numeric(g4s[s, paste0("chr", 1:22)]), sprs.lcl$spr, method="spearman", exact=F)
+   g4s <- as.numeric(g4rs[s, paste0("chr", 1:22)])
+   rts <- sprs.lcl$spr
+   cor3 <- cor.test(rts, g4s, method="spearman", exact=F)
    g4rs$rho[s] <- cor3[[4]]
 
    sample <- samples$SAMPLE_ID[s]
    file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample))
-   main.text <- c("BRCA G4RS vs. LCL RTS", "G4RS = (E-L)/(E+L)")
-   xlab.text <- paste0(sample, " G4RS")
+   main.text <- c(paste0(sample, " G4RS vs. LCL RTS"), "G4RS = (E-L)/(E+L)")
+   xlab.text <- "G-quadruplex region skew (Chromosome)"
    ylab.text <- "LCL RTS"
-   cols <- "black"
-   cols2 <- "darkgray"
-   plotG4RS(sprs.lcl$spr, as.numeric(g4s[s, paste0("chr", 1:22)]), file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
+   cols <- c(red, blue, "black", green)
+   plotG4RS(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols, "topright")
 }
 
 ## G4RS E vs. L
 ylim <- c(min(c(g4rs$L, g4rs$E)), max(c(g4rs$L, g4rs$E)))
-file.name <- paste0("boxplot_brca_g4rs_E+L")
-plotBoxG4R(wd.rt.plots, file.name, g4rs$L, g4rs$E, main="BRCA G4R", names=c("Late", "Early"), cols=c("darkgray", "darkgray"), ylim)
+file.name <- paste0("boxplot_brca_g4rs_E+L_darkgray")
+main.txt <- c("BRCA G4R", "")
+plotBoxG4R(wd.rt.plots, file.name, g4rs$L, g4rs$E, main.txt, names=c("Late", "Early"), cols=c("darkgray", "darkgray"), ylim)
 
 
 
