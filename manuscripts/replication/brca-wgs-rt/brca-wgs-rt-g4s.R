@@ -31,21 +31,28 @@ method <- "rpkm"
 
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.meta  <- file.path(wd, BASE, "metadata", "Hänsel-Hertsch 2020", "DG4Rs")
+wd.meta  <- file.path(wd, BASE, "metadata", "Hänsel-Hertsch 2020")   #, "DG4Rs")
 
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs.data <- file.path(wd.ngs, "data")
-samples <- readTable(file.path(wd.ngs, "brca_wgs_n27.txt"), header=T, rownames=T, sep="\t")
+samples <- readTable(file.path(wd.ngs, "brca_wgs_n22.txt"), header=T, rownames=T, sep="\t")
 n <- nrow(samples)
+
+helicases <- readTable(file.path(wd.meta, "Helicases.list"), header=F, rownames=F, sep="\t")
+#helicases <- rownames(getGenes(helicases))
+tfbs      <- readTable(file.path(wd.meta, "TFBS.list"), header=F, rownames=F, sep="\t")
+#tfbs      <- rownames(getGenes(tfbs))
 
 # -----------------------------------------------------------------------------
 # G-quadruplex region skew (G4RS)
 # Last Modified: 02/02/21
 # -----------------------------------------------------------------------------
 g4rs <- getG4RS(wd.meta, samples, bed.gc, nrds.lcl)
+save(g4rs, file=file.path(wd.rt.data, paste0("brca_g4rs_n22.RData")))
+
 samples$G4RS <- g4rs$G4RS
 
 g4rs$rho <- 0
@@ -58,9 +65,10 @@ for (s in 1:nrow(g4rs)) {
 
    sample <- samples$SAMPLE_ID[s]
    file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample))
-   main.text <- c(paste0(sample, " G4RS vs. LCL RTS"), "G4RS = (E-L)/(E+L)")
-   xlab.text <- "G-quadruplex region skew (Chromosome)"
-   ylab.text <- "LCL RTS"
+   main.text <- c(paste0(sample, " G-quadruplex region skew"), "G4RS = (E-L)/(E+L)")
+   #main.text <- c(paste0(sample, ""), "")
+   xlab.text <- "G4RS (Chromosome)"
+   ylab.text <- "LCL S/G1"
    cols <- c(red, blue, "black", green)
    plotG4RS(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols, "topright")
 }

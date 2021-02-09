@@ -60,6 +60,9 @@ samples1 <- samples1[samples4,]
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
 # Last Modified: 30/01/21
 # -----------------------------------------------------------------------------
+cors.samples <- getSAMPLEvsRT(wd.rt.data, rownames(samples))
+
+
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1[,1])
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
@@ -78,9 +81,9 @@ plotSAMPLEvsRT(cors.samples, samples1[,1], file.name, main.text, ymin, ymax)
 # Overall correlation with LCL S/G1
 # Last Modified: 30/01/21
 # -----------------------------------------------------------------------------
-samples.brca <- setSamplesQ4(wd.rt.data, samples1[,1])
-samples1[,c("COR", "M2", "Q4")] <- samples.brca[,c("COR", "M2", "Q4")] 
-writeTable(samples1, file.path(wd.ngs, "brca_wgs_n27.txt"), colnames=T, rownames=F, sep="\t")
+samples.brca <- setSamplesQ4(wd.rt.data, rownames(samples))
+samples[,c("COR", "M2", "Q4")] <- samples.brca[,c("COR", "M2", "Q4")] 
+writeTable(samples, file.path(wd.ngs, "brca_wgs_n22.txt"), colnames=T, rownames=F, sep="\t")
 #           0%          25%          50%          75%         100% 
 # -0.318593844 -0.144644811  0.001117642  0.122733386  0.195393937
 
@@ -145,8 +148,8 @@ samples$CANCER[1:n.brca] <- 1
 #samples$SAMPLE_ID <- samples$SAMPLE_ID
 #rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_brca_n22_fit.pdf"), height=6, width=4.2)
-ymax <- 0.25
+pdf(file.path(wd.rt.plots, "boxplot_brca_n22.pdf"), height=6, width=4.2)
+ymax <- 0.24
 ymin <- -0.35
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5, lwd=2)
@@ -183,8 +186,9 @@ for (s in 1:nrow(samples)) {
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, lighterred, lighterblue, blue), cex=1.5)
 
 axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
+axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.5)
 mtext("Overall read depth vs. LCL RT [rho]", side=2, line=2.75, cex=1.6)
+#mtext("Overall read depth correlation [rho]", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="BRCA", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
@@ -235,7 +239,7 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 # https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
 plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
    xlim <- c(0, xlim.max)
-   ylim <- c(-0.34, 0.25)
+   ylim <- c(-0.34, 0.24)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", pch=15, col=col2, lwd=0, cex=2, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
@@ -248,7 +252,7 @@ plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col,
    legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
    
    axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
+   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.5)
    mtext(ylab.text, side=2, line=2.75, cex=1.6)
    mtext(main.text[2], line=0.3, cex=1.6)
    dev.off()
@@ -300,11 +304,12 @@ samples$SAMPLE_ID <- gsub("-1", "", samples$SAMPLE_ID)
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4R_n22_darkgray")
+file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4R_n22")
 main.text <- c(paste("In silico vs. G4R"), "")
 #xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
-xlab.text <- "Number of G4R [#]"
+xlab.text <- "Number of G4R (Hänsel-Hertsch et al.) [#]"
 ylab.text <- "Overall read depth vs. LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+#ylab.text <- "Overall read depth correlation [rho]"         
 cols <- "black"
 cols2 <- "darkgray"
 plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
@@ -313,17 +318,18 @@ plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, 
 file.name <- file.path(wd.rt.plots, "G4R_BRCA_G4RS")
 main.text <- c(paste("In silico vs. G4R"), "n=27")
 xlab.text <- expression(paste(Delta, "G4R skew = (E-L)/(E+L)"))
-ylab.text <- "Overall read depth vs. LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+ylab.text <- "Overall read depth correlation [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- "black"
 cols2 <- "darkgray"
 plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4RS_RHO_E-L_green")
+file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4RS_RHO_E-L")
 main.text <- c(paste("In silico vs. G4RS"), "G4RS = (E-L)/(E+L)")
 xlab.text <- "G-quadruplex region skew [rho]"
-ylab.text <- "Overall read depth vs. LCL RT [rho]"
+ylab.text <- "Overall read depth vs. LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+#ylab.text <- "Overall read depth correlation [rho]"   
 cols <- "black"
 cols2 <- green
 plotG4RSvsIS(samples$COR, g4rs$rho, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")

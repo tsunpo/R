@@ -353,7 +353,7 @@ plotRDvsRT <- function(reads1, timings, file.name, main.text, ylab.text, xlab.te
    }
  
    png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   plot(reads1 ~ timings, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", col=colours[2], cex.axis=1.4, cex.lab=1.5, cex.main=1.6)
+   plot(reads1 ~ timings, xlim=xlim, ylim=ylim, ylab="", xlab=xlab.text, main=main.text[1], xaxt="n", col=colours[2], cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
    #pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
    abline(v=0, lty=5, lwd=2)
@@ -364,11 +364,13 @@ plotRDvsRT <- function(reads1, timings, file.name, main.text, ylab.text, xlab.te
 
    RT <- "RT"   #paste0(legends[1], "/", legends[2])
    if (cor1 > 0) {
-      legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], bty="n", cex=1.5)
+      legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], text.font=2, bty="n", cex=1.6)
    } else {
-      legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = \u2212", round0(abs(cor1), digits=2), ")"), text.col=colours[1], bty="n", cex=1.5)
+      legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = \u2212", round0(abs(cor1), digits=2), ")"), text.col=colours[1], text.font=2, bty="n", cex=1.6)
    }
-   axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3), cex.axis=1.4)
+   
+   axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3), cex.axis=1.6)
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
    #mtext(main.text[2], line=0.3, cex=1.2)
    dev.off()
 }
@@ -385,7 +387,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
 
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", cex.axis=1.4, cex.lab=1.5, cex.main=1.6)
+   plot(NULL, xlim=xlim, ylim=ylim, ylab="", xlab=xlab.text, main=main.text[1], xaxt="n", cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
    abline(v=0, lty=5, lwd=2)
    
    lm.fit2 <- lm(reads2 ~ timings)   ## G1 first
@@ -398,12 +400,14 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    
    RT <- "RT"   #paste0(legends[1], "/", legends[2])
    if (cor1 < 0 && cor2 < 0) {
-      legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, bty="n", cex=1.5)
+      legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, text.font=2, bty="n", cex=1.6)
    } else if (as.numeric(cor1) > 0 && as.numeric(cor2) < 0) {
-      legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], bty="n", cex=1.5)        
-      legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")"), text.col=colours[2], bty="n", cex=1.5)
+      legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], text.font=2, bty="n", cex=1.6)        
+      legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")"), text.col=colours[2], text.font=2, bty="n", cex=1.6)
    }
-   axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3), cex.axis=1.4)
+   
+   axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3), cex.axis=1.6)
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
    #mtext(main.text[2], line=0.3, cex=1.2)
    dev.off()
 }

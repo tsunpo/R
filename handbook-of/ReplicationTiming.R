@@ -501,10 +501,10 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    
    RT <- "RT"   #paste0(legends[1], "/", legends[2])
    if (cor1 < 0 && cor2 < 0) {
-      legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, bty="n", cex=1.25)
+      legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), paste0(cor, " = ", round0(cor2, digits=2), " (", legends[2], " vs. ", RT, ")")), text.col=colours, text.font=2, bty="n", cex=1.25)
    } else if (as.numeric(cor1) > 0 && as.numeric(cor2) < 0) {
-      legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], bty="n", cex=1.25)        
-      legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")"), text.col=colours[2], bty="n", cex=1.25)
+      legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], text.font=2, bty="n", cex=1.25)        
+      legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")"), text.col=colours[2], text.font=2, bty="n", cex=1.25)
    }
    axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3), cex.axis=1.2)
    mtext(main.text[2], line=0.3, cex=1.2)

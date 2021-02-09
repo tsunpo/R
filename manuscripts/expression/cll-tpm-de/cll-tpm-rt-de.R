@@ -568,22 +568,23 @@ fdrToP <- function(fdr, de) {
    return(max(de.sig$P))
 }
 
-plotVolcano <- function(de, fdr, genes, file.de, file.main, xlab.text) {
-   pvalue <- fdrToP(fdr, de)
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
+   #pvalue <- fdrToP(fdr, de)
+   #fdr <- pvalueToFDR(pvalue, de)
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
-   ymax <- max(de$log10P)
-   #ymax <- 6.8
+   xmin <- min(de$LOG2_FC)
+   if (ymax ==0) ymax <- max(de$log10P)
    
    pdf(file.de, height=6, width=6)
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="-log10(p-value)", col="lightgray", main=file.main[1], cex=1.2, cex.axis=1.2, cex.lab=1.2, cex.main=1.25)
 
    abline(h=c(-log10(pvalue)), lty=5)
    #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)    ## SCLC (IZ)
-   text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
+   #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
 
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.2)
@@ -617,6 +618,30 @@ plotVolcano <- function(de, fdr, genes, file.de, file.main, xlab.text) {
    legend("topleft", legend=c("Upregulated", "Downregulated"), col=c("gold", "dodgerblue"), pch=19)
    dev.off()
 }
+
+## CLL ALL genes
+xlab.text <- "CLL S/G1 [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_cll_median0_rfd_p1e-3_all_Helicases")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("CLL expressed genes (n=22,807)", "Expression vs. In-silico sorting")
+plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
+
+#overlaps <- intersect(helicases, de.tpm.gene$external_gene_name)
+#setdiff(helicases, overlaps)
+
+xlab.text <- "CLL S/G1 [log2 fold change]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_cll_median0_rfd_p1e-3_all_TFBS")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("CLL expressed genes (n=22,807)", "Expression vs. In-silico sorting")
+plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
+
+#overlaps <- intersect(tfbs, de.tpm.gene$external_gene_name)
+#setdiff(tfbs, overlaps)
+
+
+
 
 ##
 xlab.text <- "CLL M2/M1 [log2FC]"

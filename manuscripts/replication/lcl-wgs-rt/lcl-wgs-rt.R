@@ -97,26 +97,26 @@ for (c in 1:22) {
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
    ## Figure 1
-   #xlab.text <- "RT [log2]"
-   #ylab.text <- "Read depth [RPKM]"
-   #main.text <- c(paste0("LCL read depth vs. RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
-   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman_nasa.blue_google.red_lwd=1.3_lwd=3"))
-   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
-
-   ## SFigure 1
    xlab.text <- "RT [log2]"
    ylab.text <- "Read depth [RPKM]"
-   main.text <- c(paste0("LCL vs. RT (Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   main.text <- c(paste0("LCL read depth vs. RT (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
    
-   main.text <- c(paste0("G1 vs. RT (Chr", c, ")"), "")
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
-   plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+   ## SFigure 1
+   #xlab.text <- "RT [log2]"
+   #ylab.text <- "Read depth [RPKM]"
+   #main.text <- c(paste0("Chr", c))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
    
-   main.text <- c(paste0("S vs. RT (Chr", c, ")"), "")
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
-   plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+   #main.text <- c(paste0("Chr", c), "")
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
+   #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(lighterblue, alpha.f=0.01)), c("S", "G1"), method="spearman")
+   
+   #main.text <- c(paste0("Chr", c), "")
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
+   #plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(lighterred, alpha.f=0.01)), c("S", "G1"), method="spearman")
 }
 
 ## Replication timing skew (RTS)

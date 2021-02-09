@@ -72,7 +72,7 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
    xlim <- c(xlim[1]-offset, xlim[2]+offset)
    
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(rts ~ g4s, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], pch=19, col="white", cex=1.2, cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
+   plot(rts ~ g4s, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], yaxt="n", xaxt="n", pch=19, col="white", cex=1.2, cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
    abline(h=rts[2], lty=5, lwd=1.3)
    
    idx <- which(rts > rts[2])
@@ -100,7 +100,10 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
    cor3 <- cor.test(rts, g4s, method="spearman", exact=F)
    legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols[4], text.font=2, bty="n", cex=1.2)
 
-   mtext(main.text[2], cex=1.25, line=0.3)
+   axis(side=2, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.2)
+   axis(side=1, at=seq(-0.4, 0.8, by=0.4), labels=c(-0.4, 0, 0.4, 0.8), cex.axis=1.2)
+   axis(side=1, at=seq(-0.2, 1, by=0.4), labels=c(-0.2, 0.2, 0.6, 1), cex.axis=1.2)
+   mtext(main.text[2], cex=1.25, line=0.29)
    dev.off()
 }
 
@@ -122,25 +125,26 @@ plotBoxG4R <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, names, co
    axis(side=1, at=1, labels=paste0("n=", format(sum(tpm.1), big.mark=",", scientific=F)), line=1.5, col=NA, cex.axis=1.5)
    axis(side=1, at=2, labels=paste0("n=", format(sum(tpm.2), big.mark=",", scientific=F)), line=1.5, col=NA, cex.axis=1.5)
  
-   mtext("Number of G4R [#]", side=2, line=2.9, cex=1.6)   
+   mtext("Number of G4R [kb window]", side=2, line=2.9, cex=1.6)   
    mtext("", line=0.3, cex=1.25)
    dev.off()
 }
 
 plotG4RSvsIS <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos) {
    #xlim <- c(0, xlim.max)
-   ylim <- c(-0.35, 0.25)
+   ylim <- c(-0.35, 0.24)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, ylim=ylim, ylab="", xlab=xlab.text, main="", yaxt="n", col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   plot(n3 ~ snr3, ylim=ylim, ylab="", xlab=xlab.text, main="", yaxt="n", xaxt="n", col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col, lwd=4)
  
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
    legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
  
+   axis(side=1, at=seq(-0.2, 1, by=0.2), labels=c(-0.2, 0, 0.2, 0.4, 0.6, 0.8, 1), cex.axis=1.5)
    axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
+   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.5)
    mtext(ylab.text, side=2, line=2.75, cex=1.6)
  
    mtext(main.text[1], line=1.8, cex=1.7, font=2)

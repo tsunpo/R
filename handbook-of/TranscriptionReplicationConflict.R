@@ -368,7 +368,7 @@ plotBoxNRFD <- function(base, BASE, ylim, ylim2=NA, tpm.gene.log2.m.rfd.ctr.iz.e
    
    ## IZ
    main.txt <- paste0(BASE, " early IZ genes")
-   cols=c("red", "red")
+   cols=c(red, red)
 
    file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_IZ_E_HO+CD")
    plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [TSS]", cols, ylim, height=5, width=3.2)
@@ -393,7 +393,7 @@ plotBoxNRFD <- function(base, BASE, ylim, ylim2=NA, tpm.gene.log2.m.rfd.ctr.iz.e
 
    ## TZ
    main.txt <- paste0(BASE, " early TZ genes")
-   cols=c("blue", "blue")
+   cols=c(blue, blue)
 
    file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_TZ_E_HO+CD")
    plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [TSS]", cols, ylim, isFlip=T, height=5, width=3.2)
