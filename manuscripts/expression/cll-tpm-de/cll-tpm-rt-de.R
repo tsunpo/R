@@ -115,8 +115,9 @@ nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 
 ###
 ## TTR and CTR (IZ +TZ)
-save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd0.RData"))
+save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
 
+load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
 file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
 #file.name <- file.path(wd.de.data, "tpm-gene-median0_log2_m_de_rfd.RData")
 setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)

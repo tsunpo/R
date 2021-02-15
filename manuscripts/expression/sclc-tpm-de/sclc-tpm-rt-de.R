@@ -122,6 +122,7 @@ nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
 #load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
 
+load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
 file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
 #file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd.RData")
 #file.name <- file.path(wd.de.data, "tpm_gene_r5p47_log2_m_rfd.RData")
@@ -206,7 +207,7 @@ load(file.name)
 
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
-file.name <- paste0("boxplot3_sclc_tpm.gene_RFD_3.5")
+file.name <- paste0("boxplot3_sclc_tpm.gene_RFD_3.5_FigureS1")
 plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
 
 file.name <- paste0("boxplot4_sclc_tpm.gene_RFD_3.2")
@@ -245,20 +246,20 @@ report["L", "IZ"]  <- toString(getGeneRFD(genes, tpm.gene.log2.m.rfd.ctr.iz.l))
 # -----------------------------------------------------------------------------
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
-file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TTR+IZ_nasa.blue_P")
+file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TTR+IZ")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC genes", names=c("TTR", "IZ"), cols=c("black", red), ylim)
 
-file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TTR+TZ_nasa.blue_P")
+file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TTR+TZ")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, main="SCLC genes", names=c("TTR", "TZ"), cols=c("black", blue), ylim)
 
-file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TZ+IZ_nasa.blue_P")
+file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TZ+IZ")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC genes (CTR)", names=c("TZ", "IZ"), cols=c(blue, red), ylim)
 
 ##
-file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_IZ_E+L_nasa.blue_P")
+file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_IZ_E+L")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC IZ genes", names=c("Late", "Early"), cols=c(red, red), ylim)
 
-file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TZ_E+L_nasa.blue_P")
+file.name <- paste0("boxplot0_sclc_tpm.gene_rfd_TZ_E+L")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, main="SCLC TZ genes", names=c("Late", "Early"), cols=c(blue, blue), ylim)
 
 # -----------------------------------------------------------------------------
@@ -287,12 +288,12 @@ plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd
 file.name <- paste0("boxplot0_sclc_tpm.gene.median0_rfd_IZ_E+L")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC IZ genes", names=c("Late", "Early"), cols=c(red, red), ylim)
 file.name <- paste0("boxplot_sclc_tpm.gene.median0_rfd_IZ_E+L")
-plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC IZ genes", names=c("Late", "Early"), cols=c(red, red), ylim)
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="IZ", names=c("Late", "Early"), cols=c(red, red), ylim)
 
 file.name <- paste0("boxplot0_sclc_tpm.gene.median0_rfd_IZ_E_HO+CD")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="SCLC early IZ genes", names=c("HO", "CD"), cols=c(red, red), ylim)
 file.name <- paste0("boxplot_sclc_tpm.gene.median0_rfd_IZ_E_HO+CD")
-plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="SCLC early IZ genes", names=c("HO", "CD"), cols=c(red, red), ylim)
+plotBox(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="Early IZ", names=c("HO", "CD"), cols=c(red, red), ylim)
 
 ##
 file.name <- paste0("boxplot0_sclc_tpm.gene.median0_rfd_TZ_E+L")
@@ -323,22 +324,47 @@ plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.r
 ylim <- c(-0.01, 0.033)
 plotBoxNRFD(base, BASE, ylim, ylim2=c(-36, 35), tpm.gene.log2.m.rfd.ctr.iz.e.cd, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, tpm.gene.log2.m.rfd.ctr.tz.e.ho)
 
+# -----------------------------------------------------------------------------
+# RFD vs. TPM (median0)
+# Last Modified: 11/02/21; 27/11/20; 01/09/20; 29/05/20
+# -----------------------------------------------------------------------------
+file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
+load(file.name)
+
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
+
+file.name <- paste0("boxplot3_sclc_tpm.gene.median0_RFD_3.5_FigureS1")
+plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
+
+file.name <- paste0("boxplot4_sclc_tpm.gene.median0_RFD_3.2")
+plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC expression (CTR)", names=c("L", "E", "L", "E"), cols=c(blue, blue, red, red), ylim)
+
+file.name <- paste0("boxplot6_sclc_tpm.gene.median0_RFD_3.5")
+plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
+
+
+
+
+
+
+
+
 ## TTR
 main.txt <- paste0(BASE, " early TTR genes")
 cols=c("white", "white")
 ylim <- c(-1E-16, 1E-16)
 
 file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_TTR_E_HO+CD")
-plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main=main.txt, names, "TTR efficiency [TSS]", cols, ylim, isFlip=T, height=5, width=3.2)
+plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main=main.txt, names=c("HO", "CD"), "TTR efficiency [TSS]", cols, ylim, isFlip=T, height=5, width=3.2)
 file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_TSS-NRFD_TTR_E_HO+CD")
-plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main="TSS", names, "TTR efficiency", cols, ylim, isFlip=T, height=5, width=3.2)
+plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main="TSS", names=c("HO", "CD"), "TTR efficiency", cols, ylim, isFlip=T, height=5, width=3.2)
 
-file.name <- paste0("boxplot_", base, "_tpm.gene_median0_GENE-NRFD_TTR_E_HO+CD")
-plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main=main.txt, names, "TTR efficiency [Gene body]", cols, ylim, isFlip=T)
-file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_GENE-NRFD_TTR_E_HO+CD")
-plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main=main.txt, names, "TTR efficiency [Gene body]", cols, ylim, isFlip=T, height=5, width=3.2)
+#file.name <- paste0("boxplot_", base, "_tpm.gene_median0_GENE-NRFD_TTR_E_HO+CD")
+#plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main=main.txt, names=c("HO", "CD"), "TTR efficiency [Gene body]", cols, ylim, isFlip=T)
+#file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_GENE-NRFD_TTR_E_HO+CD")
+#plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main=main.txt, names=c("HO", "CD"), "TTR efficiency [Gene body]", cols, ylim, isFlip=T, height=5, width=3.2)
 file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_GENE-NRFD_TTR_E_HO+CD")
-plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main="Gene body", names, "TTR efficiency", cols, ylim, isFlip=T, height=5, width=3.2)
+plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.e.cd, main="Gene body", names=c("HO", "CD"), "TTR efficiency", cols, ylim, isFlip=T, height=5, width=3.2)
 
 # -----------------------------------------------------------------------------
 # 
@@ -352,10 +378,10 @@ genes <- c("PIF1", "MARS", "KIF18B", "BRCA2")
 genes <- c("RP3-407E4.3", "BRD9")
 genes <- c("RP11-730B22.1")
 genes <- c("RAD9A", "PIF1", "AL049840.1", "KIF18B", "BRCA2")
-genes <- c("RSAD2", "IRF2", "IFI35", "IFI6")
+#genes <- c("RSAD2", "IRF2", "IFI35", "IFI6")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
-   plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "steelblue1", "bottomright")
+   plotSRC(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, yellow, "bottomright")
 }
 
 ##
@@ -441,7 +467,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    if (ymax ==0) ymax <- max(de$log10P)
    
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
 
    #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.1)    ## SCLC (IZ)
    #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
@@ -466,24 +492,24 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
          
             if (!is.na(gene$ADJ_1))
                if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
             else
                if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
          } else
             print(genes[g])
       }
    }
    
    #axis(side=1, at=seq(-3, 6, by=1), labels=c(-3, -2, -1, 0, 1, 2, 3, 4, 5, 6), cex.axis=1.1)
-   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.1)
-   axis(side=1, at=seq(-10, 10, by=4), labels=c(-10, -6, -2, 2, 6, 10), cex.axis=1.1)
+   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
+   axis(side=1, at=seq(-10, 10, by=4), labels=c(-10, -6, -2, 2, 6, 10), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topright", legend=c("Positively-correlated", "Negatively-correlated"), col=c("gold", "steelblue1"), pch=19, pt.cex=1.1, cex=1.1)
+   legend("topleft", legend=c("Positively", "Negatively"), col=c(yellow, lightblue), pch=19, pt.cex=1.2, cex=1.2)
    dev.off()
 }
 
@@ -542,9 +568,14 @@ plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
 xlab.text <- "SCLC S/G1 [log2 fold change]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-3_iz_e_cd")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c("SCLC early IZ, CD genes (n=1,377)", "Correlation between expression and in-silico sorting")
+file.main <- c("SCLC expression vs. In-silico sorting", "Early IZ, CD genes (n=1,377)")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene.rfd.iz.e.cd, 0.001, genes, file.de, file.main, xlab.text, ymax=4.3)
+
+
+
+
+
 
 ## SCLC IZ-E, CD genes
 xlab.text <- "SCLC S/G1 [log2 fold change]"

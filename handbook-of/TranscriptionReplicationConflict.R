@@ -107,9 +107,9 @@ setTRC <- function(tpm.gene.log2.m.rfd, rfd, file.name) {
 # -----------------------------------------------------------------------------
 getPvalueSignificanceLevel <- function(p) {
    text <- ""
-   if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
+   if (p < 1E-3) text <- "*"
+   if (p < 1E-6) text <- "**"
+   if (p < 1E-9) text <- "***"
    
    return(text)
 }
@@ -127,12 +127,12 @@ plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yli
    text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)
  
    ##
-   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.2)
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.25)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
-   axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
-   axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
+   axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.2)
+   axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.2)
    
-   mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
+   mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.25, line=0.3)
    dev.off()
 }
 
@@ -205,6 +205,7 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    #axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
  
    #mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
+   #mtext(paste0("Total Ensembl genes"), cex=1.25, line=0.3)
    dev.off()
 }
 
@@ -233,7 +234,7 @@ plotBox4 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, main, n
    axis(side=1, at=seq(1.5, 3.5, by=2), labels=c("TZ", "IZ"), font=2, cex.axis=1.25)
    axis(side=1, at=seq(1, 4, by=1), labels=c("(L)", "(E)", "(L)", "(E)"), line=1.2, col=NA, cex.axis=1.25)
  
-   mtext(paste0("(L)ate vs. (E)arly"), cex=1.2, line=0.3)
+   mtext(paste0("(L)ate vs. (E)arly"), cex=1.25, line=0.3)
    dev.off()
 }
 
@@ -270,7 +271,7 @@ plotBox6 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, tpm.5, 
    axis(side=1, at=seq(1, 5, by=2), labels=c("(L)", "(L)", "(L)"), line=1.2, col=NA, cex.axis=1.25)
    axis(side=1, at=seq(2, 6, by=2), labels=c("(E)", "(E)", "(E)"), line=1.2, col=NA, cex.axis=1.25)
    
-   mtext(paste0("(L)ate vs. (E)arly"), cex=1.2, line=0.3)
+   mtext(paste0("(L)ate vs. (E)arly"), cex=1.25, line=0.3)
    dev.off()
 }
 
@@ -289,15 +290,15 @@ plotBoxTSSNRFD <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, names
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
    if (outline)
-      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    else
-      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
  
    p <- testU(tpm.1$TSS_NRFD, tpm.2$TSS_NRFD)
    text <- ""
    if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
+   if (p < 1E-6)  text <- "**"
+   if (p < 1E-9) text <- "***"
    text(1.5, ylim[2], text, col="black", cex=2.5)
  
    ##
@@ -307,11 +308,11 @@ plotBoxTSSNRFD <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, names
    expr <- as.numeric(c(tpm.1$TSS_NRFD, tpm.2$TSS_NRFD))
  
    if (isFlip)
-      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(0.01, 0, -0.01, -0.02, -0.03), cex.axis=1.1)
+      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(0.01, 0, -0.01, -0.02, -0.03), cex.axis=1.2)
    else
-      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(-0.01, 0, 0.01, 0.02, 0.03), cex.axis=1.1)
+      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(-0.01, 0, 0.01, 0.02, 0.03), cex.axis=1.2)
  
-   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.2)
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.25)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
    axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
    axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
@@ -331,15 +332,15 @@ plotBoxGENENRFD <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, name
    
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
    if (outline)
-      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    else
-      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+      boxplot(expr ~ trait, outline=outline, xaxt="n", yaxt="n", ylab=ylab.txt, main=main.txt, col=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    
    p <- testU(tpm.1$GENE_NRFD, tpm.2$GENE_NRFD)
    text <- ""
    if (p < 1E-3)  text <- "*"
-   if (p < 1E-9)  text <- "**"
-   if (p < 1E-15) text <- "***"
+   if (p < 1E-6)  text <- "**"
+   if (p < 1E-9) text <- "***"
    text(1.5, ylim[2], text, col="black", cex=2.5)
  
    ##
@@ -349,11 +350,11 @@ plotBoxGENENRFD <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, name
    expr <- as.numeric(c(tpm.1$GENE_NRFD, tpm.2$GENE_NRFD))
  
    if (isFlip)
-      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(0.01, 0, -0.01, -0.02, -0.03), cex.axis=1.1)
+      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(0.01, 0, -0.01, -0.02, -0.03), cex.axis=1.2)
    else
-      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(-0.01, 0, 0.01, 0.02, 0.03), cex.axis=1.1)
+      axis(side=2, at=seq(-0.01, 0.03, by=0.01), labels=c(-0.01, 0, 0.01, 0.02, 0.03), cex.axis=1.2)
    
-   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.2)
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.25)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
    axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
    axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
@@ -370,19 +371,19 @@ plotBoxNRFD <- function(base, BASE, ylim, ylim2=NA, tpm.gene.log2.m.rfd.ctr.iz.e
    main.txt <- paste0(BASE, " early IZ genes")
    cols=c(red, red)
 
-   file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_IZ_E_HO+CD")
-   plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [TSS]", cols, ylim, height=5, width=3.2)
-   file.name <- paste0("boxplot2_", base, "_tpm.gene_median0_TSS-NRFD_IZ_E_HO+CD")
-   plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [TSS]", cols, ylim2, height=5, width=3.2, outline=T)
+   #file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_IZ_E_HO+CD")
+   #plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [TSS]", cols, ylim, height=5, width=3.2)
+   #file.name <- paste0("boxplot2_", base, "_tpm.gene_median0_TSS-NRFD_IZ_E_HO+CD")
+   #plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [TSS]", cols, ylim2, height=5, width=3.2, outline=T)
    file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_TSS-NRFD_IZ_E_HO+CD")
    plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="TSS", names, "IZ efficiency", cols, ylim, height=5, width=3.2)
 
-   file.name <- paste0("boxplot_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
-   plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [Gene body]", cols, ylim)
-   file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
-   plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [Gene body]", cols, ylim, height=5, width=3.2)
-   file.name <- paste0("boxplot2_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
-   plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [Gene body]", cols, ylim2, height=5, width=3.2, outline=T)
+   #file.name <- paste0("boxplot_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
+   #plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [Gene body]", cols, ylim)
+   #file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
+   #plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [Gene body]", cols, ylim, height=5, width=3.2)
+   #file.name <- paste0("boxplot2_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
+   #plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main=main.txt, names, "IZ efficiency [Gene body]", cols, ylim2, height=5, width=3.2, outline=T)
    file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_GENE-NRFD_IZ_E_HO+CD")
    plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="Gene body", names, "IZ efficiency", cols, ylim, height=5, width=3.2)
 
@@ -395,15 +396,15 @@ plotBoxNRFD <- function(base, BASE, ylim, ylim2=NA, tpm.gene.log2.m.rfd.ctr.iz.e
    main.txt <- paste0(BASE, " early TZ genes")
    cols=c(blue, blue)
 
-   file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_TZ_E_HO+CD")
-   plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [TSS]", cols, ylim, isFlip=T, height=5, width=3.2)
+   #file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_TSS-NRFD_TZ_E_HO+CD")
+   #plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [TSS]", cols, ylim, isFlip=T, height=5, width=3.2)
    file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_TSS-NRFD_TZ_E_HO+CD")
    plotBoxTSSNRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main="TSS", names, "TZ efficiency", cols, ylim, isFlip=T, height=5, width=3.2)
 
-   file.name <- paste0("boxplot_", base, "_tpm.gene_median0_GENE-NRFD_TZ_E_HO+CD")
-   plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [Gene body]", cols, ylim, isFlip=T)
-   file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_GENE-NRFD_TZ_E_HO+CD")
-   plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [Gene body]", cols, ylim, isFlip=T, height=5, width=3.2)
+   #file.name <- paste0("boxplot_", base, "_tpm.gene_median0_GENE-NRFD_TZ_E_HO+CD")
+   #plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [Gene body]", cols, ylim, isFlip=T)
+   #file.name <- paste0("boxplot0_", base, "_tpm.gene_median0_GENE-NRFD_TZ_E_HO+CD")
+   #plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main=main.txt, names, "TZ efficiency [Gene body]", cols, ylim, isFlip=T, height=5, width=3.2)
    file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_GENE-NRFD_TZ_E_HO+CD")
    plotBoxGENENRFD(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main="Gene body", names, "TZ efficiency", cols, ylim, isFlip=T, height=5, width=3.2)
 }
@@ -467,7 +468,7 @@ plotCYS0 <- function(file.name, main.text, ylab.text, xlab.text, cn, snr, pos) {
    dev.off()
 }
 
-plotCYS <- function(gene, cn, snr, pch, col, pos) {
+plotSRC <- function(gene, cn, snr, pch, col, pos) {
    unit <- (max(snr) - min(snr))/10
    xlim <- c(min(snr) - unit, max(snr) + unit)
    unit <- (max(cn) - min(cn))/10
@@ -479,13 +480,14 @@ plotCYS <- function(gene, cn, snr, pch, col, pos) {
    file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
- 
+   #plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   
    lm.fit <- lm(cn ~ snr)
    abline(lm.fit, col=col, lwd=5)
  
    cor <- cor.test(cn, snr, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col="black", bty="n", cex=1.9)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, text.font=2, bty="n", cex=1.9)
  
    axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
    #axis(side=2, at=seq(6, 8, by=1), labels=c(6, 7, 8), cex.axis=1.7)   ## MARS

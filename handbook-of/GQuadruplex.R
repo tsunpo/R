@@ -125,7 +125,7 @@ plotBoxG4R <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, names, co
    axis(side=1, at=1, labels=paste0("n=", format(sum(tpm.1), big.mark=",", scientific=F)), line=1.5, col=NA, cex.axis=1.5)
    axis(side=1, at=2, labels=paste0("n=", format(sum(tpm.2), big.mark=",", scientific=F)), line=1.5, col=NA, cex.axis=1.5)
  
-   mtext("Number of G4R [kb window]", side=2, line=2.9, cex=1.6)   
+   mtext("Number of G4R [kb window #]", side=2, line=2.9, cex=1.6)   
    mtext("", line=0.3, cex=1.25)
    dev.off()
 }
