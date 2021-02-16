@@ -325,13 +325,13 @@ plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, 
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4RS_RHO_E-L")
+file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4RS_RHO_E-L_orange")
 main.text <- c(paste("In silico vs. G4RS"), "G4RS = (E-L)/(E+L)")
 xlab.text <- "G-quadruplex region skew [rho]"
 ylab.text <- "Overall read depth vs. LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 #ylab.text <- "Overall read depth correlation [rho]"   
 cols <- "black"
-cols2 <- green
+cols2 <- orange
 plotG4RSvsIS(samples$COR, g4rs$rho, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
 
 

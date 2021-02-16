@@ -379,7 +379,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    if (ymax ==0) ymax <- max(de$log10P)
    
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
    
    abline(h=c(-log10(pvalue)), lty=5)
@@ -388,9 +388,9 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
    
    de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.4)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=yellow, cex=1.4)
    de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="steelblue1", cex=1.4)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=lightblue, cex=1.4)
  
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
@@ -402,35 +402,35 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
          
             if (!is.na(gene$ADJ_1))
                if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
             else
                if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
          } else
             print(genes[g])
       }
    }
    
    #axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.1)
-   axis(side=1, at=seq(-6, 12, by=2), labels=c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12), cex.axis=1.1)
+   axis(side=1, at=seq(-6, 12, by=2), labels=c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topright", legend=c("Positively-correlated", "Negatively-correlated"), col=c("gold", "steelblue1"), pch=19, pt.cex=1.1, cex=1.1)
+   legend("topleft", legend=c("Positively", "Negatively"), col=c(yellow, lightblue), pch=19, cex=1.25)
    dev.off()
 }
 
 ## NBL ALL genes
-xlab.text <- "NBL S/G1 [log2 fold change]"
+xlab.text <- "NBL S/G1 fold change [log2]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_rfd_p1e-3_all_Helicases")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 file.main <- c("NBL expressed genes (n=22,899)", "Expression vs. In-silico sorting")
 plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ymax=11)
 
-xlab.text <- "NBL S/G1 [log2 fold change]"
+xlab.text <- "NBL S/G1 fold change [log2]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_rfd_p1e-3_all_TFBS")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")

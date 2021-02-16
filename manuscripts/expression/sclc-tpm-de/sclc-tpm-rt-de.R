@@ -467,16 +467,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    if (ymax ==0) ymax <- max(de$log10P)
    
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
 
    #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.1)    ## SCLC (IZ)
    #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
    #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
    
    de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="gold", cex=1.4)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=yellow, cex=1.4)
    de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col="steelblue1", cex=1.4)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=lightblue, cex=1.4)
  
    abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
    #abline(v=0, col="gray")
@@ -509,34 +509,34 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
    axis(side=1, at=seq(-10, 10, by=4), labels=c(-10, -6, -2, 2, 6, 10), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topleft", legend=c("Positively", "Negatively"), col=c(yellow, lightblue), pch=19, pt.cex=1.2, cex=1.2)
+   legend("topleft", legend=c("Positively", "Negatively"), col=c(yellow, lightblue), pch=19, cex=1.25)
    dev.off()
 }
 
 ###
 ## SCLC ALL genes
-xlab.text <- "SCLC S/G1 [log2 fold change]"
+xlab.text <- "SCLC S/G1 fold change [log2]"
 file.main <- c("SCLC expressed genes (n=23,572)", "Expression vs. In-silico sorting")
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-3_all_PIF1")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ymax=5.5)
 
-xlab.text <- "SCLC S/G1 [log2 fold change]"
+xlab.text <- "SCLC S/G1 fold change [log2]"
 file.main <- c("SCLC expressed genes (n=23,572)", "Expression vs. In-silico sorting")
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-3_all_Helicases")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ymax=5.5)
 
-xlab.text <- "SCLC S/G1 [log2 fold change]"
+xlab.text <- "SCLC S/G1 fold change [log2]"
 file.main <- c("SCLC expressed genes (n=23,572)", "Expression vs. In-silico sorting")
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-3_all_TFBS")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ymax=5.5)
 
-xlab.text <- "SCLC S/G1 [log2 fold change]"
+xlab.text <- "SCLC S/G1 fold change [log2]"
 file.main <- c("SCLC expressed genes (n=23,572)", "Expression vs. In-silico sorting")
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-3_all_BRD9")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
@@ -565,7 +565,7 @@ plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ymax=5.5)
 
 
 ## SCLC IZ-E, CD genes
-xlab.text <- "SCLC S/G1 [log2 fold change]"
+xlab.text <- "SCLC S/G1 fold change [log2]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median0_rfd_p1e-3_iz_e_cd")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.main <- c("SCLC expression vs. In-silico sorting", "Early IZ, CD genes (n=1,377)")

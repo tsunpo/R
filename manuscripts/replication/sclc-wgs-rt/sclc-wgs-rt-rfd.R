@@ -241,6 +241,18 @@ plotBootstrapRFD(file.name, BASE, chr, 110000000, 160000000, nrds.RT.NRFD, bed.g
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10_new"))
 plotBootstrapRFD(file.name, BASE, chr, 100000000, 200000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 
+## Chr8 (FGFR1)
+c <- 8
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+plotBootstrapRFD(file.name, BASE, chr, 36268656,	40326352, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, gene="FGFR1")
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0_SIZE10_new"))
+plotBootstrapRFD(file.name, BASE, chr, 36268656,	40326352, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+
+
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
 # Last Modified: 28/11/20; 24/11/19

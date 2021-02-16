@@ -65,10 +65,10 @@ for (s in 1:nrow(g4rs)) {
 
    sample <- samples$SAMPLE_ID[s]
    file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample))
-   main.text <- c(paste0(sample, " G-quadruplex region skew"), "G4RS = (E-L)/(E+L)")
-   #main.text <- c(paste0(sample, ""), "")
+   #main.text <- c(paste0(sample, " G-quadruplex region skew"), "G4RS = (E-L)/(E+L)")
+   main.text <- c(paste0(sample, ""), "")
    xlab.text <- "G4RS (Chromosome)"
-   ylab.text <- "LCL S/G1"
+   ylab.text <- "LCL RTS"
    cols <- c(red, blue, "black", green)
    plotG4RS(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols, "topright")
 }

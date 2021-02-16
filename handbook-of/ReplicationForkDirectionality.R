@@ -870,8 +870,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    ##
    if (gene != "") {
       g <- getGene(gene)
-      abline(v=g$start_position/1E6, lty=2, lwd=1, col="#01DF01")
-      abline(v=g$end_position/1E6, lty=2, lwd=1, col="#01DF01")
+      abline(v=g$start_position/1E6, lty=5, lwd=1.5, col="#01DF01")
+      abline(v=g$end_position/1E6, lty=5, lwd=1.5, col="#01DF01")
    }
    #abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
    #abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")

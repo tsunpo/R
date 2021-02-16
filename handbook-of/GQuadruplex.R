@@ -74,7 +74,7 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    plot(rts ~ g4s, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], yaxt="n", xaxt="n", pch=19, col="white", cex=1.2, cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
    abline(h=rts[2], lty=5, lwd=1.3)
-   
+
    idx <- which(rts > rts[2])
    points(rts[idx] ~ g4s[idx], col=cols[1], pch=19, cex=1.2)
    idx <- which(rts < rts[2])
@@ -82,7 +82,13 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
    points(rts[2] ~ g4s[2], col=cols[3], pch=19, cex=1.2)
    if (length(na) != 0)
       points(rts[na] ~ g4s[na], col=cols[3], pch=1, cex=1.2)
-           
+   
+   lm.fit <- lm(rts ~ g4s)
+   abline(lm.fit, col=cols[4], lwd=4)
+   
+   cor3 <- cor.test(rts, g4s, method="spearman", exact=F)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols[4], text.font=2, bty="n", cex=1.2)
+   
    text(g4s[2], rts[2], "Chr2", col=cols[3], pos=3, cex=1.2)
    text(g4s[17], rts[17], "Chr17", col=cols[1], pos=3, cex=1.2)
    text(g4s[19], rts[19], "Chr19", col=cols[1], pos=3, cex=1.2)
@@ -93,12 +99,6 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
     
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.25)   
    legend("bottomleft", "Later than", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.25)
-   
-   lm.fit <- lm(rts ~ g4s)
-   abline(lm.fit, col=cols[4], lwd=4)
- 
-   cor3 <- cor.test(rts, g4s, method="spearman", exact=F)
-   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols[4], text.font=2, bty="n", cex=1.2)
 
    axis(side=2, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.2)
    axis(side=1, at=seq(-0.4, 0.8, by=0.4), labels=c(-0.4, 0, 0.4, 0.8), cex.axis=1.2)

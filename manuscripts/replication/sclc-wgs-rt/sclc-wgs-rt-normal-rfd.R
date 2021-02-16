@@ -227,6 +227,14 @@ for (g in 1:length(genes)) {
 }
 
 
+## Chr8 (FGFR1)
+c <- 8
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+plotBootstrapRFD(file.name, BASE, chr, 36268656,	40326352, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, gene="FGFR1")
+
 
 ## Chr2
 c <- 2
