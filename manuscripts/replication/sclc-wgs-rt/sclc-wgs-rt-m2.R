@@ -132,7 +132,7 @@ plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, yla
 
 ### Figure 4D
 ## SCLC vs. LCL
-file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman_nasa.blue_google.red_microsoft.green_cex=1.2_lwd=3_lwd=1.3_bty")
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman")
 main.text <- c("Replication timing skew", "")
 xlab.text <- "LCL S/G1"
 ylab.text <- "SCLC M2/M1"

@@ -119,12 +119,13 @@ nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 
 ###
 ## TTR and CTR (IZ +TZ)
-save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
-#load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
+#save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
+save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd0.RData"))
 
-load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
-file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
-#file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd.RData")
+#load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
+load(file=file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd0.RData"))
+#file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
+file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd.RData")
 #file.name <- file.path(wd.de.data, "tpm_gene_r5p47_log2_m_rfd.RData")
 setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
 load(file.name)
@@ -400,6 +401,80 @@ for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotNLSCLC(id, genes[g])
 }
+
+# -----------------------------------------------------------------------------
+# SCLC early IZ genes (Eff vs. Length)
+# Last Modified: 16/02/21
+# -----------------------------------------------------------------------------
+plotEffvsLength <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos) {
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(n3 ~ snr3, ylab="", xlab=xlab.text, main=main.text[1], pch=15, col=col2, lwd=0, cex=2, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   lm.fit <- lm(n3 ~ snr3)
+   abline(lm.fit, col=col, lwd=4)
+ 
+   cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
+   #cor3 <- round0(cor3[[4]], digits=2)
+   #legend(pos, paste("rho = ", cor3), text.col=col, pch=15, col=col2, pt.cex=2.5, cex=1.5, pt.lwd=0, text.font=1)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
+ 
+   #axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
+   #axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.5)
+   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   mtext(main.text[2], line=0.3, cex=1.6)
+   dev.off()
+}
+
+##
+file.name <- file.path(wd.rt.plots, "SCLC_IZ_E-vs-Length")
+main.text <- c(paste("IZ efficiency vs. Gene length"), "")
+xlab.text <- "Gene length [log10]"
+ylab.text <- "IZ efficiency"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- "black"
+cols2 <- "lightgray"
+plotEffvsLength(tpm.gene.log2.m.rfd.ctr.iz.e$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.iz.e$length), file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
+
+##
+file.name <- file.path(wd.rt.plots, "SCLC_TZ_E-vs-Length")
+main.text <- c(paste("TZ efficiency vs. Gene length"), "")
+xlab.text <- "Gene length [log10]"
+ylab.text <- "TZ efficiency"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- "black"
+cols2 <- "lightgray"
+plotEffvsLength(tpm.gene.log2.m.rfd.ctr.tz.e$GENE_NRFD, log10(tpm.gene.log2.m.rfd.ctr.tz.e$length), file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright")
+
+##
+plotBoxLength <- function(wd.de.plots, file.name, tpm.1, tpm.2, main.txt, names, ylab.txt, cols, height=6, width=3) {
+   trait <- rep(0, nrow(tpm.1))
+   trait <- c(trait, rep(1, nrow(tpm.2)))
+   trait <- as.factor(trait)
+ 
+   expr <- as.numeric(c(log10(tpm.1$length), log10(tpm.2$length)))
+ 
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+   boxplot(expr ~ trait, xaxt="n",  ylab=ylab.txt, main=main.txt, col=cols, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+ 
+   p <- testU(tpm.1$length, tpm.2$length)
+   text <- ""
+   if (p < 1E-3)  text <- "*"
+   if (p < 1E-6)  text <- "**"
+   if (p < 1E-9) text <- "***"
+   text(1.5, ylim[2], text, col="black", cex=2.5)
+
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.25)
+   #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
+   axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
+   axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.3, col=NA, cex.axis=1.2)
+ 
+   mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.25, line=0.3)
+   dev.off()
+}
+
+names <- c("HO", "CD")
+file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_LENGTH_IZ_E_HO+CD")
+plotBoxLength(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="Early IZ genes", names, "Gene length [log10]", "lightgray", height=5, width=3.2)
+
+file.name <- paste0("boxplot1_", base, "_tpm.gene_median0_LENGTH_TZ_E_HO+CD")
+plotBoxLength(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, main="Early TZ genes", names, "Gene length [log10]", "lightgray", height=5, width=3.2)
 
 # -----------------------------------------------------------------------------
 # SCLC early IZ genes
