@@ -166,6 +166,9 @@ plotBootstrapRFD(file.name, BASE, chr,  5590856, 9590856, nrds.RT.NRFD, bed.gc.c
 # -----------------------------------------------------------------------------
 nrds.RT.NRFD.cll.ttr <- getBootstrapTTR(nrds.RT.NRFD.cll, 0.9)
 
+nrds.RT.NRFD.cll.ttr.e <- subset(nrds.RT.NRFD.cll.ttr, RT > 0)
+nrds.RT.NRFD.cll.ttr.l <- subset(nrds.RT.NRFD.cll.ttr, RT < 0)
+
 nrds.RT.NRFD.cll.ctr <- getBootstrapCTR(nrds.RT.NRFD.cll, 0.9)
 nrds.RT.NRFD.cll.ctr.iz <- subset(nrds.RT.NRFD.cll.ctr, NRFD > 0)
 nrds.RT.NRFD.cll.ctr.tz <- subset(nrds.RT.NRFD.cll.ctr, NRFD < 0)

@@ -164,6 +164,42 @@ de.tpm.gene.rfd.tz.e.ho$Q <- qvalue(de.tpm.gene.rfd.tz.e.ho$P)$qvalue
 writeTable(de.tpm.gene.rfd.tz.e.ho, file.path(wd.de.data, "de_cll_tpm-gene-median0_src_q_rfd_tz_e_ho_n71.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
+# Shared genes (All)
+# Last Modified: 10/09/20
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-tpm-de/data/tpm_gene_log2_m_rfd.RData")
+
+gene.cll   <- list(rownames(tpm.gene.log2.m.rfd.ctr.iz),   rownames(tpm.gene.log2.m.rfd.ctr.tz),   rownames(tpm.gene.log2.m.rfd.ttr))
+gene.cll.e <- list(rownames(tpm.gene.log2.m.rfd.ctr.iz.e), rownames(tpm.gene.log2.m.rfd.ctr.tz.e), rownames(tpm.gene.log2.m.rfd.ttr.e))
+gene.cll.l <- list(rownames(tpm.gene.log2.m.rfd.ctr.iz.l), rownames(tpm.gene.log2.m.rfd.ctr.tz.l), rownames(tpm.gene.log2.m.rfd.ttr.l))
+
+# -----------------------------------------------------------------------------
+# Density (All)
+# Last Modified: 17/03/21
+# -----------------------------------------------------------------------------
+nrow(tpm.gene.log2.m.rfd.ctr.iz)/nrow(nrds.RT.NRFD.cll.ctr.iz)*1000
+# [1] 15.30022
+nrow(tpm.gene.log2.m.rfd.ctr.tz)/nrow(nrds.RT.NRFD.cll.ctr.tz)*1000
+# [1] 10.78863
+nrow(tpm.gene.log2.m.rfd.ttr)/nrow(nrds.RT.NRFD.cll.ttr)*1000
+# [1] 10.97982
+
+nrow(tpm.gene.log2.m.rfd.ctr.iz.e)/nrow(nrds.RT.NRFD.cll.ctr.iz.e)*1000
+# [1] 22.1724
+nrow(tpm.gene.log2.m.rfd.ctr.iz.l)/nrow(nrds.RT.NRFD.cll.ctr.iz.l)*1000
+# [1] 6.715485
+
+nrow(tpm.gene.log2.m.rfd.ctr.tz.e)/nrow(nrds.RT.NRFD.cll.ctr.tz.e)*1000
+# [1] 17.90273
+nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/nrow(nrds.RT.NRFD.cll.ctr.tz.l)*1000
+# [1] 6.572995
+
+nrow(tpm.gene.log2.m.rfd.ttr.e)/nrow(nrds.RT.NRFD.cll.ttr.e)*1000
+# [1] 17.58857
+nrow(tpm.gene.log2.m.rfd.ttr.l)/nrow(nrds.RT.NRFD.cll.ttr.l)*1000
+# [1] 6.164826
+
+# -----------------------------------------------------------------------------
 # E vs. L (All)
 # Last Modified: 30/08/20
 # -----------------------------------------------------------------------------
@@ -173,6 +209,11 @@ nrow(tpm.gene.log2.m.rfd.ctr.iz)/30347
 # [1] 0.1587307
 nrow(tpm.gene.log2.m.rfd.ctr.tz)/30347
 # [1] 0.1182654
+
+nrow(tpm.gene.log2.m.rfd.ttr.e)/30347
+# [1] 0.4875605
+nrow(tpm.gene.log2.m.rfd.ttr.l)/30347
+# [1] 0.2345537
 
 nrow(tpm.gene.log2.m.rfd.ctr.iz.e)/30347
 # [1] 0.1277556
@@ -245,6 +286,9 @@ plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.r
 
 file.name <- paste0("boxplot_cll_tpm.gene_rfd_TZ_E+L_nasa.blue")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, main="CLL TZ genes", names=c("Late", "Early"), cols=c(blue, blue), ylim)
+
+file.name <- paste0("boxplot0_cll_tpm.gene_rfd_TTR_E+L")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, main="CLL TTR genes", names=c("Late", "Early"), cols=c("black", "black"), ylim)
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (median0)

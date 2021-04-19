@@ -34,7 +34,7 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 #wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
+wd.rt.plots <- file.path(wd.rt, "plots/nrfd2")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -200,6 +200,7 @@ genes <- c("AL807752.1", "TOR1AIP1", "ECH1", "NMRK1", "PHPT1")
 genes <- c("RP11-730B22.1")
 genes <- c("FBXL5", "FAM92B", "BSDC1", "MORF4L1", "IRF2", "B2M")
 genes <- c("BLM")
+genes <- c("PIF1", "KIF18B", "GTPBP3")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -207,7 +208,7 @@ for (g in 1:length(genes)) {
    end_position   <- subset(ensGene, external_gene_name == genes[g])$end_position
    strand <- subset(ensGene, external_gene_name == genes[g])$strand
    
-   size  <- 2000000
+   size  <- 1000000
    start <- start_position + size
    end   <- start_position - size
    if (strand < 0) {
@@ -574,6 +575,9 @@ plotReportRFD12(report.rfds, c("SCLC-TN", "SCLC", "NBL", "CLL"), file.name, "Ove
 # Last Modified: 12/08/20
 # -----------------------------------------------------------------------------
 nrds.RT.NRFD.sclc.ttr <- getBootstrapTTR(nrds.RT.NRFD.sclc, 0.9)
+
+nrds.RT.NRFD.sclc.ttr.e <- subset(nrds.RT.NRFD.sclc.ttr, RT > 0)
+nrds.RT.NRFD.sclc.ttr.l <- subset(nrds.RT.NRFD.sclc.ttr, RT < 0)
 
 nrds.RT.NRFD.sclc.ctr <- getBootstrapCTR(nrds.RT.NRFD.sclc, 0.9)
 nrds.RT.NRFD.sclc.ctr.iz <- subset(nrds.RT.NRFD.sclc.ctr, NRFD > 0)

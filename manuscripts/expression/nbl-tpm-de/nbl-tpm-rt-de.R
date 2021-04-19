@@ -137,15 +137,59 @@ length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
 # [1] 113
 
 # -----------------------------------------------------------------------------
+# Shared genes (All)
+# Last Modified: 10/09/20
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/tpm_gene_log2_m_rfd.RData")
+
+gene.nbl   <- list(rownames(tpm.gene.log2.m.rfd.ctr.iz),   rownames(tpm.gene.log2.m.rfd.ctr.tz),   rownames(tpm.gene.log2.m.rfd.ttr))
+gene.nbl.e <- list(rownames(tpm.gene.log2.m.rfd.ctr.iz.e), rownames(tpm.gene.log2.m.rfd.ctr.tz.e), rownames(tpm.gene.log2.m.rfd.ttr.e))
+gene.nbl.l <- list(rownames(tpm.gene.log2.m.rfd.ctr.iz.l), rownames(tpm.gene.log2.m.rfd.ctr.tz.l), rownames(tpm.gene.log2.m.rfd.ttr.l))
+
+
+# -----------------------------------------------------------------------------
+# Density (All)
+# Last Modified: 17/03/21
+# -----------------------------------------------------------------------------
+nrow(tpm.gene.log2.m.rfd.ctr.iz)/nrow(nrds.RT.NRFD.nbl.ctr.iz)*1000
+# [1] 15.9889
+nrow(tpm.gene.log2.m.rfd.ctr.tz)/nrow(nrds.RT.NRFD.nbl.ctr.tz)*1000
+# [1] 12.17577
+nrow(tpm.gene.log2.m.rfd.ttr)/nrow(nrds.RT.NRFD.nbl.ttr)*1000
+# [1] 11.30821
+
+nrow(tpm.gene.log2.m.rfd.ctr.iz.e)/nrow(nrds.RT.NRFD.nbl.ctr.iz.e)*1000
+# [1] 20.23631
+nrow(tpm.gene.log2.m.rfd.ctr.iz.l)/nrow(nrds.RT.NRFD.nbl.ctr.iz.l)*1000
+# [1] 8.101177
+
+nrow(tpm.gene.log2.m.rfd.ctr.tz.e)/nrow(nrds.RT.NRFD.nbl.ctr.tz.e)*1000
+# [1] 16.13775
+nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/nrow(nrds.RT.NRFD.nbl.ctr.tz.l)*1000
+# [1] 8.227748
+
+nrow(tpm.gene.log2.m.rfd.ttr.e)/nrow(nrds.RT.NRFD.nbl.ttr.e)*1000
+# [1] 14.8517
+nrow(tpm.gene.log2.m.rfd.ttr.l)/nrow(nrds.RT.NRFD.nbl.ttr.l)*1000
+# [1] 7.297637
+
+# -----------------------------------------------------------------------------
 # E vs. L (All)
 # Last Modified: 10/09/20
 # -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/tpm_gene_log2_m_rfd.RData")
+
 nrow(tpm.gene.log2.m.rfd.ttr)/31703
 # [1] 0.7274075
 nrow(tpm.gene.log2.m.rfd.ctr.iz)/31703
 # [1] 0.155632
 nrow(tpm.gene.log2.m.rfd.ctr.tz)/31703
 # [1] 0.1166767
+
+nrow(tpm.gene.log2.m.rfd.ttr.e)/31703
+# [1] 0.5072075
+nrow(tpm.gene.log2.m.rfd.ttr.l)/31703
+# [1] 0.2202
 
 nrow(tpm.gene.log2.m.rfd.ctr.iz.e)/31703
 # [1] 0.128032
@@ -238,6 +282,9 @@ plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.r
 
 file.name <- paste0("boxplot0_nbl_tpm.gene_rfd_TZ_E+L_nasa.blue")
 plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, main="NBL TZ genes", names=c("Late", "Early"), cols=c(blue, blue), ylim)
+
+file.name <- paste0("boxplot0_nbl_tpm.gene_rfd_TTR_E+L")
+plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, main="NBL TTR genes", names=c("Late", "Early"), cols=c("black", "black"), ylim)
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (r5p47)

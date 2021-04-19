@@ -35,8 +35,8 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
 samples <- samples[rownames(subset(samples, GROUP_ID != 2)),]
-tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
-#tpm.gene.log2.res <- tpm.gene.log2.res[, rownames(samples)]
+#tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+tpm.gene.log2.res <- tpm.gene.log2.res[, rownames(samples)]
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -47,10 +47,10 @@ tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 ## FDR : Q/BH
 ## DE  : TR (1) vs UN (0) as factor
 argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_X-vs-B_wilcox_q_n45")
+file.name <- paste0("de_", base, "_tpm-gene-median0-res-pc1_B-vs-X_wilcox_q_n45")
 file.main <- paste0("TR (n=22) vs UN (n=23) in ", BASE)
 
-de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+de <- differentialAnalysis(tpm.gene.log2.res, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]

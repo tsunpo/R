@@ -45,6 +45,7 @@ wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 # -----------------------------------------------------------------------------
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
+nrds.RT.BSTRPS.lcl <- nrds.RT.BSTRPS
 # > nrow(nrds.RT.BSTRPS)
 # [1] 2534909
 

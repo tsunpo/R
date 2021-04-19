@@ -35,13 +35,13 @@ samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt"), header=T, rownames=
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
-t  <- rownames(subset(samples, GROUP_ID == 0))
-tr <- rownames(subset(samples, GROUP_ID == 1))
+b <- rownames(subset(samples, GROUP_ID == 0))
+x <- rownames(subset(samples, GROUP_ID == 1))
 n  <- rownames(subset(samples, GROUP_ID == 2))
 samples$GROUP_ID2 <- 0
-samples[n,]$GROUP_ID2  <- 0
-samples[t,]$GROUP_ID2  <- 1
-samples[tr,]$GROUP_ID2 <- 2
+samples[n,]$GROUP_ID2 <- 0
+samples[b,]$GROUP_ID2 <- 1
+samples[x,]$GROUP_ID2 <- 2
 samples$GROUP_ID2 <- as.numeric(samples$GROUP_ID2)
 
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
@@ -52,23 +52,23 @@ nrow(tpm.gene.log2)
 # Spearman's rank correlation
 # Last Modified: 22/08/20
 # -----------------------------------------------------------------------------
-colnames <- c("RHO", "P", "FDR", "N", "T", "TR", "FC_T_N", "FC_TR_N")
+colnames <- c("RHO", "P", "FDR", "N", "B", "X", "FC_B_N", "FC_X_N")
 de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
 rownames(de) <- rownames(tpm.gene.log2)
 
 ## SRC
-de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$GROUP_ID, method="spearman", exact=F)[[4]])
-de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$GROUP_ID, method="spearman", exact=F)[[3]])
+de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$GROUP_ID2, method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$GROUP_ID2, method="spearman", exact=F)[[3]])
 ## ANOVA
 #samples$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
 #de$ANOVA_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) testANOVA(x, expr.pheno.log2, pheno.all))
 
 ## Log2 fold change
-de$N  <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID == 0)))
-de$T  <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID == 1)))
-de$TR <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID == 2)))
-de$FC_T_N  <- de$T - de$N
-de$FC_TR_N <- de$TR - de$N
+de$N <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID2 == 0)))
+de$B <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID2 == 1)))
+de$X <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID2 == 2)))
+de$FC_B_N <- de$B - de$N
+de$FC_X_N <- de$X - de$N
 
 ## FDR
 library(qvalue)
@@ -80,11 +80,11 @@ de <- de[order(de$P),]
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
 de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
 
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "src_esad_tpm-gene-median0_TR-T-N_src_q_n68.RData"))
-writeTable(de.tpm.gene, file.path(wd.de.data, "src_esad_tpm-gene-median0_TR-T-N_src_q_n68.txt"), colnames=T, rownames=F, sep="\t")
+save(de.tpm.gene, samples, file=file.path(wd.de.data, "src_esad_tpm-gene-median0_N-B-X_src_q_n68.RData"))
+writeTable(de.tpm.gene, file.path(wd.de.data, "src_esad_tpm-gene-median0_N-B-X_src_q_n68.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
-# 
+# 26/03/21
 # -----------------------------------------------------------------------------
 plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=5, width=3.5, ylab.txt="log2(TPM + 0.01)") {
    trait <- rep(0, length(tpm.1))
@@ -108,33 +108,43 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
 
 ###
 ##
-n  <- tpm.gene.log2["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 0))]
-t  <- tpm.gene.log2["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 1))]
-tr <- tpm.gene.log2["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 2))]
+n <- tpm.gene.log2["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 0))]
+b <- tpm.gene.log2["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 1))]
+x <- tpm.gene.log2["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 2))]
 ylim <- c(min(tpm.gene.log2["ENSG00000087245",]), max(tpm.gene.log2["ENSG00000087245",]))
 
-file.name <- paste0("boxplot_esad_tpm.gene.median_MMP2_2")
-plotBox3(wd.de.plots, file.name, n, t, tr, main="MMP2 (ENSG00000087245)", names=c("N", "B", "X"), cols=c(green, orange, red), ylim=ylim)
+file.name <- paste0("boxplot_EAC_tpm.gene.median0_MMP2")
+plotBox3(wd.de.plots, file.name, n, b, x, main="MMP2 (ENSG00000087245)", names=c("N", "B", "X"), cols=c(green, red, purple), ylim=ylim)
 
 ###
 ##
-n  <- tpm.gene.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 0))]
-t  <- tpm.gene.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 1))]
-tr <- tpm.gene.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 2))]
+n <- tpm.gene.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 0))]
+b <- tpm.gene.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 1))]
+x <- tpm.gene.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 2))]
 ylim <- c(min(tpm.gene.res["ENSG00000087245",]), max(tpm.gene.res["ENSG00000087245",]))
 
-file.name <- paste0("boxplot_esad_tpm.gene.median_MMP2_RES_2")
-plotBox3(wd.de.plots, file.name, n, t, tr, main="MMP2 (ENSG00000087245)", names=c("N", "B", "X"), cols=c(green, orange, red), ylim, ylab.txt="Residual of expression (controlled for PC1)")
+file.name <- paste0("boxplot_EAC_tpm.gene.median0_MMP2_res")
+plotBox3(wd.de.plots, file.name, n, b, x, main="MMP2 (ENSG00000087245)", names=c("N", "B", "X"), cols=c(green, red, purple), ylim, ylab.txt="Residual of expression (controlled for PC1)")
 
 ###
 ##
-n  <- tpm.gene.log2.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 0))]
-t  <- tpm.gene.log2.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 1))]
-tr <- tpm.gene.log2.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 2))]
+n <- tpm.gene.log2.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 0))]
+b <- tpm.gene.log2.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 1))]
+x <- tpm.gene.log2.res["ENSG00000087245", rownames(subset(samples, GROUP_ID2 == 2))]
 ylim <- c(min(tpm.gene.log2.res["ENSG00000087245",]), max(tpm.gene.log2.res["ENSG00000087245",]))
 
-file.name <- paste0("boxplot_esad_tpm.gene.median_MMP2_LOG2_RES_2")
-plotBox3(wd.de.plots, file.name, n, t, tr, main="MMP2 (ENSG00000087245)", names=c("N", "B", "X"), cols=c(green, orange, red), ylim, ylab.txt="Residual of expression (controlled for PC1)")
+file.name <- paste0("boxplot_EAC_tpm.gene.median0_MMP2_log2.res")
+plotBox3(wd.de.plots, file.name, n, b, x, main="MMP2 (ENSG00000087245)", names=c("N", "B", "X"), cols=c(green, red, purple), ylim, ylab.txt="Residual of expression (controlled for PC1)")
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -172,8 +182,6 @@ tr <- tpm.gene.res["ENSG00000154096", rownames(subset(samples, GROUP_ID == 2))]
 
 file.name <- paste0("boxplot_esad_tpm.gene.median_THY1_RES")
 plotBox3(wd.de.plots, file.name, n, t, tr, main="THY1 (ENSG00000154096)", names=c("N", "T", "TR"), cols=c("dodgerblue", "red", "#01DF01"), ylab.txt="Residual of expression (controlled for PC1)")
-
-
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC

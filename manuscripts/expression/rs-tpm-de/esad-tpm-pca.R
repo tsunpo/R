@@ -41,7 +41,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
    #trait.v <- sort(unique(trait), decreasing=F)
-   trait.v <- c("N", "B", "X")
+   trait.v <- c("B", "X", "N")
    
    if (isNA(cols))
       cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")

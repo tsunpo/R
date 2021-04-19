@@ -33,7 +33,10 @@ wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
-wd.rt.data  <- file.path(wd.rt, "data/random1")
+wd.rt.data  <- file.path(wd.rt, "data/random2")
+
+r1 <- readTable(file.path(wd.rt.data, "NRFD_R1_20KB.txt"), header=T, rownames=T, sep="")
+r2 <- readTable(file.path(wd.rt.data, "NRFD_R2_20KB.txt"), header=T, rownames=T, sep="")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution

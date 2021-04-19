@@ -177,7 +177,7 @@ plotBox20 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names) {
    dev.off()
 }
 
-plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=5, width=3.5) {
+plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=5, width=3.5, text="") {
    trait <- rep(0, nrow(tpm.1))
    trait <- c(trait, rep(1, nrow(tpm.2)))
    trait <- c(trait, rep(2, nrow(tpm.3)))
@@ -205,7 +205,7 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    #axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
  
    #mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
-   #mtext(paste0("Total Ensembl genes"), cex=1.25, line=0.3)
+   mtext(paste0(text), cex=1.25, line=0.3)
    dev.off()
 }
 

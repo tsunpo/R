@@ -225,8 +225,8 @@ grey      <- "darkgray"
 google.red.lighter50 <- "#FFC2B4"
 nasa.blue.lighter50  <- "#8FDAFF"
 
-red.lighter50  <- google.red.lighter50
-blue.lighter50 <- nasa.blue.lighter50
+red.lighter  <- google.red.lighter50
+blue.lighter <- nasa.blue.lighter50
 
 # -----------------------------------------------------------------------------
 # TEMP

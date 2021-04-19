@@ -207,6 +207,7 @@ genes <- c("TSC2")
 genes <- c("AL807752.1", "TOR1AIP1", "ECH1", "NMRK1", "PHPT1")
 genes <- c("B2M")
 genes <- c("BLM")
+genes <- c("PIF1", "KIF18B", "GTPBP3")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -214,7 +215,7 @@ for (g in 1:length(genes)) {
    end_position   <- subset(ensGene, external_gene_name == genes[g])$end_position
    strand <- subset(ensGene, external_gene_name == genes[g])$strand
  
-   size  <- 2000000
+   size  <- 1000000
    start <- start_position + size
    end   <- start_position - size
    if (strand < 0) {
@@ -450,12 +451,12 @@ save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, repor
 #load(file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_nasa.blue_google.red_cex=1.25_1.3_115.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains             ")
 
-report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_1.3_test_test.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
+#report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
+#file.name <- file.path(wd.rt.plots, paste0("RFD_ALL_TTR-E-L_1.3_test_test.pdf"))
+#plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution             ")
 
 # -----------------------------------------------------------------------------
 # Report (between random1 and random2)
@@ -500,6 +501,16 @@ plotReportNRFD12(report.rfds.random, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.na
 # [1] 0.2483745
 # > (75.5-57.8)/75.5
 # [1] 0.2344371
+
+report.rfds <- list(as.numeric(r1$SCLC.NL), as.numeric(r1$SCLC), as.numeric(r1$NBL), as.numeric(r1$CLL))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_R1_20kb.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "R1 random-downsampling RFD           ")
+
+report.rfds <- list(as.numeric(r2$SCLC.NL), as.numeric(r2$SCLC), as.numeric(r2$NBL), as.numeric(r2$CLL))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_R2_20kb.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "R2 random-downsampling RFD           ")
+
+
 
 # -----------------------------------------------------------------------------
 # Report (between NL and Ts)
@@ -547,15 +558,16 @@ plotBootstrapSummary <- function(summary, file.name, main.text) {
    
    pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
    par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
-   bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   #bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   bp <- barplot(summary, col=cols, xlim=c(0, 63), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 
    h <- summary
-   h[1,] <- as.numeric(round0(summary[1,], digits=0))
-   h[2,] <- as.numeric(round0(summary[2,], digits=0))
+   h[1,] <- as.numeric(round0(summary[1,], digits=1))
+   h[2,] <- as.numeric(round0(summary[2,], digits=1))
    H <- apply(summary, 2L, cumsum) - summary/2
    text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
 
-   legend("bottomright", rownames(summary), pt.cex=2.5, cex=1.6, fill=cols, horiz=T, bty="n")
+   legend("bottomright", c("Shared", "Specific"), pt.cex=2.5, cex=1.6, fill=cols, horiz=T, bty="n")
    #mtext(ylab.text, side=2, line=2.75, cex=1.6)
    dev.off()
 }
@@ -578,8 +590,8 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    bp <- barplot(summary, col=cols, xlim=c(0, 100), xlab=xlab.text, names.arg="", main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
  
    h <- summary
-   h[1,] <- as.numeric(round0(summary[1,], digits=0))
-   h[2,] <- as.numeric(round0(summary[2,], digits=0))
+   h[1,] <- as.numeric(round0(summary[1,], digits=1))
+   h[2,] <- as.numeric(round0(summary[2,], digits=1))
    H <- apply(summary, 2L, cumsum) - summary/2
    text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
    
@@ -588,20 +600,78 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-SCLC_barchart")
+file.name <- file.path(wd.rt.plots, "barchart_F7_SCLC-NL-vs-SCLC")
 main.text <- c("SCLC vs. SCLC-NL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.sclc, file.name, main.text)
 plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "SCLC vs. SCLC-NL")
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-NBL_barchart")
+file.name <- file.path(wd.rt.plots, "barchart_F7_SCLC-NL-vs-NBL")
 main.text <- c("NBL vs. SCLC-NL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.nbl, file.name, main.text)
 plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "NBL vs. SCLC-NL")
 
-file.name <- file.path(wd.rt.plots, "F7_SCLC-NL-vs-CLL_barchart")
+file.name <- file.path(wd.rt.plots, "barchart_F7_SCLC-NL-vs-CLL")
 main.text <- c("CLL vs. SCLC-NL replication-domain landscape", "")
 plotBootstrapSummary(summary.sclc.nl.vs.cll, file.name, main.text)
 plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "CLL vs. SCLC-NL")
+
+
+# -----------------------------------------------------------------------------
+# Report (between NBL-CL and others)
+# Last Modified: 21/03/21
+# -----------------------------------------------------------------------------
+#boundary.upper <- 950   ## RFD > +0.9
+#boundary.lower <-  50   ## RFD < -0.9
+rfd <- 0.9
+
+report.nbl.cl.vs.sclc <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.sclc, "NBLC-CL", "SCLC")
+writeTable(report.nbl.cl.vs.sclc, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_SCLC_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.cl.vs.sclc.nl <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.sclc.nl, "NBLC-CL", "SCLC-NL")
+writeTable(report.nbl.cl.vs.sclc.nl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_SCLC-NL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.cl.vs.nbl  <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.nbl, "NBL-CL", "NBL")
+writeTable(report.nbl.cl.vs.nbl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_NBL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.cl.vs.cll  <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.cll, "NBL-CL", "CLL")
+writeTable(report.nbl.cl.vs.cll, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_CLL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+report.nbl.cl.vs.lcl  <- getBootstrapReport(rfd, nrds.RT.NRFD.nbl.cl, nrds.RT.NRFD.lcl, "NBL-CL", "LCL")
+writeTable(report.nbl.cl.vs.lcl, file.path(wd.rt.data, paste0("NRFD_NBL-CL_vs_LCL_20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+summary.nbl.cl.vs.sclc.nl <- getBootstrapSummary(report.nbl.cl.vs.sclc.nl)
+summary.nbl.cl.vs.sclc <- getBootstrapSummary(report.nbl.cl.vs.sclc)
+summary.nbl.cl.vs.nbl  <- getBootstrapSummary(report.nbl.cl.vs.nbl)
+summary.nbl.cl.vs.cll  <- getBootstrapSummary(report.nbl.cl.vs.cll)
+summary.nbl.cl.vs.lcl  <- getBootstrapSummary(report.nbl.cl.vs.lcl)
+
+##
+file.name <- file.path(wd.rt.plots, "barchart_SF7_NBL-CL-vs-SCLC")
+main.text <- c("SCLC vs. NBL-CL replication-domain landscape", "")
+plotBootstrapSummary(summary.nbl.cl.vs.sclc, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.cl.vs.sclc, file.name, "SCLC vs. NBL-CL")
+
+file.name <- file.path(wd.rt.plots, "barchart_SF7_NBL-CL-vs-SCLC-NL")
+main.text <- c("SCLC-NL vs. NBL-CL replication-domain landscape", "")
+plotBootstrapSummary(summary.nbl.cl.vs.sclc.nl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.cl.vs.sclc.nl, file.name, "SCLC-NL vs. NBL-CL")
+
+file.name <- file.path(wd.rt.plots, "barchart_SF7_NBL-CL-vs-NBL")
+main.text <- c("NBL vs. NBL-CL replication-domain landscape", "")
+plotBootstrapSummary(summary.nbl.cl.vs.nbl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.cl.vs.nbl, file.name, "NBL vs. NBL-CL")
+
+file.name <- file.path(wd.rt.plots, "barchart_SF7_NBL-CL-vs-CLL")
+main.text <- c("CLL vs. NBL-CL replication-domain landscape", "")
+plotBootstrapSummary(summary.nbl.cl.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.cl.vs.cll, file.name, "CLL vs. NBL-CL")
+
+file.name <- file.path(wd.rt.plots, "barchart_SF7_NBL-CL-vs-LCL")
+main.text <- c("LCL vs. NBL-CL replication-domain landscape", "")
+plotBootstrapSummary(summary.nbl.cl.vs.lcl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.nbl.cl.vs.lcl, file.name, "LCL vs. NBL-CL")
+
+
 
 # -----------------------------------------------------------------------------
 # Report (between SCLC and others)
@@ -659,8 +729,6 @@ file.name <- file.path(wd.rt.plots, "FS7_SCLC-vs-NBL-vs-CLL_barchart")
 main.text <- c("SCLC landscape domains conserved with NBL and CLL", "")
 plotBootstrapSummary(summary.sclc.vs.nbl.vs.cll, file.name, main.text)
 plotBootstrapSummaryTotal(summary.sclc.vs.nbl.vs.cll, file.name, "Between SCLC, NBL and CLL")
-
-
 
 
 
@@ -784,20 +852,189 @@ nrow(nrds.RT.NRFD.sclc.nl.ctr.tz.l)/nrow(nrds.RT.NRFD.sclc.nl)
 ##
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_CTR_E-L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L_3.6_1_9.5.pdf"))
-plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Bootstrap RFD distribution (CTR)  ")
+file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L.pdf"))
+plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains (CTR)  ")
 
 ###
 ## 30/08/2020
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
 file.name <- file.path(wd.rt.plots, paste0("RFD_EG.pdf"))
-plotReportEG(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of genes")
+plotReportEG(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "   Distribution of genes")
 
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_E+L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
 file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_.pdf"))
-plotReportEGEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of genes (CTR)")
+plotReportEGEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "              Distribution of genes (CTR)")
+
+###
+## 15/03/2021
+plotReportEGDensity <- function(report.rfds, names, file.name, main.text) {
+   titles <- c("TTR", "CTR_IZ", "CTR_TZ")
+   cols <- c("black", red, blue)
+   n <- length(names)
+ 
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7)
+   rfds$pch  <- c(19, 17, 17, 17)
+   rfds$cex  <- c(1.8, 1.6, 1.6, 1.6)
+   rfds$pos1 <- c(1, 1, 1, 3)
+   rfds$pos2 <- c(3, 3, 3, 3)
+   rfds$pos3 <- c(3, 3, 3, 1)
+   for (r in 1:length(names)) {
+      rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1], digit=1))
+      rfds$CTR_IZ[r] <- as.numeric(round0(report.rfds[[r]][2], digit=1))
+      rfds$CTR_TZ[r] <- as.numeric(round0(report.rfds[[r]][3], digit=1))
+   }
+ 
+   ##
+   pdf(file.name, height=5, width=5.2)
+   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(1,3.6,3.6,0))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(15, 18), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   points(rfds$X, rfds$CTR_IZ, col=cols[2], pch=rfds$pch, cex=rfds$cex)
+   lines(x=rfds$X[2:4], y=rfds$CTR_IZ[2:4], type="l", lwd=3, col=cols[2])
+   
+   text(8, rfds$CTR_IZ[n], "        CTR (IZ)", cex=1.25, col=red)
+   for (n in 2:length(names))
+      text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.25)
+ 
+   ##
+   axis(side=2, at=seq(15, 17, by=1), labels=c(15, 16, 17), cex.axis=1.2)
+   legend("top", "Normal                              ", col="white", bty="n", pch=1, pt.cex=2, horiz=T, cex=1.3, text.col="white")
+   legend("topright", "Tumour                    ", col="black", bty="n", pch=2, pt.cex=1.6, horiz=T, cex=1.3)
+   mtext("[#]               ", side=2, line=2.6, cex=1.25)
+ 
+   ##
+   par(mar=c(5,3.6,0,0))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(9.8, 12.6), ylab="", xlab="", col=cols[2], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$TTR[2:4], type="l", lwd=3, col=cols[1])
+   points(rfds$X, rfds$CTR_TZ, col=cols[3], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$CTR_TZ[2:4], type="l", lwd=3, col=cols[3])
+   
+   text(8, rfds$TTR[n], " TTR ", cex=1.25, col="black", pos=3) 
+   text(8, rfds$CTR_TZ[n], "        CTR (TZ)", cex=1.25, col=blue, pos=1)
+   for (n in 2:length(names)) {
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n],    col=cols[1], pos=rfds$pos1[n], cex=1.25)
+      text(rfds$X[n], rfds$CTR_TZ[n],  rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.25)
+   }
+
+   ##
+   axis(side=2, at=seq(10, 12, by=1), labels=c(10, 11, 12), cex.axis=1.2)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.25)
+   axis(side=1, at=seq(3, 7, by=2), labels=c("n=70", "n=53", "n=71"), line=1.2, col=NA, cex.axis=1.25)
+
+   mtext("                          Number", side=2, line=2.6, cex=1.25)
+   dev.off()
+}
+
+report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_D_N.txt")), header=T, rownames=T, sep="")
+#report[2, 2:4] <- report[2, 2:4] / 26.50083
+#report[3, 2:4] <- report[3, 2:4] / 26.59570
+#report[4, 2:4] <- report[4, 2:4] / 26.44419
+report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_D_N_Mb.pdf"))
+plotReportEGDensity(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "   Density of genes per Mb")
+
+###
+## 15/03/2021
+plotReportEGELDensity <- function(report.rfds, names, file.name, main.text) {
+   titles <- c("IZ_E", "IZ_L", "TZ_E", "TZ_L", "TTR_E", "TTR_L")
+   cols <- c(red, red, blue, blue, "black", "black")
+   n <- length(names)
+ 
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", "pos4", "pos5", "pos6", titles)
+   rfds <- toTable(0, length(colnames), length(names), colnames)
+   rfds$NAME <- names
+   rfds$X    <- c(1, 3, 5, 7)
+   rfds$pch  <- c(19, 17, 17, 17)
+   rfds$cex  <- c(1.8, 1.6, 1.6, 1.6)
+   rfds$pos1 <- c(0, 3, 3, 3)
+   rfds$pos2 <- c(0, 3, 1, 3)
+   rfds$pos3 <- c(0, 3, 3, 3)
+   rfds$pos4 <- c(0, 1, 3, 1)
+   rfds$pos5 <- c(0, 1, 1, 1)
+   rfds$pos6 <- c(0, 1, 1, 1)
+   for (r in 1:length(names)) {
+      rfds$IZ_E[r] <- as.numeric(round0(report.rfds[[r]][1], digit=1))
+      rfds$IZ_L[r] <- as.numeric(round0(report.rfds[[r]][2], digit=1))
+      rfds$TZ_E[r] <- as.numeric(round0(report.rfds[[r]][3], digit=1))
+      rfds$TZ_L[r] <- as.numeric(round0(report.rfds[[r]][4], digit=1))
+      rfds$TTR_E[r] <- as.numeric(round0(report.rfds[[r]][5], digit=1))
+      rfds$TTR_L[r] <- as.numeric(round0(report.rfds[[r]][6], digit=1))
+   }
+ 
+   ##
+   pdf(file.name, height=5, width=5.2)
+   layout(matrix(c(1,2), ncol=1), widths=1, heights=c(3,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(0,3.6,4.6,0))
+ 
+   plot(NULL, xlim=c(0.5, 9), ylim=c(14, 23), ylab="", xlab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   points(rfds$X, rfds$TTR_E, col=cols[5], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$TTR_E[2:4], type="l", lwd=3, col=cols[5])
+   points(rfds$X, rfds$TZ_E, col=cols[3], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$TZ_E[2:4], type="l", lwd=3, col=cols[3])
+   points(rfds$X, rfds$IZ_E, col=cols[1], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$IZ_E[2:4], type="l", lwd=3, col=cols[1])
+   
+   text(8, rfds$IZ_E[n], "      IZ (Early)", cex=1.25, col=red) 
+   text(8, rfds$TZ_E[n], "      TZ (Early)", cex=1.25, col=blue)
+   text(8, rfds$TTR_E[n], "    TTR (Early)", cex=1.25, col="black", pos=1)
+   for (n in 2:length(names)) {
+      text(rfds$X[n], rfds$IZ_E[n], rfds$IZ_E[n], col=cols[1], pos=rfds$pos1[n], cex=1.25)
+      text(rfds$X[n], rfds$TZ_E[n], rfds$TZ_E[n], col=cols[3], pos=rfds$pos3[n], cex=1.25)
+      #text(rfds$X[n], rfds$TTR_E[n], rfds$TTR_E[n], col=cols[5], pos=rfds$pos5[n], cex=1.25)
+   }
+ 
+   ##
+   axis(side=2, at=seq(14, 22, by=2), labels=c(14, 16, 18, 20, 22), cex.axis=1.2)
+   #axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
+   #legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
+   #legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
+ 
+   ##
+   mtext("[#]        ", side=2, line=2.6, cex=1.25)
+ 
+   ##
+   par(mar=c(5,3.6,0,0))
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(5, 9.3), ylab="", xlab="", col=cols[3], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   points(rfds$X, rfds$TTR_L, col=cols[6], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$TTR_L[2:4], type="l", lty=5, lwd=3, col=cols[6])
+   points(rfds$X, rfds$TZ_L, col=cols[4], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$TZ_L[2:4], type="l", lty=5, lwd=3, col=cols[4])
+   points(rfds$X, rfds$IZ_L, col=cols[2], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[2:4], y=rfds$IZ_L[2:4], type="l", lty=5, lwd=3, col=cols[2])
+   
+   text(8, rfds$TTR_L[n], "      TTR (Late)", cex=1.25, col="black", pos=1)
+   text(8, rfds$IZ_L[n], "        IZ (Late)", cex=1.25, col=red, pos=3)
+   text(8, rfds$TZ_L[n], "        TZ (Late)", cex=1.25, col=blue)
+   #abline(v=4, lty=5, lwd=1, col="black")
+   #abline(v=8,  lty=5, lwd=1, col="black")
+   for (n in 2:length(names)) {
+      #text(rfds$X[n], rfds$TTR_L[n], rfds$TTR_L[n], col=cols[6], pos=rfds$pos6[n], cex=1.25)
+      text(rfds$X[n], rfds$IZ_L[n], rfds$IZ_L[n], col=cols[2], pos=rfds$pos2[n], cex=1.25)
+      text(rfds$X[n], rfds$TZ_L[n], rfds$TZ_L[n], col=cols[4], pos=rfds$pos4[n], cex=1.25)
+   }
+   #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
+ 
+   axis(side=2, at=seq(6, 8, by=2), labels=c(6, 8), cex.axis=1.2)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.2)
+   axis(side=1, at=seq(3, 7, by=2), labels=c("n=70", "n=53", "n=71"), line=1.2, col=NA, cex.axis=1.25)
+   mtext("                          Number", side=2, line=2.6, cex=1.25)
+   dev.off()
+}
+
+report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_E+L_D_N.txt")), header=T, rownames=T, sep="")
+#report[2, 2:5] <- report[2, 2:5] / 26.50083
+#report[3, 2:5] <- report[3, 2:5] / 26.59570
+#report[4, 2:5] <- report[4, 2:5] / 26.44419
+report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]), as.numeric(report[5, -1]), as.numeric(report[6, -1]))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_D_N_Mb.pdf"))
+plotReportEGELDensity(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "   Density of genes per Mb")
+
 
 
 

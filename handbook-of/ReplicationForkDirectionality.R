@@ -411,6 +411,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
    axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.25)
    axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.25)
+   #axis(side=1, at=seq(1, 7, by=2), labels=c("n=46", "n=51", "n=28", "n=48"), line=1.2, col=NA, cex.axis=1.25)
    #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
    #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
    
@@ -607,7 +608,7 @@ plotReportEG <- function(report.rfds, names, file.name, main.text) {
  
    ##
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.2)
-   legend("top", "Normal                              ", col="black", bty="n", pch=1, pt.cex=2, horiz=T, cex=1.3)
+   legend("top", "Normal                              ", col="white", bty="n", pch=1, pt.cex=2, horiz=T, cex=1.3, text.col="white")
    legend("topright", "Tumour                    ", col="black", bty="n", pch=2, pt.cex=1.6, horiz=T, cex=1.3)
    #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)

@@ -274,6 +274,7 @@ save(lcl.rt, lcl.mean, file=file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData
 # Last Modified: 07/04/19
 # -----------------------------------------------------------------------------
 writeTable(ensGene[,c("chromosome_name", "start_position", "end_position", "ensembl_gene_id")], file.path(wd.reference, "collections/hg19.ensembl.gene.txt"), colnames=F, rownames=F, sep="\t")
+#writeTable(ensGene, file.path(wd.reference, "collections/hg19.ensembl.gene.txt"), colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Add BED information for the ensGenes
