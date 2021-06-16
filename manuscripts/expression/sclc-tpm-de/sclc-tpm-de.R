@@ -56,6 +56,57 @@ nrow(tpm.gene.log2.m)
 # [1] 19131
 
 # -----------------------------------------------------------------------------
+# Stage UICC
+# Last Modified: 03/05/21; 05/05/19
+# -----------------------------------------------------------------------------
+phenos <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, rownames=T, sep="\t")
+
+phenos$Stage <- NA
+phenos[which(phenos$stage_UICC == "I"),]$Stage <- 0
+phenos[which(phenos$stage_UICC == "Ia"),]$Stage <- 0
+phenos[which(phenos$stage_UICC == "Ib"),]$Stage <- 0
+phenos[which(phenos$stage_UICC == "IB"),]$Stage <- 0
+
+phenos[which(phenos$stage_UICC == "II"),]$Stage <- 0
+phenos[which(phenos$stage_UICC == "IIa"),]$Stage <- 0
+phenos[which(phenos$stage_UICC == "IIb"),]$Stage <- 0
+
+phenos[which(phenos$stage_UICC == "III"),]$Stage <- 1
+phenos[which(phenos$stage_UICC == "IIIa"),]$Stage <- 1
+phenos[which(phenos$stage_UICC == "IIIb"),]$Stage <- 1
+
+phenos[which(phenos$stage_UICC == "IV"),]$Stage <- 1
+phenos <- phenos[!is.na(phenos$Stage),]
+
+##
+samples$Stage <- phenos[rownames(samples),]$Stage
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
+# Last Modified: 22/08/20
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : TR (1) vs UN (0) as factor
+argv      <- data.frame(predictor="Stage", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-median0_I+II-vs-III+IV_wilcox_q_n69")
+file.main <- paste0("I+II (n=42) vs III+IV (n=27) in ", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # Correlation bwteen TPM and in-silico sorting
 # Last Modified: 12/12/19; 08/01/19; 17/08/17
 # -----------------------------------------------------------------------------

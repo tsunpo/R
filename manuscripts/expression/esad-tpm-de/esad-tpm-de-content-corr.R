@@ -30,15 +30,152 @@ wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples  <- readTable(file.path(wd.rna, "esad_3rna_n68.txt2"), header=T, rownames=T, sep="\t")
-purities <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
+samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt2"), header=T, rownames=T, sep="\t")
+samples <- samples[!is.na(samples[, "tumorcontent_per_sample"]),]
+samples$tumorcontent_per_sample <- as.numeric(sub("%", "", samples$tumorcontent_per_sample))/100
 
+b <- rownames(subset(samples, GROUP_ID == 0))
+x <- rownames(subset(samples, GROUP_ID == 1))
+samples$GROUP_ID2 <- 0
+samples[b,]$GROUP_ID2 <- 0
+samples[x,]$GROUP_ID2 <- 1
+samples$GROUP_ID2 <- as.factor(samples$GROUP_ID2)
+
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.median0.RData")))
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
-samples <- samples[rownames(subset(samples, GROUP_ID != 1)),]
-samples$GROUP_ID <- samples$GROUP_ID - 2
-tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+## ADD 07/06/21: Correct for tumour content
+tpm.gene <- tpm.gene[, rownames(samples)]
+for (s in 1:nrow(samples)) {   
+   content <- samples$tumorcontent_per_sample[s]
+   tpm.gene[, s] <- tpm.gene[, s] / content
+}
+
+tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
+nrow(tpm.gene.log2)
+# [1] 15658
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; n=45, 22 X vs 23 B) RES
+# Last Modified: 30/03/21; 22/08/20
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : TR (1) vs UN (0) as factor
+argv      <- data.frame(predictor="GROUP_ID2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-median0-content-corr_B-vs-X_wilcox_q_n44")
+file.main <- paste0("B (n=23) vs X (n=21) in ", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Volcano plots of RB1-loss DE genes in LCNEC
+# Figure(s)    : Figure S1 (A)
+# Last Modified: 07/01/19
+# -----------------------------------------------------------------------------
+plot.main <- "Correction for tumour content (TPM / Tumour content)"
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_EAC_median0_content_corr_B-vs-X_p1e-6")
+
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c(plot.main, "Before (B) vs. After treatment (X)")
+file.de <- paste0(plot.de, ".pdf")
+de.tpm.gene$LOG2_FC <- de.tpm.gene$GROUP_ID2 - de.tpm.gene$GROUP_ID2_WT
+plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main, ymax=8)
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# PCA vs. Purites
+# Last Modified: 02/06/21
+# -----------------------------------------------------------------------------
+#rownames(samples) <- samples$PATIENT_ID2
+#overlaps <- intersect(samples$PATIENT_ID2, purities$sample_name)
+#samples <- samples[overlaps,]
+#samples$purity <- purities[overlaps,]$purity
+#rownames(samples) <- samples$SAMPLE_ID
+
+scores <- pcaScores(pca.de)
+scores <- scores[rownames(samples),]
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 03/06/21
+# -----------------------------------------------------------------------------
+plotFACS3 <- function(p, pc, file.name, main.text, xlab.text, ylab.text, col, col2) {
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(p ~ pc, ylab="", xlab=xlab.text, main=main.text[1], col="white", pch=19, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   points(pc[ 1:23], p[ 1:23], col=col2[1], pch=19, cex=1.7)
+   points(pc[24:44], p[24:44], col=col2[2], pch=19, cex=1.7)
+   
+   lm.fit <- lm(p ~ pc)
+   abline(lm.fit, col=col, lwd=4)
+ 
+   cor3 <- cor.test(p, pc, method="spearman", exact=F)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
+ 
+   #axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
+   #axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
+   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   #mtext(main.text[2], line=0.3, cex=1.6)
+   dev.off()
+}
+
+file.name <- file.path(wd.de.plots, "ESAD_Content-vs-PC1_n44")
+main.text <- c(paste("Tumour content vs. PC1 (n=44)"), "")
+xlab.text <- paste0("PC", 1, " (", pcaProportionofVariance(pca.de, 1), "%)")
+ylab.text <- "Tumour content"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- "black"
+cols2 <- c(red, purple)
+plotFACS3(samples$tumorcontent_per_sample, scores$PC1*-1, file.name, main.text, xlab.text, ylab.text, cols, cols2)
+
+# -----------------------------------------------------------------------------
+# Spearman's rank correlation
+# Last Modified: 03/-6/21; 22/08/20
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "FDR", "B", "X", "FC_B_X")
+de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(de) <- rownames(tpm.gene.log2)
+
+## SRC
+de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$GROUP_ID2, method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$GROUP_ID2, method="spearman", exact=F)[[3]])
+## ANOVA
+#samples$Cancer_Type <- as.factor(pheno.all$Cancer_Type)
+#de$ANOVA_P <- mapply(x = 1:nrow(expr.pheno.log2), function(x) testANOVA(x, expr.pheno.log2, pheno.all))
+
+## Log2 fold change
+de$B <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID2 == 0)))
+de$X <- median00(tpm.gene.log2, rownames(subset(samples, GROUP_ID2 == 1)))
+de$FC_B_X <- de$X - de$B
+
+## FDR
+library(qvalue)
+de$FDR   <- qvalue(de$P)$qvalue
+#de$ANOVA_Q <- qvalue(de$ANOVA_P)$qvalue
+de <- de[order(de$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
+
+save(de.tpm.gene, samples, file=file.path(wd.de.data, "SRC_EAC_tpm-gene-median0_B-X_content_q_n44.RData"))
+writeTable(de.tpm.gene, file.path(wd.de.data, "SRC_EAC_tpm-gene-median0_B-X_content_q_n44.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -238,13 +375,3 @@ abline(v=-6, lty=5)
 axis(side=1, at=seq(-16, 0, by=2), labels=c(16, 14, 12, 10, 8, 6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()
-
-# -----------------------------------------------------------------------------
-# PCA vs. Purites
-# Last Modified: 02/06/21
-# -----------------------------------------------------------------------------
-rownames(samples) <- samples$PATIENT_ID2
-overlaps <- intersect(samples$PATIENT_ID2, purities$sample_name)
-samples <- samples[overlaps,]
-samples$purity <- purities[overlaps,]$purity
-

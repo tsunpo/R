@@ -33,12 +33,68 @@ wd.de.plots <- file.path(wd.de, "plots")
 samples  <- readTable(file.path(wd.rna, "esad_3rna_n68.txt2"), header=T, rownames=T, sep="\t")
 purities <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
 
-samples <- samples[rownames(subset(samples, GROUP_ID != 1)),]
-samples$GROUP_ID <- samples$GROUP_ID - 2
-tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+#samples <- samples[rownames(subset(samples, GROUP_ID != 1)),]
+#samples$GROUP_ID <- samples$GROUP_ID - 2
+#tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+
+# -----------------------------------------------------------------------------
+# PCA vs. Purites
+# Last Modified: 02/06/21
+# -----------------------------------------------------------------------------
+rownames(samples) <- samples$PATIENT_ID2
+overlaps <- intersect(samples$PATIENT_ID2, purities$sample_name)
+samples <- samples[overlaps,]
+samples$purity <- purities[overlaps,]$purity
+rownames(samples) <- samples$SAMPLE_ID
+
+scores <- pcaScores(pca.de)
+scores <- scores[rownames(samples),]
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 03/06/21
+# -----------------------------------------------------------------------------
+plotFACS3 <- function(p, pc, file.name, main.text, xlab.text, ylab.text, col, col2) {
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(p ~ pc, ylab="", xlab=xlab.text, main=main.text[1], col="white", pch=19, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   points(pc[ 1:10], p[ 1:10], col=col2[1], pch=19, cex=1.7)
+   points(pc[11:20], p[11:20], col=col2[2], pch=19, cex=1.7)
+   
+   lm.fit <- lm(p ~ pc)
+   abline(lm.fit, col=col, lwd=4)
+ 
+   cor3 <- cor.test(p, pc, method="spearman", exact=F)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
+ 
+   #axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
+   #axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
+   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   #mtext(main.text[2], line=0.3, cex=1.6)
+   dev.off()
+}
+
+file.name <- file.path(wd.de.plots, "ESAD_Purity-vs-PC4_n20")
+main.text <- c(paste("Purity vs. PC4 (n=20)"), "")
+xlab.text <- paste0("PC", 4, " (", pcaProportionofVariance(pca.de, 4), "%)")
+ylab.text <- "Purity"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- "black"
+cols2 <- c(red, purple)
+plotFACS3(samples$purity, scores$PC4, file.name, main.text, xlab.text, ylab.text, cols, cols2)
+
+file.name <- file.path(wd.de.plots, "ESAD_Purity-vs-tumorcontent_n20")
+main.text <- c(paste("Purity vs. Tumour content (n=20)"), "")
+xlab.text <- "Tumour content"
+ylab.text <- "Purity"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+cols <- "black"
+cols2 <- c(red, purple)
+plotFACS3(samples$purity, as.numeric(sub("%", "", samples$tumorcontent_per_sample))/100, file.name, main.text, xlab.text, ylab.text, cols, cols2)
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -238,13 +294,3 @@ abline(v=-6, lty=5)
 axis(side=1, at=seq(-16, 0, by=2), labels=c(16, 14, 12, 10, 8, 6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()
-
-# -----------------------------------------------------------------------------
-# PCA vs. Purites
-# Last Modified: 02/06/21
-# -----------------------------------------------------------------------------
-rownames(samples) <- samples$PATIENT_ID2
-overlaps <- intersect(samples$PATIENT_ID2, purities$sample_name)
-samples <- samples[overlaps,]
-samples$purity <- purities[overlaps,]$purity
-

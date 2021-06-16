@@ -34,7 +34,7 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 #wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/nrfd2")
+wd.rt.plots <- file.path(wd.rt, "plots/rfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -179,6 +179,100 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC_5-20KB.pdf"))
 plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC sliding window size on RFD")
+
+# -----------------------------------------------------------------------------
+# Plot bootstrap-based RFD data
+# Last Modified: 29/05/21
+# -----------------------------------------------------------------------------
+kb <- 20
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+ 
+   file.name <- file.path(wd.rt.plots, paste0("RFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+   plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+}
+
+# -----------------------------------------------------------------------------
+# Compare between RFD data
+# Last Modified: 01/06/21
+# -----------------------------------------------------------------------------
+getCTR <- function(nrds.RT.NRFD.1, isIZ) {
+   ## TTR and CTR
+   nrds.RT.NRFD.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.1, rfd)
+ 
+   diff <- setdiff(rownames(nrds.RT.NRFD.1), rownames(nrds.RT.NRFD.1.ttr))
+   nrds.RT.NRFD.1.ctr <- nrds.RT.NRFD.1[diff,]
+   
+   if (isIZ) {
+      return(subset(nrds.RT.NRFD.1.ctr, NRFD > 0))
+   }
+      return(subset(nrds.RT.NRFD.1.ctr, NRFD < 0))
+}
+
+plotRFD2 <- function(nrds.RT.NRFD.sclc, nrds.RT.NRFD.sclc.nl, bed.gc, file.name, main.text, isIZ, col) {
+   xlab.text <- "SCLC [Mb]"
+   ylab.text <- "SCLC-NL [Mb]"
+
+   overlaps <- intersect(nrds.RT.NRFD.sclc$BED, nrds.RT.NRFD.sclc.nl$BED)
+   nrds.RT.NRFD.sclc <- nrds.RT.NRFD.sclc[overlaps,]
+   nrds.RT.NRFD.sclc.nl <- nrds.RT.NRFD.sclc.nl[overlaps,]
+   
+   ## CTR (IZ/TZ)
+   nrds.RT.NRFD.1.ctr.iz <- getCTR(nrds.RT.NRFD.sclc,    isIZ)
+   nrds.RT.NRFD.2.ctr.iz <- getCTR(nrds.RT.NRFD.sclc.nl, isIZ)
+
+   colnames <- c("n1", "n2")
+   izs <- toTable(0, length(colnames), 22, colnames)
+   for (c in 1:22) {
+      chr <- chrs[c]
+      bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+      #overlaps2 <- intersect(rownames(bed.gc.chr), overlaps)
+      #bed.gc.chr <- bed.gc.chr[overlaps,]
+      nrds.RT.NRFD.1.ctr.iz.chr <- nrds.RT.NRFD.1.ctr.iz[intersect(rownames(bed.gc.chr), rownames(nrds.RT.NRFD.1.ctr.iz)),]
+      nrds.RT.NRFD.2.ctr.iz.chr <- nrds.RT.NRFD.2.ctr.iz[intersect(rownames(bed.gc.chr), rownames(nrds.RT.NRFD.2.ctr.iz)),]
+      
+      izs$n1[c] <- nrow(nrds.RT.NRFD.1.ctr.iz.chr)
+      izs$n2[c] <- nrow(nrds.RT.NRFD.2.ctr.iz.chr)
+   }
+   izs <- izs/1000
+   
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(izs$n1 ~ izs$n2, ylim=c(min(izs), max(izs)), xlim=c(min(izs), max(izs)), ylab="", xlab=xlab.text, main=main.text, col=NULL, pch=19, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   lines(c(min(izs), max(izs)), c(min(izs), max(izs)), pch=NULL, col="black", type="l", lty=5, lwd=2)
+   #lines(abs(cors$cor2), abs(cors$cor2), pch=NULL, col="purple", type="l", lty=2, lwd=3)
+   #lm.fit <- lm(abs(cors$cor2) ~ abs(cors$cor2))
+   #abline(lm.fit, col="purple", lty=2, lwd=2)
+   for (c in 1:22) {
+      if (izs$n1[c] > izs$n2[c]) {
+         #text(abs(cors$cor2[c]), cors$cor1[c], paste0("Chr", c), col="red", pos=3, cex=1.7)
+         points(izs$n1[c], izs$n2[c], col=col, pch=19, cex=1.5)
+      } else
+         points(izs$n1[c], izs$n2[c], col=col, pch=19, cex=1.5)
+   }
+ 
+   #axis(side=2, at=seq(0.3, 0.8, by=0.1), labels=c("", 0.4, "", 0.6, "", 0.8), cex.axis=1.6)
+   #axis(side=1, at=seq(0.3, 0.8, by=0.1), labels=c("", -0.4, "", -0.6, "", -0.8), cex.axis=1.6)
+   #axis(side=2, at=seq(0.1, 0.7, by=0.1), labels=c(0.1, "", 0.3, "", 0.5, "", 0.7), cex.axis=1.6)
+   #axis(side=1, at=seq(0.1, 0.7, by=0.1), labels=c(-0.1, "", -0.3, "", -0.5, "", -0.7), cex.axis=1.6)
+   mtext(ylab.text, side=2, line=2.85, cex=1.7)
+   dev.off()
+}
+
+##
+file.name <- file.path(wd.rt.plots, "RFD2_SCLC-vs-SCLC-NL_IZ")
+main.text <- "Distribution of IZs"
+plotRFD2(nrds.RT.NRFD.sclc, nrds.RT.NRFD.sclc.nl, bed.gc, file.name, main.text, isIZ=T, red)
+
+##
+file.name <- file.path(wd.rt.plots, "RFD2_SCLC-vs-SCLC-NL_TZ")
+main.text <- "Distribution of TZs"
+plotRFD2(nrds.RT.NRFD.sclc, nrds.RT.NRFD.sclc.nl, bed.gc, file.name, main.text, isIZ=F, blue)
+
+
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data

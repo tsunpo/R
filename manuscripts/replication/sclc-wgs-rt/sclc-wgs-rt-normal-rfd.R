@@ -39,7 +39,7 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 #wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
+wd.rt.plots <- file.path(wd.rt, "plots/rfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -187,6 +187,21 @@ plotReportNRFD5K <- function(report, names, file.name, main.text) {
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_SCLC-NL_5-20KB.pdf"))
 plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC-NL sliding window size on RFD")
+
+# -----------------------------------------------------------------------------
+# Plot bootstrap-based RFD data
+# Last Modified: 29/05/21
+# -----------------------------------------------------------------------------
+kb <- 20
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+ 
+   file.name <- file.path(wd.rt.plots, paste0("RFD_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+   plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, NA, NA, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+}
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data

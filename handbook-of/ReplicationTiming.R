@@ -455,7 +455,7 @@ plotRDvsRT <- function(reads1, timings, file.name, main.text, ylab.text, xlab.te
       main.text2 <- "Pearson correlation"
    }
  
-   png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   jpeg(paste0(file.name, ".jpg"), height=5, width=5, units="in", res=300)
    plot(reads1 ~ timings, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", col=colours[2], cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
    #pdf(paste0(file.name, ".pdf"), height=5, width=5)
    #plot(NULL, xlim=xlim, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], xaxt="n", cex.axis=1.1, cex.lab=1.2, cex.main=1.25)

@@ -468,13 +468,14 @@ plotCYS0 <- function(file.name, main.text, ylab.text, xlab.text, cn, snr, pos) {
    dev.off()
 }
 
-plotSRC <- function(gene, cn, snr, pch, col, pos) {
+plotSRC <- function(gene, cn, snr, pch, col, pos, xlab.text="") {
    unit <- (max(snr) - min(snr))/10
    xlim <- c(min(snr) - unit, max(snr) + unit)
    unit <- (max(cn) - min(cn))/10
    ylim <- c(min(cn) - unit, max(cn) + unit)
  
-   xlab.text <- "In-silico sorting [rho]"
+   if (xlab.text == "")
+      xlab.text <- "In-silico sorting [rho]"
    ylab.text <- "log2(TPM + 0.01)"
    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
    file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
