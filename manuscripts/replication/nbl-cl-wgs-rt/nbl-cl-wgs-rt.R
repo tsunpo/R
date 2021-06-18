@@ -132,7 +132,7 @@ rownames(samples) <- samples$SAMPLE_ID
 pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_italic.pdf"), height=6, width=4.2)
 ymax <- 0.5
 ymin <- -0.367
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main=expression(bold(paste(italic('In silico'), " prediction"))), yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main=expression(bolditalic('In silico')~bold("prediction")), yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 abline(h=0, lty=5, lwd=2)
 
 points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col=blue.lighter, pch=19, cex=2)
@@ -256,8 +256,8 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Proportion of S phase cells"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P")
-main.text <- c("In silico vs. In vitro", "")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_italic")
+main.text <- c(expression(bolditalic('In silico')~bold("vs.")~bolditalic('in vitro')), "")
 xlab.text <- "Proportion of cells [%]"
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- c(blue, red, "darkgray")
@@ -275,15 +275,15 @@ plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart")
-main.text <- c("Flow cytometry validation in vitro (Dean-Jett-Fox)", "")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic")
+main.text <- c(expression(bold("Flow cytometry validation")~bolditalic('in vitro')~bold('(Dean-Jett-Fox)')), "")
 xlab.text <- ""
 ylab.text <- "Proportion of cells [%]"
 #blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
 #red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
 #green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
 #cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
-cols <- c(blue, red, gray)
+cols <- c(flowjo.blue, flowjo.red, flowjo.grey)
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)

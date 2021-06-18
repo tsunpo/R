@@ -36,10 +36,57 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
 phenos  <- readTable(file.path(wd.meta, "NB_WGS_Mutations_Overview.txt"), header=T, rownames=T, sep="")
-q4 <- rownames(subset(samples, Q4 == 4))
-q3 <- rownames(subset(samples, Q4 == 3))
-q2 <- rownames(subset(samples, Q4 == 2))
-q1 <- rownames(subset(samples, Q4 == 1))
+#q4 <- rownames(subset(samples, Q4 == 4))
+#q3 <- rownames(subset(samples, Q4 == 3))
+#q2 <- rownames(subset(samples, Q4 == 2))
+#q1 <- rownames(subset(samples, Q4 == 1))
+
+overlaps <- intersect(rownames(samples), rownames(phenos))
+phenos <- cbind(samples[overlaps,], phenos[overlaps,])
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 18/06/21
+# -----------------------------------------------------------------------------
+## Risk group vs. Cell cycle
+test <- toTable(0, 2, 2, c("M2", "M1"))
+rownames(test) <- c("High", "Low")
+
+test[1, 1] <- nrow(subset(subset(phenos, M2 == 1), risk == "high"))
+test[1, 2] <- nrow(subset(subset(phenos, M2 == 0), risk == "high"))
+test[2, 1] <- nrow(subset(subset(phenos, M2 == 1), risk == "low"))
+test[2, 2] <- nrow(subset(subset(phenos, M2 == 0), risk == "low"))
+fisher.test(test)[[1]]
+
+## TERT vs. Cell cycle
+test <- toTable(0, 2, 2, c("M2", "M1"))
+rownames(test) <- c("TERT", "TERT_non")
+
+test[1, 1] <- nrow(subset(subset(phenos, M2 == 1), TERT_Rearrangement == 1))
+test[1, 2] <- nrow(subset(subset(phenos, M2 == 0), TERT_Rearrangement == 1))
+test[2, 1] <- nrow(subset(subset(phenos, M2 == 1), TERT_Rearrangement == 0))
+test[2, 2] <- nrow(subset(subset(phenos, M2 == 0), TERT_Rearrangement == 0))
+fisher.test(test)[[1]]
+
+## Risk group vs. TERT
+test <- toTable(0, 2, 2, c("TERT", "TERT_non"))
+rownames(test) <- c("High", "Low")
+
+test[1, 1] <- nrow(subset(subset(phenos, TERT_Rearrangement == 1), risk == "high"))
+test[1, 2] <- nrow(subset(subset(phenos, TERT_Rearrangement == 0), risk == "high"))
+test[2, 1] <- nrow(subset(subset(phenos, TERT_Rearrangement == 1), risk == "low"))
+test[2, 2] <- nrow(subset(subset(phenos, TERT_Rearrangement == 0), risk == "low"))
+fisher.test(test)[[1]]
+
+## Risk group vs. MYCN
+test <- toTable(0, 2, 2, c("MYCN", "MYCN_non"))
+rownames(test) <- c("High", "Low")
+
+test[1, 1] <- nrow(subset(subset(phenos, MYCN_amp == 1), risk == "high"))
+test[1, 2] <- nrow(subset(subset(phenos, MYCN_amp == 0), risk == "high"))
+test[2, 1] <- nrow(subset(subset(phenos, MYCN_amp == 1), risk == "low"))
+test[2, 2] <- nrow(subset(subset(phenos, MYCN_amp == 0), risk == "low"))
+fisher.test(test)[[1]]
 
 # -----------------------------------------------------------------------------
 # 
