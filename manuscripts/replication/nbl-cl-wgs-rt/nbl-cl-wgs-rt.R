@@ -243,6 +243,7 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
 }
 
 ## FACS
+## https://link.springer.com/protocol/10.1385/1-59259-227-9:129
 facs <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS.txt"), header=T, rownames=T, sep="")
 samples <- samples[facs$SAMPLE_ID,]
 #facs$SUM <- facs$G1 + facs$S + facs$G2

@@ -497,6 +497,7 @@ fishers <- function(x, y) {
 ## https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/FAQ#Can_I_use_GSEA_to_analyze_SNP.2C_SAGE.2C_ChIP-Seq_or_RNA-Seq_data.3F
 ## https://gsea-msigdb.github.io/gsea-gpmodule/v19/index.html
 
+## RNK format
 ## http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#RNK:_Ranked_list_file_format_.28.2A.rnk.29
 writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
    #de.sorted <- de.tpm.gene[order(de.tpm.gene$LOG2_FC, decreasing=T),]
