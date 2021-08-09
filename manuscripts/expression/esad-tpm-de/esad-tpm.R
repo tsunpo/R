@@ -79,6 +79,17 @@ writeTable(read.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.
 nrow(read.gene)
 # [1] 34908
 
+colnames <- c("MEAN", "SD", "CV")
+cv <- toTable(0, length(colnames), nrow(read.gene), colnames)
+rownames(cv) <- rownames(read.gene)
+
+cv$MEAN <- mapply(x = 1:nrow(read.gene), function(x) mean(as.numeric(read.gene[x,])))
+cv$SD   <- mapply(x = 1:nrow(read.gene), function(x) sd(as.numeric(read.gene[x,])))
+cv$CV   <- cv$SD / cv$MEAN
+cv <- subset(cv, MEAN != 0)
+writeTable(cv, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_read.gene.cv_24847.txt.gz"))), colnames=T, rownames=T, sep="\t")
+
+
 ## Gene-level TPMs (Expressed)
 load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene <- removeMedian0(tpm.gene)
