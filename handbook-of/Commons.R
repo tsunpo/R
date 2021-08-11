@@ -222,9 +222,11 @@ purple    <- aviva.lightplum
 grey      <- "darkgray"
 
 ## PCA
+google.red.lighter25 <- "#FF8375"
 google.red.lighter50 <- "#FFC2B4"
 nasa.blue.lighter50  <- "#8FDAFF"
 
+red.light    <- google.red.lighter25
 red.lighter  <- google.red.lighter50
 blue.lighter <- nasa.blue.lighter50
 

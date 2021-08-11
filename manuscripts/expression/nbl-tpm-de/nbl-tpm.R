@@ -113,7 +113,7 @@ file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.media
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Expressed")
 
-## Consistently expressed genes
+## Expressed genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Consistently expressed")
+plotDensityHistogram(tpm.gene, file.main, "Expressed")
