@@ -111,12 +111,14 @@ de <- de[order(de$P),]
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
 de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
-de.tpm.gene <- de.tpm.gene[-16919,]
 
 writeTable(de.tpm.gene, file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_fishers_q_n53.txt"), colnames=T, rownames=F, sep="\t")
 save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_nbl_tpm-gene-r5p47_fishers_q_n53.RData"))
 # > nrow(de.tpm.gene)
 # [1] 18764
+
+de.tpm.gene <- de.tpm.gene[-16919,]
+fishers.tpm.gene <- de.tpm.gene
 
 # -----------------------------------------------------------------------------
 # Volcano plots
@@ -135,7 +137,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #ymax <- 9.5
  
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="NBL High/Low [log2 fold change]", ylab="Significance [-log10(p-value)]", col="lightgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xaxt="n", xlab="High/Low-risk fold change [log2]", ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
  
    #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
    #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
@@ -143,11 +145,11 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
  
    de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=orange)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.light, cex=1.4)
    de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=green)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue.light, cex=1.4)
  
-   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
+   #abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
    abline(h=c(-log10(pvalue)), lty=5, col="black")
  
    if(nrow(genes) != 0) {
@@ -156,39 +158,41 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
          gene <- cbind(gene, genes[g,])
    
          if (nrow(gene) > 0) {
-            points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
     
             if (!is.na(gene$ADJ_1))
                if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=0.75)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
             else
                if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=0.75)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=1.25)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=0.75)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=1.25)
          } else
             print(genes[g,])
       }
    }
  
-   mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Up-regulated (Low < High)", "Down-regulated (Low > High)"), col=c(orange, green), pch=19)
+   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
+   mtext(file.main[2], cex=1.25, line=0.3)
+   legend("topleft", legend=c("Positively (Fisher's)", "Negatively"), col=c(red.light, blue.light), pch=19, cex=1.25)
    dev.off()
 }
 
 ##
-plot.main <- "484 Fisher's exact test difference genes"
 plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_r5p47_Fishers_p1e-3_TERT")
-
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "Low vs. High risk")
+file.main <- c("NBL expressed genes (n=18,763)", "Expression vs. Risk group")
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 1.00E-03, genes, file.de, file.main)
+plotVolcano(fishers.tpm.gene, 1.00E-03, genes, file.de, file.main)
 
-fishers.tpm.gene <- de.tpm.gene
+overlaps.up <- intersect(rownames(subset(subset(de.tpm.gene, P < 1E-3), LOG2_FC >= 0)), rownames(subset(subset(fishers.tpm.gene, P < 1E-3), LOG2_FC >= 0)))
+overlaps.down <- intersect(rownames(subset(subset(de.tpm.gene, P < 1E-3), LOG2_FC < 0)), rownames(subset(subset(fishers.tpm.gene, P < 1E-3), LOG2_FC < 0)))
 
+writeTable(overlaps.up, file.path(wd.de.data, "genes_Merged_p1e-3_n242_down.txt"), colnames=F, rownames=F, sep="")
+writeTable(overlaps.down, file.path(wd.de.data, "genes_Merged_p1e-3_n73_up.txt"), colnames=F, rownames=F, sep="")
 
 
 

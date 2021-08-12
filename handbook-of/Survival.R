@@ -2,7 +2,7 @@
 # Library      : Survival Probability
 # Name         : handbook-of/Survival.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 03/05/19
+# Last Modified: 09/08/21; 03/05/19
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -89,3 +89,8 @@ survSCLC <- function(phenos, samples, isCensored) {
    } else
       return(phenos)
 }
+
+# -----------------------------------------------------------------------------
+# Methods:  analysis
+# Last Modified: 09/08/21
+# -----------------------------------------------------------------------------
