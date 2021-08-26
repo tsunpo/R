@@ -54,12 +54,166 @@ nrow(tpm.gene.log2.m)
 # [1] 18764
 
 # -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
+# Last Modified: 22/08/20
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : High (n=36) vs Low (n=17) as factor
+argv      <- data.frame(predictor="risk", predictor.wt="low", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-median0_risk_wilcox_q_n53")
+file.main <- paste0("", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+nrow(de.tpm.gene)
+# [1] 22899
+
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   de$log10P <- -log10(de$P)
+   xmax <- max(de$LOG2_FC)
+   xmin <- min(de$LOG2_FC)
+   #if (ymax ==0) ymax <- max(de$log10P)
+   ymax <- 7
+   
+   pdf(file.de, height=6, width=6)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
+ 
+   abline(h=c(-log10(pvalue)), lty=5)
+
+   de.up   <- subset(de.sig, LOG2_FC > 0)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lighter, cex=1.4)
+   de.down <- subset(de.sig, LOG2_FC < 0)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue.lighter, cex=1.4)
+ 
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+   
+         if (nrow(gene) > 0) {
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+    
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
+            else
+               if (gene$LOG2_FC > 0)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
+         } else
+            print(genes[g,])
+      }
+   }
+ 
+   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
+   mtext(file.main[2], cex=1.25, line=0.3)
+   legend("topleft", legend=c("Up-regulated (L < H)", "Down-regulated (L > H)"), col=c(red.lighter, blue.lighter), pch=19, cex=1.25)
+   dev.off()
+}
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL high risk-differentially expressed genes", "Low (L) vs. High (H)")
+plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
+# Last Modified: 12/08/21
+# -----------------------------------------------------------------------------
+wd.de.pathway <- file.path(wd.de, "pathway_median0")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_Risk_p1e-3_up")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_Risk_p1e-3_down")
+
+setTable <- function(wd.de.reactome) {
+   list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
+ 
+   reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
+   colnames(reactome) <- gsub("X.", "", colnames(reactome))
+   reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+   for (r in 1:nrow(reactome)) {
+      ids <- as.vector(reactome$Submitted.entities.found[r])
+      ids <- unlist(strsplit(ids, ";"))
+  
+      for (i in 1:length(ids))
+         if (nrow(list[ids[i],]) != 0)
+      ids[i] <- list[ids[i],]$external_gene_name
+  
+      reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+   }
+   writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
+}
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE_p1e-3_up")
+#setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
+reactome.up <- subset(reactome, Entities.pValue <= 1e-7)[, 2:7]
+reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
+reactome.up <- reactome.up[order(reactome.up$log10P),]
+
+main.text <- c("Up-regulated", "309 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE_p1e-3_n309_up.pdf")
+
+pdf(file.de, height=3.7, width=7.5)
+par(mar=c(4,27.5,4,1))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.lighter, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+
+axis(side=1, at=seq(0, 12, by=4))
+mtext(main.text[2], line=0.3)
+abline(v=7, lty=5)
+dev.off()
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE_p1e-3_down")
+#setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
+reactome.down <- subset(reactome, Entities.pValue <= 1.7e-3)[, 2:7]
+reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
+reactome.down <- reactome.down[order(reactome.down$log10P),]
+reactome.down$log10P <- reactome.down$log10P * -1
+
+main.text <- c("Down-regulated", "727 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE_p1e-3_n727_down.pdf")
+
+pdf(file.de, height=3, width=7.5)
+par(mar=c(4,1,4,27.5))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.lighter, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
+abline(v=-7, lty=5)
+
+axis(side=1, at=seq(-12, 0, by=4))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
 # Correlation bwteen TPM and in-silico sorting
 # Last Modified: 12/12/19; 08/01/19; 17/08/17
 # -----------------------------------------------------------------------------
 colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
 src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
-rownames(de) <- rownames(tpm.gene.log2)
+rownames(src) <- rownames(tpm.gene.log2)
 
 ## SRC
 src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
@@ -80,11 +234,584 @@ src <- src[order(src$P),]
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
 src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 
-writeTable(src.tpm.gene, file.path(wd.de.data, "src_nbl_tpm-gene-r5p47_src_q_n53.txt"), colnames=T, rownames=F, sep="\t")
-save(src.tpm.gene, samples, file=file.path(wd.de.data, "src_nbl_tpm-gene-r5p47_src_q_n53.RData"))
+writeTable(src.tpm.gene, file.path(wd.de.data, "src_nbl_tpm-gene-median0_src_q_n53.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples, file=file.path(wd.de.data, "src_nbl_tpm-gene-median0_src_q_n53.RData"))
 nrow(src.tpm.gene)
 # [1] 22899
 # [1] 18764
+
+# -----------------------------------------------------------------------------
+# Last Modified: 15/08/21
+# -----------------------------------------------------------------------------
+plotVolcano2 <- function(de, pvalue, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd) {
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   de$log10P <- -log10(de$P)
+   xmax <- max(de$LOG2_FC)
+   xmin <- min(de$LOG2_FC)
+   #if (ymax ==0) ymax <- max(de$log10P)
+   ymax <- 8
+ 
+   pdf(file.de, height=6, width=6)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
+ 
+   abline(h=c(-log10(pvalue)), lty=5)
+ 
+   de.up   <- subset(de.sig, LOG2_FC > 0)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lightest, cex=1.4)
+   
+   de.up <- de[overlaps.up.pe3,]
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lighter, cex=1.4)
+  
+   de.up <- de[overlaps.up.pe3.iz.e.cd,]
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red, cex=1.4)
+ 
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+   
+         if (nrow(gene) > 0) {
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+    
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
+            else
+               if (gene$LOG2_FC > 0)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
+         } else
+            print(genes[g,])
+      }
+   }
+ 
+   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
+   mtext(file.main[2], cex=1.25, line=0.3)
+   #legend("topleft", legend=c("Up-regulated (L < H)", "Down-regulated (L > H)"), col=c(red, blue), pch=19, cex=1.25)
+   legend("topleft", legend="Up-regulated (L < H)", col=red, pch=19, cex=1.25)
+   dev.off()
+}
+
+### 16/08/21
+## NBL expressed genes 
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E+CD_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd)
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E+CD_p1e-3_22q11.22")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd)
+
+
+
+
+
+###
+##
+overlaps.up <- intersect(rownames(subset(de.tpm.gene, LOG2_FC >= 0)), rownames(subset(src.tpm.gene, LOG2_FC >= 0)))
+overlaps.down <- intersect(rownames(subset(de.tpm.gene, LOG2_FC < 0)), rownames(subset(src.tpm.gene, LOG2_FC < 0)))
+overlaps <- c(overlaps.up, overlaps.down)
+
+## NBL expressed genes
+#xlab.text <- "High/Low risk fold change [log2]"
+#plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC_p1e-3_TERT")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+#file.de <- paste0(plot.de, ".pdf")
+#file.main <- c("NBL high risk, proliferation-associated genes", "Low (L) vs. High (H)")
+#plotVolcano(de.tpm.gene[overlaps,], 0.001, genes, file.de, file.main, xlab.text)
+
+##
+overlaps.up.pe3 <- intersect(rownames(subset(subset(de.tpm.gene, P < 1E-3), LOG2_FC >= 0)), rownames(subset(subset(src.tpm.gene, P < 1E-3), LOG2_FC >= 0)))
+overlaps.down.pe3 <- intersect(rownames(subset(subset(de.tpm.gene, P < 1E-3), LOG2_FC < 0)), rownames(subset(subset(src.tpm.gene, P < 1E-3), LOG2_FC < 0)))
+overlaps.pe3 <- c(overlaps.up.pe3, overlaps.down.pe3)
+
+de.tpm.gene.overlaps.pe3 <- de.tpm.gene[overlaps.pe3,]
+de.tpm.gene.overlaps.pe3 <- de.tpm.gene.overlaps.pe3[order(de.tpm.gene.overlaps.pe3$P),]
+
+writeTable(overlaps.up.pe3, file.path(wd.de.data, "genes_DE+SRC_p1e-3_n158_up.txt"), colnames=F, rownames=F, sep="")
+writeTable(overlaps.down.pe3, file.path(wd.de.data, "genes_DE+SRC_p1e-3_n464_down.txt"), colnames=F, rownames=F, sep="")
+
+###
+## Overlaps with early CD genes
+genes.iz.e.cd <- readTable(file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_e_cd_n53.txt"), header=T, rownames=T, sep="")
+genes.iz.e.ho <- readTable(file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_e_ho_n53.txt"), header=T, rownames=T, sep="")
+overlaps.iz.e.cd <- intersect(rownames(genes.iz.e.cd), overlaps)
+overlaps.iz.e <- intersect(c(rownames(genes.iz.e.cd), rownames(genes.iz.e.ho)), overlaps)
+
+de.tpm.gene.iz.e.cd <- de.tpm.gene[overlaps.iz.e.cd,]
+de.tpm.gene.iz.e.cd <- de.tpm.gene.iz.e.cd[order(de.tpm.gene.iz.e.cd$P),]
+
+de.tpm.gene.iz.e <- de.tpm.gene[overlaps.iz.e,]
+de.tpm.gene.iz.e <- de.tpm.gene.iz.e[order(de.tpm.gene.iz.e$P),]
+
+##
+overlaps.up.pe3.iz.e <- intersect(rownames(subset(subset(de.tpm.gene.iz.e, P < 1E-3), LOG2_FC > 0)), overlaps.pe3)
+overlaps.down.pe3.iz.e <- intersect(rownames(subset(subset(de.tpm.gene.iz.e, P < 1E-3), LOG2_FC < 0)), overlaps.pe3)
+
+writeTable(overlaps.up.pe3.iz.e, file.path(wd.de.data, "genes_DE+SRC+E_p1e-3_n22_up.txt"), colnames=F, rownames=F, sep="")
+writeTable(overlaps.down.pe3.iz.e, file.path(wd.de.data, "genes_DE+SRC+E_p1e-3_n67_down.txt"), colnames=F, rownames=F, sep="")
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E_p1e-3")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene[overlaps.iz.e,], 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3.iz.e, overlaps.down.pe3.iz.e)
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E_p1e-3_22q11.22")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene[overlaps.iz.e,], 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3.iz.e, overlaps.down.pe3.iz.e)
+
+
+
+
+
+
+
+##
+overlaps.up.pe3.iz.e.cd <- rowname(subset(subset(de.tpm.gene.iz.e.cd, P < 1E-3), LOG2_FC > 0))
+overlaps.down.pe3.iz.e.cd <- rowname(subset(subset(de.tpm.gene.iz.e.cd, P < 1E-3), LOG2_FC < 0))
+
+writeTable(overlaps.up.pe3.iz.e.cd, file.path(wd.de.data, "genes_DE+SRC+CD_p1e-3_n11_up.txt"), colnames=F, rownames=F, sep="")
+writeTable(overlaps.down.pe3.iz.e.cd, file.path(wd.de.data, "genes_DE+SRC+CD_p1e-3_n36_down.txt"), colnames=F, rownames=F, sep="")
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+CD_p1e-3")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene[overlaps.iz.e.cd,], 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd)
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+CD_p1e-3")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene[overlaps.iz.e.cd,], 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd)
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+CD_p1e-3_22q11.22")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene[overlaps.iz.e.cd,], 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3.iz.e.cd, overlaps.down.pe3.iz.e.cd)
+
+#overlaps.r5p47 <- intersect(rownames(de.tpm.gene.iz.e.cd), rownames(tpm.gene.log2))
+#xlab.text <- "High/Low risk fold change [log2]"
+#plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_r5p47_DE+SRC+CD_p1e-3")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+#file.de <- paste0(plot.de, ".pdf")
+#file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+#plotVolcano(de.tpm.gene.iz.e.cd[overlaps.r5p47,], 0.001, genes, file.de, file.main, xlab.text)
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Volcano plots
+# Last Modified: 11/08/21
+# -----------------------------------------------------------------------------
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   de$log10P <- -log10(de$P)
+   xmax <- max(de$LOG2_FC)
+   xmin <- min(de$LOG2_FC)
+   if (ymax ==0) ymax <- max(de$log10P)
+   
+   pdf(file.de, height=6, width=6)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
+   
+   abline(h=c(-log10(pvalue)), lty=5)
+
+   de.up   <- subset(de.sig, LOG2_FC > 0)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red, cex=1.4)
+   de.down <- subset(de.sig, LOG2_FC < 0)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue, cex=1.4)
+ 
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+      
+         if (nrow(gene) > 0) {
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+         
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
+            else
+               if (gene$LOG2_FC > 0)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
+               else
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
+         } else
+            print(genes[g])
+      }
+   }
+   
+   #axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.1)
+   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
+   mtext(file.main[2], cex=1.25, line=0.15)
+   legend("topleft", legend=c("Positively", "Negatively"), col=c(red, blue), pch=19, cex=1.25)
+   dev.off()
+}
+
+## NBL expressed genes
+xlab.text <- "S/G1-like fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_SRC_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(expression(bold("NBL proliferation-correlated genes")), expression("Expression vs."~italic('in silico')~"sorting"))
+plotVolcano(src.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL high risk, proliferation-associated genes", "Low (L) vs. High (H)")
+plotVolcano(de.tpm.gene[overlaps,], 0.001, genes, file.de, file.main, xlab.text)
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
+# Last Modified: 11/08/21
+# -----------------------------------------------------------------------------
+wd.de.pathway <- file.path(wd.de, "pathway_median0")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_up")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_down")
+
+setTable <- function(wd.de.reactome) {
+   list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
+ 
+   reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
+   colnames(reactome) <- gsub("X.", "", colnames(reactome))
+   reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+   for (r in 1:nrow(reactome)) {
+      ids <- as.vector(reactome$Submitted.entities.found[r])
+      ids <- unlist(strsplit(ids, ";"))
+  
+      for (i in 1:length(ids))
+         if (nrow(list[ids[i],]) != 0)
+            ids[i] <- list[ids[i],]$external_gene_name
+  
+      reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+   }
+   writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
+}
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_up")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+#reactome[6, 2] <- "Respiratory electron transport, ATP synthesis by chemiosmotic coupling"
+
+reactome.up <- subset(reactome, Entities.pValue <= 1e-8)[, 2:7]
+reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
+reactome.up <- reactome.up[order(reactome.up$log10P),]
+
+main.text <- c("Positively-correlated", "158 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE+SRC_p1e-3_n158_up.pdf")
+
+pdf(file.de, height=4, width=7.5)
+par(mar=c(4,27.5,4,1))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+
+axis(side=1, at=seq(0, 12, by=4))
+mtext(main.text[2], line=0.3)
+abline(v=8, lty=5)
+dev.off()
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_down")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
+reactome.down <- subset(reactome, Entities.pValue <= 1e-4)[, 2:7]
+reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
+reactome.down <- reactome.down[order(reactome.down$log10P),]
+reactome.down$log10P <- reactome.down$log10P * -1
+
+main.text <- c("Negatively-correlated", "464 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE+SRC_p1e-3_n464_down.pdf")
+
+pdf(file.de, height=2.5, width=7.5)
+par(mar=c(4,1,4,27.5))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
+abline(v=-8, lty=5)
+
+axis(side=1, at=seq(-12, 0, by=4))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
+# Last Modified: 13/08/21
+# -----------------------------------------------------------------------------
+wd.de.pathway <- file.path(wd.de, "pathway_median0")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_up")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_down")
+
+setTable <- function(wd.de.reactome) {
+   list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
+ 
+   reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
+   colnames(reactome) <- gsub("X.", "", colnames(reactome))
+   reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+   for (r in 1:nrow(reactome)) {
+      ids <- as.vector(reactome$Submitted.entities.found[r])
+      ids <- unlist(strsplit(ids, ";"))
+  
+      for (i in 1:length(ids))
+         if (nrow(list[ids[i],]) != 0)
+            ids[i] <- list[ids[i],]$external_gene_name
+  
+      reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+   }
+   writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
+}
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_up")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+reactome[6, 2] <- "Respiratory electron transport, ATP synthesis by chemiosmotic coupling"
+
+reactome.up <- subset(reactome, Entities.pValue <= 1e-15)[, 2:7]
+reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
+reactome.up <- reactome.up[order(reactome.up$log10P),]
+
+main.text <- c("Positively-correlated", "426 genes")
+file.de <- file.path(wd.de.reactome, "genes_SRC_p1e-3_n426_up.pdf")
+
+pdf(file.de, height=4, width=7.5)
+par(mar=c(4,27.5,4,1))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 16), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+
+axis(side=1, at=seq(0, 16, by=4))
+mtext(main.text[2], line=0.3)
+abline(v=15, lty=5)
+dev.off()
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_down")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
+reactome.down <- subset(reactome, Entities.pValue <= 4e-4)[, 2:7]
+reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
+reactome.down <- reactome.down[order(reactome.down$log10P),]
+reactome.down$log10P <- reactome.down$log10P * -1
+
+main.text <- c("Negatively-correlated", "1,055 genes")
+file.de <- file.path(wd.de.reactome, "genes_SRC_p1e-3_n1055_down.pdf")
+
+pdf(file.de, height=2.5, width=7.5)
+par(mar=c(4,1,4,27.5))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col=blue.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
+abline(v=-15, lty=5)
+
+axis(side=1, at=seq(-16, 0, by=4))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
+# Last Modified: 11/08/21
+# -----------------------------------------------------------------------------
+wd.de.pathway <- file.path(wd.de, "pathway_median0")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC+E_p1e-3_up")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC+E_p1e-3_down")
+
+setTable <- function(wd.de.reactome) {
+   list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
+ 
+   reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
+   colnames(reactome) <- gsub("X.", "", colnames(reactome))
+   reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+   for (r in 1:nrow(reactome)) {
+      ids <- as.vector(reactome$Submitted.entities.found[r])
+      ids <- unlist(strsplit(ids, ";"))
+  
+      for (i in 1:length(ids))
+         if (nrow(list[ids[i],]) != 0)
+            ids[i] <- list[ids[i],]$external_gene_name
+  
+      reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+   }
+   writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
+}
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC+E_p1e-3_up")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+#reactome[1, 2] <- "TP53 Regulates Transcription Involved in Cytochrome C Release"
+
+reactome.up <- subset(reactome, Entities.pValue <= 2e-3)[, 2:7]
+reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
+reactome.up <- reactome.up[order(reactome.up$log10P),]
+
+main.text <- c("Up-regulated", "11 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE+SRC+CD_p1e-3_n11_up.pdf")
+
+pdf(file.de, height=4.5, width=7.5)
+par(mar=c(4,27.5,4,1))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 4), xaxt="n", names.arg=reactome.up$Pathway.name, col=red, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+
+axis(side=1, at=seq(0, 4, by=2))
+mtext(main.text[2], line=0.3)
+abline(v=3, lty=5)
+dev.off()
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_down")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
+reactome.down <- subset(reactome, Entities.pValue <= 1e-4)[, 2:7]
+reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
+reactome.down <- reactome.down[order(reactome.down$log10P),]
+reactome.down$log10P <- reactome.down$log10P * -1
+
+main.text <- c("Negatively-correlated", "464 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE+SRC_p1e-3_n464_down.pdf")
+
+pdf(file.de, height=2.5, width=7.5)
+par(mar=c(4,1,4,27.5))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
+abline(v=-8, lty=5)
+
+axis(side=1, at=seq(-12, 0, by=4))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
+# Last Modified: 11/08/21
+# -----------------------------------------------------------------------------
+wd.de.pathway <- file.path(wd.de, "pathway_median0")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC+CD_p1e-3_up")
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC+CD_p1e-3_down")
+
+setTable <- function(wd.de.reactome) {
+   list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
+ 
+   reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
+   colnames(reactome) <- gsub("X.", "", colnames(reactome))
+   reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
+   for (r in 1:nrow(reactome)) {
+      ids <- as.vector(reactome$Submitted.entities.found[r])
+      ids <- unlist(strsplit(ids, ";"))
+  
+      for (i in 1:length(ids))
+         if (nrow(list[ids[i],]) != 0)
+      ids[i] <- list[ids[i],]$external_gene_name
+  
+      reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
+   }
+   writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
+}
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC+CD_p1e-3_up")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+reactome[1, 2] <- "TP53 Regulates Transcription Involved in Cytochrome C Release"
+
+reactome.up <- subset(reactome, Entities.pValue <= 3e-3)[, 2:7]
+reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
+reactome.up <- reactome.up[order(reactome.up$log10P),]
+
+main.text <- c("Up-regulated", "11 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE+SRC+CD_p1e-3_n11_up.pdf")
+
+pdf(file.de, height=3.5, width=7.5)
+par(mar=c(4,27.5,4,1))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 4), xaxt="n", names.arg=reactome.up$Pathway.name, col=red, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+
+axis(side=1, at=seq(0, 4, by=2))
+mtext(main.text[2], line=0.3)
+abline(v=3, lty=5)
+dev.off()
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_down")
+setTable(wd.de.reactome)
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+
+reactome.down <- subset(reactome, Entities.pValue <= 1e-4)[, 2:7]
+reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
+reactome.down <- reactome.down[order(reactome.down$log10P),]
+reactome.down$log10P <- reactome.down$log10P * -1
+
+main.text <- c("Negatively-correlated", "464 genes")
+file.de <- file.path(wd.de.reactome, "genes_DE+SRC_p1e-3_n464_down.pdf")
+
+pdf(file.de, height=2.5, width=7.5)
+par(mar=c(4,1,4,27.5))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
+abline(v=-8, lty=5)
+
+axis(side=1, at=seq(-12, 0, by=4))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
@@ -204,25 +931,25 @@ nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/31703
 ###
 ## median0
 nrow(tpm.gene.log2.m.rfd.ttr)/
-# [1] 
-nrow(tpm.gene.log2.m.rfd.ctr.iz)/
-# [1] 
-nrow(tpm.gene.log2.m.rfd.ctr.tz)/
-# [1] 
-
-nrow(tpm.gene.log2.m.rfd.ctr.iz.e)/
-# [1] 
-nrow(tpm.gene.log2.m.rfd.ctr.iz.l)/
-# [1] 
+ # [1] 
+ nrow(tpm.gene.log2.m.rfd.ctr.iz)/
+ # [1] 
+ nrow(tpm.gene.log2.m.rfd.ctr.tz)/
+ # [1] 
  
-nrow(tpm.gene.log2.m.rfd.ctr.tz.e)/
-# [1] 
-nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/
-# [1] 
-
-###
-## r5p47
-nrow(tpm.gene.log2.m.rfd.ttr)/17654
+ nrow(tpm.gene.log2.m.rfd.ctr.iz.e)/
+ # [1] 
+ nrow(tpm.gene.log2.m.rfd.ctr.iz.l)/
+ # [1] 
+ 
+ nrow(tpm.gene.log2.m.rfd.ctr.tz.e)/
+ # [1] 
+ nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/
+ # [1] 
+ 
+ ###
+ ## r5p47
+ nrow(tpm.gene.log2.m.rfd.ttr)/17654
 # [1] 0.7132095
 nrow(tpm.gene.log2.m.rfd.ctr.iz)/17654
 # [1] 0.1759941
@@ -350,8 +1077,8 @@ plotBoxNRFD(base, BASE, ylim, tpm.gene.log2.m.rfd.ctr.iz.e.cd, tpm.gene.log2.m.r
 # -----------------------------------------------------------------------------
 genes <- c("RPL38")
 for (g in 1:length(genes)) {
-   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
-   plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
+ id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+ plotCYS(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, "black", "bottomright")
 }
 
 ##
@@ -397,78 +1124,28 @@ de.tpm.gene.rfd.tz.e.ho <- de.tpm.gene[overlaps,]
 de.tpm.gene.rfd.tz.e.ho$Q <- qvalue(de.tpm.gene.rfd.tz.e.ho$P)$qvalue
 writeTable(de.tpm.gene.rfd.tz.e.ho, file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_tz_e_ho_n53.txt"), colnames=T, rownames=F, sep="\t")
 
-# -----------------------------------------------------------------------------
-# Volcano plots
-# Last Modified: 11/08/21
-# -----------------------------------------------------------------------------
-pvalueToFDR <- function(pvalue, de) {
-   de.sig <- subset(de, P <= pvalue)
- 
-   return(round0(max(de.sig$Q)*100, digits=0))
-}
 
-plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
-   #pvalue <- fdrToP(fdr, de)
-   fdr <- pvalueToFDR(pvalue, de)
-   de.sig <- subset(de, P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   xmin <- min(de$LOG2_FC)
-   if (ymax ==0) ymax <- max(de$log10P)
-   
-   pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
-   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
-   
-   abline(h=c(-log10(pvalue)), lty=5)
-   #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.1)    ## SCLC (IZ)
-   #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
-   #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
-   
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lighter, cex=1.4)
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=lightblue, cex=1.4)
- 
-   if (nrow(genes) != 0) {
-      for (g in 1:nrow(genes)) {
-         gene <- subset(de, external_gene_name == genes[g,]$GENE)
-         gene <- cbind(gene, genes[g,])
-      
-         if (nrow(gene) > 0) {
-            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
-         
-            if (!is.na(gene$ADJ_1))
-               if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
-               else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
-            else
-               if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
-               else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
-         } else
-            print(genes[g])
-      }
-   }
-   
-   #axis(side=1, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.1)
-   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
-   mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topleft", legend=c("Positively (Spearman's)", "Negatively"), col=c(red.lighter, blue.lighter), pch=19, cex=1.25)
-   dev.off()
-}
 
-## NBL expressed genes
-xlab.text <- "S/G1-like fold change [log2]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_r5p47_SRC_p1e-3_TERT")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(plot.de, ".pdf")
-file.main <- c("NBL expressed genes (n=18,764)", "Expression vs. in silico sorting")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -538,79 +1215,7 @@ file.main <- c("NBL early TZ, HO genes (n=951)", "Correlation between expression
 file.de <- paste0(plot.de, ".pdf")
 plotVolcano(de.tpm.gene.rfd.tz.e.ho, 0.01, genes, file.de, file.main, xlab.text, ymax=8.5)
 
-# -----------------------------------------------------------------------------
-# Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
-# Last Modified: 11/08/21
-# -----------------------------------------------------------------------------
-wd.de.pathway <- file.path(wd.de, "pathway_r5p47")
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_up")
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_down")
 
-setTable <- function(wd.de.reactome) {
-   list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
- 
-   reactome <- read.csv(file.path(wd.de.reactome, "result.csv"))
-   colnames(reactome) <- gsub("X.", "", colnames(reactome))
-   reactome$Submitted.entities.found <- as.vector(reactome$Submitted.entities.found)
-   for (r in 1:nrow(reactome)) {
-      ids <- as.vector(reactome$Submitted.entities.found[r])
-      ids <- unlist(strsplit(ids, ";"))
-  
-   for (i in 1:length(ids))
-      if (nrow(list[ids[i],]) != 0)
-      ids[i] <- list[ids[i],]$external_gene_name
-  
-      reactome$Submitted.entities.found[r] <- paste(ids, collapse=";")
-   }
-   writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownames=F, sep="\t")
-}
-
-###
-## Link: https://www.statmethods.net/graphs/bar.html
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_up")
-setTable(wd.de.reactome)
-reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
-reactome[6, 2] <- "Respiratory electron transport, ATP synthesis by chemiosmotic coupling"
-
-reactome.up <- subset(reactome, Entities.pValue <= 1e-15)[, 2:7]
-reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
-reactome.up <- reactome.up[order(reactome.up$log10P),]
-
-main.text <- c("Positively-correlated", "385 genes")
-file.de <- file.path(wd.de.reactome, "genes_SRC_p1e-3_n385_up.pdf")
-
-pdf(file.de, height=4, width=7.5)
-par(mar=c(4,27.5,4,1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 16), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.lighter, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
-
-axis(side=1, at=seq(0, 16, by=4))
-mtext(main.text[2], line=0.3)
-abline(v=15, lty=5)
-dev.off()
-
-###
-## Link: https://www.statmethods.net/graphs/bar.html
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_SRC_p1e-3_down")
-setTable(wd.de.reactome)
-reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
-
-reactome.down <- subset(reactome, Entities.pValue <= 1e-4)[, 2:7]
-reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
-reactome.down <- reactome.down[order(reactome.down$log10P),]
-reactome.down$log10P <- reactome.down$log10P * -1
-
-main.text <- c("Negatively-correlated", "1,025 genes")
-file.de <- file.path(wd.de.reactome, "genes_SRC_p1e-3_n1025_down.pdf")
-
-pdf(file.de, height=1.85, width=7.5)
-par(mar=c(4,1,4,27.5))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col="steelblue1", xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
-text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
-abline(v=-15, lty=5)
-
-axis(side=1, at=seq(-16, 0, by=4))
-mtext(main.text[2], line=0.3)
-dev.off()
 
 
 

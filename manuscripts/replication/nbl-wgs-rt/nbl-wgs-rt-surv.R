@@ -191,8 +191,8 @@ plotVolcano(fishers.tpm.gene, 1.00E-03, genes, file.de, file.main)
 overlaps.up <- intersect(rownames(subset(subset(de.tpm.gene, P < 1E-3), LOG2_FC >= 0)), rownames(subset(subset(fishers.tpm.gene, P < 1E-3), LOG2_FC >= 0)))
 overlaps.down <- intersect(rownames(subset(subset(de.tpm.gene, P < 1E-3), LOG2_FC < 0)), rownames(subset(subset(fishers.tpm.gene, P < 1E-3), LOG2_FC < 0)))
 
-writeTable(overlaps.up, file.path(wd.de.data, "genes_Merged_p1e-3_n242_down.txt"), colnames=F, rownames=F, sep="")
-writeTable(overlaps.down, file.path(wd.de.data, "genes_Merged_p1e-3_n73_up.txt"), colnames=F, rownames=F, sep="")
+writeTable(overlaps.up, file.path(wd.de.data, "genes_Merged_p1e-3_n73_up.txt"), colnames=F, rownames=F, sep="")
+writeTable(overlaps.down, file.path(wd.de.data, "genes_Merged_p1e-3_n242_down.txt"), colnames=F, rownames=F, sep="")
 
 
 
