@@ -9,7 +9,7 @@
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Commons.R", "Transcription.R", "TranscriptionReplicationConflict.R")
+handbooks  <- c("Commons.R", "Transcription.R", "TranscriptionReplicationInteraction.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -27,6 +27,7 @@ base <- tolower(BASE)
 wd.rna   <- file.path(wd, BASE, "ngs/RNA")
 wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata", "Peifer 2015")
 
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
@@ -52,6 +53,44 @@ nrow(tpm.gene.log2.m)
 # [1] 34908
 # [1] 22899
 # [1] 18764
+
+# -----------------------------------------------------------------------------
+# Purities
+# Last Modified: 31/08/21
+# -----------------------------------------------------------------------------
+purities <- readTable(file.path(wd.meta, "nature14980-s1_Table1.txt"), header=T, rownames=T, sep="")
+news <- readTable(file.path(wd.meta, "Samples_NEW_NUMBERS.txt"), header=T, rownames=2, sep="")
+
+overlaps.samples <- intersect(rownames(purities), rownames(news))
+purities <- cbind(purities[overlaps.samples,], news[overlaps.samples,])
+rownames(purities) <- purities$OLD
+
+overlaps.samples <- intersect(rownames(samples.wgs), rownames(purities))
+samples.purities <- cbind(samples.wgs[overlaps.samples,], purities[overlaps.samples, 1:22])
+#rownames(samples.purities) <- samples.purities$V1
+
+plotPuritySRC("Purity", expression(bold("Purity")), as.numeric(sub("%", "", samples.purities$Purity))/100, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Ploidy", expression(bold("Ploidy")), samples.purities$Ploidy, samples.purities$COR, 1, "black", "bottomright")
+
+plotPuritySRC("Aligned reads", expression(bold("Aligned reads")), samples.purities$Reads_Align, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Uniquely aligned reads", expression(bold("Uniquely aligned reads")), samples.purities$Align_Uniquely, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Paired reads", expression(bold("Paired reads")), samples.purities$Paired_Reads, samples.purities$COR, 1, "black", "bottomright")
+
+plotPuritySRC("Insert size", expression(bold("Insert size")), samples.purities$Insert_Size, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Mean coverage", expression(bold("Mean coverage")), samples.purities$Mean_Coverage, samples.purities$COR, 1, "black", "bottomright")
+
+
+
+plotPuritySRC("Purity", expression(bold("Purity vs."~bolditalic('in silico')~"sorting")), as.numeric(sub("%", "", samples.purities$Purity))/100, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Ploidy", expression(bold("Ploidy vs."~bolditalic('in silico')~"sorting")), samples.purities$Ploidy, samples.purities$COR, 1, "black", "bottomright")
+
+plotPuritySRC("Aligned reads", expression(bold("Aligned reads vs."~bolditalic('in silico')~"")), samples.purities$Reads_Align, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Uniquely aligned reads", expression(bold("Uniquely aligned vs."~bolditalic('in silico')~"")), samples.purities$Align_Uniquely, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Paired reads", expression(bold("Paired reads vs."~bolditalic('in silico')~"sorting")), samples.purities$Paired_Reads, samples.purities$COR, 1, "black", "bottomright")
+
+plotPuritySRC("Insert size", expression(bold("Insert size vs."~bolditalic('in silico')~"sorting")), samples.purities$Insert_Size, samples.purities$COR, 1, "black", "bottomright")
+plotPuritySRC("Mean coverage", expression(bold("Mean coverage vs."~bolditalic('in silico')~"")), samples.purities$Mean_Coverage, samples.purities$COR, 1, "black", "bottomright")
+
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -83,8 +122,8 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
    xmin <- min(de$LOG2_FC)
-   #if (ymax ==0) ymax <- max(de$log10P)
-   ymax <- 7
+   if (ymax ==0) ymax <- max(de$log10P)
+   #ymax <- 7
    
    pdf(file.de, height=6, width=6)
    plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
@@ -122,7 +161,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
  
    axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topleft", legend=c("Up-regulated (L < H)", "Down-regulated (L > H)"), col=c(red.lighter, blue.lighter), pch=19, cex=1.25)
+   legend("topleft", legend=c("Up-regulated (L < H)", "Down-regulated (L > H)"), col=c(red.lightest, blue.lightest), pch=19, cex=1.25)
    dev.off()
 }
 
@@ -131,7 +170,7 @@ xlab.text <- "High/Low risk fold change [log2]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE_p1e-3_TERT")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-file.main <- c("NBL high risk-differentially expressed genes", "Low (L) vs. High (H)")
+file.main <- c("NBL risk group-associated genes", "Low (L) vs. High (H)")
 plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
 
 # -----------------------------------------------------------------------------
@@ -171,12 +210,12 @@ reactome.up <- subset(reactome, Entities.pValue <= 1e-7)[, 2:7]
 reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
 reactome.up <- reactome.up[order(reactome.up$log10P),]
 
-main.text <- c("Up-regulated", "309 genes")
+main.text <- c("Up-regulated (L < H)", "309 genes")
 file.de <- file.path(wd.de.reactome, "genes_DE_p1e-3_n309_up.pdf")
 
 pdf(file.de, height=3.7, width=7.5)
 par(mar=c(4,27.5,4,1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.lighter, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.lightest, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 
 axis(side=1, at=seq(0, 12, by=4))
 mtext(main.text[2], line=0.3)
@@ -194,12 +233,12 @@ reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
 reactome.down <- reactome.down[order(reactome.down$log10P),]
 reactome.down$log10P <- reactome.down$log10P * -1
 
-main.text <- c("Down-regulated", "727 genes")
+main.text <- c("Down-regulated (L > H)", "727 genes")
 file.de <- file.path(wd.de.reactome, "genes_DE_p1e-3_n727_down.pdf")
 
 pdf(file.de, height=3, width=7.5)
 par(mar=c(4,1,4,27.5))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.lighter, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.lightest, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
 abline(v=-7, lty=5)
 
@@ -246,15 +285,18 @@ nrow(src.tpm.gene)
 plotVolcano2 <- function(de, pvalue, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd) {
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
- 
+   adjustcolor.gray  <- adjustcolor("lightgray", alpha.f=0.125)
+   
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
+   #xmin <- -xmax
    xmin <- min(de$LOG2_FC)
    #if (ymax ==0) ymax <- max(de$log10P)
-   ymax <- 8
- 
+   ymax <- max(de$log10P)
+   #ymax <- 8.5
+   
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col=adjustcolor.gray, main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
  
    abline(h=c(-log10(pvalue)), lty=5)
@@ -262,11 +304,14 @@ plotVolcano2 <- function(de, pvalue, genes, file.de, file.main, xlab.text, overl
    de.up   <- subset(de.sig, LOG2_FC > 0)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lightest, cex=1.4)
    
-   de.up <- de[overlaps.up.pe3,]
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lighter, cex=1.4)
-  
-   de.up <- de[overlaps.up.pe3.iz.e.cd,]
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red, cex=1.4)
+   if (is.null(nrow(overlaps.up.pe3))) {
+      de.up <- de[overlaps.up.pe3,]
+      points(de.up$LOG2_FC, de.up$log10P, pch=16, col=flowjo.red, cex=1.4)
+   }
+   if (is.null(nrow(overlaps.up.pe3.iz.e.cd))) {
+      de.up <- de[overlaps.up.pe3.iz.e.cd,]
+      points(de.up$LOG2_FC, de.up$log10P, pch=16, col="red", cex=1.4)
+   }
  
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
@@ -293,8 +338,13 @@ plotVolcano2 <- function(de, pvalue, genes, file.de, file.main, xlab.text, overl
  
    axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   #legend("topleft", legend=c("Up-regulated (L < H)", "Down-regulated (L > H)"), col=c(red, blue), pch=19, cex=1.25)
-   legend("topleft", legend="Up-regulated (L < H)", col=red, pch=19, cex=1.25)
+   #if (!is.null(nrow(overlaps.up.pe3)) && !is.null(nrow(overlaps.up.pe3.iz.e.cd))) {
+   #legend("topleft", legend=c("309 L < H", "158 S-like", "  22 Early IZ"), col=c(red.lightest, flowjo.red, "red"), pch=19, cex=1.25) 
+   #} else if (!is.null(nrow(overlaps.up.pe3)) && is.null(nrow(overlaps.up.pe3.iz.e.cd))) {
+      legend("topleft", legend=c("309 L < H", "158 S-like"), col=c(red.lightest, flowjo.red), pch=19, cex=1.25)  
+      #} else {
+         #legend("topleft", legend=c("309 L < H"), col=c(red.lightest), pch=19, cex=1.25)
+      #}
    dev.off()
 }
 
@@ -303,9 +353,47 @@ plotVolcano2 <- function(de, pvalue, genes, file.de, file.main, xlab.text, overl
 xlab.text <- "High/Low risk fold change [log2]"
 plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E+CD_p1e-3_TERT")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(plot.de, ".pdf")
-file.main <- c("NBL early IZ, CD genes", "Low (L) vs. High (H)")
+file.de <- paste0(plot.de, ".google.red.pdf")
+file.main <- c("11 NBL early IZ, CD genes", "Low (L) vs. High (H)")
 plotVolcano2(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd)
+
+### 30/08/21
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+IZ+E_p1e-3_ICT1")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, "adjustcolor.gray0.125.pdf")
+file.main <- c("22 NBL early IZ genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e)
+
+writeTable(de.tpm.gene[overlaps.up.pe3.iz.e,], file.path(wd.de.data, "NBL_tpm-gene-median0_DE+SRC+IZ+E_pe1-3_n53_HIGH.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene[overlaps.down.pe3.iz.e,], file.path(wd.de.data, "NBL_tpm-gene-median0_DE+SRC+IZ+E_pe1-3_n53_LOW.txt"), colnames=T, rownames=F, sep="\t")
+save(overlaps.up.pe3.iz.e, overlaps.down.pe3.iz.e, file=file.path(wd.de.data, "NBL_tpm-gene-median0_DE+SRC+IZ+E_pe1-3_n53.RData"))
+
+### 29/08/21
+## NBL expressed genes 
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC_p1e-3_FKBP3")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, "adjustcolor.gray0.125.pdf")
+file.main <- c("158 NBL high risk- and proliferation-associated genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3, NA)
+
+writeTable(de.tpm.gene[overlaps.up.pe3,], file.path(wd.de.data, "NBL_tpm-gene-median0_DE+SRC_pe1-3_n53_HIGH.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene[overlaps.down.pe3,], file.path(wd.de.data, "NBL_tpm-gene-median0_DE+SRC_pe1-3_n53_LOW.txt"), colnames=T, rownames=F, sep="\t")
+save(overlaps.up.pe3, overlaps.down.pe3, file=file.path(wd.de.data, "NBL_tpm-gene-median0_DE+SRC_pe1-3_n53.RData"))
+
+## NBL expressed genes
+xlab.text <- "High/Low risk fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, "adjustcolor.gray0.125.pdf")
+file.main <- c("309 NBL high risk-associated genes", "Low (L) vs. High (H)")
+plotVolcano2(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, NA, NA)
+
+
+
+
 
 ## NBL expressed genes
 xlab.text <- "High/Low risk fold change [log2]"
@@ -344,10 +432,19 @@ de.tpm.gene.overlaps.pe3 <- de.tpm.gene.overlaps.pe3[order(de.tpm.gene.overlaps.
 writeTable(overlaps.up.pe3, file.path(wd.de.data, "genes_DE+SRC_p1e-3_n158_up.txt"), colnames=F, rownames=F, sep="")
 writeTable(overlaps.down.pe3, file.path(wd.de.data, "genes_DE+SRC_p1e-3_n464_down.txt"), colnames=F, rownames=F, sep="")
 
+### 30/08/21
+## Overlapping with early IZ genes
+overlaps.up.pe3.iz.e <- intersect(overlaps.up.pe3, rownames(tpm.gene.log2.m.rfd.ctr.iz.e))
+
+
+
+
+
 ###
 ## Overlaps with early CD genes
 genes.iz.e.cd <- readTable(file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_e_cd_n53.txt"), header=T, rownames=T, sep="")
 genes.iz.e.ho <- readTable(file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_e_ho_n53.txt"), header=T, rownames=T, sep="")
+genes.iz.e <- c(genes.iz.e.cd, genes.iz.e.ho)
 overlaps.iz.e.cd <- intersect(rownames(genes.iz.e.cd), overlaps)
 overlaps.iz.e <- intersect(c(rownames(genes.iz.e.cd), rownames(genes.iz.e.ho)), overlaps)
 
@@ -366,10 +463,10 @@ writeTable(overlaps.down.pe3.iz.e, file.path(wd.de.data, "genes_DE+SRC+E_p1e-3_n
 
 ## NBL expressed genes
 xlab.text <- "High/Low risk fold change [log2]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E_p1e-3")
+plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0_DE+SRC+E_p1e-3_ICT1")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-file.main <- c("NBL early IZ genes", "Low (L) vs. High (H)")
+file.main <- c("22 NBL early IZ genes", "Low (L) vs. High (H)")
 plotVolcano2(de.tpm.gene[overlaps.iz.e,], 0.001, genes, file.de, file.main, xlab.text, overlaps.up.pe3.iz.e, overlaps.down.pe3.iz.e)
 
 ## NBL expressed genes
@@ -532,7 +629,7 @@ setTable <- function(wd.de.reactome) {
 ###
 ## Link: https://www.statmethods.net/graphs/bar.html
 wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_up")
-setTable(wd.de.reactome)
+#setTable(wd.de.reactome)
 reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
 #reactome[6, 2] <- "Respiratory electron transport, ATP synthesis by chemiosmotic coupling"
 
@@ -545,7 +642,7 @@ file.de <- file.path(wd.de.reactome, "genes_DE+SRC_p1e-3_n158_up.pdf")
 
 pdf(file.de, height=4, width=7.5)
 par(mar=c(4,27.5,4,1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col=red.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 12), xaxt="n", names.arg=reactome.up$Pathway.name, col=flowjo.red, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 
 axis(side=1, at=seq(0, 12, by=4))
 mtext(main.text[2], line=0.3)
@@ -555,7 +652,7 @@ dev.off()
 ###
 ## Link: https://www.statmethods.net/graphs/bar.html
 wd.de.reactome <- file.path(wd.de.pathway, "reactome_DE+SRC_p1e-3_down")
-setTable(wd.de.reactome)
+#setTable(wd.de.reactome)
 reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
 
 reactome.down <- subset(reactome, Entities.pValue <= 1e-4)[, 2:7]
@@ -568,7 +665,7 @@ file.de <- file.path(wd.de.reactome, "genes_DE+SRC_p1e-3_n464_down.pdf")
 
 pdf(file.de, height=2.5, width=7.5)
 par(mar=c(4,1,4,27.5))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=blue.light, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-12, 0), xaxt="n", names.arg="", col=flowjo.blue, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
 abline(v=-8, lty=5)
 
@@ -724,6 +821,38 @@ axis(side=1, at=seq(-12, 0, by=4))
 mtext(main.text[2], line=0.3)
 dev.off()
 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 27/08/21
+# -----------------------------------------------------------------------------
+genes <- c("TERT", "ANAPC11", "TRIAP1", "ICT1")
+genes <- c("FKBP3", "MRPL11", "PSMA6")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, flowjo.red, "bottomright")
+}
+
+genes <- c("ALK", "ATRX", "MYCN")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(genes[g], as.numeric(tpm.gene.log2[id,]), samples$COR, 1, flowjo.blue, "bottomright")
+}
+
+###
+##
+genes <- c("TERT", "ALK", "ATRX", "MYCN", "ANAPC11", "TRIAP1", "ICT1")
+genes <- c("FKBP3", "MRPL11", "PSMA6")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   
+   file.name <- paste0("boxplot0_NBL_L+H_", genes[g])
+   plotBox02(wd.de.plots, file.name, tpm.gene.log2[id, rownames(subset(samples, risk == "low"))], tpm.gene.log2[id, rownames(subset(samples, risk == "high"))], main=genes[g], names=c("Low", "High"), cols=c(blue.lightest, red.lightest))
+   #file.name <- paste0("boxplot0_NBL_L+H_test_", genes[g])
+   #plotBox02(wd.de.plots, file.name, tpm.gene.log2[id, rownames(subset(samples, risk == "low"))], tpm.gene.log2[id, rownames(subset(samples, risk == "high"))], main=genes[g], names=c("Low", "High"), cols=c(green.lighter, orange.lighter))
+}
+
+
+
 
 
 
@@ -847,9 +976,14 @@ nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
 save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
 
 load(file=file.path(wd.de.data, "tpm_gene_log2_m_rfd0.RData"))
-file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
-#file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd.RData")
+#file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
+file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd.RData")
 #file.name <- file.path(wd.de.data, "tpm_gene_r5p47_log2_m_rfd.RData")
+
+###
+## ADD: 29/08/21
+load(file=file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd0.RData"))
+file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd.RData")
 setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
 load(file.name)
 
@@ -984,6 +1118,18 @@ plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.r
 file.name <- paste0("boxplot6_sclc_tpm.gene_RFD_3.5")
 plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="NBL expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
 
+###
+## 30/08/21
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
+
+file.name <- paste0("boxplot3_nbl_tpm.gene.median0_RFD_3.5_NEW")
+plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="NBL expressed genes", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
+
+file.name <- paste0("boxplot4_nbl_tpm.gene.median0_RFD_3.2")
+plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="NBL expressed genes (CTR)", names=c("L", "E", "L", "E"), cols=c(blue, blue, red, red), ylim)
+
+file.name <- paste0("boxplot6_sclc_tpm.gene.median0_RFD_3.5")
+plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="NBL expressed genes", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
 
 
 
@@ -1015,8 +1161,25 @@ plotBox0(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (r5p47)
-# Last Modified: 02/09/20; 25/08/20; 29/05/20
+# Last Modified: 29/08/21; 02/09/20; 25/08/20; 29/05/20
 # -----------------------------------------------------------------------------
+# load("/Users/tpyang/Work/uni-koeln/tyang2/NBL/analysis/expression/kallisto/nbl-tpm-de/data/tpm_gene_median0_log2_m_rfd.RData")
+# > nrow(tpm.gene.log2.m.rfd.ctr.iz.e)
+# [1] 3231
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
+
+file.name <- paste0("boxplot0_nbl_tpm.gene.median0_rfd_TTR+IZ_Figure1")
+plotBox00(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.iz, main="NBL genes", names=c("TTR", "IZ"), cols=c("black", "red"), ylim)
+
+file.name <- paste0("boxplot0_nbl_tpm.gene.median0_rfd_IZ_E+L_Figure1")
+plotBox00(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="NBL IZ genes", names=c("Late", "Early"), cols=c("red", "red"), ylim)
+
+file.name <- paste0("boxplot0_nbl_tpm.gene.median0_rfd_IZ_E_HO+CD_Figure1")
+plotBox00(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.e.cd, main="NBL early IZ genes", names=c("HO", "CD"), cols=c("red", "red"), ylim)
+
+
+
+
 ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
 
 file.name <- paste0("boxplot0_nbl_tpm.gene.median0_rfd_TTR+IZ")

@@ -140,7 +140,54 @@ plotBox0 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
    plotBox(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.2)
 }
 
-plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names) {
+plotBox00 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3) {
+   trait <- rep(0, nrow(tpm.1))
+   trait <- c(trait, rep(1, nrow(tpm.2)))
+   trait <- as.factor(trait)
+   expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN))
+ 
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+ 
+   p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
+   text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)
+ 
+   ##
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.25)
+   #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
+   axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.2)
+   axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.2)
+ 
+   mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.25, line=0.3)
+   dev.off()
+}
+
+plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
+   trait <- rep(0, length(tpm.1))
+   trait <- c(trait, rep(1, length(tpm.2)))
+   trait <- as.factor(trait)
+ 
+   expr <- as.numeric(c(tpm.1, tpm.2))
+   ylim <- c(min(expr), max(expr))
+ 
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=4.5)
+   boxplot(expr ~ trait, outline=T, names=names, main="", col=cols, xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+ 
+   p <- wilcox.test(expr ~ trait, exact=F)$p.value
+   offset <- (ylim[2] - ylim[1])/35
+   text(1.5, ylim[2] - offset, getPvalueSignificanceLevel(p), col="black", cex=4)
+ 
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.9)
+   axis(side=1, at=1, labels=paste0("n=", length(tpm.1)), line=1.8, col=NA, cex.axis=1.9)
+   axis(side=1, at=2, labels=paste0("n=", length(tpm.2)), line=1.8, col=NA, cex.axis=1.9)
+   #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
+   mtext(main, font=2, cex=2, line=2)
+   mtext(paste0("p-value = ", scientific(p)), cex=2, line=0.3)
+   mtext("log2(TPM + 0.01)", side=2, line=2.74, cex=1.85)
+   dev.off()
+}
+
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
    trait <- as.factor(trait)
@@ -201,6 +248,9 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    
    axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.25)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
+   #axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
+   #axis(side=1, at=3, labels=paste0("n=", format(nrow(tpm.3), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
+   
    #axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
    #axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
  
@@ -475,15 +525,46 @@ plotSRC <- function(gene, cn, snr, pch, col, pos, xlab.text="") {
    ylim <- c(min(cn) - unit, max(cn) + unit)
  
    if (xlab.text == "")
-      xlab.text <- "In-silico sorting [rho]"
+      xlab.text <- expression(italic('In silico')~'sorting [rho]')
    ylab.text <- "log2(TPM + 0.01)"
    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
    file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    #plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab="", main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
    
+   lm.fit <- lm(cn ~ snr)
+   abline(lm.fit, col=col, lwd=7)
+ 
+   cor <- cor.test(cn, snr, method="spearman", exact=F)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, text.font=2, bty="n", cex=1.9)
+ 
+   axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
+   #axis(side=2, at=seq(6, 8, by=1), labels=c(6, 7, 8), cex.axis=1.7)   ## MARS
+   #axis(side=2, at=seq(4, 6, by=1), labels=c(4, 5, 6), cex.axis=1.7)   ## GTPBP3
+   mtext(ylab.text, side=2, line=2.74, cex=1.85)
+   mtext(xlab.text, side=1, line=3.5, cex=1.9)
+   #mtext(main.text[2], cex=1.2, line=0.3)
+   dev.off()
+}
+
+plotPuritySRC <- function(column, gene, cn, snr, pch, col, pos, xlab.text="") {
+   unit <- (max(snr) - min(snr))/10
+   xlim <- c(min(snr) - unit, max(snr) + unit)
+   unit <- (max(cn) - min(cn))/10
+   ylim <- c(min(cn) - unit, max(cn) + unit)
+ 
+   column <- sub("_", " ", column)
+   if (xlab.text == "")
+      xlab.text <- expression(italic('In silico')~'sorting [rho]')
+   ylab.text <- column
+   file.name <- file.path(wd.de.plots, paste0("SORTING_vs_", column, ""))
+ 
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   #plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab="", main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+ 
    lm.fit <- lm(cn ~ snr)
    abline(lm.fit, col=col, lwd=5)
  
@@ -494,6 +575,7 @@ plotSRC <- function(gene, cn, snr, pch, col, pos, xlab.text="") {
    #axis(side=2, at=seq(6, 8, by=1), labels=c(6, 7, 8), cex.axis=1.7)   ## MARS
    #axis(side=2, at=seq(4, 6, by=1), labels=c(4, 5, 6), cex.axis=1.7)   ## GTPBP3
    mtext(ylab.text, side=2, line=2.74, cex=1.85)
+   mtext(xlab.text, side=1, line=3.5, cex=1.9)
    #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
