@@ -36,6 +36,7 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
 phenos  <- readTable(file.path(wd.meta, "NB_WGS_Mutations_Overview.txt"), header=T, rownames=T, sep="")
+science <- readTable(file.path(wd.meta, "NB_RAS_Science_Table S10.txt"), header=T, rownames=T, sep="\t")
 #q4 <- rownames(subset(samples, Q4 == 4))
 #q3 <- rownames(subset(samples, Q4 == 3))
 #q2 <- rownames(subset(samples, Q4 == 2))
@@ -277,7 +278,73 @@ dev.off()
 
 
 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 12/09/21
+# -----------------------------------------------------------------------------
+## Risk group vs. Cell cycle
+test <- toTable(0, 2, 2, c("Low", "High"))
+rownames(test) <- c("M2", "M1")
 
+test[1, 1] <- nrow(subset(subset(phenos, M2 == 1), risk == "low"))
+test[1, 2] <- nrow(subset(subset(phenos, M2 == 1), risk == "high"))
+test[2, 1] <- nrow(subset(subset(phenos, M2 == 0), risk == "low"))
+test[2, 2] <- nrow(subset(subset(phenos, M2 == 0), risk == "high"))
+fisher.test(test)[[1]]
+
+## Risk group vs. Stage
+test <- toTable(0, 2, 2, c("Low", "High"))
+rownames(test) <- c("Stage4", "Stage1")
+
+test[1, 1] <- nrow(subset(subset(phenos.test, Stage == 1), risk == "low"))
+test[1, 2] <- nrow(subset(subset(phenos.test, Stage == 1), risk == "high"))
+test[2, 1] <- nrow(subset(subset(phenos.test, Stage == 0), risk == "low"))
+test[2, 2] <- nrow(subset(subset(phenos.test, Stage == 0), risk == "high"))
+fisher.test(test)[[1]]
+
+## Risk group vs. Stage
+test <- toTable(0, 2, 2, c("Low", "High"))
+rownames(test) <- c("Age", "Age540")
+
+test[1, 1] <- nrow(subset(subset(phenos, pat_age >= 540), risk == "low"))
+test[1, 2] <- nrow(subset(subset(phenos, pat_age >= 540), risk == "high"))
+test[2, 1] <- nrow(subset(subset(phenos, pat_age < 540), risk == "low"))
+test[2, 2] <- nrow(subset(subset(phenos, pat_age < 540), risk == "high"))
+fisher.test(test)[[1]]
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 05/09/21
+# -----------------------------------------------------------------------------
+## Stage vs. Cell cycle
+test <- toTable(0, 2, 2, c("Stage1", "Stage4"))
+rownames(test) <- c("M2", "M1")
+
+phenos.test <- phenos
+phenos.test$Stage <- 0
+phenos.test[rownames(subset(phenos, stage == 4)),]$Stage <- 1
+#phenos.test[rownames(subset(phenos, stage == 5)),]$Stage <- 1
+
+test[1, 1] <- nrow(subset(subset(phenos.test, M2 == 1), Stage == 0))
+test[1, 2] <- nrow(subset(subset(phenos.test, M2 == 1), Stage == 1))
+test[2, 1] <- nrow(subset(subset(phenos.test, M2 == 0), Stage == 0))
+test[2, 2] <- nrow(subset(subset(phenos.test, M2 == 0), Stage == 1))
+fisher.test(test)[[1]]
+
+## Age vs. Cell cycle
+test <- toTable(0, 2, 2, c("Age", "Age540"))
+rownames(test) <- c("M2", "M1")
+
+test[1, 1] <- nrow(subset(subset(phenos, M2 == 1), pat_age < 540))
+test[1, 2] <- nrow(subset(subset(phenos, M2 == 1), pat_age >= 540))
+test[2, 1] <- nrow(subset(subset(phenos, M2 == 0), pat_age < 540))
+test[2, 2] <- nrow(subset(subset(phenos, M2 == 0), pat_age >= 540))
+fisher.test(test)[[1]]
+
+## TERT maintenance
+rownames(phenos.age) <- phenos.age$NEW
+overlaps <- intersect(rownames(phenos.age), rownames(science))
+phenos.science <- cbind(phenos.age[overlaps,], science[overlaps,])
 
 # -----------------------------------------------------------------------------
 # 
@@ -285,7 +352,7 @@ dev.off()
 # -----------------------------------------------------------------------------
 ## Risk group vs. Cell cycle
 test <- toTable(0, 2, 2, c("M2", "M1"))
-rownames(test) <- c("High", "Low")
+rownames(test) <- c("Low", "High")
 
 test[1, 1] <- nrow(subset(subset(phenos, M2 == 1), risk == "high"))
 test[1, 2] <- nrow(subset(subset(phenos, M2 == 0), risk == "high"))
@@ -322,6 +389,19 @@ test[1, 2] <- nrow(subset(subset(phenos, MYCN_amp == 0), risk == "high"))
 test[2, 1] <- nrow(subset(subset(phenos, MYCN_amp == 1), risk == "low"))
 test[2, 2] <- nrow(subset(subset(phenos, MYCN_amp == 0), risk == "low"))
 fisher.test(test)[[1]]
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # 

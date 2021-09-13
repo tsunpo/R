@@ -187,6 +187,101 @@ plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
    dev.off()
 }
 
+plotBox020 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim) {
+   trait <- rep(0, length(tpm.1))
+   trait <- c(trait, rep(1, length(tpm.2)))
+   trait <- as.factor(trait)
+ 
+   expr <- as.numeric(c(tpm.1, tpm.2))
+
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=4.5)
+   boxplot(expr ~ trait, outline=T, names=names, main="", col=cols, xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+ 
+   p <- wilcox.test(expr ~ trait, exact=F)$p.value
+   offset <- (ylim[2] - ylim[1])/35
+   text(1.5, ylim[2] - offset, getPvalueSignificanceLevel(p), col="black", cex=4)
+ 
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.9)
+   axis(side=1, at=1, labels=paste0("n=", length(tpm.1)), line=1.8, col=NA, cex.axis=1.9)
+   axis(side=1, at=2, labels=paste0("n=", length(tpm.2)), line=1.8, col=NA, cex.axis=1.9)
+   #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
+   mtext(main, font=2, cex=2, line=2)
+   mtext(paste0("p-value = ", scientific(p)), cex=2, line=0.3)
+   mtext(expression(italic('in silico')~"sorting [rho]"), side=2, line=2.48, cex=1.85)
+   dev.off()
+}
+
+plotStripchart <- function(wd.de.plots, file.name, phenos, main, names, cols, height, width) {
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+   boxplot(COR ~ group, data=phenos, xaxt="n", ylab="", main=main, col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   
+   #stripchart(COR ~ group, data=subset(phenos, M2 == 0), method="jitter", cex=2, pch=19, col=cols[1], vertical=T, add=T)
+   #stripchart(COR ~ group, data=subset(phenos, M2 == 1), method="jitter", cex=2, pch=19, col=cols[2], vertical=T, add=T, at=2:4)
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T)
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=T, add=T, at=c(1,3,4))
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 3), method="jitter", cex=1.5, pch=19, col=cols[3], vertical=T, add=T, at=2:4)
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 4), method="jitter", cex=1.5, pch=19, col=cols[4], vertical=T, add=T, at=2:4)
+   
+   #p <- testU(tpm.1$COR, tpm.3$COR)
+   #text(2, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   #lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
+ 
+   #p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
+   #text(1.5, ylim[2]-1.6, getPvalueSignificanceLevel(p), cex=2.5)
+   #lines(c(1, 2), y=c(ylim[2]-2.4, ylim[2]-2.4), type="l", lwd=2)
+ 
+   #p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
+   #text(2.5, ylim[2]-3.2, getPvalueSignificanceLevel(p), cex=2.5)
+   #lines(c(2, 3), y=c(ylim[2]-4, ylim[2]-4), type="l", lwd=2)
+ 
+   axis(side=1, at=seq(1, 4, by=1), labels=names, font=2, cex.axis=1.7)
+   axis(side=1, at=1, labels=paste0("n=", nrow(subset(phenos, group == 0))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=2, labels=paste0("n=", nrow(subset(phenos, group == 1))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=3, labels=paste0("n=", nrow(subset(phenos, group == 2))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=4, labels=paste0("n=", nrow(subset(phenos, group == 3))), line=1.35, col=NA, cex.axis=1.7)
+   
+   #mtext(paste0(text), cex=1.25, line=0.3)
+   mtext(expression(italic('in silico')~"sorting [rho]"), side=2, line=2.38, cex=1.85)
+   legend("topleft", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.light, blue.light, blue), cex=1.8)
+   dev.off()
+}
+
+plotStripchartATRX <- function(wd.de.plots, file.name, phenos, main, names, cols, height, width) {
+   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+   boxplot(COR ~ group, data=phenos, xaxt="n", ylab="", main=main, col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+ 
+   #stripchart(COR ~ group, data=subset(phenos, M2 == 0), method="jitter", cex=2, pch=19, col=cols[1], vertical=T, add=T)
+   #stripchart(COR ~ group, data=subset(phenos, M2 == 1), method="jitter", cex=2, pch=19, col=cols[2], vertical=T, add=T, at=2:4)
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T, at=c(1,2,4))
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=T, add=T, at=c(1,3,4,5))
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 3), method="jitter", cex=1.5, pch=19, col=cols[3], vertical=T, add=T, at=2:5)
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 4), method="jitter", cex=1.5, pch=19, col=cols[4], vertical=T, add=T, at=2:5)
+ 
+   #p <- testU(tpm.1$COR, tpm.3$COR)
+   #text(2, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   #lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
+ 
+   #p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
+   #text(1.5, ylim[2]-1.6, getPvalueSignificanceLevel(p), cex=2.5)
+   #lines(c(1, 2), y=c(ylim[2]-2.4, ylim[2]-2.4), type="l", lwd=2)
+ 
+   #p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
+   #text(2.5, ylim[2]-3.2, getPvalueSignificanceLevel(p), cex=2.5)
+   #lines(c(2, 3), y=c(ylim[2]-4, ylim[2]-4), type="l", lwd=2)
+ 
+   axis(side=1, at=seq(1, 5, by=1), labels=names, font=2, cex.axis=1.7)
+   axis(side=1, at=1, labels=paste0("n=", nrow(subset(phenos, group == 0))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=2, labels=paste0("n=", nrow(subset(phenos, group == 1))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=3, labels=paste0("n=", nrow(subset(phenos, group == 2))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=4, labels=paste0("n=", nrow(subset(phenos, group == 3))), line=1.35, col=NA, cex.axis=1.7)
+   axis(side=1, at=5, labels=paste0("n=", nrow(subset(phenos, group == 4))), line=1.35, col=NA, cex.axis=1.7)
+   
+   #mtext(paste0(text), cex=1.25, line=0.3)
+   mtext(expression(italic('in silico')~"sorting [rho]"), side=2, line=2.38, cex=1.85)
+   legend("topleft", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.light, blue.light, blue), cex=1.8)
+   dev.off()
+}
+
 plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
@@ -549,33 +644,32 @@ plotSRC <- function(gene, cn, snr, pch, col, pos, xlab.text="") {
    dev.off()
 }
 
-plotPuritySRC <- function(column, gene, cn, snr, pch, col, pos, xlab.text="") {
+plotPuritySRC <- function(column, gene, cn, snr, pch, col, pos) {
    unit <- (max(snr) - min(snr))/10
-   xlim <- c(min(snr) - unit, max(snr) + unit)
+   ylim <- c(min(snr) - unit, max(snr) + unit)
    unit <- (max(cn) - min(cn))/10
-   ylim <- c(min(cn) - unit, max(cn) + unit)
+   xlim <- c(min(cn) - unit, max(cn) + unit)
  
    column <- sub("_", " ", column)
-   if (xlab.text == "")
-      xlab.text <- expression(italic('In silico')~'sorting [rho]')
-   ylab.text <- column
+   ylab.text <- expression(italic('In silico')~'sorting [rho]')
+   xlab.text <- column
    file.name <- file.path(wd.de.plots, paste0("SORTING_vs_", column, ""))
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    #plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab="", main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   plot(snr ~ cn, ylim=ylim, xlim=xlim, xlab="", yaxt="n", ylab="", main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
  
-   lm.fit <- lm(cn ~ snr)
+   lm.fit <- lm(snr ~ cn )
    abline(lm.fit, col=col, lwd=5)
  
    cor <- cor.test(cn, snr, method="spearman", exact=F)
    legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, text.font=2, bty="n", cex=1.9)
  
-   axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
+   axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
    #axis(side=2, at=seq(6, 8, by=1), labels=c(6, 7, 8), cex.axis=1.7)   ## MARS
    #axis(side=2, at=seq(4, 6, by=1), labels=c(4, 5, 6), cex.axis=1.7)   ## GTPBP3
-   mtext(ylab.text, side=2, line=2.74, cex=1.85)
-   mtext(xlab.text, side=1, line=3.5, cex=1.9)
+   mtext(ylab.text, side=2, line=2.35, cex=1.9)
+   mtext(xlab.text, side=1, line=3, cex=1.9)
    #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
