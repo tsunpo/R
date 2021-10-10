@@ -115,6 +115,24 @@ for (g in 1:length(genes)) {
 ## Chr2
 c <- 2
 chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+plotBootstrapRFD(file.name, BASE, chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, BASE, chr,  69500000,  81000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+
+
+
+plotBootstrapRFD(file.name, BASE, chr,  70000000,  80000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, BASE, chr,  65000000,  85000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, BASE, chr,  95500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, BASE, chr, 160000000, 170000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+
+## Chr2
+c <- 2
+chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR"))

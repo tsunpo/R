@@ -66,7 +66,7 @@ snr.q4$N[3] <- sd(nrds.nbl.q4$RT - nrds.nbl.q4$SPLINE)
 ##
 ymax <- 0.6
 ymin <- 0.15
-for (c in 1:22) {
+for (c in 2:2) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
@@ -74,13 +74,21 @@ for (c in 1:22) {
    #nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, " Q4/Q1 read depth ratio between Q4 (n=", n1, ") and Q1 (n=", n0, ") tumour samples")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4 tumour", "Q1 tumour"), c(red, blue), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   main.text <- paste0(BASE, " Q4/Q1 tumour RT between Q4 (n=", n1, ") and Q1 (n=", n0, ") tumour samples")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Abstract"))   
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4 tumour", "Q1 tumour"), c(red, blue), c("Q4", "Q1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
    
    ## Plot RT
    main.text <- paste0(BASE, "") 
-   plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   #plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   
+   ## chr2
+   main.text <- paste0(BASE, " Q4/Q1 replication timing")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRTAbstract(file.name, main.text, chr,  13000000,  17000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.1)
+   plotRTAbstract(file.name, main.text, chr,  69500000,  81000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
+   plotRTAbstract(file.name, main.text, chr,  70000000,  80000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
+   plotRTAbstract(file.name, main.text, chr, 160000000, 170000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
 }
 
 # -----------------------------------------------------------------------------
@@ -92,21 +100,45 @@ save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_s
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-q4-q1_spline_spearman.RData")))
 
-for (c in 1:22) {
+for (c in 2:2) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
+ 
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-
-   main.text <- c(paste0("NBL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (Q4 vs. Q1)"))
-   xlab.text <- "NBL Q4/Q1"
-   ylab.text <- "NBL read depth [RPKM]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-Q4-Q1_chr", c, "_spline_spearman"))
-   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("Q4", "Q1"), method="spearman")
+ 
+   ## Figure 1
+   xlab.text <- "RT [log2]"
+   ylab.text <- "Read depth [RPKM]"
+   main.text <- c(paste0("Correlation (", "Chr", c, ")"), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-Q4-Q1_chr", c, ""))
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("Q4", "Q1"), method="spearman")
+ 
+ ## SFigure 1
+ #xlab.text <- "RT [log2]"
+ #ylab.text <- "Read depth [RPKM]"
+ #main.text <- c(paste0("Chr", c))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+ #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+ #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
+ 
+ #main.text <- c(paste0("Chr", c), "")
+ #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
+ #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(lighterblue, alpha.f=0.01)), c("S", "G1"), method="spearman")
+ 
+ #main.text <- c(paste0("Chr", c), "")
+ #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
+ #plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(lighterred, alpha.f=0.01)), c("S", "G1"), method="spearman")
 }
+
+###
+##
+file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-NBL-Q4-Q1")
+main.text <- c("Correlation (Chr1-22)", "Spearman's rho")
+plotRD2(sprs, file.name, main.text, 0.74, 1.00005)
+
+
 
 ## S-phase progression rate (SPR)
 file.name <- file.path(wd.rt.plots, "SPR_NBL-Q4-Q1_spline_spearman")

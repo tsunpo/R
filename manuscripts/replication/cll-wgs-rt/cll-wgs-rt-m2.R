@@ -183,14 +183,14 @@ cors <- getRTvsRT3(nrds.cll.m2, nrds.cll.q4, nrds.sclc.nl.m2, nrds.lcl, bed.gc)
 save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 #load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-ALL_spline_spearman_dhl.yellow_cex=1.5_text.font=2")   ## gold (#f6c700)
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-ALL")   ## gold (#f6c700)
 main.text <- paste0(BASE, " M2/M1")
 ymin <- 0.85
 ymax <- 1
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", yellow), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL "))
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", yellow), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL"))
 
-file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-ALL_spline_spearman_dhl.yellow_cex=1.5_text.font=2_0")   ## gold (#f6c700)
-plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL "))
+file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-ALL_0")   ## gold (#f6c700)
+plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", "white"), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL"))
 
 #file.name <- file.path(wd.rt.plots, "RT-vs-RT3_CLL-M2-M1-vs-ALL_spline_spearman")
 #main.text <- paste0(BASE, " M2/M1")

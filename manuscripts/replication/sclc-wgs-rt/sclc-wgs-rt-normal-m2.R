@@ -152,12 +152,12 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    ylim <- c(min(n) - unit, max(n) + unit)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=2)
+   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
    points(n2 ~ snr2, col=col[2], pch=19, cex=2)
  
    samples <- c("SCLC-NL", "SCLC", "NBL", "CLL")
-   text(snr1, n1, samples, col=col[1], pos=c(1,2,2,2), cex=1.8)
-   text(snr2, n2, samples, col=col[2], pos=c(1,4,4,4), cex=1.8)
+   text(snr1, n1, samples, col=col[1], pos=c(1,2,2,2), cex=1.9)
+   text(snr2, n2, samples, col=col[2], pos=c(1,4,4,4), cex=1.9)
  
    lm.fit <- lm(n2 ~ snr2)
    abline(lm.fit, col=col[2], lwd=4.5)
@@ -167,13 +167,13 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
  
    cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[1], bty="n", cex=1.75)
-   legend(pos[1], c("M2/M1", "(rho = 0.8)"), text.col=col[1], pch=c(19, NA), cex=1.8)
+   legend(pos[1], "M2/M1", text.col=col[1], pch=c(19, NA), cex=1.9)
  
    cor <- cor.test(n2, snr2, method="spearman", exact=F)
    #legend(pos[2], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[2], bty="n", cex=1.75)
-   legend(pos[2], c("Q4/Q1", "(rho = 0.8)"), text.col=col[2], pch=c(19, NA), col=col[2], box.col=col[2], cex=1.8)
+   legend(pos[2], "Q4/Q1", text.col=col[2], pch=c(19, NA), col=col[2], box.col=col[2], cex=1.9)
  
-   mtext(ylab.text, side=2, line=2.75, cex=1.8)
+   mtext(ylab.text, side=2, line=2.75, cex=1.9)
    #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
@@ -182,7 +182,7 @@ plotSNR2 <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 snr    <- readTable(file.path(wd.rt.data, paste0("SNR_ALL.txt")), header=T, rownames=T, sep="\t")
 snr.q4 <- readTable(file.path(wd.rt.data, paste0("SNR.Q4_ALL.txt")), header=T, rownames=T, sep="\t")
 
-file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE_darkgray_lwd=4.5_bty_darkgray")
+file.name <- file.path(wd.rt.plots, "STN2_ALL_SIZE")
 main.text <- c("Signal-to-noise", "")
 xlab.text <- "Signal-to-noise ratio"
 ylab.text <- "Sample size"

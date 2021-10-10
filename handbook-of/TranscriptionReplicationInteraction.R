@@ -121,7 +121,7 @@ plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yli
    expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 1)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
    text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)
@@ -183,7 +183,7 @@ plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
    #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
    mtext(main, font=2, cex=2, line=2)
    mtext(paste0("p-value = ", scientific(p)), cex=2, line=0.3)
-   mtext("log2(TPM + 0.01)", side=2, line=2.74, cex=1.85)
+   mtext("log2(TPM + 1)", side=2, line=2.74, cex=1.85)
    dev.off()
 }
 
@@ -252,8 +252,8 @@ plotStripchartATRX <- function(wd.de.plots, file.name, phenos, main, names, cols
  
    #stripchart(COR ~ group, data=subset(phenos, M2 == 0), method="jitter", cex=2, pch=19, col=cols[1], vertical=T, add=T)
    #stripchart(COR ~ group, data=subset(phenos, M2 == 1), method="jitter", cex=2, pch=19, col=cols[2], vertical=T, add=T, at=2:4)
-   stripchart(COR ~ group, data=subset(phenos, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T, at=c(1,2,4))
-   stripchart(COR ~ group, data=subset(phenos, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=T, add=T, at=c(1,3,4,5))
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T, at=c(1,3,4))
+   stripchart(COR ~ group, data=subset(phenos, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=T, add=T, at=c(1,2,3,5))
    stripchart(COR ~ group, data=subset(phenos, Q4 == 3), method="jitter", cex=1.5, pch=19, col=cols[3], vertical=T, add=T, at=2:5)
    stripchart(COR ~ group, data=subset(phenos, Q4 == 4), method="jitter", cex=1.5, pch=19, col=cols[4], vertical=T, add=T, at=2:5)
  
@@ -291,7 +291,7 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
    ylim <- c(min(expr), max(expr))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=3)
-   boxplot(expr ~ trait, outline=T, names=names, ylab=paste0("log2(TPM + 0.01)"), main=main, xaxt="n", ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   boxplot(expr ~ trait, outline=T, names=names, ylab=paste0("log2(TPM + 1)"), main=main, xaxt="n", ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
    text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)
@@ -327,21 +327,22 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   boxplot(expr ~ trait, outline=F, xaxt="n", ylab=paste0("log2(TPM + 1)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, yaxt="n", cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
  
    p <- testU(tpm.1$MEDIAN, tpm.3$MEDIAN)
-   text(2, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   text(2, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
    
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   text(1.5, ylim[2]-1.6, getPvalueSignificanceLevel(p), cex=2.5)
-   lines(c(1, 2), y=c(ylim[2]-2.4, ylim[2]-2.4), type="l", lwd=2)
+   text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
+   lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
    
    p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
-   text(2.5, ylim[2]-3.2, getPvalueSignificanceLevel(p), cex=2.5)
-   lines(c(2, 3), y=c(ylim[2]-4, ylim[2]-4), type="l", lwd=2)
+   text(2.5, ylim[2]-2.6, getPvalueSignificanceLevel(p), cex=2.5)
+   lines(c(2, 3), y=c(ylim[2]-3.2, ylim[2]-3.2), type="l", lwd=2)
    
-   axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.25)
+   axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.25)
+   axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.3)
    #axis(side=1, at=2, labels="Total n=30,978", line=1.3, col=NA, cex.axis=1.2)
    #axis(side=1, at=1, labels=paste0("n=", format(nrow(tpm.1), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
    #axis(side=1, at=3, labels=paste0("n=", format(nrow(tpm.3), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
@@ -350,7 +351,7 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    #axis(side=1, at=2, labels=paste0("n=", format(nrow(tpm.2), big.mark=",", scientific=F)), line=1.2, col=NA, cex.axis=1.25)
  
    #mtext(paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), cex=1.2, line=0.3)
-   mtext(paste0(text), cex=1.25, line=0.3)
+   mtext(paste0(text), cex=1.3, line=0.3)
    dev.off()
 }
 
@@ -363,21 +364,22 @@ plotBox4 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, main, n
    expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN, tpm.4$MEDIAN))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   boxplot(expr ~ trait, outline=F, xaxt="n", ylab=paste0("log2(TPM + 1)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, yaxt="n", cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
  
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   text(1.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   text(1.5, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 2), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.3$MEDIAN, tpm.4$MEDIAN)
-   text(3.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   text(3.5, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(3, 4), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
+   axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.25)
    #axis(side=1, at=seq(1, 4, by=1), labels=c("L", "E", "L", "E"), cex.axis=1.2)
    #axis(side=1, at=1.5, labels="TZ", line=1.2, col=NA, font=2, cex.axis=1.25)
    #axis(side=1, at=3.5, labels="IZ", line=1.2, col=NA, font=2, cex.axis=1.25)
-   axis(side=1, at=seq(1.5, 3.5, by=2), labels=c("TZ", "IZ"), font=2, cex.axis=1.25)
-   axis(side=1, at=seq(1, 4, by=1), labels=c("(L)", "(E)", "(L)", "(E)"), line=1.2, col=NA, cex.axis=1.25)
+   axis(side=1, at=seq(1.5, 3.5, by=2), labels=c("TZ", "IZ"), font=2, cex.axis=1.3)
+   axis(side=1, at=seq(1, 4, by=1), labels=c("(L)", "(E)", "(L)", "(E)"), line=1.2, col=NA, cex.axis=1.3)
  
    mtext(paste0("(L)ate vs. (E)arly"), cex=1.25, line=0.3)
    dev.off()
@@ -394,27 +396,28 @@ plotBox6 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, tpm.4, tpm.5, 
    expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN, tpm.4$MEDIAN, tpm.5$MEDIAN, tpm.6$MEDIAN))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(expr ~ trait, outline=T, xaxt="n", ylab=paste0("log2(TPM + 0.01)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   boxplot(expr ~ trait, outline=F, xaxt="n", ylab=paste0("log2(TPM + 1)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, yaxt="n", cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
  
    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   text(1.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   text(1.5, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(1, 2), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.3$MEDIAN, tpm.4$MEDIAN)
-   text(3.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   text(3.5, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(3, 4), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
  
    p <- testU(tpm.5$MEDIAN, tpm.6$MEDIAN)
-   text(5.5, ylim[2], getPvalueSignificanceLevel(p), cex=2.5)
+   text(5.5, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
    lines(c(5, 6), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
    
+   axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.25)
    #axis(side=1, at=seq(1, 6, by=1), labels=c("L", "E", "L", "E", "L", "E"), cex.axis=1.2)
    #axis(side=1, at=1.5, labels="TTR", line=1.2, col=NA, font=2, cex.axis=1.25)
    #axis(side=1, at=3.5, labels="TZ", line=1.2, col=NA, font=2, cex.axis=1.25)
    #axis(side=1, at=5.5, labels="IZ", line=1.2, col=NA, font=2, cex.axis=1.25)
-   axis(side=1, at=seq(1.5, 5.5, by=2), labels=c("TTR", "TZ", "IZ"), font=2, cex.axis=1.25)
-   axis(side=1, at=seq(1, 5, by=2), labels=c("(L)", "(L)", "(L)"), line=1.2, col=NA, cex.axis=1.25)
-   axis(side=1, at=seq(2, 6, by=2), labels=c("(E)", "(E)", "(E)"), line=1.2, col=NA, cex.axis=1.25)
+   axis(side=1, at=seq(1.5, 5.5, by=2), labels=c("TTR", "TZ", "IZ"), font=2, cex.axis=1.3)
+   axis(side=1, at=seq(1, 5, by=2), labels=c("(L)", "(L)", "(L)"), line=1.2, col=NA, cex.axis=1.3)
+   axis(side=1, at=seq(2, 6, by=2), labels=c("(E)", "(E)", "(E)"), line=1.2, col=NA, cex.axis=1.3)
    
    mtext(paste0("(L)ate vs. (E)arly"), cex=1.25, line=0.3)
    dev.off()
@@ -621,7 +624,7 @@ plotSRC <- function(gene, cn, snr, pch, col, pos, xlab.text="") {
  
    if (xlab.text == "")
       xlab.text <- expression(italic('In silico')~'sorting [rho]')
-   ylab.text <- "log2(TPM + 0.01)"
+   ylab.text <- "log2(TPM + 1)"
    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
    file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
  
@@ -659,10 +662,10 @@ plotPuritySRC <- function(column, gene, cn, snr, pch, col, pos) {
    #plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
    plot(snr ~ cn, ylim=ylim, xlim=xlim, xlab="", yaxt="n", ylab="", main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
  
-   lm.fit <- lm(snr ~ cn )
+   lm.fit <- lm(snr ~ cn)
    abline(lm.fit, col=col, lwd=5)
  
-   cor <- cor.test(cn, snr, method="spearman", exact=F)
+   cor <- cor.test(snr, cn, method="spearman", exact=F)
    legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, text.font=2, bty="n", cex=1.9)
  
    axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)

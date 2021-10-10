@@ -211,11 +211,11 @@ getRT <- function(nrds, bed.gc) {
 }
 
 ## http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
-plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL) {
+plotRTAbstract <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL, f) {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.01)
-   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.01)
+   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=f)
+   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=f)
 
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
@@ -249,12 +249,12 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ## Initiate RD plot
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
    par(mar=c(1,4,4,1))
-   ylab.text <- "Read depth"
+   ylab.text <- "Read depth [RPKM]"
    if (is.null(ylim)) {
       rds <- c(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE)
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab="", ylab=ylab.text, main="", xaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.3)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(min(rds), max(rds)), xlab="", ylab=ylab.text, main=main.text, xaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
    } else
-      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab="", ylab=ylab.text, main="", xaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.3)
+      plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=ylim, xlab="", ylab=ylab.text, main=main.text, xaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
    #points(bed.gc.chr$START/1E6, nrds.chr, col=colours[1], cex=0.3)
    #abline(h=0, lwd=0.5, col="lightgrey")
  
@@ -304,8 +304,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, nrds.chr.RT$SPLINE, col="black", pch=16, cex=0.4)
    abline(h=0, lty=5, lwd=1.5, col="black")
-   axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.1)
-   axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.1)
+   axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.2)
+   axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.2)
+   axis(side=2, at=0, labels=0, cex.axis=1.2)
    
    ## Plot legend and peaks
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[1], cex=1.3)   

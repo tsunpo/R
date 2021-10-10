@@ -44,8 +44,8 @@ samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 0))
 # [1] 35
 
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
@@ -295,18 +295,18 @@ nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/18007
 # RFD vs. TPM (All)
 # Last Modified: 27/11/20; 01/09/20; 29/05/20
 # -----------------------------------------------------------------------------
-file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd.RData")
+file.name <- file.path(wd.de.data, "tpm_gene_log2_m_rfd+1.RData")
 load(file.name)
 
-ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 14.5)
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 12)
 
-file.name <- paste0("boxplot3_sclc_tpm.gene_RFD_3.5_FigureS1")
-plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim, width=3.5, text="Total Ensembl genes")
+file.name <- paste0("boxplot3_sclc_tpm.gene+1_RFD")
+plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim, width=3.5, text="")
 
-file.name <- paste0("boxplot4_sclc_tpm.gene_RFD_3.2")
+file.name <- paste0("boxplot4_sclc_tpm.gene+1_RFD")
 plotBox4(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC expression (CTR)", names=c("L", "E", "L", "E"), cols=c(blue, blue, red, red), ylim)
 
-file.name <- paste0("boxplot6_sclc_tpm.gene_RFD_3.5")
+file.name <- paste0("boxplot6_sclc_tpm.gene+1_RFD")
 plotBox6(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.iz.e, main="SCLC expression", names=c("L", "E", "L", "E", "L", "E"), cols=c("black", "black", blue, blue, red, red), ylim)
 
 # -----------------------------------------------------------------------------

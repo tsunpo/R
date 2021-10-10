@@ -39,7 +39,7 @@ wd.anlys <- file.path(wd, BASE, "analysis")
 wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
 wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 #wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
-wd.rt.plots <- file.path(wd.rt, "plots/rfd")
+wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
@@ -202,6 +202,20 @@ for (c in 1:22) {
    file.name <- file.path(wd.rt.plots, paste0("RFD_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
    plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, NA, NA, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 }
+
+## Chr2
+c <- 2
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Abstract"))
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  70000000,  80000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  69500000,  81000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr,  95500000, 105000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "\u2212NL"), chr, 160000000, 170000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+
+
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data
@@ -466,7 +480,7 @@ save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, repor
 #load(file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_BIGGER_tumor.pdf"))
 plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains             ")
 
 #report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
@@ -908,41 +922,41 @@ plotReportEGDensity <- function(report.rfds, names, file.name, main.text) {
    pdf(file.name, height=5, width=5.2)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    par(mar=c(1,3.6,3.6,0))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(15, 18), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(15, 18), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
    points(rfds$X, rfds$CTR_IZ, col=cols[2], pch=rfds$pch, cex=rfds$cex)
    lines(x=rfds$X[2:4], y=rfds$CTR_IZ[2:4], type="l", lwd=3, col=cols[2])
    
-   text(8, rfds$CTR_IZ[n], "        CTR (IZ)", cex=1.25, col=red)
+   text(8, rfds$CTR_IZ[n], "      IZ ", cex=1.3, col=red, font=2)
    for (n in 2:length(names))
-      text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.25)
+      text(rfds$X[n], rfds$CTR_IZ[n], rfds$CTR_IZ[n], col=cols[2], pos=rfds$pos2[n], cex=1.3)
  
    ##
-   axis(side=2, at=seq(15, 17, by=1), labels=c(15, 16, 17), cex.axis=1.2)
+   axis(side=2, at=seq(15, 17, by=1), labels=c(15, 16, 17), cex.axis=1.25)
    legend("top", "Normal                              ", col="white", bty="n", pch=1, pt.cex=2, horiz=T, cex=1.3, text.col="white")
-   legend("topright", "Tumour                    ", col="black", bty="n", pch=2, pt.cex=1.6, horiz=T, cex=1.3)
-   mtext("[#]               ", side=2, line=2.6, cex=1.25)
+   legend("topright", "Tumor                    ", col="black", bty="n", pch=2, pt.cex=1.6, horiz=T, cex=1.3)
+   mtext("[#]               ", side=2, line=2.6, cex=1.3)
  
    ##
    par(mar=c(5,3.6,0,0))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(9.8, 12.6), ylab="", xlab="", col=cols[2], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   plot(NULL, xlim=c(0.5, 9.1), ylim=c(9.8, 12.7), ylab="", xlab="", col=cols[2], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=rfds$cex)
    lines(rfds$X[2:4], y=rfds$TTR[2:4], type="l", lwd=3, col=cols[1])
    points(rfds$X, rfds$CTR_TZ, col=cols[3], pch=rfds$pch, cex=rfds$cex)
    lines(rfds$X[2:4], y=rfds$CTR_TZ[2:4], type="l", lwd=3, col=cols[3])
    
-   text(8, rfds$TTR[n], " TTR ", cex=1.25, col="black", pos=3) 
-   text(8, rfds$CTR_TZ[n], "        CTR (TZ)", cex=1.25, col=blue, pos=1)
+   text(8, rfds$TTR[n], "   TTR ", cex=1.3, col="black", pos=3, font=2) 
+   text(8, rfds$CTR_TZ[n], "     TZ ", cex=1.3, col=blue, pos=1, font=2)
    for (n in 2:length(names)) {
-      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n],    col=cols[1], pos=rfds$pos1[n], cex=1.25)
-      text(rfds$X[n], rfds$CTR_TZ[n],  rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.25)
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n],    col=cols[1], pos=rfds$pos1[n], cex=1.3)
+      text(rfds$X[n], rfds$CTR_TZ[n],  rfds$CTR_TZ[n], col=cols[3], pos=rfds$pos3[n], cex=1.3)
    }
 
    ##
-   axis(side=2, at=seq(10, 12, by=1), labels=c(10, 11, 12), cex.axis=1.2)
-   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.25)
+   axis(side=2, at=seq(10, 12, by=1), labels=c(10, 11, 12), cex.axis=1.3)
+   axis(side=1, at=seq(3, 7, by=2), labels=names[2:4], cex.axis=1.3)
    axis(side=1, at=seq(3, 7, by=2), labels=c("n=70", "n=53", "n=71"), line=1.2, col=NA, cex.axis=1.25)
 
-   mtext("                          Number", side=2, line=2.6, cex=1.25)
+   mtext("                      Number", side=2, line=2.6, cex=1.3)
    dev.off()
 }
 
@@ -951,7 +965,7 @@ report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_D_N.txt")), header=T, 
 #report[3, 2:4] <- report[3, 2:4] / 26.59570
 #report[4, 2:4] <- report[4, 2:4] / 26.44419
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_EG_D_N_Mb.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_D_N_Mb_BIGGER_tumor.pdf"))
 plotReportEGDensity(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "   Density of genes per Mb")
 
 ###
@@ -1008,7 +1022,7 @@ plotReportEGELDensity <- function(report.rfds, names, file.name, main.text) {
    axis(side=2, at=seq(14, 22, by=2), labels=c(14, 16, 18, 20, 22), cex.axis=1.2)
    #axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.1)
    #legend("top", "Normal                              ", col="black", bty="n", pt.cex=1.4, pch=1, horiz=T, cex=1.2)
-   #legend("topright", "Tumour                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
+   #legend("topright", "Tumor                    ", col="black", bty="n", pt.cex=1.2, pch=2, horiz=T, cex=1.2)
  
    ##
    mtext("[#]        ", side=2, line=2.6, cex=1.25)
@@ -1047,7 +1061,7 @@ report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_E+L_D_N.txt")), header
 #report[3, 2:5] <- report[3, 2:5] / 26.59570
 #report[4, 2:5] <- report[4, 2:5] / 26.44419
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]), as.numeric(report[5, -1]), as.numeric(report[6, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_D_N_Mb.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_D_N_Mb_tumor.pdf"))
 plotReportEGELDensity(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "   Density of genes per Mb")
 
 

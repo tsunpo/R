@@ -78,16 +78,17 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    } else
       ylim[1] <- floor(ylim[1])
    par(mar=c(1,4,3.6,1))
-   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, border="darkgray", col=cols, xaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
+   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, border="darkgray", col=cols, xaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.35)
    abline(v=500, lty=5, lwd=1.5, col="black")
    #abline(v=950, lty=5, lwd=1, col="red")
    #abline(v=50,  lty=5, lwd=1, col="red")
    #text(950, max(ylim)-10, "950", cex=1.2, col="red") 
    #text(50, max(ylim)-10, "50", cex=1.2, col="blue") 
-   
+   #mtext("RFD = (R\u2212L)/(R+L)", cex=1.3, line=4.7)   ## separator(nrow(nrds.RT.BSTRPS))
+
    ##
    par(mar=c(5,4,0,1))
-   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab="", ylim=c(0, ymax), breaks=breaks, border="darkgray", col=cols, las=1, axes=F, cex.axis=1.2, cex.lab=1.25, cex.main=1.35)
+   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, border="darkgray", col=cols, las=1, axes=F, cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
    if (ymax < 1000) {
       axis(side=2, at=seq(0, ymax, by=250), cex.axis=1.2)
    } else if (ymax < 3000) {
@@ -102,19 +103,18 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    #abline(v=50,  lty=5, lwd=1, col="red")
    text(500, ymax*4/5, "RFD = 0", cex=1.3, col="black", font=2) 
    
-   mtext(xlab.text, line=4.7, cex=1.25)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()
 }
 
 boundary.upper <- 500   ## 500-520 breaks
 boundary.lower <- 500   ## 480-500 breaks
 boundary.break <- 0   ## 1 breaks each centering 500
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD=0_orange_darkgray_font=2_line=4.5.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD=0.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
 xlab.text <- "Number of rightward forks per kb window"
 plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
-plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb, withUnclassified=F) {
+plotBootstrapRFD0 <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, ext, width, kb, withUnclassified=F) {
    overlaps <- intersect(rownames(bed.gc.chr), nrds.RT.NRFD$BED)
    nrds.RT.NRFD.chr <- nrds.RT.NRFD[overlaps,]
    bed.gc.chr <- bed.gc.chr[overlaps,]
@@ -125,7 +125,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    lefts  <- rownames(subset(nrds.RT.NRFD.chr, RFD <= 0))
    
    if (width == 10) main.text <- paste0(BASE, " bootstrap replication fork directionality (RFD)")
-   else main.text <- paste0(BASE, " bootstrap RFD")
+   else main.text <- paste0(BASE, " bootstrap-based RFD")
    if (withUnclassified)
       main.text <- paste0(main.text, " (", kb, " kb)")
    
@@ -150,7 +150,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    par(mar=c(1,4,4,1))
    ylab.text <- "RT [log2]"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.35)
    points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.3)
    
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.15)
@@ -168,9 +168,9 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
 
    ## Plot legend
    #legend("topright", c("Leftward", "Rightward   "), col=c(blue, orange), bty="n", pt.cex=1, lty=c(1, 1), lwd=c(3, 3), pch=c(NA, NA), horiz=T, cex=1.2)
-   legend("topright", "Rightward ", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
-   legend("topleft",  "Leftward",  col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25, inset=c(0.03, 0))
-   mtext("RFD = (R\u2212L)/(R+L)", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
+   legend("topright", "Rightward ", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
+   legend("topleft",  "Leftward",  col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3, inset=c(0.03, 0))
+   mtext("RFD = (R\u2212L)/(R+L)", line=0.25, cex=1.3)   ## separator(nrow(nrds.RT.BSTRPS)),
    
    ###
    ## Initiate RFD plot
@@ -178,7 +178,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
    ylab.text <- "RFD"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.2, cex.lab=1.25)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.2, cex.lab=1.3)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.15)
    abline(h=0, lty=5, lwd=1.5, col="black")
    #abline(h=0.9, lty=5, lwd=1, col="black")
@@ -193,8 +193,8 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col=orange, pch=19, cex=0.5)
 
    ## Plot legend
-   legend("topright", "TTR (R)", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
-   legend("bottomright", "TTR (L)", col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.25)
+   legend("topright", "TTR (R)", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
+   legend("bottomright", "TTR (L)", col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
    dev.off()
 }
 
@@ -217,6 +217,7 @@ nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE_", chr, ".RData")))
 nrds.RT.BSTRPS.chr$RFD <- getRFD(nrds.RT.BSTRPS.chr)
 file.name <- file.path(wd.rt.plots, paste0("RFD_", base, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_RFD=0"))
+plotBootstrapRFD(file.name, BASE, chr,  70000000,  80000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
 plotBootstrapRFD(file.name, BASE, chr, 110000000, 130000000, nrds.chr, bed.gc.chr, nrds.RT.BSTRPS.chr, boundary.upper, boundary.lower, "png", width=5)
 
 ## Chr12

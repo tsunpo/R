@@ -64,7 +64,7 @@ load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m
 
 ymax <- 0.6
 ymin <- 0.15
-for (c in 1:22) {
+for (c in 22:1) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
@@ -72,12 +72,22 @@ for (c in 1:22) {
    nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, " M2/M1 read depth ratio between M2 (n=", n1, ") and M1 (n=", n0, ") tumour samples")
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   main.text <- paste0(BASE, " M2/M1 replication timing profile")
+   #file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
    
    file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))  
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   plotRT(BASE, file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 samples", "M1 samples"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+
+   ## chr2
+   main.text <- paste0(BASE, " M2/M1 replication timing")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRTAbstract(file.name, main.text, chr,  13000000,  17000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.1)
+
+   
+   
+   plotRTAbstract(file.name, main.text, chr,  70000000,  80000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
+   plotRTAbstract(file.name, main.text, chr, 160000000, 170000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
 }
 
 # -----------------------------------------------------------------------------
@@ -90,31 +100,54 @@ writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_sp
 #load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-m2-m1_spline_spearman.RData")))
 sprs.nbl <- sprs
 
-for (c in 1:22) {
+for (c in 2:2) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
+ 
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
    nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
-
-   main.text <- c(paste0("NBL read depth correlation (", "Chr", c, ")"), paste0("rho = ", round0(sprs$cor[c], digits=2), " (M2 vs. M1)"))
-   xlab.text <- "NBL M2/M1"
-   ylab.text <- "NBL read depth [RPKM]"
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-M2-M1_chr", c, "_spline_spearman"))
-   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c("red", "blue"), c("M2", "M1"), method="spearman")
+ 
+   ## Figure 1
+   xlab.text <- "RT [log2]"
+   ylab.text <- "Read depth [RPKM]"
+   main.text <- c(paste0("Correlation (", "Chr", c, ")"), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_NBL-M2-M1_chr", c, ""))
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("M2", "M1"), method="spearman")
+ 
+   ## SFigure 1
+   #xlab.text <- "RT [log2]"
+   #ylab.text <- "Read depth [RPKM]"
+   #main.text <- c(paste0("Chr", c))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
+ 
+   #main.text <- c(paste0("Chr", c), "")
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
+   #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(lighterblue, alpha.f=0.01)), c("S", "G1"), method="spearman")
+ 
+   #main.text <- c(paste0("Chr", c), "")
+   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
+   #plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(lighterred, alpha.f=0.01)), c("S", "G1"), method="spearman")
 }
 
+###
+##
+file.name <- file.path(wd.rt.plots, "RD2_NBL-M2-M1-vs-NBL-M2-M1")
+main.text <- c("Correlation (Chr1-22)", "Spearman's rho")
+plotRD2(sprs, file.name, main.text, 0.5, 1)
+
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_NBL-M2-M1_spline_spearman_chr2")
+file.name <- file.path(wd.rt.plots, "RTS_NBL-M2-M1")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
 ylab.text <- "NBL M2/M1"
-plotRTS(sprs.nbl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2=-0.05, offset="            ")
+#plotRTS(sprs.nbl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2=-0.05, offset="            ")
+plotRTS(sprs.nbl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2)
 
 ### Figure 4D
 ## NBL vs. LCL
-file.name <- file.path(wd.rt.plots, "RTS2_NBL-M2-M1_vs_LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "RTS2_NBL-M2-M1_vs_LCL")
 main.text <- c("Replication timing skew", "")
 xlab.text <- "LCL S/G1"
 ylab.text <- "NBL M2/M1"

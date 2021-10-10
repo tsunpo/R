@@ -229,25 +229,25 @@ basf.darkgreen.lighter30  <- "#4DC687"
 basf.lightgreen.lighter10 <- "#7FC638"
 basf.lightgreen.lighter20 <- "#98DF51"
 
-google.red.lighter60 <- "#FFDCCE"
-#google.red.lighter50 <- "#FFC2B4"
+#google.red.lighter60 <- "#FFDCCE"
+google.red.lighter50 <- "#FFC2B4"
 #google.red.lighter40 <- "#FFA99B"
-google.red.lighter35 <- "#FF9C8E"
+#google.red.lighter35 <- "#FF9C8E"
 #google.red.lighter30 <- "#FF9082"
-google.red.lighter25 <- "#FF8375"
-nasa.blue.lighter25  <- "#509BFF"
+#google.red.lighter25 <- "#FF8375"
+#nasa.blue.lighter25  <- "#509BFF"
 nasa.blue.lighter50  <- "#8FDAFF"
-nasa.blue.lighter60  <- "#A9F4FF"
+#nasa.blue.lighter60  <- "#A9F4FF"
 
 orange.lighter <- basf.orange.lighter20
 green.lighter  <- basf.lightgreen.lighter10
 
-red.lightest <- google.red.lighter60
-red.lighter  <- google.red.lighter35
-red.light    <- google.red.lighter25
-blue.light   <- nasa.blue.lighter25
+#red.lightest <- google.red.lighter60
+red.lighter  <- google.red.lighter50
+#red.light    <- google.red.lighter25
+#blue.light   <- nasa.blue.lighter25
 blue.lighter <- nasa.blue.lighter50
-blue.lightest <- nasa.blue.lighter60
+#blue.lightest <- nasa.blue.lighter60
 
 # -----------------------------------------------------------------------------
 # TEMP

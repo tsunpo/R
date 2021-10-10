@@ -129,7 +129,7 @@ samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_italic.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_italic_Spearman's.pdf"), height=6, width=4.2)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main=expression(bolditalic('In silico')~bold("prediction")), yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
@@ -157,7 +157,7 @@ for (s in 1:nrow(samples)) {
 legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.5)
 
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.5)
-mtext("Overall read depth vs. RT [rho]", side=2, line=2.75, cex=1.6)
+mtext("Spearman's rho", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="NBL-CL", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
@@ -251,16 +251,16 @@ samples <- samples[facs$SAMPLE_ID,]
 #facs$S <- (facs$S/facs$SUM) * 100
 #facs$G2 <- (facs$G2/facs$SUM) * 100
 
-#file.name <- file.path(wd.rt.plots, "FACS_NBL-CL")
-#main.text <- c("Flow cytometry validation", "")
-#xlab.text <- "Proportion of cells"
-#ylab.text <- "Proportion of S phase cells"
+#file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_italic_Spearman's_count")
+#main.text <- c(expression(bolditalic('In silico')~bold(" vs. ")~bolditalic('in vitro')), "")
+#xlab.text <- "Cell count [%]"
+#ylab.text <- "Spearmans's rho"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_italic")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_3P_italic_Spearman's_count")
 main.text <- c(expression(bolditalic('In silico')~bold("vs.")~bolditalic('in vitro')), "")
-xlab.text <- "Proportion of cells [%]"
-ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+xlab.text <- "Cell count [%]"
+ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- c(blue, red, "darkgray")
 flowjo.blue <- "#989aff"
 flowjo.red  <- "#ff9899"
@@ -276,10 +276,10 @@ plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic_count")
 main.text <- c(expression(bold("Flow cytometry validation")~bolditalic('in vitro')~bold('(Dean-Jett-Fox)')), "")
 xlab.text <- ""
-ylab.text <- "Proportion of cells [%]"
+ylab.text <- "Cell count [%]"
 #blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
 #red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
 #green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
