@@ -184,7 +184,7 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_
 #load(file.path(wd.rt.data, paste0("rt-vs-rt3_", base, "-m2-m1-vs-ALL_spline_spearman.RData")))
 
 file.name <- file.path(wd.rt.plots, "RT-vs-RT2_CLL-M2-M1-vs-ALL")   ## gold (#f6c700)
-main.text <- paste0(BASE, " M2/M1")
+main.text <- paste0(BASE, " RT")
 ymin <- 0.85
 ymax <- 1
 plotRTvsRT2(cors, file.name, main.text, ymin, ymax, cols=c("black", yellow), c("M2/M1 vs. Q4/Q1", "CLL vs. SCLC-NL"))

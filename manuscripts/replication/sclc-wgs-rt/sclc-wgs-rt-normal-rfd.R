@@ -480,7 +480,7 @@ save(report.sclc.nl.vs.sclc, report.sclc.nl.vs.nbl, report.sclc.nl.vs.cll, repor
 #load(file=file.path(wd.rt.data, paste0("NRFD_ALL_20KB.RData")))
 
 report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_BIGGER_tumor.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_NEW.pdf"))
 plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains             ")
 
 #report.rfds <- list(getReportRFD(report.sclc.nl.vs.sclc, "SCLC-NL"), getReportRFD(report.sclc.nl.vs.sclc, "SCLC"), getReportRFD(report.sclc.nl.vs.nbl, "NBL"), getReportRFD(report.sclc.nl.vs.cll, "CLL"))
@@ -881,20 +881,20 @@ nrow(nrds.RT.NRFD.sclc.nl.ctr.tz.l)/nrow(nrds.RT.NRFD.sclc.nl)
 ##
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_CTR_E-L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L.pdf"))
-plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains (CTR)  ")
+file.name <- file.path(wd.rt.plots, paste0("RFD_CTR_E-L_NEW.pdf"))
+plotReportNRFDEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains (IZ & TZ)")
 
 ###
 ## 30/08/2020
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_EG.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_NEW.pdf"))
 plotReportEG(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "   Distribution of genes")
 
 report <- readTable(file.path(wd.rt.plots, paste0("RFD_EG_E+L.txt")), header=T, rownames=T, sep="")
 report.rfds <- list(as.numeric(report[1, -1]), as.numeric(report[2, -1]), as.numeric(report[3, -1]), as.numeric(report[4, -1]))
-file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_.pdf"))
-plotReportEGEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "              Distribution of genes (CTR)")
+file.name <- file.path(wd.rt.plots, paste0("RFD_EG_E+L_NEW.pdf"))
+plotReportEGEL(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "            Distribution of genes (IZ & TZ)")
 
 ###
 ## 15/03/2021

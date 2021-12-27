@@ -24,19 +24,27 @@ base <- tolower(BASE)
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/3RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata")
 
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt"), header=T, rownames=T, sep="\t")
+samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt2"), header=T, rownames=T, sep="\t")
+samples <- samples[rownames(subset(samples, GROUP_ID != 0)),]
+n <- rownames(subset(samples, GROUP_ID == 2))
+x <- rownames(subset(samples, GROUP_ID == 1))
+samples$GROUP_ID2 <- 0
+samples[n,]$GROUP_ID2 <- 0
+samples[x,]$GROUP_ID2 <- 1
+samples$GROUP_ID2 <- as.factor(samples$GROUP_ID2)
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
+tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=0.01
 
-samples <- samples[rownames(subset(samples, GROUP_ID != 2)),]
-#tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
-tpm.gene.log2.res <- tpm.gene.log2.res[, rownames(samples)]
+tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
+nrow(tpm.gene.log2)
+# [1] 15658
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -45,33 +53,12 @@ tpm.gene.log2.res <- tpm.gene.log2.res[, rownames(samples)]
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
-## DE  : TR (1) vs UN (0) as factor
-argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0-res-pc1+pc2_B-vs-X_wilcox_q_n45")
-file.main <- paste0("TR (n=22) vs UN (n=23) in ", BASE)
+## DE  : N (0) vs X (1) as factor
+argv      <- data.frame(predictor="GROUP_ID2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("DE_EAC_tpm-gene-median0_N-vs-X_wilcox_q_n45")
+file.main <- paste0("N (n=23) vs X (n=22) in ", BASE)
 
-de <- differentialAnalysis(tpm.gene.log2.res, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-
-## Ensembl gene annotations
-annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)
-
-save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=45, 22 X vs 23 B) RES
-# Last Modified: 30/03/21; 22/08/20
-# -----------------------------------------------------------------------------
-## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
-##       Student's/t.test
-## FDR : Q/BH
-## DE  : TR (1) vs UN (0) as factor
-argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0-res-pc1+pc2_B-vs-X_wilcox_q_n45")
-file.main <- paste0("X (n=22) vs B (n=23) in ", BASE)
-
-de <- differentialAnalysis(tpm.gene.log2.res, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
@@ -80,34 +67,49 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-
+de.tpm.gene.NX.up   <- subset(de.tpm.gene, LOG2_FC >= 0)
+de.tpm.gene.NX.down <- subset(de.tpm.gene, LOG2_FC < 0)
+#genes.NX      <- rownames(subset(de.tpm.gene, P < 1E-6))
+#genes.NX.up   <- rownames(subset(subset(de.tpm.gene, P < 1E-6), LOG2_FC >= 0))
+#genes.NX.down <- rownames(subset(subset(de.tpm.gene, P < 1E-6), LOG2_FC < 0))
 
 # -----------------------------------------------------------------------------
-# PCA
-# Last Modified: 23/08/20
+# N, B, X
+# Last Modified: 20/12/21
 # -----------------------------------------------------------------------------
-test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.de <- getPCA(t(test))
+de.tpm.gene.NX.NBX <- de.tpm.gene.NX[c(genes.NBX.up, genes.NBX.down),]
 
-trait <- as.numeric(samples[, "GROUP_ID2"])
-trait[which(trait == 0)] <- "N"
-trait[which(trait == 1)] <- "B"
-trait[which(trait == 2)] <- "X"
-
-file.main <- c("ESAD samples (n=68)", "")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_ESAD_N-B-X_median0_n68", size=6.5, file.main, "topright", c("red", "#01DF01", "dodgerblue"), NA, flip.x=-1, flip.y=1, legend.title=NA)
+genes.NX.NBX.up   <- rownames(subset(subset(de.tpm.gene.NX.NBX, P < 1E-6), LOG2_FC >= 0))
+genes.NX.NBX.down <- rownames(subset(subset(de.tpm.gene.NX.NBX, P < 1E-6), LOG2_FC < 0))
+genes.NX.NBX <- c(genes.NX.NBX.up, genes.NX.NBX.down)
 
 ##
-test <- tpm.gene.res[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.res <- getPCA(t(test))
+genes <- genes.NX.NBX
+test <- tpm.gene[genes, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+file.main <- c(paste0("N vs. X genes (n=", length(genes), ")"), "")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC_N-B-X_n68_N-vs-X", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=-1, flip.y=1, legend.title=NA)
 
-trait <- as.numeric(samples[, "GROUP_ID"])
-trait[which(trait == 0)] <- "B"
-trait[which(trait == 1)] <- "X"
-trait[which(trait == 2)] <- "N"
+# -----------------------------------------------------------------------------
+# N, X, B
+# Last Modified: 21/12/21
+# -----------------------------------------------------------------------------
+de.tpm.gene.NX.NXB <- de.tpm.gene.NX[c(genes.NXB.up, genes.NXB.down),]
 
-file.main <- c("ESAD samples (n=68)", "After controlling for cell cycle")
-plotPCA(1, 2, pca.res, trait, wd.de.plots, "PCA_ESAD_TR-T-N_median0_RES_n68", size=6.5, file.main, "topleft", c("red", "#01DF01", "dodgerblue"), NA, flip.x=1, flip.y=1, legend.title=NA)
+genes.NX.NXB.up   <- rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-6), LOG2_FC >= 0))
+genes.NX.NXB.down <- rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-6), LOG2_FC < 0))
+genes.NX.NXB <- c(genes.NX.NXB.up, genes.NX.NXB.down)
+
+##
+genes <- genes.NX.NXB
+test <- tpm.gene[genes, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+file.main <- c(paste0("N vs. X genes (n=", length(genes), ")"), "")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC_N-X-B_n68_N-vs-X", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=-1, flip.y=-1, legend.title=NA)
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC

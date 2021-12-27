@@ -38,6 +38,7 @@ samples$Cheops_Folder <- ""
 samples[f1,]$Cheops_Folder <- samples[f1,]$Cheops_Folder_1
 samples[f2,]$Cheops_Folder <- samples[f2,]$Cheops_Folder_2
 samples <- subset(samples, Cheops_Folder != "")
+writeTable(samples, file.path(wd.rna, "esad2_3rna_n97.txt"), colnames=F, rownames=F, sep="\t")
 
 #fastqs <- readTable(file.path(wd.rna, "esad2_3rna_n101.list"), header=T, rownames=T, sep="")
 fastqs <- readTable(file.path(wd.rna, "esad2_3rna_n101.txt"), header=T, rownames=F, sep="\t")

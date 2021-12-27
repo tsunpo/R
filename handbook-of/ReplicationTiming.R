@@ -314,7 +314,7 @@ getRT <- function(nrds, bed.gc) {
 }
 
 ## http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
-plotRT <- function(BASE, file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="topright") {
+plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="topright") {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
    adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.01)
@@ -417,9 +417,9 @@ plotRT <- function(BASE, file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[1], cex=1.3)   
    legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[2], cex=1.3)
    if (width != 5)
-      legend("topright", paste0(BASE, " ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
+      legend("topright", paste0("NBL ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
    else
-      legend("topright", paste0(BASE, " ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
+      legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
    if (!is.null(lcl.rt.chr))
       legend("bottomright", "Koren et al. (~2 kb)", col=colours[3], lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
    if (!is.null(nrds.lcl.chr))
@@ -481,7 +481,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    xlim <- c(min(timings), max(timings))
    ylim <- c(min(c(reads1, reads2)), max(c(reads1, reads2)))
    cor <- "rho"
-   main.text2 <- "Spearman correlation"
+   main.text2 <- "Spearman's rho"
    if (method == "pearson") {
       cor <- "r" 
       main.text2 <- "Pearson correlation"
@@ -500,7 +500,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    abline(lm.fit1, col=colours[1], lwd=3)
    cor1 <- getCor(reads1, timings, method)
    
-   RT <- paste0(legends[1], "/", legends[2])
+   RT <- paste0(legends[1], "/", legends[2])   # "RT"
    if (cor1 < 0 && cor2 < 0) {
       legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")")), text.col=colours, text.font=2, bty="n", cex=1.3)
    } else if (as.numeric(cor1) > 0 && as.numeric(cor2) < 0) {

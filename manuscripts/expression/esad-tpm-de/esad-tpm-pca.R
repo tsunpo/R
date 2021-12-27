@@ -37,35 +37,29 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, trait.v, cols, samples, flip.x, flip.y, legend.title=NA) {
    scores <- pcaScores(pca)
-   trait[is.na(trait)] <- "NA"
-   #trait.v <- sort(unique(trait), decreasing=F)
-   trait.v <- c("N", "B", "X")
-   
-   if (isNA(cols))
-      cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
-   if (length(trait.v) > length(cols))
-      cols <- rainbow(length(trait.v))
-   else
-      cols <- cols[1:length(trait.v)]
-   trait.col <- mapply(x = 1:length(trait), function(x) return(cols[which(trait[x] == trait.v)]))   ## Assign colours to each subtypes
-   
-   cols[which(trait.v == "NA")] <- "lightgray"
-   trait.col[which(trait == "NA")] <- "lightgray"
    xlab.txt <- paste0("PC", x, " (", pcaProportionofVariance(pca, x), "%)")
    ylab.txt <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
    
-   pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   idx <- which(trait == "B")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "X")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "N")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
+   #cols <- cols[1:length(trait.v)]
+   trait.col <- mapply(x = 1:length(trait), function(x) return(cols[which(trait[x] == trait.v)]))   ## Assign colours to each subtypes
+   cols[which(trait.v == "NA")] <- "lightgray"
+   trait.col[which(trait == "NA")] <- "lightgray"
 
+   pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   for (t in length(trait.v):1) {
+      idx <- which(trait == trait.v[t])
+      points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)    
+   }
+   #text(scores["P-0024_B", x]*flip.x, scores["P-0024_B", y]*flip.y, "Major",    col="black", adj=c(0, -0.5), cex=1.5)
+   #text(scores["P-0055_B", x]*flip.x, scores["P-0055_B", y]*flip.y, "Complete", col="black", adj=c(0, -0.5), cex=1.5)
+   #text(scores["P-0056_B", x]*flip.x, scores["P-0056_B", y]*flip.y, "Minor",    col="black", adj=c(0, -0.5), cex=1.5)
+   
+   #text(scores["S125293", x]*flip.x, scores["S125293", y]*flip.y, "N", col="black", adj=c(0, -0.5), cex=1.5)
+   #text(scores["S125253", x]*flip.x, scores["S125253", y]*flip.y, "X", col="black", adj=c(0, -0.5), cex=1.5)
+   #text(scores["S125207", x]*flip.x, scores["S125207", y]*flip.y, "B", col="black", adj=c(0, -0.5), cex=1.5)
    #if (!is.null(samples))
    #   for (s in 1:length(samples)) {
    #      sample <- samples[s]
@@ -73,24 +67,23 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #        text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.5), cex=1)
    #   }
    
-   mtext(file.main[2], cex=1.3, line=0.3)
    for (l in 1:length(trait.v))
       trait.v[l] <- trait.v[l]
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
    
-   #trait.v[5] <- "Others"   ## For PCA ALL
-   #if (BASE != "") {
-   #   trait.v <- trait.v[1:4]
-   #   trait.v <- paste0(BASE, " ", trait.v)
-   #   cols <- cols[1:4]
-   #}
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.6)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)
-   mtext(ylab.txt, side=2, line=2.75, cex=1.8)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.6)
+   mtext(ylab.txt, side=2, line=2.75, cex=1.6)
+   mtext(file.main[2], line=0.15, cex=1.5)
    dev.off()
 }
+
+
+
+
+
 
 plotPCAs <- function(x, y, pca, traits, wd.pca, file.main, legend.x, legend.y, cols) {
    for (t in 1:ncol(traits)) {

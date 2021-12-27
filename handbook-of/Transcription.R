@@ -249,11 +249,11 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    trait[is.na(trait)] <- "NA"
    trait.v <- sort(unique(trait), decreasing=T)
    
-   if (isNA(cols))
-      cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
-   if (length(trait.v) > length(cols))
-      cols <- rainbow(length(trait.v))
-   else
+   #if (isNA(cols))
+   #   cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
+   #if (length(trait.v) > length(cols))
+   #   cols <- rainbow(length(trait.v))
+   #else
       cols <- cols[1:length(trait.v)]
    trait.col <- mapply(x = 1:length(trait), function(x) return(cols[which(trait[x] == trait.v)]))   ## Assign colours to each subtypes
    
@@ -263,34 +263,13 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    ylab.txt <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
-   idx <- which(trait == "NA")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7, ylab=ylab.txt)
-   idx <- which(trait == "Q2")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "Q3")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "Q1")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "Q4")
-   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   
-   if (!is.null(samples))
-      for (s in 1:length(samples)) {
-         sample <- samples[s]
-         if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1.7)
-         else if (sample == "TR14")
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1.7)
-         else
-            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1.7)
-      }
-   
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=19, cex=2, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
+   #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
+
    mtext(file.main[2], cex=1.2, line=0.3)
    for (l in 1:length(trait.v))
-      trait.v[l] <- trait.v[l]
-      #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
+      trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
+      #trait.v[l] <- trait.v[l]
    
    #trait.v[5] <- "Others"   ## For PCA ALL
    #if (BASE != "") {
@@ -299,9 +278,9 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #   cols <- cols[1:4]
    #}
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.9)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.9)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)
    mtext(ylab.txt, side=2, line=2.75, cex=1.9)
    dev.off()
 }

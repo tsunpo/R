@@ -6,6 +6,213 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
+# Methods: Transcript-level TPM estimates using sleuth
+# Last Modified: 28/03/17
+# -----------------------------------------------------------------------------
+tx2gene <- function(t2g) {
+   colnames(t2g) <- c("target_id", "ens_gene", "ext_gene")
+   #rownames(t2g) <- t2g$target_id
+ 
+   return(t2g)
+}
+
+tx2Ens <- function(ensGene) {
+   return(tx2gene(ensGene[,c("ensembl_transcript_id", "ensembl_gene_id", "external_gene_name")]))
+}
+
+## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## See line 30 in guide-to-the/hg19.R
+## https://www.ncbi.nlm.nih.gov/grc/help/patches
+list2Matrix <- function(list, kallisto.table) {
+   genes <- unique(kallisto.table$target_id)
+   samples <- unique(kallisto.table$sample)  
+ 
+   list.matrix <- data.frame(matrix(list, nrow=length(genes), byrow=T))
+   rownames(list.matrix) <- genes
+   colnames(list.matrix) <- samples
+ 
+   return(list.matrix)
+}
+
+# -----------------------------------------------------------------------------
+# Method: tpm.gene file manipulations
+# Last Modified: 10/04/18
+# -----------------------------------------------------------------------------
+## Remove patches (*_PATCH)
+getGeneTPM <- function(tpm.gene.patch, ensGene) {
+   overlaps <- intersect(rownames(tpm.gene.patch), rownames(ensGene))
+   tpm.gene <- tpm.gene.patch[overlaps,]
+ 
+   return(tpm.gene)
+}
+
+removeMedian0 <- function(tpm.gene) {
+   medians <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
+   tpm.gene <- tpm.gene[-which(medians == 0),]
+ 
+   return(tpm.gene)
+}
+
+## https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5143225/
+## https://www.nature.com/articles/nmeth.3580/figures/7
+getLog2andMedian <- function(tpm.gene, pseudocount) {
+   tpm.gene.log2 <- log2(tpm.gene + pseudocount)
+   tpm.gene.log2$MEDIAN <- mapply(x = 1:nrow(tpm.gene.log2), function(x) median(as.numeric(tpm.gene.log2[x,])))
+ 
+   return(tpm.gene.log2)
+}
+
+getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnly) {   ## ADD 11/04/18; ADD 01/02/18
+   if (autosomeOnly)
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, chromosome_name %in% paste0("chr", 1:22)))),]
+   if (proteinCodingOnly)
+      tpm.gene <- tpm.gene[intersect(rownames(tpm.gene), rownames(subset(ensGene, gene_biotype == "protein_coding"))),]
+ 
+   return(tpm.gene)
+}
+
+# =============================================================================
+# Methods: Density plot and histogram
+# Last Modified: 25/11/18
+# =============================================================================
+## http://www.sthda.com/english/wiki/abline-r-function-an-easy-way-to-add-straight-lines-to-a-plot-using-r-software
+## http://www.sthda.com/english/wiki/line-types-in-r-lty
+plotDensity <- function(medians, BASE, file.name, title, pseudocount, ymax) {
+   xlab.text <- paste0("log2(TPM+", pseudocount, ")")
+   ylab.text <- "Density"
+   d <- density(medians)
+   #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
+   q <- as.numeric(quantile(medians))
+   if (is.null(ymax))
+      ymax <- max(d$y)
+   numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
+
+   pdf(file.name, height=6, width=6)
+   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(title, " genes in ", BASE), ylim=c(0, ymax), lwd=1.5)
+   abline(v=q, col=c("red", "blue", "blue", "blue", "blue"), lty=c(1, 5, 1, 5, 1), lwd=c(0.85, 0.85, 0.85, 0.85, 0.85))
+   for (x in 2:5)
+      text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
+   text(q[1], ymax, "TPM=0", cex=0.85, col="red") 
+   text(q[3], ymax, "Median", cex=0.85, col="blue") 
+   text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
+   
+   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.3)
+   rug(jitter(medians))
+   dev.off()
+}
+
+plotDensity0 <- function(medians, BASE, file.name, title, pseudocount, ymax) {
+   xlab.text <- paste0("log2(TPM + ", pseudocount, ")")
+   ylab.text <- "Density"
+   d <- density(medians)
+   #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
+   q <- as.numeric(quantile(medians))
+   if (is.null(ymax))
+      ymax <- max(d$y)
+   numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
+ 
+   pdf(file.name, height=6, width=6)
+   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(title, " genes in ", BASE), ylim=c(0, ymax), cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+   abline(v=q, col=c("black", "black", "black", "black", "black"), lty=c(1, 5, 1, 5, 1), lwd=c(1, 1, 1, 1, 1))
+   #for (x in 2:5)
+   #   text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
+   text(q[1], ymax, "TPM = 0", cex=1.3, col="black") 
+   #text(q[3], ymax, "Median", cex=1, col="black") 
+   #text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
+ 
+   mtext(paste0("n=", numbers), cex=1.4, line=0.25)
+   rug(jitter(medians))
+   dev.off()
+}
+
+## https://homepage.divms.uiowa.edu/~luke/classes/STAT4580/histdens.html
+## https://www.r-graph-gallery.com/190-mirrored-histogram/
+## https://www.statmethods.net/graphs/density.html
+plotHistogram <- function(medians, BASE, file.name, title, pseudocount, ymax, breaks=15) {
+   h <- hist(medians, breaks=breaks) 
+   if (is.null(ymax))
+      ymax <- max(h$counts)
+   numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
+   
+   pdf(file.name, height=6, width=6)
+   hist(medians, ylab="Frequency", xlab=paste0("log2(TPM+", pseudocount, ")"), main=paste0(title, " genes in ", BASE), breaks=breaks, ylim=c(0, ymax)) 
+   mtext(paste0("(n=", numbers, ")"), cex=1.2, line=0.3)
+   dev.off()
+}
+
+plotDensityHistogram <- function(tpm.gene, file.main, title) {
+   pcs <- c(1, 0.1, 0.01)
+   for (c in 1:1) {
+      pc <- pcs[c]
+  
+      tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=pc)
+      plotDensity0(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc", pc, ".pdf"), title, pseudocount=pc, NULL)
+      #plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc", pc, ".pdf"), title, pseudocount=pc, NULL)
+   }
+}
+
+###
+##
+plotTxDensityHistogram <- function(gene, BASE, wd.rt.plots, tpm.gene.log2, ensGene.rt.tx, tx.q4.fix.all, pseudocount) {
+   ensembl_gene_id <- rownames(subset(ensGene.rt.tx, external_gene_name == gene))
+   ensGene.rt.tx.gene <- ensGene.rt.tx[ensembl_gene_id,]
+   main.text <- paste0(gene, " (", ensembl_gene_id, ") in ", BASE, " (n=", ncol(tpm.gene.log2) - 1, ")")
+   xlab.text <- paste0("log2(TPM+", pseudocount, ")")
+   for (q in 1:4)
+      if (length(intersect(ensembl_gene_id, tx.q4.fix.all[[q]])) == 1)
+         q.text <- paste0("Q", q)
+   
+   if (ensGene.rt.tx.gene$CONSIST == 1) {
+      if (ensGene.rt.tx.gene$CD == 1) {
+         mtext <- paste0("Co-directional (", q.text, "); RT(")
+         if (ensGene.rt.tx.gene$RT == 1)
+            mtext <- paste0(mtext, "R), Tx(+)")
+         else
+            mtext <- paste0(mtext, "L), Tx(-)")
+      } else {
+         mtext <- paste0("Head-on (", q.text, "); RT(")  
+         if (ensGene.rt.tx.gene$RT == 1)
+            mtext <- paste0(mtext, "R), Tx(-)")
+         else
+            mtext <- paste0(mtext, "L), Tx(+)")
+      }
+   } else {
+      mtext <- paste0("Inconsistent RT (", q.text, "); ")
+      if (ensGene.rt.tx.gene$strand == 1) {
+         mtext <- paste0(mtext, "Tx(+), TSS(")
+         if (ensGene.rt.tx.gene$RT_1 == 1)
+            mtext <- paste0(mtext, "R), TES(L)")
+         else
+            mtext <- paste0(mtext, "L), TES(R)")
+      } else {
+         if (ensGene.rt.tx.gene$RT_1 == 1)
+            mtext <- paste0(mtext, "TSS(R), TES(L)")
+         else
+            mtext <- paste0(mtext, "TSS(L), TES(R)")
+         mtext <- paste0(mtext, ", Tx(-)")
+      }
+   }
+   
+   medians <- as.numeric(tpm.gene.log2[ensembl_gene_id, -ncol(tpm.gene.log2)])
+   d <- density(medians)
+   #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
+ 
+   ## Density plots
+   file.name  <- file.path(wd.rt.plots, paste0("density_", base, "_tx_", gene, ".pdf"))
+   pdf(file.name, height=6, width=6)
+   plot(d, xlab=xlab.text, ylab="Density", main=main.text, lwd=1.5)
+   mtext(mtext, cex=1.2, line=0.3)
+   rug(jitter(medians))
+   dev.off()
+ 
+   ## Histogram
+   file.name  <- file.path(wd.rt.plots, paste0("hist_", base, "_tx_", gene, ".pdf"))
+   pdf(file.name, height=6, width=6)
+   hist(medians, xlab=xlab.text, ylab="Frequency", main=main.text) 
+   mtext(mtext, cex=1.2, line=0.3)
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
 # Methods: Principal component analysis
 # Last Modified: 05/02/17
 # -----------------------------------------------------------------------------
@@ -40,8 +247,7 @@ isNA <- function(input) {
 plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
-   #trait.v <- sort(unique(trait), decreasing=F)
-   trait.v <- c("N", "B", "X")
+   trait.v <- sort(unique(trait), decreasing=T)
    
    if (isNA(cols))
       cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
@@ -58,22 +264,30 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=16, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   idx <- which(trait == "B")
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
+   idx <- which(trait == "NA")
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7, ylab=ylab.txt)
+   idx <- which(trait == "Q2")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "X")
+   idx <- which(trait == "Q3")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-   idx <- which(trait == "N")
+   idx <- which(trait == "Q1")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
-
-   #if (!is.null(samples))
-   #   for (s in 1:length(samples)) {
-   #      sample <- samples[s]
-   #      if (sample == "S125650" || sample == "S125652")
-   #        text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.5), cex=1)
-   #   }
+   idx <- which(trait == "Q4")
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
    
-   mtext(file.main[2], cex=1.3, line=0.3)
+   if (!is.null(samples))
+      for (s in 1:length(samples)) {
+         sample <- samples[s]
+         if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1.7)
+         else if (sample == "TR14")
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1.7)
+         else
+            text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1.7)
+      }
+   
+   mtext(file.main[2], cex=1.2, line=0.3)
    for (l in 1:length(trait.v))
       trait.v[l] <- trait.v[l]
       #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
@@ -85,10 +299,10 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #   cols <- cols[1:4]
    #}
    if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
+      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.9)   ##bty="n")
    else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)
-   mtext(ylab.txt, side=2, line=2.75, cex=1.8)
+      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.9)
+   mtext(ylab.txt, side=2, line=2.75, cex=1.9)
    dev.off()
 }
 
@@ -283,6 +497,7 @@ fishers <- function(x, y) {
 ## https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/FAQ#Can_I_use_GSEA_to_analyze_SNP.2C_SAGE.2C_ChIP-Seq_or_RNA-Seq_data.3F
 ## https://gsea-msigdb.github.io/gsea-gpmodule/v19/index.html
 
+## RNK format
 ## http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#RNK:_Ranked_list_file_format_.28.2A.rnk.29
 writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
    #de.sorted <- de.tpm.gene[order(de.tpm.gene$LOG2_FC, decreasing=T),]

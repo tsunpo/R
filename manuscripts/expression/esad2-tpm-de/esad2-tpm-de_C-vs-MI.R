@@ -17,26 +17,37 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-BASE <- "ESAD"
+BASE <- "ESAD2"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/3RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata")
 
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt"), header=T, rownames=T, sep="\t")
+colnames <- c("NR_intern", "CCG_ID", "PATIENT_ID2", "FILE_NAME", "", "Responder", "Type", "FILE_NAME")
+samples  <- readTable(file.path(wd.rna, "esad2_3rna_n97.txt"), header=F, rownames=3, sep="\t")
+colnames(samples) <- colnames
+
+samples <- samples[rownames(subset(samples, Type != "N")),]
+samples <- samples[rownames(subset(samples, Responder != "Major")),]
+c  <- rownames(subset(samples, Responder == "Complete"))
+mi <- rownames(subset(samples, Responder == "Minor"))
+samples$GROUP_ID2 <- 0
+samples[mi,]$GROUP_ID2 <- 1
+samples$GROUP_ID2 <- as.factor(samples$GROUP_ID2)
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
+tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=0.01
 
-samples <- samples[rownames(subset(samples, GROUP_ID != 2)),]
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
-#tpm.gene.log2.res <- tpm.gene.log2.res[, rownames(samples)]
+nrow(tpm.gene.log2)
+# [1] 15658
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -45,10 +56,10 @@ tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
-## DE  : TR (1) vs UN (0) as factor
-argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_X-vs-B_wilcox_q_n45")
-file.main <- paste0("TR (n=22) vs UN (n=23) in ", BASE)
+## DE  : C (0) vs MI (1) as factor
+argv      <- data.frame(predictor="GROUP_ID2", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("DE_EAC2_tpm-gene-median0_C-vs-MI_wilcox_q_n49")
+file.main <- paste0("C (n=17) vs MI (n=32) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -59,55 +70,15 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-# -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=45, 22 X vs 23 B) RES
-# Last Modified: 30/03/21; 22/08/20
-# -----------------------------------------------------------------------------
-## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
-##       Student's/t.test
-## FDR : Q/BH
-## DE  : TR (1) vs UN (0) as factor
-argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0-res_X-vs-B_wilcox_q_n45")
-file.main <- paste0("X (n=22) vs B (n=23) in ", BASE)
-
-de <- differentialAnalysis(tpm.gene.log2.res, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-
-## Ensembl gene annotations
-annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)
-
-save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+de.tpm.gene.CMI.up   <- subset(de.tpm.gene, LOG2_FC >= 0)
+de.tpm.gene.CMI.down <- subset(de.tpm.gene, LOG2_FC < 0)
+genes.CMI      <- subset(de.tpm.gene, P < 1E-3)
+genes.CMI.up   <- subset(genes.CMI, LOG2_FC >= 0)
+genes.CMI.down <- subset(genes.CMI, LOG2_FC < 0)
 
 
 
-# -----------------------------------------------------------------------------
-# PCA
-# Last Modified: 23/08/20
-# -----------------------------------------------------------------------------
-test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.de <- getPCA(t(test))
 
-trait <- as.numeric(samples[, "GROUP_ID2"])
-trait[which(trait == 0)] <- "N"
-trait[which(trait == 1)] <- "B"
-trait[which(trait == 2)] <- "X"
-
-file.main <- c("ESAD samples (n=68)", "")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_ESAD_N-B-X_median0_n68", size=6.5, file.main, "topright", c("red", "#01DF01", "dodgerblue"), NA, flip.x=-1, flip.y=1, legend.title=NA)
-
-##
-test <- tpm.gene.res[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
-pca.res <- getPCA(t(test))
-
-trait <- as.numeric(samples[, "GROUP_ID"])
-trait[which(trait == 0)] <- "B"
-trait[which(trait == 1)] <- "X"
-trait[which(trait == 2)] <- "N"
-
-file.main <- c("ESAD samples (n=68)", "After controlling for cell cycle")
-plotPCA(1, 2, pca.res, trait, wd.de.plots, "PCA_ESAD_TR-T-N_median0_RES_n68", size=6.5, file.main, "topleft", c("red", "#01DF01", "dodgerblue"), NA, flip.x=1, flip.y=1, legend.title=NA)
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC

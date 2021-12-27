@@ -50,6 +50,7 @@ samples <- samples[overlaps,]
 samples$purity <- purities[overlaps,]$purity
 rownames(samples) <- samples$SAMPLE_ID
 
+#load("/Users/tpyang/Work/uni-koeln/tyang2/ESAD/analysis/expression/kallisto/esad-tpm-de/data/PCA_EAC_N-B-X.RData")
 scores <- pcaScores(pca.de)
 scores <- scores[rownames(samples),]
 
@@ -69,6 +70,7 @@ plotFACS3 <- function(p, pc, file.name, main.text, xlab.text, ylab.text, col, co
    cor3 <- cor.test(p, pc, method="spearman", exact=F)
    legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
  
+   legend("topleft", c("B", "X"), col=col2, pch=19, pt.cex=2.5, cex=1.6)   ##bty="n")
    #axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
    #axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
    mtext(ylab.text, side=2, line=2.75, cex=1.6)
@@ -76,21 +78,30 @@ plotFACS3 <- function(p, pc, file.name, main.text, xlab.text, ylab.text, col, co
    dev.off()
 }
 
-file.name <- file.path(wd.de.plots, "ESAD_Purity-vs-PC4_n20")
-main.text <- c(paste("Purity vs. PC4 (n=20)"), "")
-xlab.text <- paste0("PC", 4, " (", pcaProportionofVariance(pca.de, 4), "%)")
-ylab.text <- "Purity"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
-cols <- "black"
-cols2 <- c(red, purple)
-plotFACS3(samples$purity, scores$PC4, file.name, main.text, xlab.text, ylab.text, cols, cols2)
-
-file.name <- file.path(wd.de.plots, "ESAD_Purity-vs-tumorcontent_n20")
-main.text <- c(paste("Purity vs. Tumour content (n=20)"), "")
-xlab.text <- "Tumour content"
+file.name <- file.path(wd.de.plots, "ESAD_Purity-vs-tumorcontent_n20_NEW")
+main.text <- c(paste("Tumour content vs. Purity (n=20)"), "")
+xlab.text <- "Tumour content [%]"
 ylab.text <- "Purity"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- "black"
 cols2 <- c(red, purple)
 plotFACS3(samples$purity, as.numeric(sub("%", "", samples$tumorcontent_per_sample))/100, file.name, main.text, xlab.text, ylab.text, cols, cols2)
+
+#file.name <- file.path(wd.de.plots, "ESAD_Purity-vs-PC4_n20")
+#main.text <- c(paste("Purity vs. PC4 (n=20)"), "")
+#xlab.text <- paste0("PC", 4, " (", pcaProportionofVariance(pca.de, 4), "%)")
+#ylab.text <- "Purity"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+#cols <- "black"
+#cols2 <- c(red, purple)
+#plotFACS3(samples$purity, scores$PC4, file.name, main.text, xlab.text, ylab.text, cols, cols2)
+
+
+
+
+
+
+
+
+
 
 
 
