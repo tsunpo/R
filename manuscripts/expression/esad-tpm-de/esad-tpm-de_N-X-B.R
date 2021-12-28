@@ -90,17 +90,14 @@ genes.NXB.down <- intersect(overlaps.down, rownames(de.tpm.gene.BX.up))
 
 ###
 ##
-genes.NXB.up.pe6   <- intersect(intersect(rownames(subset(subset(de.tpm.gene.NB.NXB, P < 1E-6), LOG2_FC >= 0)), rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-6), LOG2_FC >= 0))), rownames(subset(subset(de.tpm.gene.BX.NXB, P < 1E-6), LOG2_FC < 0)))
-genes.NXB.down.pe6 <- intersect(intersect(rownames(subset(subset(de.tpm.gene.NB.NXB, P < 1E-6), LOG2_FC < 0)),  rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-6), LOG2_FC < 0))),  rownames(subset(subset(de.tpm.gene.BX.NXB, P < 1E-6), LOG2_FC >= 0)))
+genes.NXB.up.pe4   <- intersect(intersect(rownames(subset(subset(de.tpm.gene.NB.NXB, P < 1E-4), LOG2_FC >= 0)), rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-4), LOG2_FC >= 0))), rownames(subset(subset(de.tpm.gene.BX.NXB, P < 1E-4), LOG2_FC < 0)))
+genes.NXB.down.pe4 <- intersect(intersect(rownames(subset(subset(de.tpm.gene.NB.NXB, P < 1E-4), LOG2_FC < 0)),  rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-4), LOG2_FC < 0))),  rownames(subset(subset(de.tpm.gene.BX.NXB, P < 1E-4), LOG2_FC >= 0)))
 
-genes.NXB.up.pe3   <- intersect(intersect(rownames(subset(subset(de.tpm.gene.NB.NXB, P < 1E-3), LOG2_FC >= 0)), rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-3), LOG2_FC >= 0))), rownames(subset(subset(de.tpm.gene.BX.NXB, P < 1E-3), LOG2_FC < 0)))
-genes.NXB.down.pe3 <- intersect(intersect(rownames(subset(subset(de.tpm.gene.NB.NXB, P < 1E-3), LOG2_FC < 0)),  rownames(subset(subset(de.tpm.gene.NX.NXB, P < 1E-3), LOG2_FC < 0))),  rownames(subset(subset(de.tpm.gene.BX.NXB, P < 1E-3), LOG2_FC >= 0)))
+file.name <- paste0("genes_N-X-B_p1e-4_n14_up")
+writeTable(genes.NXB.up.pe4, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-file.name <- paste0("genes_N-X-B_p1e-3_n77_up")
-writeTable(genes.NXB.up.pe3, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-file.name <- paste0("genes_N-X-B_p1e-3_n73_down")
-writeTable(genes.NXB.down.pe3, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+file.name <- paste0("genes_N-X-B_p1e-4_n23_down")
+writeTable(genes.NXB.down.pe4, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 ##
 genes <- c(genes.NXB.up.pe4, genes.NXB.down.pe4)
