@@ -1,8 +1,8 @@
 # =============================================================================
 # Manuscript   :
-# Name         : manuscripts/expression/esad-tpm.R
+# Name         : manuscripts/expression/sfb-tpm.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 22/08/20
+# Last Modified: 04/01/22
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
@@ -90,8 +90,7 @@ nrow(tpm.gene)
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
-# Figure(s)    : Figure S2 (A and B)
-# Last Modified: 13/09/20; 29/05/20
+# Last Modified: 04/01/22
 # =============================================================================
 ## All genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))

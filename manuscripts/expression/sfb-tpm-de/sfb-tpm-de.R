@@ -1,8 +1,8 @@
 # =============================================================================
 # Manuscript   : 
-# Name         : manuscripts/expression/esad-tpm-de.R
+# Name         : manuscripts/expression/sfb-tpm-de.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 21/08/20
+# Last Modified: 04/01/22
 # =============================================================================
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
 wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
@@ -11,98 +11,68 @@ wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/librarie
 handbooks  <- c("Commons.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
-wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
-load(file.path(wd.src.ref, "hg19.RData"))
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Mouse Genome
+load(file.path(wd.src.ref, "mm10.RData"))
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-BASE <- "ESAD2"
+BASE <- "SFB"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2/projects"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/3RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.meta  <- file.path(wd, BASE, "metadata")
 
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-colnames <- c("NR_intern", "CCG_ID", "PATIENT_ID2", "FILE_NAME", "", "Responder", "Type", "FILE_NAME")
-samples  <- readTable(file.path(wd.rna, "esad2_3rna_n97.txt"), header=F, rownames=3, sep="\t")
-colnames(samples) <- colnames
-#purities <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
+samples <- readTable(file.path(wd.rna, "sfb_3rna_n41.txt"), header=T, rownames=T, sep="\t")
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
-# Last Modified: 22/08/20
-# -----------------------------------------------------------------------------
-## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
-##       Student's/t.test
-## FDR : Q/BH
-## DE  : TR (1) vs UN (0) as factor
-argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0-median0_B-vs-N_wilcox_q_n46")
-file.main <- paste0("TR (n=22) vs UN (n=23) in ", BASE)
-
-de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-
-## Ensembl gene annotations
-annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)
-
-save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 10/10/21
 # -----------------------------------------------------------------------------
-colnames <- c("NR_intern", "CCG_ID", "PATIENT_ID2", "FILE_NAME", "", "Responder", "Type", "FILE_NAME")
-samples  <- readTable(file.path(wd.rna, "esad2_3rna_n97.txt"), header=F, rownames=3, sep="\t")
-colnames(samples) <- colnames
-
-n <- rownames(subset(samples, Type == "N"))
-b <- rownames(subset(samples, Type == "B"))
-samples$GROUP_ID2     <- 0
-samples[b,]$GROUP_ID2 <- 1
-samples$GROUP_ID2 <- as.numeric(samples$GROUP_ID2)
-
-trait <- as.numeric(samples[, "GROUP_ID2"])
-trait[which(trait == 0)] <- "N"
-trait[which(trait == 1)] <- "B"
-trait.v <- c("N", "B")
-cols    <- c(blue, red)
+trait <- samples$GROUP_NAME
+trait.v <- c("NEMO", "p65", "IKK2ca", "TNFR1KO", "TNFR1LEC-KO", "MLKLS345_7A", "MLKLWT", "WT")
+cols    <- c(green, purple, orange, blue, blue.lighter, red, red.lighter, grey)
 
 ###
 ##
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
-file.main <- c("EAC2 samples (n=97)", "Expressed genes (n=15,381)")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_N-B_n97_ALL", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+file.main <- c("SFB samples (n=41)", "Expressed genes (n=18,383)")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_SFB_n41_median0", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
 
-# -----------------------------------------------------------------------------
-# PCA
-# Last Modified: 10/10/21
-# -----------------------------------------------------------------------------
-n <- which(samples$Type == "N")
-trait <- samples[, "Responder"]
-trait[n] <- "NA"
-trait.v <- c("Complete", "Major", "Minor", "NA")
-cols    <- c(green, yellow, red, "white")
+##
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(test)
+file.main <- c("SFB test (n=41)", "Expressed genes (n=18,383)")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_SFB_n41_median0_test", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
 
 ###
 ##
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
-file.main <- c("EAC2 samples (n=97)", "Expressed genes (n=15,381)")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n97_ALL", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+file.main <- c("SFB samples (n=41)", "Filtered genes (n=15,056)")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_SFB_n41_r5p47", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+
+
+
+
+
+
+
+
 
 ###
 ##

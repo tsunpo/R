@@ -31,7 +31,7 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
 samples <- readTable(file.path(wd.rna, "sfb_3rna_n41.txt"), header=T, rownames=T, sep="\t")
-samples <- samples[rownames(subset(samples, GROUP_NAME %in% c("NEMO", "WT"))),]
+samples <- samples[rownames(subset(samples, GROUP_NAME %in% c("MLKLS345_7A", "MLKLWT"))),]
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
@@ -48,8 +48,8 @@ dim(tpm.gene.log2)
 ## FDR : Q/BH
 ## DE  : C (0) vs MA (1) as factor
 argv      <- data.frame(predictor="GROUP_ID", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("DE_SFB_tpm-gene-median0_NEMO-vs-WT_wilcox_q_n11")
-file.main <- paste0("NEMO (n=5) vs. WT (n=6) in ", BASE)
+file.name <- paste0("DE_SFB_tpm-gene-median0_MLKLS345_7A-vs-MLKLWT_wilcox_q_n9")
+file.main <- paste0("MLKLS345_7A (n=5) vs. MLKLWT (n=4) in ", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 
@@ -61,26 +61,23 @@ save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 # > de.tpm.gene[1:10,]
-# ensembl_gene_id external_gene_name chromosome_name strand start_position end_position           gene_biotype           P       FDR GROUP_ID_WT
-# ENSMUSG00000021680 ENSMUSG00000021680              Crhbp           chr13     -1       95431371     95444924         protein_coding 0.003890487 0.9215105   0.0000000
-# ENSMUSG00000018595 ENSMUSG00000018595              Glra4            chrX     -1      136757674    136780141         protein_coding 0.005494111 0.9215105   0.0000000
-# ENSMUSG00000034467 ENSMUSG00000034467            Dynlrb2            chr8      1      116504974    116515915         protein_coding 0.005494111 0.9215105   1.7690385
-# ENSMUSG00000102175 ENSMUSG00000102175             Gm6119            chr1     -1        4692219      4693424   processed_pseudogene 0.005494111 0.9215105   0.0000000
-# ENSMUSG00000109750 ENSMUSG00000109750         Hmgb1-rs17            chr8      1       33484196     33485167 unprocessed_pseudogene 0.005494111 0.9215105   0.0000000
-# ENSMUSG00000113053 ENSMUSG00000113053            Gm18262           chr13      1       12864124     12866069   processed_pseudogene 0.005494111 0.9215105   0.0000000
-# ENSMUSG00000115799 ENSMUSG00000115799            Vmn1r19            chr6      1       57403780     57406034         protein_coding 0.005494111 0.9215105   0.3814651
-# ENSMUSG00000036198 ENSMUSG00000036198           Arhgap36            chrX      1       49463945     49500244         protein_coding 0.006735947 0.9215105   1.2876382
-# ENSMUSG00000019194 ENSMUSG00000019194              Scn1b            chr7     -1       31116524     31127003         protein_coding 0.007546234 0.9215105   0.7049706
-# ENSMUSG00000015337 ENSMUSG00000015337              Endog            chr2      1       30171493     30174069         protein_coding 0.007969413 0.9215105   1.5530695
+# ensembl_gene_id external_gene_name chromosome_name strand start_position end_position         gene_biotype           P FDR GROUP_ID_WT  GROUP_ID
+# ENSMUSG00000031493 ENSMUSG00000031493                Ggn            chr7      1       29170210     29173976       protein_coding 0.01079959 0.5739708   0.8694058 0.0000000
+# ENSMUSG00000051076 ENSMUSG00000051076              Vtcn1            chr3      1      100825459    100896922       protein_coding 0.01079959 0.5739708   0.4254594 0.0000000
+# ENSMUSG00000055109 ENSMUSG00000055109            Gm15155            chrX      1      155624741    156345887       protein_coding 0.01079959 0.5739708   2.0086318 0.0000000
+# ENSMUSG00000074006 ENSMUSG00000074006                Omp            chr7     -1       98143359     98145502       protein_coding 0.01079959 0.5739708   0.2305364 0.0000000
+# ENSMUSG00000024868 ENSMUSG00000024868               Dkk1           chr19     -1       30545863     30549665       protein_coding 0.01507850 0.5739708   0.0000000 0.3129159
+# ENSMUSG00000040663 ENSMUSG00000040663              Clcf1           chr19      1        4214238      4223490       protein_coding 0.01507850 0.5739708   0.1997805 0.0000000
+# ENSMUSG00000043366 ENSMUSG00000043366             Olfr78            chr7     -1      102738511    102759471       protein_coding 0.01507850 0.5739708   0.0000000 0.1794218
+# ENSMUSG00000051599 ENSMUSG00000051599             Pcdhb2           chr18      1       37294812     37297624       protein_coding 0.01507850 0.5739708   0.0000000 0.9861322
+# ENSMUSG00000081490 ENSMUSG00000081490            Gm11830            chr4      1       11144710     11145270 processed_pseudogene 0.01507850 0.5739708   0.0000000 1.0934757
+# ENSMUSG00000087166 ENSMUSG00000087166              L1td1            chr4      1       98726734     98738480       protein_coding 0.01507850 0.5739708   0.0000000 0.1832358
 
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC
 # Figure(s)    : Figure S1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("DE_SFB_tpm-gene-median0_NEMO-vs-WT_wilcox_q_n11")
-load(file=file.path(wd.de.data, paste0(file.name, ".RData")))
-
 plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    #pvalue <- fdrToP(fdr, de)
    fdr <- pvalueToFDR(pvalue, de)
@@ -93,7 +90,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
    ymax <- 9
  
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="NEMO to WT fold change [log2]", ylab="P-value significance [-log10]", col="lightgray", main=file.main[1])
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="B to N fold change [log2]", ylab="P-value significance [-log10]", col="lightgray", main=file.main[1])
 
    #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
    #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
