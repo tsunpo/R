@@ -587,8 +587,8 @@ plotBootstrapSummary <- function(summary, file.name, main.text) {
    
    pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
    par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
-   #bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-   bp <- barplot(summary, col=cols, xlim=c(0, 63), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   #bp <- barplot(summary, col=cols, xlim=c(0, 63), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
 
    h <- summary
    h[1,] <- as.numeric(round0(summary[1,], digits=1))
@@ -629,20 +629,22 @@ plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, "barchart_F7_SCLC-NL-vs-SCLC")
-main.text <- c("SCLC vs. SCLC-NL replication-domain landscape", "")
+file.name <- file.path(wd.rt.plots, "barchart_SCLC-NL-vs-SCLC")
+main.text <- c("SCLC-NL vs. SCLC replication domains", "")
 plotBootstrapSummary(summary.sclc.nl.vs.sclc, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "SCLC vs. SCLC-NL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.sclc, file.name, "SCLC-NL vs. SCLC")
 
-file.name <- file.path(wd.rt.plots, "barchart_F7_SCLC-NL-vs-NBL")
-main.text <- c("NBL vs. SCLC-NL replication-domain landscape", "")
+file.name <- file.path(wd.rt.plots, "barchart_SCLC-NL-vs-NBL")
+main.text <- c("SCLC-NL vs. NBL replication domains", "")
 plotBootstrapSummary(summary.sclc.nl.vs.nbl, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "NBL vs. SCLC-NL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.nbl, file.name, "SCLC-NL vs. NBL")
 
-file.name <- file.path(wd.rt.plots, "barchart_F7_SCLC-NL-vs-CLL")
-main.text <- c("CLL vs. SCLC-NL replication-domain landscape", "")
+file.name <- file.path(wd.rt.plots, "barchart_SCLC-NL-vs-CLL")
+main.text <- c("SCLC-NL vs. CLL replication domains", "")
 plotBootstrapSummary(summary.sclc.nl.vs.cll, file.name, main.text)
-plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "CLL vs. SCLC-NL")
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.cll, file.name, "SCLC-NL vs. CLL")
+
+
 
 
 # -----------------------------------------------------------------------------

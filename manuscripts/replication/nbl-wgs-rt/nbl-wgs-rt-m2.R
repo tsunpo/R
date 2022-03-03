@@ -64,7 +64,7 @@ load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m
 
 ymax <- 0.6
 ymin <- 0.15
-for (c in 22:1) {
+for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
@@ -72,11 +72,11 @@ for (c in 22:1) {
    nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, " M2 to M1 ratio replication timing")
+   main.text <- paste0(BASE, " tumour replication timing")
    #file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_1128"))   
    #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
    
-   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_1128"))  
+   file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_0220"))  
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 
    ## chr2
@@ -138,6 +138,19 @@ file.name <- file.path(wd.rt.plots, "RD2_NBL-M2-M1-vs-NBL-M2-M1")
 main.text <- c("Correlation (Chr1-22)", "Spearman's rho")
 plotRD2(sprs, file.name, main.text, 0.5, 1)
 
+###
+## 24/01/22
+file.name <- file.path(wd.rt.plots, "RD2_NBL-M2-M1-vs-LCL-S-G1")
+main.text <- c("Correlation with RT (Chr1-22)", "Spearman's rho")
+plotRD2(cors, file.name, main.text, 0.4019374, 0.8270088)
+# > max(abs(cors$cor1), abs(cors$cor2))
+# [1] 0.8270088
+# > min(abs(cors$cor1), abs(cors$cor2))
+# [1] 0.4019374
+
+
+
+
 ## Replication timing skew (RTS)
 file.name <- file.path(wd.rt.plots, "RTS_NBL-M2-M1")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
@@ -196,7 +209,7 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-m2-m1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman_nasa.blue_google.red_text.font=2")
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-M2-M1-vs-LCL-S-G1_spline_spearman")
 main.text <- paste0("NBL M2/M1 vs. LCL S/G1")
 #ylab.text <- "Spearman's rho"
 #xlab.text <- "Chromosome"

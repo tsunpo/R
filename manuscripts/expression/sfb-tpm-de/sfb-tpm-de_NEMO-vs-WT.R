@@ -21,7 +21,7 @@ BASE <- "SFB"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2/projects"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/3RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.meta  <- file.path(wd, BASE, "metadata")

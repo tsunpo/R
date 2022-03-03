@@ -281,6 +281,7 @@ plotBoxNBX <- function(wd.de.plots, file.name, id, tpm.gene.log2, samples, de.tp
 }
 
 genes <- c("ADH7", "PAX9", "KRT4", "SPRR3", "PERP", "F2R", "POSTN")
+genes <- c("KRT78", "KRT5", "KRT6A", "KRT6B", "KRT6C", "KRT7", "KRT16")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
  
@@ -298,6 +299,12 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
+
+## N subgroup
+samples.n <- samples[rownames(subset(samples, GROUP_ID2 == 0)),]
+tpm.gene.n <- tpm.gene[, rownames(samples.n)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.n.log2   <- log2(tpm.gene.n + 1)
+tpm.gene.n.log2.m <- getLog2andMedian(tpm.gene.n, 1)
 
 ## B subgroup
 samples.b <- samples[rownames(subset(samples, GROUP_ID2 == 1)),]
@@ -348,6 +355,11 @@ genes <- c(genes.up, genes.down)
 
 ###
 ##
+n <- tpm.gene.n.log2[genes,]
+colnames(n) <- gsub("P-00", "P", samples.n$PATIENT_ID2)
+rownames(n) <- ensGene[genes, ]$external_gene_name
+n <- data.matrix(n)
+
 b <- tpm.gene.b.log2[genes,]
 colnames(b) <- gsub("P-00", "P", samples.b$PATIENT_ID2)
 rownames(b) <- ensGene[genes, ]$external_gene_name
@@ -358,6 +370,7 @@ colnames(x) <- gsub("P-00", "P", samples.x$PATIENT_ID2)
 rownames(x) <- ensGene[genes, ]$external_gene_name
 x <- data.matrix(x)
 
+nbx <- cbind(n, b, x)
 xb <- cbind(x, b)
 
 ###
@@ -401,6 +414,20 @@ hc <- hclust(as.dist(1-cor(xb,    method="spearman")), method="complete")
 
 colfunc <- colorRampPalette(c("red", "black", "green"))
 heatmap.2(xb, col=colfunc(7), scale="row", trace="none")
+
+###
+##
+heatmap(nbx)
+
+## Returning the values used for the heatmap
+test <- heatmap.2(nbx, scale="row")
+nbx[rev(test$rowInd), test$colInd]
+
+hr <- hclust(as.dist(1-cor(t(nbx), method="pearson")),  method="complete")
+hc <- hclust(as.dist(1-cor(nbx,    method="spearman")), method="complete")
+
+colfunc <- colorRampPalette(c("red", "black", "green"))
+heatmap.2(nbx, col=colfunc(7), scale="row", trace="none")
 
 # -----------------------------------------------------------------------------
 # Tumour contents

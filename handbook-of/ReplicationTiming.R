@@ -238,27 +238,46 @@ getLog2ScaledRT <- function(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs
    return(nrds)
 }
 
+setSpline0 <- function(nrds.chr, bed.gc.chr, column) {
+   overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
+   bed.gc.chr.o <- bed.gc.chr[overlaps,]
+   nrds.chr.o   <- nrds.chr[overlaps,]
+ 
+   spline <- smooth.spline(nrds.chr.o[, column])
+   nrds.chr.o$SPLINE <- spline$y
+ 
+   return(nrds.chr.o[, c("BED", column, "SPLINE")])
+}
+
 setSpline <- function(nrds.chr, bed.gc.chr, column) {
    overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
    bed.gc.chr.o <- bed.gc.chr[overlaps,]
    nrds.chr.o   <- nrds.chr[overlaps,]
  
    spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, column])
-   nrds.chr.o$SPLINE <- spline$y
-
+   if (nrow(nrds.chr.o) == length(spline$y)) {
+      nrds.chr.o$SPLINE <- spline$y
+   } else {
+      bed.gc.chr.o.spline <- subset(bed.gc.chr.o, START %in% spline$x)
+      nrds.chr.o$SPLINE <- NA
+      nrds.chr.o[rownames(bed.gc.chr.o.spline),]$SPLINE <- spline$y
+      
+      diff <- setdiff(rownames(bed.gc.chr.o), rownames(bed.gc.chr.o.spline))
+      idx <- which(rownames(nrds.chr.o) %in% diff)
+      nrds.chr.o[idx,]$SPLINE <- nrds.chr.o[idx-1,]$SPLINE
+   }
+   
    return(nrds.chr.o[, c("BED", column, "SPLINE")])
 }
 
 setSpline2 <- function(nrds.chr, bed.gc.chr, column, kb=1, returnAll=F) {
+   nrds.chr <- setSpline(nrds.chr, bed.gc.chr, column)
    overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
    bed.gc.chr.o <- bed.gc.chr[overlaps,]
-   nrds.chr.o <- nrds.chr[overlaps,]
- 
-   spline <- smooth.spline(x=bed.gc.chr.o$START, y=nrds.chr.o[, column])
-   nrds.chr.o$SPLINE <- spline$y
+   nrds.chr.o   <- nrds.chr[overlaps,]
  
    ## https://stackoverflow.com/questions/43615469/how-to-calculate-the-slope-of-a-smoothed-curve-in-r
-   slopes <- diff(spline$y)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
+   slopes <- diff(nrds.chr.o$SPLINE)/diff(bed.gc.chr.o$START/1E6)   ## ADD 31/10/18
    nrds.chr.o$SLOPE <- NA
    nrds.chr.o$SLOPE[1:length(slopes)] <- slopes   ## length(slopes) is 1 less than nrow(bed.gc.chr.o), as no slope for the last 1kb window
    #nrds.chr.o <- nrds.chr.o[1:length(slopes),]   ## REMOVED 24/11/19
@@ -320,9 +339,14 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.01)
    adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.01)
 
-   nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
-   nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   ## Read in replicaiton time
+   overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds.chr))   ## 29/11/19: Changed from intersect(rownames(nrds), rownames(bed.gc.chr))
+   nrds.chr   <- nrds.chr[overlaps,]
+   bed.gc.chr <- bed.gc.chr[overlaps,]
+   
+   nrds.chr.T  <- setSpline0(nrds.chr, bed.gc.chr, "T")
+   nrds.chr.N  <- setSpline0(nrds.chr, bed.gc.chr, "N")
+   nrds.chr.RT <- setSpline0(nrds.chr, bed.gc.chr, "RT")
    if (!is.null(nrds.lcl.chr))
       nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
     
@@ -417,7 +441,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[1], cex=1.3)   
    legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=0.9, pt.lwd=1.25, pch=1, col=colours2[2], cex=1.3)
    if (width != 5)
-      legend("topright", paste0("NBL ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
+      legend("topright", paste0("", legends2[1], "/", legends2[2], " read depth ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
    else
       legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=3, bty="n", horiz=T, cex=1.3)
    if (!is.null(lcl.rt.chr))
@@ -669,8 +693,8 @@ plotRTvsRT3 <- function(cors, file.name, main.text, ymin, ymax, cols, legends) {
 ###
 ##
 plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
-   ylab.text <- "S vs. RT"
-   xlab.text <- "G1 vs. RT"
+   ylab.text <- "LCL S vs. RT"
+   xlab.text <- "LCL G1 vs. RT"
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
@@ -696,35 +720,8 @@ plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
 }
 
 plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
-   ylab.text <- "Q4 vs. Q4/Q1"
-   xlab.text <- "Q1 vs. Q4/Q1"
- 
-   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(cors$cor1 ~ abs(cors$cor2), ylim=c(ymin, ymax), xlim=c(ymin, ymax), ylab="", xlab=xlab.text, yaxt="n", xaxt="n", main=main.text[1], col=NULL, pch=19, cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
-   lines(c(0, 1.1), c(0, 1.1), pch=NULL, col="black", type="l", lty=5, lwd=1.5)
-   #lines(abs(cors$cor2), abs(cors$cor2), pch=NULL, col="purple", type="l", lty=2, lwd=3)
-   #lm.fit <- lm(abs(cors$cor2) ~ abs(cors$cor2))
-   #abline(lm.fit, col="purple", lty=2, lwd=2)
-   
-   for (c in 1:22)
-      if (cors$cor1[c] > abs(cors$cor2[c])) {
-         text(abs(cors$cor2[c]), cors$cor1[c], paste0("Chr", c), col="red", pos=3, cex=1.3)
-         points(abs(cors$cor2[c]), cors$cor1[c], col=red, pch=19, cex=1.3)
-      } else
-         points(abs(cors$cor2[c]), cors$cor1[c], col=blue, pch=19, cex=1.3)
-   text(abs(cors$cor2[2]), cors$cor1[2], paste0("Chr", 2), col="blue", pos=3, cex=1.3)
-   
-   axis(side=2, at=seq(0.75, 1, by=0.05), labels=c("", 0.8, "", 0.9, "", 1), cex.axis=1.25)
-   axis(side=1, at=seq(0.75, 1, by=0.05), labels=c("", -0.8, "", -0.9, "", -1), cex.axis=1.25)
-   mtext(ylab.text, side=2, line=2.85, cex=1.3)
-   mtext(main.text[2], line=0.3, cex=1.3)
-   dev.off()
-}
-
-plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
-   ylab.text <- "M2 vs. M2/M1"
-   xlab.text <- "M1 vs. M2/M1"
+   ylab.text <- "NBL Q4 vs. RT"
+   xlab.text <- "NBL Q1 vs. RT"
  
    #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
@@ -742,8 +739,35 @@ plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
    points(abs(cors$cor2[c]), abs(cors$cor1[c]), col=blue, pch=19, cex=1.3)
    text(abs(cors$cor2[2]), abs(cors$cor1[2]), paste0("Chr", 2), col="blue", pos=3, cex=1.3)
  
-   axis(side=2, at=seq(0.5, 1, by=0.1), labels=c("", -0.6, "", -0.8, "", -1), cex.axis=1.25)
-   axis(side=1, at=seq(0.5, 1, by=0.1), labels=c("", -0.6, "", -0.8, "", -1), cex.axis=1.25)   
+   axis(side=2, at=seq(0.4, 1, by=0.1), labels=c(0.4, "", 0.6, "", 0.8, "", 1), cex.axis=1.25)
+   axis(side=1, at=seq(0.4, 1, by=0.1), labels=c(-0.4, "", -0.6, "", -0.8, "", -1), cex.axis=1.25)   
+   mtext(ylab.text, side=2, line=2.85, cex=1.3)
+   mtext(main.text[2], line=0.3, cex=1.3)
+   dev.off()
+}
+
+plotRD2 <- function(cors, file.name, main.text, ymin, ymax) {
+   ylab.text <- "NBL M2 vs. RT"
+   xlab.text <- "NBL M1 vs. RT"
+ 
+   #png(paste0(file.name, ".png"), height=5, width=5, units="in", res=300)
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(abs(cors$cor1) ~ abs(cors$cor2), ylim=c(ymin, ymax), xlim=c(ymin, ymax), ylab="", xlab=xlab.text, yaxt="n", xaxt="n", main=main.text[1], col=NULL, pch=19, cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
+   lines(c(0, 1.1), c(0, 1.1), pch=NULL, col="black", type="l", lty=5, lwd=1.5)
+   #lines(abs(cors$cor2), abs(cors$cor2), pch=NULL, col="purple", type="l", lty=2, lwd=3)
+   #lm.fit <- lm(abs(cors$cor2) ~ abs(cors$cor2))
+   #abline(lm.fit, col="purple", lty=2, lwd=2)
+ 
+   for (c in 1:22)
+      if (abs(cors$cor1[c]) > abs(cors$cor2[c])) {
+         text(abs(cors$cor2[c]), abs(cors$cor1[c]), paste0("Chr", c), col="red", pos=3, cex=1.3)
+         points(abs(cors$cor2[c]), abs(cors$cor1[c]), col=red, pch=19, cex=1.3)
+      } else
+   points(abs(cors$cor2[c]), abs(cors$cor1[c]), col=blue, pch=19, cex=1.3)
+   text(abs(cors$cor2[2]), abs(cors$cor1[2]), paste0("Chr", 2), col="blue", pos=3, cex=1.3)
+ 
+   axis(side=2, at=seq(0.4, 1, by=0.1), labels=c(-0.4, "", -0.6, "", -0.8, "", -1), cex.axis=1.25)
+   axis(side=1, at=seq(0.4, 1, by=0.1), labels=c(-0.4, "", -0.6, "", -0.8, "", -1), cex.axis=1.25)   
    mtext(ylab.text, side=2, line=2.85, cex=1.3)
    mtext(main.text[2], line=0.3, cex=1.3)
    dev.off()
@@ -859,7 +883,7 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
             #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
    legend("topleft", "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.3)   
-   legend("bottomleft", "Later than", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.3)
+   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.3)
 
    axis(side=1, at=seq(2, 22, by=4), cex.axis=1.2)
    axis(side=1, at=seq(4, 20, by=4), cex.axis=1.2)
@@ -909,7 +933,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    legends <- c("topright", "bottomleft")
    if (cor[[4]] > 0) legends[1] <- "topleft"
    legend(legends[1], "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.3)   ## bty="n"
-   legend(legends[2], "Later than", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.3)
+   legend(legends[2], "Later than chr2", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.3)
    
    pvalue <- scientific(cor[[3]])
    #legend("bottomright", paste0("rho = ", round0(cor[[4]], digits=2)), text.col=cols[4], bty="n", cex=1.2)
@@ -952,8 +976,8 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
    cors.all$Q4[which(cors.all$SAMPLE_ID %in% samples.q4[[2]])] <- 2
    cors.all$Q4[which(cors.all$SAMPLE_ID %in% samples.q4[[1]])] <- 1
  
-   cors.all$M2[which(cors.all$Q4 %in% c(3, 4))] <- 1
-   cors.all$M2[which(cors.all$Q4 %in% c(1, 2))] <- 0
+   cors.all$M2[which(cors.all$Q4 %in% c(3, 4))] <- 2
+   cors.all$M2[which(cors.all$Q4 %in% c(1, 2))] <- 1
 
    return(cors.all)
 }
@@ -966,6 +990,13 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
 read.peiflyne.cn.txt <- function(cn.file) {
    cn <- readTable(cn.file, header=F, rownames=T, sep="")
    colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "RD_T", "RD_N", "V10", "INSERT_SIZE_T", "INSERT_SIZE_N")
+ 
+   return(cn)
+}
+
+read.peiflyne.icgc.cn.txt <- function(cn.file) {
+   cn <- readTable(cn.file, header=F, rownames=T, sep="")
+   colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "RD_T", "RD_N", "V10")
  
    return(cn)
 }

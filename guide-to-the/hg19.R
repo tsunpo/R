@@ -44,6 +44,8 @@ freq <- freq[order(freq$Freq, decreasing=T),]
 #       Var1 Freq
 # 29322 RBL1    2
 
+writeTable(ensGene, gzfile(file.path(wd.src.ref, paste0("ensGene.GRCh37.p13.txt.gz"))), colnames=T, rownames=F, sep="\t")
+
 # -----------------------------------------------------------------------------
 # Database: Ensembl Gene / Transcripts (with patches/scaffold sequences)
 # Table: ensGene / Count: 215,170 / Download Version: 2017-03-25
@@ -290,3 +292,19 @@ for (c in 2:22) {
 ensGene.bed <- ensGene.bed[rownames(ensGene), c("TSS", "TTS")]
 
 save(ensGene.bed, file=file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
+
+# -----------------------------------------------------------------------------
+# ICGC_PartNo_*
+# Last Modified: 17/02/22
+# -----------------------------------------------------------------------------
+bed <- readTable(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/converted_data/513bafce-375c-49b0-ae75-6c607abd05d8_CONVERTED/513bafce-375c-49b0-ae75-6c607abd05d8_cn.txt"), header=F, rownames=T, sep="")[,c(1:4,10)]
+colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
+rownames(bed) <- bed$BED
+bed <- bed[,-1]
+
+bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
+save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
+# > nrow(bed.gc)
+# [1] 4062897
+# > nrow(bed.gc)   ## As in hg19.bed.gc.1kb.RData
+# [1] 2861558

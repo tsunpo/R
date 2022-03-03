@@ -73,6 +73,14 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 # ENSMUSG00000079852 ENSMUSG00000079852              Klra4            chr6     -1      130043731    130067271       protein_coding 0.007546234 0.6308385  0.18234549
 # ENSMUSG00000033966 ENSMUSG00000033966              Cdkl4           chr17     -1       80523550     80577813       protein_coding 0.007969413 0.6308385  0.20513056
 
+file.name <- paste0("DE_SFB_tpm-gene-median0_p65-vs-WT_wilcox_q_n11")
+load(file=file.path(wd.de.data, paste0(file.name, ".RData")))
+nrow(subset(de.tpm.gene, P < 0.01))
+nrow(subset(de.tpm.gene, P < 0.05))
+
+de.tpm.gene[153, "FDR"]
+de.tpm.gene[1012, "FDR"]
+
 # -----------------------------------------------------------------------------
 # Volcano plots of RB1-loss DE genes in LCNEC
 # Figure(s)    : Figure S1 (A)

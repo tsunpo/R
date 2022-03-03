@@ -4,8 +4,8 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 22/08/20
 # =============================================================================
-wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
+#wd.src <- "/ngs/cangen/tyang2/dev/R"              ## tyang2@gauss
+wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
 handbooks  <- c("Commons.R", "Transcription.R")

@@ -40,12 +40,12 @@ pipeBootstrap <- function(nrds.RT.BSTRPS, bstrps) {
 }
 
 getBootstrap <- function(base, column) {
-   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.", column, "_", "chr1", ".RData")))
+   load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.RT.", column, "_", "chr1", ".RData")))
    nrds.RT.BSTRPS <- nrds.RT.BSTRPS.chr
    for (c in 2:22) {
       chr <- chrs[c]
 
-      load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.", column, "_", chr, ".RData")))
+      load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.RT.", column, "_", chr, ".RData")))
       nrds.RT.BSTRPS <- rbind(nrds.RT.BSTRPS, nrds.RT.BSTRPS.chr)
    }
    
@@ -58,7 +58,7 @@ getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc, kb) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
   
-      nrds.RT.chr <- setSpline(nrds, bed.gc.chr, "RT", returnAll=T)
+      nrds.RT.chr <- setSpline2(nrds, bed.gc.chr, "RT", returnAll=T)
       if (is.null(nrds.RT)) {
          nrds.RT <- nrds.RT.chr
       } else {
@@ -937,7 +937,87 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
       points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="#01DF01", pch=19, cex=0.5)
   
    ## Plot legend
-   legend("topright", "TTR (R)", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
-   legend("bottomright", "TTR (L)", col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
+   legend("topright", "Rightward", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
+   legend("bottomright", "Leftward", col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Report (between NL and Ts)
+# Last Modified: 23/03/20
+# -----------------------------------------------------------------------------
+getBootstrapSummary <- function(report.sclc.nl.vs.sclc) {
+   colnames <- c("Conserved", "Preserved", "Fold")
+   summary <- toTable(0, length(colnames), 3, colnames)
+   rownames(summary) <- c("TTR", "IZ", "TZ")
+ 
+   summary$Conserved[1] <- report.sclc.nl.vs.sclc$Overlapping_P[1]
+   summary$Conserved[2] <- report.sclc.nl.vs.sclc$Overlapping_P[3]
+   summary$Conserved[3] <- report.sclc.nl.vs.sclc$Overlapping_P[5]
+ 
+   summary$Preserved[1] <- (report.sclc.nl.vs.sclc$RFD_N[1] - report.sclc.nl.vs.sclc$Overlapping_N[1])/report.sclc.nl.vs.sclc$Mappable[1]
+   summary$Preserved[2] <- (report.sclc.nl.vs.sclc$RFD_N[3] - report.sclc.nl.vs.sclc$Overlapping_N[3])/report.sclc.nl.vs.sclc$Mappable[3]
+   summary$Preserved[3] <- (report.sclc.nl.vs.sclc$RFD_N[5] - report.sclc.nl.vs.sclc$Overlapping_N[5])/report.sclc.nl.vs.sclc$Mappable[5]
+ 
+   for (c in 1:3) {
+      if (summary$Conserved[c] < summary$Preserved[c])
+         summary$Fold[c] <- summary$Preserved[c]/summary$Conserved[c]
+      else
+         summary$Fold[c] <- summary$Conserved[c]/summary$Preserved[c]
+   }
+   return(summary)
+}
+
+## https://stackoverflow.com/questions/40919759/stacked-barplot-using-r-base-how-to-add-values-inside-each-stacked-bar
+plotBootstrapSummary <- function(summary, file.name, main.text) {
+   xlab.text <- "Percentage [%]"
+   #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
+   cols <- c(green, yellow)
+   summary$Conserved <- summary$Conserved*100
+   summary$Preserved <- summary$Preserved*100
+   summary <- t(as.matrix(summary[,-3]))
+   summary <- summary[,3:1]
+ 
+   pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
+   par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
+   #bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   bp <- barplot(summary, col=cols, xlim=c(0, 75), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+ 
+   h <- summary
+   h[1,] <- as.numeric(round0(summary[1,], digits=1))
+   h[2,] <- as.numeric(round0(summary[2,], digits=1))
+   H <- apply(summary, 2L, cumsum) - summary/2
+   text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
+ 
+   legend("bottomright", c("Shared", "Specific"), pt.cex=2.5, cex=1.6, fill=cols, horiz=T, bty="n")
+   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   dev.off()
+}
+
+plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
+   xlab.text <- "Percentage [%]"
+   #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
+   cols <- c(green, yellow)
+   summary$Conserved <- summary$Conserved*100
+   summary$Preserved <- summary$Preserved*100
+   summary <- as.data.frame(t(summary[,-3]))
+   summary <- summary[,3:1]
+   summary$Total <- 0
+   summary$Total[1] <- sum(summary[1,])
+   summary$Total[2] <- sum(summary[2,])
+   summary <- as.matrix(summary[,4])
+ 
+   pdf(paste0(file.name, "_total.pdf"), height=3.5, width=4)
+   par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
+   bp <- barplot(summary, col=cols, xlim=c(0, 100), xlab=xlab.text, names.arg="", main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+ 
+   h <- summary
+   h[1,] <- as.numeric(round0(summary[1,], digits=1))
+   h[2,] <- as.numeric(round0(summary[2,], digits=1))
+   H <- apply(summary, 2L, cumsum) - summary/2
+   text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
+ 
+   #legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
+   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
    dev.off()
 }

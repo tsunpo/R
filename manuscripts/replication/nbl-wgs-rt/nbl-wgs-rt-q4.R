@@ -138,6 +138,15 @@ file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-NBL-Q4-Q1")
 main.text <- c("Correlation (Chr1-22)", "Spearman's rho")
 plotRD2(sprs, file.name, main.text, 0.74, 1.00005)
 
+###
+## 24/01/22
+file.name <- file.path(wd.rt.plots, "RD2_NBL-Q4-Q1-vs-LCL-S-G1")
+main.text <- c("Correlation with RT (Chr1-22)", "Spearman's rho")
+plotRD2(cors, file.name, main.text, 0.3468236, 0.8311754)
+# > max(cors$cor1, abs(cors$cor2))
+# [1] 0.8311754
+# > min(cors$cor1, abs(cors$cor2))
+# [1] 0.3468236
 
 
 ## S-phase progression rate (SPR)
@@ -173,13 +182,13 @@ save(cors, file=file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s
 #load(file.path(wd.rt.data, paste0("rt-vs-rt_", base, "-q4-q1-vs-lcl-s-g1_spline_spearman.RData")))
 
 ##
-file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman_nasa.blue_google.red_text.font=2")
-main.text <- paste0("NBL Q4/Q1 vs. LCL S/G1")
+file.name <- file.path(wd.rt.plots, "RTD-vs-RT_NBL-Q4-Q1-vs-LCL-S-G1_spline_spearman")
+main.text <- paste0("NBL Q4/Q1 vs. LCL RT")
 ylab.text <- "Correlation [rho]"
 xlab.text <- "Chromosome"
 ymin <- -1.1
 ymax <- 1.1
-plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("Q4", "Q1", "Q4/Q1"), c=NA, isRT=T)
+plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c(red, blue, "black"), c("Q4", "Q1", "LCL RT"), c=NA, isRT=T)
 
 #ylab.text <- "Spearman's rho"
 #xlab.text <- "Chromosome"

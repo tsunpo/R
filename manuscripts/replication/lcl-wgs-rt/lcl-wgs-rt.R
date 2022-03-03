@@ -131,8 +131,8 @@ for (c in 2:2) {
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "RD2_LCL-S-G1-vs-LCL-S-G1")
-main.text <- c("Correlation (Chr1-22)", "Spearman's rho")
+file.name <- file.path(wd.rt.plots, "RD2_LCL-S-G1-vs-LCL-RT")
+main.text <- c("Correlation with RT (Chr1-22)", "Spearman's rho")
 plotRD2(sprs, file.name, main.text, 0.1, 0.75)
 
 
