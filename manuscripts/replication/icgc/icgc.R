@@ -62,6 +62,149 @@ for (s in 1:nrow(table)) {
    table$project_code[s] <- mapping[which(mapping$pcawg_wgs_id == table$wgs_id[s]),]$project_code
 }
 sort(table(table$project_code), decreasing=T)
+sort(table(table$histology_abbreviation), decreasing=T)
+
+# -----------------------------------------------------------------------------
+# Beeswarm plots
+# Last Modified: 21/04/19
+# -----------------------------------------------------------------------------
+projects <- unique(table$histology_abbreviation)
+removes  <- c("SoftTissue-Liposarc", "Cervix-SCC", "CNS-Oligo", "Bone-Benign", "Myeloid-AML", "SoftTissue-Leiomyo", "Breast-LobularCA", "Bone-Epith", "Breast-DCIS", "Myeloid-MDS", "Cervix-AdenoCA")
+diffs    <- setdiff(projects, removes)
+table.histology <- subset(table, histology_abbreviation %in% diffs)
+
+histologies <- unique(table.histology$histology_abbreviation)
+icgc <- toTable(0, 2, length(histologies), c("MEDIAN", "N"))
+rownames(icgc) <- histologies
+for (h in 1:length(histologies)) {
+   samples   <- subset(table.histology, histology_abbreviation == histologies[h])
+   icgc$N[h] <- nrow(samples)
+   
+   sum <- c()
+   for (s in 1:nrow(samples)) {
+      sample <- rownames(samples)[s]
+      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      
+      sum <- c(sum, as.numeric(cor))
+   }
+   icgc$MEDIAN[h] <- median(sum)
+}
+icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
+writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
+
+###
+##
+wd.rt.data <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/"
+samples <- toTable(0, 3, sum(icgc$N), c("CANCER", "COR", "Q4"))
+idx.cor    <- 0
+idx.sample <- 0
+for (h in nrow(icgc):1) {
+   samples.list <- subset(table.histology, histology_abbreviation == rownames(icgc)[h])
+   samples.q4   <- setSamplesQ4(wd.rt.data, rownames(samples.list))
+   
+   for (s in 1:nrow(samples.list)) {
+      sample <- rownames(samples.list)[s]
+      load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+  
+      samples$COR[idx.sample + s] <- as.numeric(cor)
+   }
+   samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.list))] <- idx.cor
+   samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.list))] <- samples.q4$Q4
+    
+   idx.cor <- idx.cor + 1
+   idx.sample <- idx.sample + nrow(samples.list)
+}
+
+###
+##
+file.name <- "stripchart_ICGC"
+main.text <- expression(bold(~bolditalic('in silico')~"sorting of PCAWG samples"))
+cols <- c(blue, blue.lighter, red.lighter, red)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=20, width=9)
+par(mar = c(5, 14.5, 4, 2))
+boxplot(COR ~ CANCER, data=samples, horizontal=T, yaxt="n", xaxt="n", ylab="", main=main.text, col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+#text(labels=labels, x=1:26, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, side=1, cex=1.8)
+
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=F, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=F, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 3), method="jitter", cex=1.5, pch=19, col=cols[3], vertical=F, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 4), method="jitter", cex=1.5, pch=19, col=cols[4], vertical=F, add=T, at=c(1:26))
+
+axis(side=1, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
+mtext("Spearman's rho", side=1, line=3.5, cex=1.8)
+#mtext("", cex=1.2, line=0.3)
+mtext(rev(rownames(icgc.tmp)), side=2, line=0.5, cex=1.8, at=1:26, las=1)
+
+legend("bottomright", legend=c("Q1", "Q2", "Q3", "Q4"), pch=19, pt.cex=2.5, col=cols, cex=1.8, horiz=T)
+dev.off()
+
+
+
+
+
+###
+##
+file.name <- "stripchart_ICGC_Spearman's"
+main.text <- expression(bold(~bolditalic('in silico')~"sorting of 2,612 ICGC PCAWG samples"))
+#labels <- paste0(labels=rownames(icgc), " (n=", icgc$N, ")")
+labels <- rownames(icgc)
+cols <- c(blue, blue.lighter, red.lighter, red)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+par(mar = c(11, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples, yaxt="n", xaxt="n", ylab="", main=main.text, col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+text(labels=labels, x=1:26, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, side=1, cex=1.8)
+
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=T, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 3), method="jitter", cex=1.5, pch=19, col=cols[3], vertical=T, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, Q4 == 4), method="jitter", cex=1.5, pch=19, col=cols[4], vertical=T, add=T, at=c(1:26))
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
+mtext("Spearman's rho", side=2, line=3.5, cex=1.8)
+#mtext("", cex=1.2, line=0.3)
+#mtext(text=rownames(icgc), side=1, cex=1.9, line=1.3, at=par("usr")[3], srt=35, adj=0, xpd=T)
+
+legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.8)
+dev.off()
+
+
+
+
+
+#install.packages('beeswarm')
+library(beeswarm)
+
+pdf(file.path(wd.rt.plots, "beeswarm_ICGC_Spearman's.pdf"), height=9, width=45)
+ymax <- 0.8   #max(samples$COR)
+ymin <- -ymax
+boxplot(COR ~ CANCER, data=samples, outline=F, names=NA, ylim=c(ymin, ymax), ylab="", main=expression(bold(~bolditalic('in silico')~"sorting of ICGC PCAWG samples")), yaxt="n", xaxt="n", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
+abline(h=0, lty=5, lwd=2)
+
+legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.9)
+
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 1), col=blue, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 2), col=blue.lighter, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 3), col=red.lighter, pch=19, cex=1, add=T)
+beeswarm(COR ~ CANCER, data=subset(samples, Q4 == 4), col=red, pch=19, cex=1, add=T)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("Spearman's rho", side=2, line=2.7, cex=1.9)
+#mtext("", cex=1.2, line=0.3)
+mtext(text=rownames(icgc), side=1, cex=1.9, line=1.3, at=c(1:26), srt=35, adj=1.1, xpd=T)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
 
 table.cll <- subset(table, project_code == "CLLE-ES")
 table.cll <- table.cll[sort(table.cll$specimen_id, decreasing=F),]
@@ -128,9 +271,8 @@ writeTable(table.cll,            file.path(wd.ngs, "ov-us_wgs_n42.txt"),  colnam
 #writeTable(table.cll[,c(5,1,2)], file.path(wd.ngs, "thca-us_wgs_n48.list"), colnames=F, rownames=F, sep="\t")
 #writeTable(table.cll,            file.path(wd.ngs, "thca-us_wgs_n48.txt"),  colnames=T, rownames=F, sep="\t")
 
-
-
-
+###
+##
 projects <- unique(table$project_code)
 removes <- c("CLLE-ES", "BRCA-EU", "BRCA-US", "BRCA-UK", "ESAD-UK", "LUAD-US", "LUSC-US", "HNSC-US", "ORCA-IN", "OV-AU", "OV-US")
 diffs <- setdiff(projects, removes)
@@ -140,6 +282,19 @@ sort(table(table.diffs$histology_abbreviation), decreasing=T)
 table.cll <- table.cll[sort(table.cll$specimen_id, decreasing=F),]
 writeTable(table.cll[,c(5,1,2)], file.path(wd.ngs, "icgc_wgs_n2096.list"), colnames=F, rownames=F, sep="\t")
 writeTable(table.cll,            file.path(wd.ngs, "icgc_wgs_n2096.txt"),  colnames=T, rownames=F, sep="\t")
+
+writeTable(table.cll[1:100,     c(5,1,2)], file.path(wd.ngs, "icgc_wgs_n1-100.list"), colnames=F, rownames=F, sep="\t")
+writeTable(table.cll[101:1000,  c(5,1,2)], file.path(wd.ngs, "icgc_wgs_n101-1000.list"), colnames=F, rownames=F, sep="\t")
+writeTable(table.cll[1001:2096, c(5,1,2)], file.path(wd.ngs, "icgc_wgs_n1001-2096.list"), colnames=F, rownames=F, sep="\t")
+
+##
+table.removes <- subset(table, project_code %in% removes)
+sort(table(table.removes$histology_abbreviation), decreasing=T)
+table.cll <- table.removes
+
+table.cll <- table.cll[sort(table.cll$specimen_id, decreasing=F),]
+writeTable(table.cll[,c(5,1,2)], file.path(wd.ngs, "icgc_wgs_n648.list"), colnames=F, rownames=F, sep="\t")
+writeTable(table.cll,            file.path(wd.ngs, "icgc_wgs_n648.txt"),  colnames=T, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Beeswarm plots

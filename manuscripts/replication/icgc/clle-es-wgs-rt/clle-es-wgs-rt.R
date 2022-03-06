@@ -56,6 +56,29 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-v
 # [1] 0.6677247
 
 # -----------------------------------------------------------------------------
+# To compare between 1-kb and ICGC partionings
+# Last Modified: 04/03/23
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/CLLE-ES/analysis/replication/clle-es-wgs-rt/data/samples-vs-rt_clle-es-vs-lcl_spline_spearman.RData")
+cors.samples.clle <- cors.samples
+cors.samples.clle <- as.data.frame(t(cors.samples.clle)[-c(1:4),])
+m.clle <- mapply(x = 1:nrow(cors.samples.clle), function(x) median(as.numeric(cors.samples.clle[x,])))
+cors.samples.clle$MEDIAN <- m.clle
+ 
+load("/Users/tpyang/Work/uni-koeln/tyang2/CLL/analysis/replication/cll-wgs-rt/data/samples-vs-rt_cll-vs-lcl_spline_spearman.RData")
+cors.samples.cll <- cors.samples
+cors.samples.cll <- as.data.frame(t(cors.samples.cll)[-c(1:4),])
+m.cll <- mapply(x = 1:nrow(cors.samples.cll), function(x) median(as.numeric(cors.samples.cll[x,])))
+cors.samples.cll$MEDIAN <- m.cll
+
+overlaps <- intersect(rownames(cors.samples.clle), rownames(cors.samples.cll))
+cors.samples.clle.o <- cors.samples.clle[overlaps,]
+cors.samples.cll.o  <- cors.samples.cll[overlaps,]
+
+file.name <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/CLLE-ES/analysis/replication/clle-es-wgs-rt/plots/correlation_clle-vs-cll_spearman"
+plotCorrelation(file.name, "CLLE-ES", "ICGC partioning", "1-kb partioning", cors.samples.clle.o$MEDIAN, cors.samples.cll.o$MEDIAN, "bottomright")
+
+# -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
 # Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------

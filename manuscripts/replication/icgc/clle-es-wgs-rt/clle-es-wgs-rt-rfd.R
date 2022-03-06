@@ -110,7 +110,7 @@ boundary.break <-  45   ## 45 breaks each centering 500
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
-genes <- c("CCR8", "PXN", "TAP1", "MAX")
+genes <- c("IFI6")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -130,10 +130,24 @@ for (g in 1:length(genes)) {
    plotBootstrapRFD(file.name, BASE, chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, F, genes[g])
 }
 
+## Chrs
+for (c in 1:22) {
+   chr <- chrs[c]
+   bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+   file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".m.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+  plotBootstrapRFD(file.name, BASE, chr, 0, max(bed.gc.chr$END), nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+}
+
 ## Chr2
 c <- 2
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".m.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+plotBootstrapRFD(file.name, BASE, chr, 0, 243188636, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+
+
 
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".m.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
 plotBootstrapRFD(file.name, BASE, chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)

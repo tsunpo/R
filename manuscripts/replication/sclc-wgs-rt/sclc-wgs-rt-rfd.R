@@ -187,12 +187,12 @@ plotReportNRFD5K(report, c("5 kb", "10 kb", "15 kb", "20 kb"), file.name, "SCLC 
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
-for (c in 1:22) {
+for (c in 1:2) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
  
    file.name <- file.path(wd.rt.plots, paste0("RFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
-   plotBootstrapRFD(file.name, BASE, chr, NA, NA, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
+   plotBootstrapRFD(file.name, BASE, chr, 0, max(bed.gc.chr$END), nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 }
 
 ## Chr2

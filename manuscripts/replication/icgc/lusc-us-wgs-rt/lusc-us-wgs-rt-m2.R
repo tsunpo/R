@@ -25,7 +25,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE  <- "CLLE-ES"
+BASE  <- "LUSC-US"
 PAIR1 <- "T"
 PAIR0 <- "T"
 base <- tolower(BASE)
@@ -38,11 +38,11 @@ wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples1 <- readTable(file.path(wd.ngs, "cll_wgs_m2_n91.txt"), header=T, rownames=T, sep="")   ## M2/M1
-#samples1 <- readTable(file.path(wd.ngs, "cll_wgs_q3_n48.txt"), header=T, rownames=T, sep="")    ## Q3/Q1
+samples1 <- readTable(file.path(wd.ngs, "lusc-us_wgs_m2_n48.txt"), header=T, rownames=T, sep="")   ## M2/M1
+#samples1 <- readTable(file.path(wd.ngs, "lusc-us_wgs_q4_n24.txt"), header=T, rownames=T, sep="")    ## Q3/Q1
 samples1 <- subset(samples1, M2 == 2)[,1]
-samples0 <- readTable(file.path(wd.ngs, "cll_wgs_m2_n91.txt"), header=T, rownames=T, sep="")
-#samples0 <- readTable(file.path(wd.ngs, "cll_wgs_q3_n48.txt"), header=T, rownames=T, sep="")
+samples0 <- readTable(file.path(wd.ngs, "lusc-us_wgs_m2_n48.txt"), header=T, rownames=T, sep="")
+#samples0 <- readTable(file.path(wd.ngs, "lusc-us_wgs_q4_n24.txt"), header=T, rownames=T, sep="")
 samples0 <- subset(samples0, M2 == 1)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
@@ -55,8 +55,17 @@ nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, be
 save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "m2-m1", ".RData")))
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "m2-m1", ".RData")))
 # > nrow(nrds)
-# [1] 3778456
-nrds.cll.m2 <- nrds
+# [1] 3778443
+nrds.lusc.us.m2 <- nrds
+
+
+
+
+
+
+
+
+
 
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
 nrds.lcl <- nrds
@@ -64,7 +73,7 @@ load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m
 
 ymax <- 0.6
 ymin <- 0.15
-for (c in 1:2) {
+for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    

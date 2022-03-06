@@ -75,7 +75,7 @@ getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc, kb) {
    nrds.RT <- cbind(nrds.RT[overlaps,], nrds.RT.BSTRPS[overlaps,])
 
    nrds.RT.NRFD <- NULL
-   for (c in 2:22) {
+   for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
       
@@ -105,10 +105,9 @@ getRTNRFD <- function(nrds, nrds.RT.BSTRPS, bed.gc, kb) {
    }
    
    ## Test lm
-   save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1_fit", ".RData")))
-   writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1_fit", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-   nrds.RT.NRFD.sclc <- nrds.RT.NRFD
-   
+   #save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1_fit", ".RData")))
+   #writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1_fit", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
+   #nrds.RT.NRFD.sclc <- nrds.RT.NRFD
    return(nrds.RT.NRFD)
 }
 
@@ -806,13 +805,13 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    dev.off()
 }
 
-boundary.upper <- 950   ## 500-520 breaks
-boundary.lower <-  50   ## 480-500 breaks
-boundary.break <-  45   ## 1 breaks each centering 500
-file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
-main.text <- c(paste0(BASE, " bootstrap distribution"), "")
-xlab.text <- "Number of rightward forks per kb window"
-plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
+#boundary.upper <- 950   ## 500-520 breaks
+#boundary.lower <-  50   ## 480-500 breaks
+#boundary.break <-  45   ## 1 breaks each centering 500
+#file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
+#main.text <- c(paste0(BASE, " bootstrap distribution"), "")
+#xlab.text <- "Number of rightward forks per kb window"
+#plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
 
 # -----------------------------------------------------------------------------
 # Visualisation of bootstrap re-sampling data (Histogram, RFD, and RT)

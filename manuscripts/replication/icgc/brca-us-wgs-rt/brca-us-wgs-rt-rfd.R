@@ -86,6 +86,9 @@ rfd <- 0.9
 report.brca.us.vs.brca.uk <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.us, nrds.RT.NRFD.brca.uk, "BRCA-US", "BRCA-UK")
 writeTable(report.brca.us.vs.brca.uk, file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_BRCA-UK_20K.txt")), colnames=T, rownames=F, sep="\t")
 
+report.brca.us.vs.brca.eu <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.us, nrds.RT.NRFD.brca.eu, "BRCA-US", "BRCA-EU")
+writeTable(report.brca.us.vs.brca.eu, file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_BRCA-EU_20K.txt")), colnames=T, rownames=F, sep="\t")
+
 # -----------------------------------------------------------------------------
 # Report (between NL and Ts)
 # Last Modified: 01/03/22; 23/03/20
@@ -94,11 +97,13 @@ report.sclc.nl.vs.sclc <- readTable(file.path(wd.rt.data, paste0("NRFD_BRCA-US_v
 report.sclc.nl.vs.nbl  <- readTable(file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_ESAD-UK_20K.txt")), header=T, rownames=F, sep="")
 report.sclc.nl.vs.cll  <- readTable(file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_CLLE-ES_20K.txt")), header=T, rownames=F, sep="")
 report.sclc.nl.vs.luad <- readTable(file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_LUAD-US_20K.txt")), header=T, rownames=F, sep="")
+report.sclc.nl.vs.brca <- readTable(file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_BRCA-EU_20K.txt")), header=T, rownames=F, sep="")
 
 summary.sclc.nl.vs.sclc <- getBootstrapSummary(report.sclc.nl.vs.sclc)
 summary.sclc.nl.vs.nbl  <- getBootstrapSummary(report.sclc.nl.vs.nbl)
 summary.sclc.nl.vs.cll  <- getBootstrapSummary(report.sclc.nl.vs.cll)
 summary.sclc.nl.vs.luad <- getBootstrapSummary(report.sclc.nl.vs.luad)
+summary.sclc.nl.vs.brca <- getBootstrapSummary(report.sclc.nl.vs.brca)
 
 ##
 file.name <- file.path(wd.rt.plots, "barchart_BRCA-US_vs_BRCA-UK")
@@ -121,6 +126,10 @@ main.text <- c("BRCA-US vs. LUAD-US replication domains", "")
 plotBootstrapSummary(summary.sclc.nl.vs.luad, file.name, main.text)
 plotBootstrapSummaryTotal(summary.sclc.nl.vs.luad, file.name, "BRCA-US vs. LUAD-US")
 
+file.name <- file.path(wd.rt.plots, "barchart_BRCA-US_vs_BRCA-EU")
+main.text <- c("BRCA-US vs. BRCA-EU replication domains", "")
+plotBootstrapSummary(summary.sclc.nl.vs.brca, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.nl.vs.brca, file.name, "BRCA-US vs. BRCA-EU")
 
 
 
@@ -146,7 +155,7 @@ boundary.break <-  45   ## 45 breaks each centering 500
 kb <- 20
 load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 
-genes <- c("CCR8", "PXN", "TAP1", "MAX")
+genes <- c("IFI6")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -165,6 +174,14 @@ for (g in 1:length(genes)) {
    file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
    plotBootstrapRFD(file.name, BASE, chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, F, genes[g])
 }
+
+## Chr1
+c <- 1
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".m.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
+plotBootstrapRFD(file.name, BASE, chr, 0, 249239581, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=10, kb)
 
 ## Chr2
 c <- 2
