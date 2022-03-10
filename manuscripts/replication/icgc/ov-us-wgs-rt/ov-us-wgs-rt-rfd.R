@@ -77,23 +77,48 @@ save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.ov.us <- nrds.RT.NRFD
 nrow(nrds.RT.NRFD.ov.us)
-# [1] 
+# [1] 3771242
 
 # -----------------------------------------------------------------------------
-# Report (between T and TN)
-# Last Modified: 01/03/22; 28/11/20; 24/11/19
+# Report
+# Last Modified: 06/03/22; 23/03/20
 # -----------------------------------------------------------------------------
-boundary.upper <- 950   ## RFD > +0.9
-boundary.lower <-  50   ## RFD < -0.9
-rfd <- 0.9
+base1  <- "OV-US"
+bases <- c("OV-AU", "BRCA-US", "BRCA-EU", "BRCA-UK", "LUAD-US", "CLLE-ES")
+for (t in 1:length(bases)) {
+   base2 <- bases[t]
+   title <- paste0(base1, " vs. ", base2)
+   file <- paste0(base1, "_vs_", base2)
+ 
+   ##
+   BASE <- base1
+   base <- tolower(BASE)
+   wd.anlys <- file.path(wd, "ICGC", BASE, "analysis")
+   wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+   wd.rt.data  <- file.path(wd.rt, "data/resampling")
+   load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+   test1 <- nrds.RT.NRFD
 
-report.brca.us.vs.luad.us <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.us, nrds.RT.NRFD.luad.us, "BRCA-US", "LUAD-US")
-writeTable(report.brca.us.vs.luad.us, file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_LUAD-US_20K.txt")), colnames=T, rownames=F, sep="\t")
-
-report.brca.uk.vs.luad.us <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.uk, nrds.RT.NRFD.luad.us, "BRCA-UK", "LUAD-US")
-writeTable(report.brca.uk.vs.luad.us, file.path(wd.rt.data, paste0("NRFD_BRCA-UK_vs_LUAD-US_20K.txt")), colnames=T, rownames=F, sep="\t")
-
-
+   BASE <- base2
+   base <- tolower(BASE)
+   wd.anlys <- file.path(wd, "ICGC", BASE, "analysis")
+   wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+   wd.rt.data  <- file.path(wd.rt, "data/resampling")
+   load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+   test2 <- nrds.RT.NRFD
+   
+   report.test1.vs.test2  <- getBootstrapReport(rfd, test1, test2, base1, base2)
+   writeTable(report.test1.vs.test2 , file.path(wd.rt.data, paste0("NRFD_", file, "_20K.txt")), colnames=T, rownames=F, sep="\t")
+   
+   ##
+   #report.test1.vs.test2 <- readTable(file.path(wd.rt.data, paste0("NRFD_", file, "_20K.txt")), header=T, rownames=F, sep="")
+   summary.test1.vs.test2 <- getBootstrapSummary(report.test1.vs.test2)
+ 
+   file.name <- file.path(wd.rt.plots, paste0("barchart_", file))
+   main.text <- c(paste0(title, " replication domains"), "")
+   plotBootstrapSummary(summary.test1.vs.test2, file.name, main.text)
+   plotBootstrapSummaryTotal(summary.test1.vs.test2, file.name, title)
+}
 
 
 

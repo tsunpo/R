@@ -56,6 +56,30 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-v
 # [1] 0.7085663
 
 # -----------------------------------------------------------------------------
+# To compare between 1-kb and ICGC partionings
+# Last Modified: 04/03/23
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ESAD-UK/analysis/replication/esad-uk-wgs-rt/data/samples-vs-rt_esad-uk-vs-lcl_spline_spearman.RData")
+cors.samples.clle <- cors.samples
+cors.samples.clle <- as.data.frame(t(cors.samples.clle)[-c(1:4),])
+m.clle <- mapply(x = 1:nrow(cors.samples.clle), function(x) median(as.numeric(cors.samples.clle[x,])))
+cors.samples.clle$MEDIAN <- m.clle
+
+cors.samples.clle$MEDIAN2 <- NA
+for (s in 1:nrow(cors.samples.clle)) {
+   sample <- rownames(cors.samples.clle)[s]
+   load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+ 
+   cors.samples.clle$MEDIAN2[s] <- as.numeric(cor)
+}
+
+file.name <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ESAD-UK/analysis/replication/esad-uk-wgs-rt/plots/correlation_esad-uk-vs-esad-uk_spearman"
+plotCorrelation(file.name, "ESAD-US", "Run 1", "Run 2", cors.samples.clle$MEDIAN, cors.samples.clle$MEDIAN2, "bottomright")
+
+wd.rt.data <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/"
+samples.q4   <- setSamplesQ4(wd.rt.data, rownames(cors.samples.clle))
+
+# -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
 # Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------

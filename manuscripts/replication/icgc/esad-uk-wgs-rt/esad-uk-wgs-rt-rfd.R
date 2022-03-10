@@ -73,7 +73,7 @@ save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.esad.uk <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.esad.uk)
-# [1] 3503954
+# [1] 3738327
 
 snr$S[4] <- sd(nrds.RT.NRFD.cll$SPLINE)
 snr$N[4] <- sd(nrds.RT.NRFD.cll$RT - nrds.RT.NRFD.cll$SPLINE)

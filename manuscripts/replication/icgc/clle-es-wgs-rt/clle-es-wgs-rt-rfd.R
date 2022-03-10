@@ -73,7 +73,7 @@ save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.clle.es <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.clle.es)
-# [1] 3531844
+# [1] 3769889
 
 snr$S[4] <- sd(nrds.RT.NRFD.cll$SPLINE)
 snr$N[4] <- sd(nrds.RT.NRFD.cll$RT - nrds.RT.NRFD.cll$SPLINE)
@@ -96,6 +96,25 @@ writeTable(report.brca.uk.vs.clle.es, file.path(wd.rt.data, paste0("NRFD_BRCA-UK
 report.brca.us.vs.clle.es <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.us, nrds.RT.NRFD.clle.es, "BRCA-US", "CLLE-ES")
 writeTable(report.brca.us.vs.clle.es, file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_CLLE-ES_20K.txt")), colnames=T, rownames=F, sep="\t")
 
+# -----------------------------------------------------------------------------
+# To compare between 1-kb and ICGC partioning
+# Last Modified: 07/03/22
+# -----------------------------------------------------------------------------
+BASE <- "CLL"
+base <- tolower(BASE)
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data/bstrps")
+load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+nrds.RT.NRFD.cll <- nrds.RT.NRFD
+
+BASE <- "CLLE-ES"
+base <- tolower(BASE)
+wd.anlys <- file.path(wd, "ICGC", BASE, "analysis")
+wd.rt    <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data/resampling")
+load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+nrds.RT.NRFD.clle.es <- nrds.RT.NRFD
 
 # -----------------------------------------------------------------------------
 # Plot bootstrap RFD data

@@ -41,14 +41,14 @@ wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 # Bootstrap distribution
 # Last Modified: 02/11/18
 # -----------------------------------------------------------------------------
-boundary.upper <- 950   ## RFD > +0.9
-boundary.lower <-  50   ## RFD < -0.9
-rfd <- 0.9
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 45 breaks each centering 500
 
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.RT.SLOPE.RData")))
-nrow(nrds.RT.BSTRPS)
-# [1] 3767405
+# > nrow(nrds.RT.BSTRPS)
+# [1] 3772820
 
 ##
 nrds.RT.BSTRPS$RFD <- NA
@@ -65,8 +65,8 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "m2-m1", ".RData")))
-nrow(nrds)
-# [1] 
+# > nrow(nrds)
+# [1] 3779277
 
 #install.packages("zoo", method="wget")
 library("zoo")
@@ -76,23 +76,54 @@ nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
 save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.ov.au <- nrds.RT.NRFD
-nrow(nrds.RT.NRFD.luad.us)
-# [1] 
+nrow(nrds.RT.NRFD.ov.au)
+# [1] 3772820
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)
 # Last Modified: 01/03/22; 28/11/20; 24/11/19
 # -----------------------------------------------------------------------------
-boundary.upper <- 950   ## RFD > +0.9
-boundary.lower <-  50   ## RFD < -0.9
-rfd <- 0.9
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 45 breaks each centering 500
 
-report.brca.us.vs.luad.us <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.us, nrds.RT.NRFD.luad.us, "BRCA-US", "LUAD-US")
-writeTable(report.brca.us.vs.luad.us, file.path(wd.rt.data, paste0("NRFD_BRCA-US_vs_LUAD-US_20K.txt")), colnames=T, rownames=F, sep="\t")
+report.ov.au.vs.ov.us <- getBootstrapReport(rfd, nrds.RT.NRFD.ov.au, nrds.RT.NRFD.ov.us, "OV-AU", "OV-US")
+writeTable(report.ov.au.vs.ov.us, file.path(wd.rt.data, paste0("NRFD_OV-AU_vs_OV-US_20K.txt")), colnames=T, rownames=F, sep="\t")
 
-report.brca.uk.vs.luad.us <- getBootstrapReport(rfd, nrds.RT.NRFD.brca.uk, nrds.RT.NRFD.luad.us, "BRCA-UK", "LUAD-US")
-writeTable(report.brca.uk.vs.luad.us, file.path(wd.rt.data, paste0("NRFD_BRCA-UK_vs_LUAD-US_20K.txt")), colnames=T, rownames=F, sep="\t")
+report.ov.au.vs.brca.us <- getBootstrapReport(rfd, nrds.RT.NRFD.ov.au, nrds.RT.NRFD.brca.us, "OV-AU", "BRCA-US")
+writeTable(report.ov.au.vs.brca.us, file.path(wd.rt.data, paste0("NRFD_OV-AU_vs_BRCA-US_20K.txt")), colnames=T, rownames=F, sep="\t")
 
+report.ov.au.vs.brca.uk <- getBootstrapReport(rfd, nrds.RT.NRFD.ov.au, nrds.RT.NRFD.brca.uk, "OV-AU", "BRCA-UK")
+writeTable(report.ov.au.vs.brca.uk, file.path(wd.rt.data, paste0("NRFD_OV-AU_vs_BRCA-UK_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+report.ov.au.vs.brca.eu <- getBootstrapReport(rfd, nrds.RT.NRFD.ov.au, nrds.RT.NRFD.brca.eu, "OV-AU", "BRCA-EU")
+writeTable(report.ov.au.vs.brca.eu, file.path(wd.rt.data, paste0("NRFD_OV-AU_vs_BRCA-EU_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+report.ov.au.vs.luad.us <- getBootstrapReport(rfd, nrds.RT.NRFD.ov.au, nrds.RT.NRFD.luad.us, "OV-AU", "LUAD-US")
+writeTable(report.ov.au.vs.luad.us, file.path(wd.rt.data, paste0("NRFD_OV-AU_vs_LUAD-US_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+report.ov.au.vs.clle.es <- getBootstrapReport(rfd, nrds.RT.NRFD.ov.au, nrds.RT.NRFD.clle.es, "OV-AU", "CLLE-ES")
+writeTable(report.ov.au.vs.clle.es, file.path(wd.rt.data, paste0("NRFD_OV-AU_vs_CLLE-ES_20K.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Report (between NL and Ts)
+# Last Modified: 01/03/22; 23/03/20
+# -----------------------------------------------------------------------------
+test1  <- "OV-AU"
+test2s <- c("OV-US", "BRCA-US", "BRCA-EU", "BRCA-UK", "LUAD-US", "CLLE-ES")
+for (t in 1:length(test2s)) {
+   test2 <- test2s[t]
+   title <- paste0(test1, " vs. ", test2)
+   file <- paste0(test1, "_vs_", test2)
+   
+   report.test1.vs.test2 <- readTable(file.path(wd.rt.data, paste0("NRFD_", file, "_20K.txt")), header=T, rownames=F, sep="")
+   summary.test1.vs.test2 <- getBootstrapSummary(report.test1.vs.test2)
+   
+   file.name <- file.path(wd.rt.plots, paste0("barchart_", file))
+   main.text <- c(paste0(title, " replication domains"), "")
+   plotBootstrapSummary(summary.test1.vs.test2, file.name, main.text)
+   plotBootstrapSummaryTotal(summary.test1.vs.test2, file.name, title)
+}
 
 
 

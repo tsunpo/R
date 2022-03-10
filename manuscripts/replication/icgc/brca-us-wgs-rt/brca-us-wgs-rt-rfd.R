@@ -73,7 +73,7 @@ save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.brca.us <- nrds.RT.NRFD
 # > nrow(nrds.RT.NRFD.brca.us)
-# [1] 3536826
+# [1] 3775629
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)

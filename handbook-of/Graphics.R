@@ -9,7 +9,7 @@
 # 
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos) {
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos, line=2.75) {
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(y ~ x, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
  
@@ -19,7 +19,7 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
    cor <- cor.test(y, x, method="spearman", exact=F)
    legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.9)
 
-   mtext(ylab.text, side=2, line=2.74, cex=1.85)
+   mtext(ylab.text, side=2, line=line, cex=1.85)
    dev.off()
 }
 

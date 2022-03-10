@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R", "DifferentialExpression.R")
+handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -25,7 +25,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 #wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "LUAD-US"
+BASE <- "LUSC-US"
 base <- tolower(BASE)
 method <- "rpkm"
 
@@ -41,10 +41,14 @@ wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 # Bootstrap distribution
 # Last Modified: 02/11/18
 # -----------------------------------------------------------------------------
+boundary.upper <- 950   ## 500-520 breaks
+boundary.lower <-  50   ## 480-500 breaks
+boundary.break <-  45   ## 45 breaks each centering 500
+
 nrds.RT.BSTRPS <- getBootstrap(base, "SLOPE")
 save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.RT.SLOPE.RData")))
-# > nrow(nrds.RT.BSTRPS)
-# [1] 3767405
+nrow(nrds.RT.BSTRPS)
+# [1] 3770297
 
 ##
 nrds.RT.BSTRPS$RFD <- NA
@@ -61,8 +65,8 @@ plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary
 # -----------------------------------------------------------------------------
 #load(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.RT.SLOPE.RData")))
 load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", paste0(base, "_", method, ".gc.cn.m.rt.log2s_", "m2-m1", ".RData")))
-# nrow(nrds)
-# [1] 3778128
+nrow(nrds)
+# [1] 3778443
 
 #install.packages("zoo", method="wget")
 library("zoo")
@@ -71,9 +75,9 @@ nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
 
 save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.m.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrds.RT.NRFD.luad.us <- nrds.RT.NRFD
-# > nrow(nrds.RT.NRFD.luad.us)
-# [1] 3528923
+nrds.RT.NRFD.lusc.us <- nrds.RT.NRFD
+nrow(nrds.RT.NRFD.lusc.us)
+# [1] 
 
 # -----------------------------------------------------------------------------
 # Report (between T and TN)

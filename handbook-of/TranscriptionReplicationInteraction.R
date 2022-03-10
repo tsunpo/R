@@ -171,7 +171,7 @@ plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
    ylim <- c(min(expr), max(expr))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=4.5)
-   boxplot(expr ~ trait, outline=T, names=names, main="", col=cols, xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   boxplot(expr ~ trait, outline=T, names=names, main="", col=cols, xaxt="n", xlab="", ylab="", ylim=ylim, cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
    offset <- (ylim[2] - ylim[1])/35
@@ -182,8 +182,8 @@ plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
    axis(side=1, at=2, labels=paste0("n=", length(tpm.2)), line=1.8, col=NA, cex.axis=1.9)
    #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
    mtext(main, font=2, cex=2, line=2)
-   mtext(paste0("p-value = ", scientific(p)), cex=2, line=0.3)
-   mtext("log2(TPM + 1)", side=2, line=2.74, cex=1.85)
+   mtext(paste0("p-value = ", scientific(p)), cex=1.9, line=0.3)
+   mtext("Age at diagnosis", side=2, line=2.7, cex=1.9)
    dev.off()
 }
 

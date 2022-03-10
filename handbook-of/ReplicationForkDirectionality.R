@@ -980,7 +980,7 @@ plotBootstrapSummary <- function(summary, file.name, main.text) {
    pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
    par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
    #bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-   bp <- barplot(summary, col=cols, xlim=c(0, 75), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   bp <- barplot(summary, col=cols, xlim=c(0, 85), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
  
    h <- summary
    h[1,] <- as.numeric(round0(summary[1,], digits=1))

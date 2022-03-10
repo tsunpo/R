@@ -64,11 +64,15 @@ toTable <- function(value, ncol, nrow, colnames) {
 
 # -----------------------------------------------------------------------------
 # Method: Modification of subset(ensGene, external_gene_name %in% "MYCL")
-# Usages: subset0(ensGene, "external_gene_name", "MYCL")
-#         subset0(ensGene, "external_gene_name", c("MYC", "MYCL", "MYCN"))
-# Last Modified: 29/11/18
+# Usages: subset00(ensGene, "external_gene_name", "MYCL")
+#         subset00(ensGene, "external_gene_name", c("MYC", "MYCL", "MYCN"))
+# Last Modified: 209/03/22; 9/11/18
 # -----------------------------------------------------------------------------
 subset0 <- function(table, colname, values) {
+   return(table[which(table[, colname] == values),])   ## NEW VERSION: 09/03/22
+}
+
+subset00 <- function(table, colname, values) {
    return(table[which(table[, colname] %in% values),])   ## NEW VERSION: 29/11/18
 }
 

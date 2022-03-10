@@ -84,10 +84,42 @@ survSCLC <- function(phenos, samples, isCensored) {
    phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
    phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
    
+   phenos.surv$SG1 <- "G1"
+   phenos.surv[which(phenos.surv$COR > -0.6503083),]$SG1 <- "S"
+   
    if (isCensored) {
       return(phenos.surv)
    } else
       return(phenos)
+}
+
+## https://www.rdocumentation.org/packages/survival/versions/2.11-4/topics/Surv
+## https://media.nature.com/original/nature-assets/nature/journal/v524/n7563/extref/nature14664-s1.xlsx
+survICGC <- function(samples.hist, colname) {
+   samples.hist <- removeNA(samples.hist, "donor_survival_time")
+   samples.hist <- removeNA(samples.hist, "donor_age_at_diagnosis")
+   samples.hist <- subset(samples.hist, donor_survival_time != 0)
+   samples.hist <- subset(samples.hist, donor_age_at_diagnosis != 0)
+   
+   samples.hist$SG1 <- "G1"
+   samples.hist[which(samples.hist$COR > -0.6503083),]$SG1 <- "S"
+   samples.hist$SG1 <- as.factor(samples.hist$SG1)
+   
+   rownames(samples.hist) <- samples.hist$icgc_specimen_id
+   samples.hist$donor_sex <- as.factor(samples.hist$donor_sex)
+   samples.hist$M2 <- as.factor(samples.hist$M2)
+   samples.hist$Q4 <- as.factor(samples.hist$Q4)
+   
+   phenos.surv <- samples.hist[!is.na(samples.hist$donor_survival_time),]
+   phenos.surv <- phenos.surv[!is.na(phenos.surv$donor_vital_status),]
+   phenos.surv$OS_month <- phenos.surv$donor_survival_time
+ 
+   phenos.surv$OS_censor <- phenos.surv$donor_vital_status
+   phenos.surv$OS_censor <- gsub("deceased",  1, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
+   phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
+   phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
+   
+   return(phenos.surv)
 }
 
 # -----------------------------------------------------------------------------

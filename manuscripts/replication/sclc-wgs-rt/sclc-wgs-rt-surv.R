@@ -24,7 +24,7 @@ load(file.path(wd.src.ref, "hg19.1kb.gc.RData"))
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
-base <- tolower(BASE1)
+base <- tolower(BASE)
 
 wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
