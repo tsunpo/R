@@ -39,22 +39,22 @@
 #' @importFrom stats anova var
 
 ggforest <- function(model, data = NULL,
-  main = "Hazard ratio", cpositions=c(0.02, 0.22, 0.4),
-  fontsize = 0.7, refLabel = "reference", noDigits=2) {
+                     main = "Hazard ratio", cpositions=c(0.02, 0.22, 0.4),
+                     fontsize = 0.7, refLabel = "reference", noDigits=2) {
   conf.high <- conf.low <- estimate <- NULL
   stopifnot(inherits(model, "coxph"))
-
+  
   # get data and variables/terms from cox model
   data  <- .get_data(model, data = data)
   terms <- attr(model$terms, "dataClasses")[-1]
-# removed as requested in #388
-#  terms <- terms[intersect(names(terms),
-#    gsub(rownames(anova(model))[-1], pattern = "`", replacement = ""))]
-
+  # removed as requested in #388
+  #  terms <- terms[intersect(names(terms),
+  #    gsub(rownames(anova(model))[-1], pattern = "`", replacement = ""))]
+  
   # use broom to get some required statistics
   coef <- as.data.frame(tidy(model, conf.int = TRUE))
   gmodel <- glance(model)
-
+  
   # extract statistics for every variable
   allTerms <- lapply(seq_along(terms), function(i){
     var <- names(terms)[i]
@@ -75,7 +75,7 @@ ggforest <- function(model, data = NULL,
   allTermsDF <- do.call(rbind, allTerms)
   colnames(allTermsDF) <- c("var", "level", "N", "pos")
   inds <- apply(allTermsDF[,1:2], 1, paste0, collapse="")
-
+  
   # use broom again to get remaining required statistics
   rownames(coef) <- gsub(coef$term, pattern = "`", replacement = "")
   toShow <- cbind(allTermsDF, coef[inds,])[,c("var", "level", "N", "p.value", "estimate", "conf.low", "conf.high", "pos")]
@@ -83,12 +83,12 @@ ggforest <- function(model, data = NULL,
   toShowExp[is.na(toShowExp)] <- 0
   toShowExp <- format(exp(toShowExp), digits=noDigits)
   toShowExpClean <- data.frame(toShow,
-    pvalue = signif(toShow[,4],noDigits+1),
-    toShowExp)
+                               pvalue = signif(toShow[,4],noDigits+1),
+                               toShowExp)
   toShowExpClean$stars <- paste0(round(toShowExpClean$p.value, noDigits+1), " ",
-    ifelse(toShowExpClean$p.value < 0.05, "*",""),
-    ifelse(toShowExpClean$p.value < 0.01, "*",""),
-    ifelse(toShowExpClean$p.value < 0.001, "*",""))
+                                 ifelse(toShowExpClean$p.value < 0.05, "*",""),
+                                 ifelse(toShowExpClean$p.value < 0.01, "*",""),
+                                 ifelse(toShowExpClean$p.value < 0.001, "*",""))
   toShowExpClean$ci <- paste0("(",toShowExpClean[,"conf.low.1"]," - ",toShowExpClean[,"conf.high.1"],")")
   toShowExpClean$estimate.1[is.na(toShowExpClean$estimate)] = refLabel
   toShowExpClean$stars[which(toShowExpClean$p.value < 0.001)] = "<0.001 ***"
@@ -99,10 +99,10 @@ ggforest <- function(model, data = NULL,
   toShowExpClean$var[duplicated(toShowExpClean$var)] = ""
   # make label strings:
   toShowExpClean$N <- paste0("(N=",toShowExpClean$N,")")
-
+  
   #flip order
   toShowExpClean <- toShowExpClean[nrow(toShowExpClean):1, ]
-
+  
   rangeb <- range(toShowExpClean$conf.low, toShowExpClean$conf.high, na.rm = TRUE)
   breaks <- axisTicks(rangeb/2, log = TRUE, nint = 7)
   rangeplot <- rangeb
@@ -110,7 +110,7 @@ ggforest <- function(model, data = NULL,
   rangeplot[1] <- rangeplot[1] - diff(rangeb)
   # increase white space on right for p-vals:
   rangeplot[2] <- rangeplot[2] + .15 * diff(rangeb)
-
+  
   width <- diff(rangeplot)
   # y-coordinates for labels:
   y_variable <- rangeplot[1] +  cpositions[1] * width
@@ -118,15 +118,16 @@ ggforest <- function(model, data = NULL,
   y_cistring <- rangeplot[1]  +  cpositions[3] * width
   y_stars <- rangeb[2]
   x_annotate <- seq_len(nrow(toShowExpClean))
-
+  
   # geom_text fontsize is in mm (https://github.com/tidyverse/ggplot2/issues/1828)
-  annot_size_mm <- fontsize *
-    as.numeric(convertX(unit(theme_get()$text$size, "pt"), "mm"))
-
+  annot_size_mm <- fontsize
+  #annot_size_mm <- fontsize *
+  #  as.numeric(convertX(unit(theme_get()$text$size, "pt"), "mm"))
+  
   p <- ggplot(toShowExpClean, aes(seq_along(var), exp(estimate))) +
     geom_rect(aes(xmin = seq_along(var) - .5, xmax = seq_along(var) + .5,
-      ymin = exp(rangeplot[1]), ymax = exp(rangeplot[2]),
-      fill = ordered(seq_along(var) %% 2 + 1))) +
+                  ymin = exp(rangeplot[1]), ymax = exp(rangeplot[2]),
+                  fill = ordered(seq_along(var) %% 2 + 1))) +
     scale_fill_manual(values = c("#FFFFFF33", "#00000033"), guide = "none") +
     geom_point(pch = 15, size = 4) +
     geom_errorbar(aes(ymin = exp(conf.low), ymax = exp(conf.high)), width = 0.15) +
@@ -140,38 +141,38 @@ ggforest <- function(model, data = NULL,
       breaks = breaks) +
     theme_light() +
     theme(panel.grid.minor.y = element_blank(),
-      panel.grid.minor.x = element_blank(),
-      panel.grid.major.y = element_blank(),
-      legend.position = "none",
-      panel.border=element_blank(),
-      axis.title.y=element_blank(),
-      axis.text.y=element_blank(),
-      axis.ticks.y=element_blank(),
-      plot.title = element_text(hjust = 0.5)) +
+          panel.grid.minor.x = element_blank(),
+          panel.grid.major.y = element_blank(),
+          legend.position = "none",
+          panel.border=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          plot.title = element_text(hjust = 0.5)) +
     xlab("") +
     annotate(geom = "text", x = x_annotate, y = exp(y_variable),
-      label = toShowExpClean$var, fontface = "bold", hjust = 0,
-      size = annot_size_mm) +
+             label = toShowExpClean$var, fontface = "bold", hjust = 0,
+             size = annot_size_mm) +
     annotate(geom = "text", x = x_annotate, y = exp(y_nlevel), hjust = 0,
-      label = toShowExpClean$level, vjust = -0.1, size = annot_size_mm) +
+             label = toShowExpClean$level, vjust = -0.1, size = annot_size_mm) +
     annotate(geom = "text", x = x_annotate, y = exp(y_nlevel),
-      label = toShowExpClean$N, fontface = "italic", hjust = 0,
-      vjust = ifelse(toShowExpClean$level == "", .5, 1.1),
-      size = annot_size_mm) +
+             label = toShowExpClean$N, fontface = "italic", hjust = 0,
+             vjust = ifelse(toShowExpClean$level == "", .5, 1.1),
+             size = annot_size_mm) +
     annotate(geom = "text", x = x_annotate, y = exp(y_cistring),
-      label = toShowExpClean$estimate.1, size = annot_size_mm,
-      vjust = ifelse(toShowExpClean$estimate.1 == "reference", .5, -0.1)) +
+             label = toShowExpClean$estimate.1, size = annot_size_mm,
+             vjust = ifelse(toShowExpClean$estimate.1 == "reference", .5, -0.1)) +
     annotate(geom = "text", x = x_annotate, y = exp(y_cistring),
-      label = toShowExpClean$ci, size = annot_size_mm,
-      vjust = 1.1,  fontface = "italic") +
+             label = toShowExpClean$ci, size = annot_size_mm,
+             vjust = 1.1,  fontface = "italic") +
     annotate(geom = "text", x = x_annotate, y = exp(y_stars),
-      label = toShowExpClean$stars, size = annot_size_mm,
-      hjust = -0.2,  fontface = "italic") +
+             label = toShowExpClean$stars, size = annot_size_mm,
+             hjust = -0.2,  fontface = "italic") +
     annotate(geom = "text", x = 0.5, y = exp(y_variable),
-      label = paste0("# Events: ", gmodel$nevent, "; Global p-value (Log-Rank): ",
-        format.pval(gmodel$p.value.log, eps = ".001"), " \nAIC: ", round(gmodel$AIC,2),
-        "; Concordance Index: ", round(gmodel$concordance,2)),
-      size = annot_size_mm, hjust = 0, vjust = 1.2,  fontface = "italic")
+             label = paste0("# Events: ", gmodel$nevent, "; Global p-value (Log-Rank): ",
+                            format.pval(gmodel$p.value.log, eps = ".001"), " \nAIC: ", round(gmodel$AIC,2),
+                            "; Concordance Index: ", round(gmodel$concordance,2)),
+             size = annot_size_mm, hjust = 0, vjust = 1.2,  fontface = "italic")
   # switch off clipping for p-vals, bottom annotation:
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"

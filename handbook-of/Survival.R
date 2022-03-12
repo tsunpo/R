@@ -14,6 +14,7 @@
 # -----------------------------------------------------------------------------
 library(survival)
 library(survminer)
+library(broom)
 
 ## https://www.rdocumentation.org/packages/survminer/versions/0.4.3/topics/surv_pvalue
 get_surv_pvalue <- function(fit) {
@@ -118,6 +119,11 @@ survICGC <- function(samples.hist, colname) {
    phenos.surv$OS_censor <- gsub("deceased",  1, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
    phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
    phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
+ 
+   phenos.surv$In_silico <- phenos.surv$COR
+   phenos.surv$G1_vs_S <- phenos.surv$SG1
+   phenos.surv$Sex     <- phenos.surv$donor_sex
+   phenos.surv$Age     <- phenos.surv$donor_age_at_diagnosis
    
    return(phenos.surv)
 }

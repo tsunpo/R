@@ -68,6 +68,10 @@ toTable <- function(value, ncol, nrow, colnames) {
 #         subset00(ensGene, "external_gene_name", c("MYC", "MYCL", "MYCN"))
 # Last Modified: 209/03/22; 9/11/18
 # -----------------------------------------------------------------------------
+grep0 <- function(patterns, vectors) {
+   grep(paste(patterns, collapse="|"), vectors)
+}
+
 subset0 <- function(table, colname, values) {
    return(table[which(table[, colname] == values),])   ## NEW VERSION: 09/03/22
 }
