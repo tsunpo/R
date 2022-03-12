@@ -31,23 +31,31 @@ base <- tolower(BASE)
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
 #wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias")
 
-wd.anlys <- file.path(wd, BASE, "analysis")
-wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
+wd.anlys <- file.path(wd, BASE, BASE, "analysis")
+wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
 t2g <- tx2Ens(ensGene.transcript)
 
+# =============================================================================
+# ICGC TPM calculated using Kallisto (version 0.42.1) and Gencode v19 protein coding transcripts
+# Link(s)      : https://dcc.icgc.org/releases/PCAWG/transcriptome/transcript_expression
+# Last Modified: 12/03/22
+# =============================================================================
 tpm <- readTable(file.path(wd.rna, "pcawg.rnaseq.transcript.expr.tpm.tsv.gz"), header=T, rownames=T, sep="")[,-1]
 ids <- colnames(tpm)
 ids <- gsub("\\.", "-", ids)
 ids <- gsub("X", "", ids)
+dim(tpm)
+# [1] 95309  1359
 
 aliquots <- readTable(file.path(wd.rna, "rnaseq.extended.metadata.aliquot_id.V4.txt"), header=T, rownames=T, sep="\t")
 overlaps <- intersect(ids, rownames(aliquots))
 aliquots <- aliquots[overlaps,]
 colnames(tpm) <- aliquots$icgc_specimen_id
 
+## Gene-level TPMs (All)
 genes <- unique(t2g$ens_gene)
 tpm.gene <- toTable(NA, ncol(tpm), 0, colnames(tpm))
 for (g in 1:length(genes)) {
@@ -62,78 +70,18 @@ for (g in 1:length(genes)) {
       tpm.gene <- rbind(tpm.gene, tpm.g)
    }
 }
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")))
+#writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
+dim(tpm.gene)
+# [1] 20720  1359
 
-tpm.1 <- tpm[]
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# Associating transcripts to gene-level TPM estimates using sleuth (v0.29.0)
-# Based on https://pachterlab.github.io/sleuth_walkthroughs/boj/analysis.html
-#
-# By using sleuth's default filter settings: minimum 5 reads in at least 47% of the samples
-# https://pachterlab.github.io/sleuth/docs/basic_filter.html
-# https://groups.google.com/forum/#!topic/kallisto-sleuth-users/QrKxxEEFnE0
-# -----------------------------------------------------------------------------
-library("sleuth")
-
-tsv <- file.path(wd.rna.raw, samples)
-s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
-t2g <- tx2Ens(ensGene.transcript)
-
-so <- sleuth_prep(s2c, target_mapping=t2g, aggregation_column="ens_gene", extra_bootstrap_summary=F, min_reads=5, min_prop=0.47)   ## Default filter settings
-# reading in kallisto results
-# dropping unused factor levels
-# ......................................................
-# normalizing est_counts
-# 82631 targets passed the filter
-# normalizing tpm
-# merging in metadata
-# aggregating by column: ens_gene
-# 20410 genes passed the filter
-# summarizing bootstraps
-
-## Transcript-level estimates with patches/scaffold sequences (*_PATCH)   ## See line 30 in guide-to-the/hg19.R
-## https://www.ncbi.nlm.nih.gov/grc/help/patches
-tpm.norm      <- kallisto_table(so, use_filtered=F, normalized=T, include_covariates=F)
-tpm.norm.filt <- kallisto_table(so, use_filtered=T, normalized=T, include_covariates=F)
-save(tpm.norm,      file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.RData")))
-save(tpm.norm.filt, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.norm.filt_r5p47.RData")))
-
-## Gene-level TPMs (All)
-tpm.gene <- getGeneTPM(list2Matrix(tpm.norm$tpm, tpm.norm), ensGene)             ## Gene-level TPMs (without filtering)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
-#writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
-nrow(tpm.gene)
-# [1] 34908
-
-## Gene-level TPMs (Detected)
-load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+## Gene-level TPMs (Expressed)
+#load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")))
 tpm.gene <- removeMedian0(tpm.gene)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.RData")))
+#writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrow(tpm.gene)
-# [1] 22899
-
-## Gene-level TPMs with default filters
-tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-nrow(tpm.gene)
-# [1] 18764
-
-## Gene-level TPMs (Detected + Expressed)
-load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-tpm.gene.median0 <- tpm.gene
-load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-tpm.gene.r5p47   <- tpm.gene
-overlaps <- intersect(rownames(tpm.gene.median0), rownames(tpm.gene.r5p47))
-
-tpm.gene <- tpm.gene[overlaps,]
-#save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0.r5p47.RData")))
-nrow(tpm.gene)
-# [1] 18764
+# [1] 18502
 
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
@@ -141,16 +89,47 @@ nrow(tpm.gene)
 # Last Modified: 06/09/20; 29/05/20
 # =============================================================================
 ## All genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene"))
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Total Ensembl")
 
 ## Expressed genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0"))
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Expressed")
 
-## Expressed genes
-file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
-load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Expressed")
+# =============================================================================
+# ICGC FPKM aligned with TopHat2 and STAR aligners
+# Link(s)      : https://dcc.icgc.org/releases/PCAWG/transcriptome/transcript_expression
+# Last Modified: 12/03/22
+# =============================================================================
+fpkm <- readTable(file.path(wd.rna, "tophat_star_fpkm.v2_aliquot_gl.tsv.gz"), header=T, rownames=T, sep="")[,-1]
+ids <- colnames(fpkm)
+ids <- gsub("\\.", "-", ids)
+ids <- gsub("X", "", ids)
+colnames(fpkm) <- ids
+dim(fpkm)
+# [1] 57820  1521
+
+aliquots <- readTable(file.path(wd.rna, "rnaseq.extended.metadata.aliquot_id.V4.txt"), header=T, rownames=T, sep="\t")
+overlaps <- intersect(ids, rownames(aliquots))
+fpkm.gene <- fpkm[, overlaps]
+aliquots <- aliquots[overlaps,]
+colnames(fpkm.gene) <- aliquots$icgc_specimen_id
+test <- mapply(x = 1:nrow(fpkm.gene), function(x) unlist(strsplit(rownames(fpkm.gene)[x], "\\."))[1])
+rownames(fpkm.gene) <- test
+dim(fpkm.gene)
+# [1] 57820  1359
+
+###
+##
+overlaps <- intersect(rownames(tpm.gene), rownames(fpkm.gene))
+tpm.gene.x <- tpm.gene[overlaps,]
+x.median <- mapply(x = 1:nrow(tpm.gene.x), function(x) median(as.numeric(tpm.gene.x[x,])))
+fpkm.gene.y <- fpkm.gene[overlaps,]
+y.median <- mapply(x = 1:nrow(fpkm.gene.y), function(x) median(as.numeric(fpkm.gene.y[x,])))
+
+file.name <- file.path(wd.de.data, paste0(base, "_FPKM-vs-TPM"))
+plotCorrelation(file.name, "ICGC gene expression", "TPM", "FPKM", x.median, y.median, "topright", line=2.4)
+file.name <- file.path(wd.de.data, paste0(base, "_FPKM-vs-TPM_log2+1"))
+plotCorrelation(file.name, "ICGC gene expression", "log2(TPM + 1)", "log2(FPKM + 1)", log2(x.median+1), log2(y.median+1), "topright", line=2.4)
