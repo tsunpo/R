@@ -15,6 +15,7 @@
 library(survival)
 library(survminer)
 library(broom)
+library(grid)
 
 ## https://www.rdocumentation.org/packages/survminer/versions/0.4.3/topics/surv_pvalue
 get_surv_pvalue <- function(fit) {
@@ -33,10 +34,10 @@ plotSurvfit <- function(fit, file.name, main.text, legends.text, cols) {
       legends <- c(legends, paste0(legends.text[l], " (n=", fit[[1]][l], ")"))
  
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(fit, ylim=c(0, 1), xlab="Months", ylab="Overall survival (%)", col=cols, main=main.text[1], mark.time=T)
-   legend("topright", legend=legends, lwd=1, col=cols)
-   mtext(main.text[2], cex=1.2, line=0.3)
-   text(0, 0, get_surv_pvalue(fit), adj= c(-0.05, 0.1), col="black")
+   plot(fit, ylim=c(0, 1), xlab="Months", ylab="Overall survival (%)", col=cols, main=main.text[1], mark.time=T, lwd=1.5, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+   legend("topright", legend=legends, lwd=2, col=cols, cex=1.25)
+   #mtext(main.text[2], cex=1.25, line=0.12)
+   text(0, 0, get_surv_pvalue(fit), adj= c(-0.05, 0.1), col="black", cex=1.25)
    dev.off()
 }
 
@@ -96,36 +97,42 @@ survSCLC <- function(phenos, samples, isCensored) {
 
 ## https://www.rdocumentation.org/packages/survival/versions/2.11-4/topics/Surv
 ## https://media.nature.com/original/nature-assets/nature/journal/v524/n7563/extref/nature14664-s1.xlsx
-survICGC <- function(samples.hist, colname) {
+survICGC <- function(samples.hist) {
    samples.hist <- removeNA(samples.hist, "donor_survival_time")
    samples.hist <- removeNA(samples.hist, "donor_age_at_diagnosis")
    samples.hist <- subset(samples.hist, donor_survival_time != 0)
    samples.hist <- subset(samples.hist, donor_age_at_diagnosis != 0)
    
-   samples.hist$SG1 <- "G1"
-   samples.hist[which(samples.hist$COR > -0.6503083),]$SG1 <- "S"
-   samples.hist$SG1 <- as.factor(samples.hist$SG1)
+   if (nrow(samples.hist) != 0) {
+      samples.hist$SG1 <- "G1"
+      idx <- which(samples.hist$COR > -0.6503083)
+      if (length(idx) != 0)
+         samples.hist[,]$SG1 <- "S"
+      samples.hist$SG1 <- as.factor(samples.hist$SG1)
    
-   rownames(samples.hist) <- samples.hist$icgc_specimen_id
-   samples.hist$donor_sex <- as.factor(samples.hist$donor_sex)
-   samples.hist$M2 <- as.factor(samples.hist$M2)
-   samples.hist$Q4 <- as.factor(samples.hist$Q4)
+      rownames(samples.hist) <- samples.hist$icgc_specimen_id
+      samples.hist$donor_sex <- as.factor(samples.hist$donor_sex)
+      samples.hist$M2 <- as.factor(samples.hist$M2)
+      samples.hist$Q4 <- as.factor(samples.hist$Q4)
    
-   phenos.surv <- samples.hist[!is.na(samples.hist$donor_survival_time),]
-   phenos.surv <- phenos.surv[!is.na(phenos.surv$donor_vital_status),]
-   phenos.surv$OS_month <- phenos.surv$donor_survival_time
+      phenos.surv <- samples.hist[!is.na(samples.hist$donor_survival_time),]
+      phenos.surv <- phenos.surv[!is.na(phenos.surv$donor_vital_status),]
+      phenos.surv$OS_month <- phenos.surv$donor_survival_time / 30.44
+      phenos.surv$donor_survival_time <- phenos.surv$donor_survival_time / 30.44
+      
+      phenos.surv$OS_censor <- phenos.surv$donor_vital_status
+      phenos.surv$OS_censor <- gsub("deceased",  1, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
+      phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
+      phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
  
-   phenos.surv$OS_censor <- phenos.surv$donor_vital_status
-   phenos.surv$OS_censor <- gsub("deceased",  1, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
-   phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
-   phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
- 
-   phenos.surv$In_silico <- phenos.surv$COR
-   phenos.surv$G1_vs_S <- phenos.surv$SG1
-   phenos.surv$Sex     <- phenos.surv$donor_sex
-   phenos.surv$Age     <- phenos.surv$donor_age_at_diagnosis
+      phenos.surv$In_silico <- phenos.surv$COR
+      phenos.surv$G1_vs_S <- phenos.surv$SG1
+      phenos.surv$Sex     <- phenos.surv$donor_sex
+      phenos.surv$Age     <- phenos.surv$donor_age_at_diagnosis
    
-   return(phenos.surv)
+      return(phenos.surv)
+   } else
+      return(samples.hist[1,][-1,])
 }
 
 # -----------------------------------------------------------------------------
