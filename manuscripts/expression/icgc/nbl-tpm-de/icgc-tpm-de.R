@@ -53,7 +53,7 @@ tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 tpm.gene.log2 <- tpm.gene.log2[rownames(subset(tpm.gene.log2.m, MEDIAN != 0)),]
 nrow(tpm.gene.log2)
-# [1] 18502
+# [1] 18523
 # [1] 20720
 
 # -----------------------------------------------------------------------------
@@ -63,10 +63,11 @@ nrow(tpm.gene.log2)
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ## FDR : Q
 argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_SG1_wilcox_q_n904")
+file.name <- paste0("de_", base, "_tpm-gene-median0-res_MEDAIN_COR_SG1_wilcox_q_n904")
 file.main <- paste0("", BASE)
 
-de <- differentialAnalysis(tpm.gene.log2, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+t <- tpm.gene.log2.res
+de <- differentialAnalysis(t, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 # Samples with MUT SG1: 271
 # Samples with  WT SG1: 633
 
@@ -77,7 +78,7 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 nrow(de.tpm.gene)
-# [1] 18502
+# [1] 18523
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric)
@@ -240,6 +241,31 @@ axis(side=1, at=seq(-12, 0, by=4))
 mtext(main.text[2], line=0.3)
 dev.off()
 
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Residuals of expression
+# Last Modified: 26/03/21; 28/08/20
+# -----------------------------------------------------------------------------
+hists <- unique(samples.tpm$histology_abbreviation)
+samples.tpm$MEDIAN_COR <- NA
+for (h in 1:length(hists)) {
+   hist <- hists[h]
+   samples.tpm[which(samples.tpm$histology_abbreviation == hist),]$MEDIAN_COR <- as.numeric(icgc[hist,]$MEDIAN)
+}
+
+#tpm.gene.res <- t(mapply(x = 1:nrow(tpm.gene), function(x) as.numeric(resid(lm(as.numeric(tpm.gene[x,]) ~ samples.tpm$MEDIAN_COR)))))
+#colnames(tpm.gene.res) <- rownames(samples.tpm)
+#rownames(tpm.gene.res) <- rownames(tpm.gene)
+#save(tpm.gene.res, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.meidan0.res.MEDIAN_COR.RData")))
+
+tpm.gene.log2.res <- t(mapply(x = 1:nrow(tpm.gene.log2), function(x) as.numeric(resid(lm(as.numeric(tpm.gene.log2[x,]) ~ samples.tpm$MEDIAN_COR)))))
+colnames(tpm.gene.log2.res) <- rownames(samples.tpm)
+rownames(tpm.gene.log2.res) <- rownames(tpm.gene.log2)
+save(tpm.gene.log2.res, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.log2.res.MEDIAN_COR.RData")))
 
 
 

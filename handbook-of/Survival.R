@@ -36,7 +36,7 @@ plotSurvfit <- function(fit, file.name, main.text, legends.text, cols) {
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
    plot(fit, ylim=c(0, 1), xlab="Months", ylab="Overall survival (%)", col=cols, main=main.text[1], mark.time=T, lwd=1.5, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
    legend("topright", legend=legends, lwd=2, col=cols, cex=1.25)
-   #mtext(main.text[2], cex=1.25, line=0.12)
+   mtext(main.text[2], cex=1.25, line=0.2)
    text(0, 0, get_surv_pvalue(fit), adj= c(-0.05, 0.1), col="black", cex=1.25)
    dev.off()
 }
@@ -107,7 +107,7 @@ survICGC <- function(samples.hist) {
       samples.hist$SG1 <- "G1"
       idx <- which(samples.hist$COR > -0.6503083)
       if (length(idx) != 0)
-         samples.hist[,]$SG1 <- "S"
+         samples.hist[idx,]$SG1 <- "S"
       samples.hist$SG1 <- as.factor(samples.hist$SG1)
    
       rownames(samples.hist) <- samples.hist$icgc_specimen_id

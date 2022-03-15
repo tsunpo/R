@@ -335,18 +335,18 @@ file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/correlation_i
 plotCorrelation(file.name, "764 PCAWG samples (RHO < 0)",  expression(italic('in silico')~"sorting"), "Age at diagnosis", y, x, "topright", line=2.4)
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ donor_sex, data=samples.surv)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_ALL_Sex"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_ALL_Sex"))
 main.text <- c("Sex", "")
 plotSurvfit(fit, file.name, main.text, c("F", "M"), c(red.lighter, blue.lighter))
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ donor_sex, data=samples.surv.pos)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_ALL_Sex_pos"))
-main.text <- c("Sex", "RHO > 0")
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_ALL_Sex_pos"))
+main.text <- c("Sex", "Slope > 0")
 plotSurvfit(fit, file.name, main.text, c("F", "M"), c(red.lighter, blue.lighter))
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ donor_sex, data=samples.surv.neg)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_ALL_Sex_neg"))
-main.text <- c("Sex", "RHO < 0")
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_ALL_Sex_neg"))
+main.text <- c("Sex", "Slope < 0")
 plotSurvfit(fit, file.name, main.text, c("F", "M"), c(red.lighter, blue.lighter))
 
 ## Wow
@@ -365,7 +365,7 @@ plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(sa
 res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + donor_sex + donor_age_at_diagnosis, data=samples.surv)
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_", "ALL", "_S-vs-G1"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1"))
 main.text <- c("Cell cycle statue", "")
 plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
@@ -376,10 +376,10 @@ samples.surv.neg <- subset(samples.surv, histology_abbreviation %in% rownames(ic
 
 ##
 res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv)
-#fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.pos)
-#file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_", "ALL", "_S-vs-G1_RHO>0_no-COR"))
-#main.text <- c("Cell cycle statue", "RHO > 0")
-#plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
+fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.pos)
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope>0"))
+main.text <- c("Cell cycle statue", "Slope > 0")
+plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
 pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", "ALL", ".pdf"), height=3, width=5)
 ggforest(res.cox, data=samples.surv, main=paste0("Hazard ratio in ", "ALL"), cpositions = c(0.02, 0.22, 0.4), fontsize=2)
@@ -387,10 +387,10 @@ dev.off()
 #ggforest(res.cox)
 
 ##
-res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv.pos)
+#res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv.pos)
 #fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.pos)
-#file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_", "ALL", "_S-vs-G1_RHO>0_no-COR"))
-#main.text <- c("Cell cycle statue", "RHO > 0")
+#file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope>0"))
+#main.text <- c("Cell cycle statue", "Slope > 0")
 #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
 pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", "ALL_RHO>0", "_label.pdf"), height=3, width=5)
@@ -399,11 +399,11 @@ dev.off()
 #ggforest(res.cox)
 
 ##
-res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv.neg)
-#fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.neg)
-#file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/survfit_", "ALL", "_S-vs-G1_RHO<0_ncorrected"))
-#main.text <- c("Cell cycle statue", "RHO < 0")
-#plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
+#res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv.neg)
+fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.neg)
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope<0"))
+main.text <- c("Cell cycle statue", "Slope < 0")
+plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
 pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", "ALL_RHO<0", "_label.pdf"), height=3, width=5)
 ggforest(res.cox, data=samples.surv.neg, main=paste0("Hazard ratio in ", "RHO < 0"), cpositions = c(0.02, 0.22, 0.4), fontsize=2)
