@@ -99,38 +99,31 @@ survSCLC <- function(phenos, samples, isCensored) {
 ## https://media.nature.com/original/nature-assets/nature/journal/v524/n7563/extref/nature14664-s1.xlsx
 survICGC <- function(samples.hist) {
    samples.hist <- removeNA(samples.hist, "donor_survival_time")
-   samples.hist <- removeNA(samples.hist, "donor_age_at_diagnosis")
    samples.hist <- subset(samples.hist, donor_survival_time != 0)
+   samples.hist <- removeNA(samples.hist, "donor_age_at_diagnosis")
    samples.hist <- subset(samples.hist, donor_age_at_diagnosis != 0)
    
    if (nrow(samples.hist) != 0) {
-      samples.hist$SG1 <- "G1"
-      idx <- which(samples.hist$COR > -0.6503083)
-      if (length(idx) != 0)
-         samples.hist[idx,]$SG1 <- "S"
-      samples.hist$SG1 <- as.factor(samples.hist$SG1)
-   
-      rownames(samples.hist) <- samples.hist$icgc_specimen_id
-      samples.hist$donor_sex <- as.factor(samples.hist$donor_sex)
-      samples.hist$M2 <- as.factor(samples.hist$M2)
-      samples.hist$Q4 <- as.factor(samples.hist$Q4)
-   
-      phenos.surv <- samples.hist[!is.na(samples.hist$donor_survival_time),]
-      phenos.surv <- phenos.surv[!is.na(phenos.surv$donor_vital_status),]
-      phenos.surv$OS_month <- phenos.surv$donor_survival_time / 30.44
-      phenos.surv$donor_survival_time <- phenos.surv$donor_survival_time / 30.44
+      samples.hist$donor_survival_time <- samples.hist$donor_survival_time / 30.44
+      #samples.hist <- samples.hist[!is.na(phenos.surv$donor_vital_status),]
       
-      phenos.surv$OS_censor <- phenos.surv$donor_vital_status
-      phenos.surv$OS_censor <- gsub("deceased",  1, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
-      phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
-      phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
+      samples.hist$OS_month <- samples.hist$donor_survival_time
+      
+      samples.hist$OS_censor <- samples.hist$donor_vital_status
+      samples.hist$OS_censor <- gsub("deceased", 1, samples.hist$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
+      samples.hist$OS_censor <- gsub("alive",    0, samples.hist$OS_censor)
+      samples.hist$OS_censor <- as.numeric(samples.hist$OS_censor)
  
-      phenos.surv$In_silico <- phenos.surv$COR
-      phenos.surv$G1_vs_S <- phenos.surv$SG1
-      phenos.surv$Sex     <- phenos.surv$donor_sex
-      phenos.surv$Age     <- phenos.surv$donor_age_at_diagnosis
+      samples.hist$donor_sex <- as.factor(samples.hist$donor_sex)
+      #samples.hist$M2 <- as.factor(samples.hist$M2)
+      #samples.hist$Q4 <- as.factor(samples.hist$Q4)
+      
+      #samples.hist$In_silico <- samples.hist$COR
+      #samples.hist$G1_vs_S <- samples.hist$SG1
+      samples.hist$SEX     <- samples.hist$donor_sex
+      samples.hist$AGE     <- samples.hist$donor_age_at_diagnosis
    
-      return(phenos.surv)
+      return(samples.hist)
    } else
       return(samples.hist[1,][-1,])
 }

@@ -23,6 +23,14 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
    dev.off()
 }
 
+plotJust <- function(file.name, main.text, xlab.text, ylab.text, x, y, line=2.75, ymax) {
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   plot(y ~ x, ylab="", ylim=c(0, ymax), xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
+
+   mtext(ylab.text, side=2, line=line, cex=1.85)
+   dev.off()
+}
+
 
 
 
