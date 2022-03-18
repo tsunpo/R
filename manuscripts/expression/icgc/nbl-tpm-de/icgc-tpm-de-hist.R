@@ -36,26 +36,24 @@ load(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")))
 dim(tpm.gene)
 # [1] 20720  1359
 
-nrow(samples)
-# [1] 2612
+nrow(samples.hist)
+# [1] 88   ## Eso-AdenoCA
+# [1] 87   ## Kidney-RCC
 
 #overlaps <- intersect(samples$icgc_specimen_id, colnames(tpm.gene))
-overlaps <- intersect(samples.surv$icgc_specimen_id, colnames(tpm.gene))
+overlaps <- intersect(samples.hist$icgc_specimen_id, colnames(tpm.gene))
 length(overlaps)
-# [1] 904
-# [1] 395
-samples.tpm <- samples[overlaps,]
-samples.tpm$SG1 <- "G1"
-samples.tpm[which(samples.tpm$COR >= sample$COR),]$SG1 <- "S"
-samples.tpm$SG1 <- as.factor(samples.tpm$SG1)
+# [1] 6
+# [1] 13
+samples.tpm <- samples.hist[overlaps,]
 
 tpm.gene <- tpm.gene[, overlaps]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 tpm.gene.log2 <- tpm.gene.log2[rownames(subset(tpm.gene.log2.m, MEDIAN != 0)),]
-nrow(tpm.gene.log2)
-# [1] 18523
-# [1] 18601
+dim(tpm.gene.log2)
+# [1] 5526    6
+# [1] 18480    13
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric)
@@ -64,14 +62,14 @@ nrow(tpm.gene.log2)
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ## FDR : Q
 argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_SG1_wilcox_q_n395")
+file.name <- paste0("de_", base, "_tpm-gene-median0_Kidney-RCC_SG1_wilcox_q_n13")
 file.main <- paste0("", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-# Samples with MUT SG1: 594   ## N=904
-# Samples with  WT SG1: 310
-# Samples with MUT SG1: 247   ## N=395
-# Samples with  WT SG1: 148
+# Samples with MUT SG1: 2   ## ESAD
+# Samples with  WT SG1: 4
+# Samples with MUT SG1: 1   ## Kidney-RCC
+# Samples with  WT SG1: 12
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
@@ -80,8 +78,8 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 nrow(de.tpm.gene)
-# [1] 18523
-# [1] 18601
+# [1] 5526
+# [1] 18480
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric)

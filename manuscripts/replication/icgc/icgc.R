@@ -207,32 +207,68 @@ save(table, table.histology, icgc, samples.h, samples.v, file=file.path(wd.rt.pl
 # -----------------------------------------------------------------------------
 samples.surv <- survICGC(samples)
 
-icgc$COR_P_OS    <- NA
-icgc$COR_P_HAZARD <- NA
+#icgc$HIST_P_OS    <- NA
+#icgc$HIST_P_HAZARD <- NA
 for (h in 1:nrow(icgc)) {
    hist <- rownames(icgc)[h]
+   samples.hist <- subset(samples.surv, histology_abbreviation == hist)
+   samples.hist <- samples.hist[order(samples.hist$COR),]
    
-   samples.surv$SG1 <- "G1"
-   idx <- which(samples.surv$COR >= icgc$MEDIAN[h])
-   if (length(idx) != 0)
-      samples.surv[idx,]$SG1 <- "S"
-   samples.surv$SG1 <- as.factor(samples.surv$SG1)
-   
-   ##
-   fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv)
-   file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", h, "_", hist))
-   main.text <- c("PCAWG", hist)   ##, expression(italic('in silico')~"sorting"))
-   plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
-   icgc$COR_P_OS[h] <- surv_pvalue(fit)$pval
-   
-   #res.cox <- coxph(Surv(OS_month, OS_censor) ~ COR + donor_sex + donor_age_at_diagnosis, data=samples.hist.surv)
-   #res.cox <- coxph(Surv(OS_month, OS_censor) ~ COR, data=samples.hist.surv)
-   #print(res.cox)
-   #print("----------------------------------------------------------------")
-   #pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", hist, ".pdf"), height=3, width=5)
-   #ggforest(res.cox, data=samples.hist.surv, main=paste0("Hazard ratio in ", hist), cpositions = c(0.02, 0.22, 0.4), fontsize=0.7)
-   #dev.off()
-   #ggforest(res.cox)
+   if (nrow(samples.hist) > 20) {
+      pvals <- c()
+      rhos  <- c()
+      
+      for (s in 1:nrow(samples.hist)) {
+         samples.hist$SG1 <- "G1"
+         idx <- which(samples.hist$COR >= samples.hist$COR[s])
+         if (length(idx) != 0)
+            samples.hist[idx,]$SG1 <- "S"
+         samples.hist$SG1 <- as.factor(samples.hist$SG1)
+       
+         ##
+         fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.hist)
+         if (!is.na(surv_pvalue(fit)$pval)) {
+            pvals <- c(pvals, surv_pvalue(fit)$pval)
+            rhos <- c(rhos, samples.hist$COR[s])
+            #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", h, "_", hist))
+            #main.text <- c("PCAWG", hist)   ##, expression(italic('in silico')~"sorting"))
+            #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
+            #icgc$COR_P_OS[h] <- surv_pvalue(fit)$pval
+          
+            #res.cox <- coxph(Surv(OS_month, OS_censor) ~ COR + donor_sex + donor_age_at_diagnosis, data=samples.hist.surv)
+            #res.cox <- coxph(Surv(OS_month, OS_censor) ~ COR, data=samples.hist.surv)
+            #pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", hist, ".pdf"), height=3, width=5)
+            #ggforest(res.cox, data=samples.hist.surv, main=paste0("Hazard ratio in ", hist), cpositions = c(0.02, 0.22, 0.4), fontsize=0.7)
+            #dev.off()
+         }
+      }
+      
+      if (-log10(min(pvals)) > 3) {
+         s <- which(pvals == min(pvals))
+         samples.hist$SG1 <- "G1"
+         idx <- which(samples.hist$COR > samples.hist$COR[s])
+         if (length(idx) != 0)
+            samples.hist[idx,]$SG1 <- "S"
+         samples.hist$SG1 <- as.factor(samples.hist$SG1)
+         
+         if (as.numeric(summary(samples.hist$SG1)[1]) >= 10 && as.numeric(summary(samples.hist$SG1)[2] >= 10)) {
+            x <- rhos
+            y <- -log10(pvals)
+            file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_P_KM_OS_", hist)
+            plotJust(file.name, hist, expression(italic('in silico')~"sorting"), "-log10(p-value)", x, y, line=2.7)
+          
+            fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.hist)
+            file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", hist))
+            main.text <- c(hist, paste0("Divided by rho = ", round0(rhos[s], 2)))   ##, expression(italic('in silico')~"sorting"))
+            plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
+            
+            res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + SEX + AGE, data=samples.hist)
+            pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_in-silico_", hist, ".pdf"), height=2.5, width=5)
+            ggforest(res.cox, data=samples.hist, main=hist, cpositions = c(0.02, 0.22, 0.4), fontsize=2)
+            dev.off()
+         }
+      }
+   }
 }
 
 samples.surv <- survICGC(samples)
@@ -255,7 +291,7 @@ for (s in 1:nrow(samples.surv)) {
    samples.surv$COR_P_OS[s] <- surv_pvalue(fit)$pval
  
    res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + SEX + AGE, data=samples.surv)
-   pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_", sample$icgc_specimen_id, ".pdf"), height=2.8, width=5)
+   pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_", sample$icgc_specimen_id, "_2.5.pdf"), height=2.5, width=5)
    ggforest(res.cox, data=samples.surv, main=paste0("Hazard ratio divided by rho = ", round0(sample$COR, 2)), cpositions = c(0.02, 0.22, 0.4), fontsize=2)
    dev.off()
 }
