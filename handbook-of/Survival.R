@@ -14,8 +14,11 @@
 # -----------------------------------------------------------------------------
 library(survival)
 library(survminer)
+library(tidyverse)
 library(broom)
 library(grid)
+library(ggalt)
+library(dplyr)
 
 ## https://www.rdocumentation.org/packages/survminer/versions/0.4.3/topics/surv_pvalue
 get_surv_pvalue <- function(fit) {
@@ -34,10 +37,18 @@ plotSurvfit <- function(fit, file.name, main.text, legends.text, cols) {
       legends <- c(legends, paste0(legends.text[l], " (n=", fit[[1]][l], ")"))
  
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(fit, ylim=c(0, 1), xlab="Months", ylab="Overall survival (%)", col=cols, main=main.text[1], mark.time=T, lwd=1.5, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
-   legend("topright", legend=legends, lwd=2, col=cols, cex=1.25)
-   mtext(main.text[2], cex=1.25, line=0.2)
-   text(0, 0, get_surv_pvalue(fit), adj= c(-0.05, 0.1), col="black", cex=1.25)
+   plot(fit, ylim=c(0, 1), xlab="Months", ylab="", col=cols, main=main.text[1], mark.time=T, lwd=2, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   legend("topright", legend=legends, lwd=4, col=cols, cex=1.6)
+   #mtext(main.text[2], cex=1.25, line=0.2)
+   
+   mtext("OS (%)", side=2, line=2.85, cex=1.7)
+   
+   max <- max(fit[[2]])
+   text(max/4.25, 0.07, expression(italic('P')~"="~"                "), cex=1.6)
+   text(max/4.25, 0.07, paste0("      ", scientific(surv_pvalue(fit)$pval, digits=2)), cex=1.6)
+   #legend("bottomleft", expression(italic('P')~"="~scientific(surv_pvalue(fit)$pval)), bty="n", cex=1.6)
+   #legend("bottomleft", expression(italic('P')~"="~"2.62e-18"), bty="n", cex=1.6)
+   
    dev.off()
 }
 
@@ -100,14 +111,16 @@ survSCLC <- function(phenos, samples, isCensored) {
 survICGC <- function(samples.hist) {
    samples.hist <- removeNA(samples.hist, "donor_survival_time")
    samples.hist <- subset(samples.hist, donor_survival_time != 0)
+   samples.hist <- subset(samples.hist, donor_vital_status != "")
+   
    samples.hist <- removeNA(samples.hist, "donor_age_at_diagnosis")
    samples.hist <- subset(samples.hist, donor_age_at_diagnosis != 0)
    
    if (nrow(samples.hist) != 0) {
-      samples.hist$donor_survival_time <- samples.hist$donor_survival_time / 30.44
+      #samples.hist$donor_survival_time <- samples.hist$donor_survival_time / 30.44
       #samples.hist <- samples.hist[!is.na(phenos.surv$donor_vital_status),]
       
-      samples.hist$OS_month <- samples.hist$donor_survival_time
+      samples.hist$OS_month <- samples.hist$donor_survival_time / 30.44
       
       samples.hist$OS_censor <- samples.hist$donor_vital_status
       samples.hist$OS_censor <- gsub("deceased", 1, samples.hist$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead

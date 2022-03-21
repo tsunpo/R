@@ -39,8 +39,8 @@ dim(tpm.gene)
 nrow(samples)
 # [1] 2612
 
-#overlaps <- intersect(samples$icgc_specimen_id, colnames(tpm.gene))
-overlaps <- intersect(samples.surv$icgc_specimen_id, colnames(tpm.gene))
+overlaps <- intersect(samples$icgc_specimen_id, colnames(tpm.gene))
+#overlaps <- intersect(samples.surv$icgc_specimen_id, colnames(tpm.gene))
 length(overlaps)
 # [1] 904
 # [1] 395
@@ -53,6 +53,7 @@ tpm.gene <- tpm.gene[, overlaps]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 tpm.gene.log2 <- tpm.gene.log2[rownames(subset(tpm.gene.log2.m, MEDIAN != 0)),]
+tpm.gene <- tpm.gene[rownames(tpm.gene.log2),]
 nrow(tpm.gene.log2)
 # [1] 18523
 # [1] 18601
@@ -64,7 +65,7 @@ nrow(tpm.gene.log2)
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ## FDR : Q
 argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_SG1_wilcox_q_n395")
+file.name <- paste0("de_", base, "_tpm-gene-median0_SG1_wilcox_q_n904")
 file.main <- paste0("", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
@@ -84,7 +85,7 @@ nrow(de.tpm.gene)
 # [1] 18601
 
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric)
+# Wilcoxon rank sum test (corrected for median COR)
 # Last Modified: 12/03/22
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
@@ -95,6 +96,33 @@ file.main <- paste0("", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2.res, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 # Samples with MUT SG1: 594
+# Samples with  WT SG1: 310
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+nrow(de.tpm.gene)
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (divided by median COR)
+# Last Modified: 19/03/22
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+## FDR : Q
+argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-log2-div-median0_SG1_wilcox_q_n904")
+file.main <- paste0("", BASE)
+
+tpm.gene.log2.div <- tpm.gene.log2
+for (s in 1:nrow(samples.tpm)) {
+   tpm.gene.log2.div[, s] <- tpm.gene.log2[, s] / abs(samples.tpm$MEDIAN_COR[s])
+}
+
+de <- differentialAnalysis(tpm.gene.log2.div, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+# Samples with MUT SG1: 594   ## N=904
 # Samples with  WT SG1: 310
 
 ## Ensembl gene annotations
@@ -132,7 +160,7 @@ nrow(de.tpm.gene)
 
 ###
 ##
-plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, fold=1, ymax=0) {
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, fold=1, ymax=0, line=0) {
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
@@ -143,9 +171,9 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, fold=1
    #ymax <- 7
    
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
    
-   abline(h=c(-log10(pvalue)), lty=5)
+   abline(h=c(-log10(pvalue)), lty=5, lwd=2)
 
    de.up   <- subset(de.sig, LOG2_FC > fold)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red, cex=1.4)
@@ -153,8 +181,8 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, fold=1
    points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue, cex=1.4)
 
    #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
-   abline(v=fold, lty=5, col=red)
-   abline(v=-fold, lty=5, col=blue)
+   abline(v=fold, lty=5, col=red, lwd=2)
+   abline(v=-fold, lty=5, col=blue, lwd=2)
    
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
@@ -166,24 +194,51 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, fold=1
     
             if (!is.na(gene$ADJ_1))
                if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
             else
                if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=1.2)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=1.2)
          } else
             print(genes[g,])
       }
    }
  
+   mtext(expression("Significance [-log10("*italic('P')*")]"), side=2, line=line, cex=1.25)
    #axis(side=1, at=seq(-4, 4, by=2), labels=c(-4, 0, 4), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topleft", legend=c(paste0(nrow(de.up), " Up (G1 < S)"), paste0(nrow(de.down), " Down (G1 > S)")), col=c(red, blue), pch=19, cex=1.2)
+   #legend("topleft", legend=c(paste0(nrow(de.up), " Up (G1 < S)"), paste0(nrow(de.down), " Down (G1 > S)")), col=c(red, blue), pch=19, cex=1.2)
+   legend("topleft", legend=c(paste0(nrow(de.up), " Proliferating"), paste0("    ", nrow(de.down), " Resting")), col=c(red, blue), pch=19, cex=1.2)
    dev.off()
 }
+
+## ICGC expressed genes
+xlab.text <- "Proliferating/Resting fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE_n=904_p1e-36_Proliferation")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("Differential expression of 904 PACWG samples", "")
+plotVolcano(de.tpm.gene, 1E-36, genes, file.de, file.main, xlab.text, line=2.85)
+
+## ICGC expressed genes
+xlab.text <- "S/G1 fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE-RES_n=904_p1e-45")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("After corrected for cell cycle status", "G1-like vs. S-like")
+plotVolcano(de.tpm.gene, 1E-45, genes, file.de, file.main, xlab.text)
+
+## ICGC expressed genes
+xlab.text <- "S/G1 fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0-log2-div_DE_n=904_p1e-45")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("After divided by cell cycle status", "G1-like vs. S-like")
+plotVolcano(de.tpm.gene, 1E-45, genes, file.de, file.main, xlab.text)
+
 
 ## ICGC expressed genes
 xlab.text <- "S/G1 fold change [log2]"
@@ -193,21 +248,7 @@ file.de <- paste0(plot.de, ".pdf")
 file.main <- c("395 PCAWG samples", "G1-like vs. S-like")
 plotVolcano(de.tpm.gene, 1E-21, genes, file.de, file.main, xlab.text)
 
-## ICGC expressed genes
-xlab.text <- "S/G1 fold change [log2]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE_n=904_p1e-45")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(plot.de, ".pdf")
-file.main <- c("904 PCAWG samples", "G1-like vs. S-like")
-plotVolcano(de.tpm.gene, 1E-45, genes, file.de, file.main, xlab.text)
 
-## ICGC expressed genes
-xlab.text <- "S/G1 fold change [log2]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE-RES_p1e-48")
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.de <- paste0(plot.de, ".pdf")
-file.main <- c("After corrected for cell cycle status", "G1-like vs. S-like")
-plotVolcano(de.tpm.gene, 1E-48, genes, file.de, file.main, xlab.text)
 
 # -----------------------------------------------------------------------------
 # Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)

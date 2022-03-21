@@ -10,7 +10,7 @@ wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Survival.R", "Transcription.R", "survminer/ggforest.R")
+handbooks  <- c("Commons.R", "Survival.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -152,31 +152,48 @@ for (h in nrow(icgc):1) {
 
 ###
 ##
-file.name <- "stripchart_ICGC_H"
-main.text <- expression(bold(~bolditalic('in silico')~"sorting of PCAWG samples"))
-cols <- c(blue, blue.lighter, red.lighter, red)
+hists <- rownames(subset(icgc, survival_N > 20))
+samples.surv.h <- subset(samples.surv, histology_abbreviation %in% hists)
+samples.h      <- subset(samples, histology_abbreviation %in% hists)
 
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=18, width=9)
+file.name <- "stripchart_ICGC_V_surv_OS_1580_lwd=3_Proliferation_pt.cex=2.5"
+main.text <- paste0("OS of ", separator(nrow(samples.surv.h)), " PCAWG patients")
+#main.text <- expression(bold(~bolditalic('in silico')~"sorting of 1,582 samples"))
+cols <- c(blue, red)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=12, width=8)
 par(mar = c(5, 14.5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h, horizontal=T, yaxt="n", xaxt="n", ylab="", main=main.text, col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+boxplot(COR ~ CANCER, data=samples.h, horizontal=T, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 #text(labels=labels, x=1:26, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, side=1, cex=1.8)
 
-stripchart(COR ~ CANCER, data=subset(samples.h, Q4 == 1), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=F, add=T, at=c(1:26))
-stripchart(COR ~ CANCER, data=subset(samples.h, Q4 == 2), method="jitter", cex=1.5, pch=19, col=cols[2], vertical=F, add=T, at=c(1:26))
-stripchart(COR ~ CANCER, data=subset(samples.h, Q4 == 3), method="jitter", cex=1.5, pch=19, col=cols[3], vertical=F, add=T, at=c(1:26))
-stripchart(COR ~ CANCER, data=subset(samples.h, Q4 == 4), method="jitter", cex=1.5, pch=19, col=cols[4], vertical=F, add=T, at=c(1:26))
+#stripchart(COR ~ CANCER, data=samples.h,                           method="jitter", cex=1.5, pch=19, col="lightgray", vertical=F, add=T, at=c(1:length(hists)))
+stripchart(COR ~ CANCER, data=subset(samples.surv.h, SG1 == "G1"), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=F, add=T, at=c(1:length(hists)))
+stripchart(COR ~ CANCER, data=subset(samples.surv.h, SG1 == "S"),  method="jitter", cex=1.5, pch=19, col=cols[2], vertical=F, add=T, at=c(1:length(hists)))
 
-axis(side=1, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.7)
+abline(v=sample$COR, lty=5, lwd=3, col=red)
+
+axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
+axis(side=1, at=sample$COR, labels=round(sample$COR, 2), cex.axis=1.7, col.axis=red, font.axis=2)
+
 mtext("Spearman's rho", side=1, line=3.5, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
-mtext(rev(rownames(icgc.tmp)), side=2, line=0.5, cex=1.8, at=1:26, las=1)
+mtext(rev(hists), side=2, line=0.5, cex=1.8, at=1:length(hists), las=1)
 
-legend("bottomright", legend=c("Q1", "Q2", "Q3", "Q4"), pch=19, pt.cex=2.5, col=cols, cex=1.8, horiz=T)
+legend("topright", legend=c("Resting", "             "), pch=19, pt.cex=2.5, col=c(blue, "white"), text.col=c("black", "white"), cex=1.7, horiz=T, text.width=0.42)
+legend("topright", legend="Proliferating", pch=19, pt.cex=2.5, col=red, text.col="black", bty="n", cex=1.7, horiz=T, text.width=0.5)
 dev.off()
+
+##
+for (h in 1:length(rev(unique(samples.surv.h$histology_abbreviation)))) {
+   hist <- rev(unique(samples.surv.h$histology_abbreviation))[h]
+               
+   print(nrow(subset(samples.surv, histology_abbreviation == hist)))
+}
+
 
 ###
 ##
-file.name <- "stripchart_ICGC_V"
+file.name <- "stripchart_ICGC_H"
 main.text <- expression(bold(~bolditalic('in silico')~"sorting of 2,612 ICGC PCAWG samples"))
 #labels <- paste0(labels=rownames(icgc), " (n=", icgc$N, ")")
 labels <- rownames(icgc)
@@ -206,30 +223,33 @@ save(table, table.histology, icgc, samples.h, samples.v, file=file.path(wd.rt.pl
 # Last Modified: 16/03/22
 # -----------------------------------------------------------------------------
 samples.surv <- survICGC(samples)
+nrow(samples.surv)
+# [1] 1680
 
 #icgc$HIST_P_OS    <- NA
 #icgc$HIST_P_HAZARD <- NA
-for (h in 1:nrow(icgc)) {
-   hist <- rownames(icgc)[h]
-   samples.hist <- subset(samples.surv, histology_abbreviation == hist)
-   samples.hist <- samples.hist[order(samples.hist$COR),]
+cc <- c(6, 7, 8, 11, 12, 13, 14)
+for (h in 1:length(hists)) {
+   hist <- hists[h]
+   samples.surv.h2 <- subset(samples.surv.h, histology_abbreviation == hist)
+   samples.surv.h2 <- samples.surv.h2[order(samples.surv.h2$COR),]
    
-   if (nrow(samples.hist) > 20) {
+   #if (nrow(samples.hist) > 20) {
       pvals <- c()
       rhos  <- c()
       
-      for (s in 1:nrow(samples.hist)) {
-         samples.hist$SG1 <- "G1"
-         idx <- which(samples.hist$COR >= samples.hist$COR[s])
+      for (s in 1:nrow(samples.surv.h2)) {
+         samples.surv.h2$SG1 <- "G1"
+         idx <- which(samples.surv.h2$COR >= samples.surv.h2$COR[s])
          if (length(idx) != 0)
-            samples.hist[idx,]$SG1 <- "S"
-         samples.hist$SG1 <- as.factor(samples.hist$SG1)
+            samples.surv.h2[idx,]$SG1 <- "S"
+         samples.surv.h2$SG1 <- as.factor(samples.surv.h2$SG1)
        
          ##
-         fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.hist)
+         fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.h2)
          if (!is.na(surv_pvalue(fit)$pval)) {
             pvals <- c(pvals, surv_pvalue(fit)$pval)
-            rhos <- c(rhos, samples.hist$COR[s])
+            rhos <- c(rhos, samples.surv.h2$COR[s])
             #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", h, "_", hist))
             #main.text <- c("PCAWG", hist)   ##, expression(italic('in silico')~"sorting"))
             #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
@@ -243,66 +263,91 @@ for (h in 1:nrow(icgc)) {
          }
       }
       
-      if (-log10(min(pvals)) > 3) {
+      #if (-log10(min(pvals)) > 3) {
          s <- which(pvals == min(pvals))
-         samples.hist$SG1 <- "G1"
-         idx <- which(samples.hist$COR > samples.hist$COR[s])
+         samples.surv.h2$SG1 <- "G1"
+         idx <- which(samples.surv.h2$COR > samples.surv.h2$COR[s])
          if (length(idx) != 0)
-            samples.hist[idx,]$SG1 <- "S"
-         samples.hist$SG1 <- as.factor(samples.hist$SG1)
+            samples.surv.h2[idx,]$SG1 <- "S"
+         samples.surv.h2$SG1 <- as.factor(samples.surv.h2$SG1)
          
-         if (as.numeric(summary(samples.hist$SG1)[1]) >= 10 && as.numeric(summary(samples.hist$SG1)[2] >= 10)) {
+         if (as.numeric(summary(samples.surv.h2$SG1)[1]) >= 10 && as.numeric(summary(samples.surv.h2$SG1)[2]) >= 10) {
             x <- rhos
             y <- -log10(pvals)
-            file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_P_KM_OS_", hist)
-            plotJust(file.name, hist, expression(italic('in silico')~"sorting"), "-log10(p-value)", x, y, line=2.7)
-          
-            fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.hist)
-            file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", hist))
+            file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hists/correlation_in-silico_P_KM_OS_", hist)
+            #plotJust0(file.name, hist, "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, samples.surv.h2$COR[s], line=2.53)
+    
+            fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.h2)
+            file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hists/survfit_in-silico_", hist))
             main.text <- c(hist, paste0("Divided by rho = ", round0(rhos[s], 2)))   ##, expression(italic('in silico')~"sorting"))
-            plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
+            #plotSurvfit(fit, file.name, main.text, c("Resting", "Proliferating"), c(blue, red))
             
-            res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + SEX + AGE, data=samples.hist)
-            pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_in-silico_", hist, ".pdf"), height=2.5, width=5)
-            ggforest(res.cox, data=samples.hist, main=hist, cpositions = c(0.02, 0.22, 0.4), fontsize=2)
+            samples.surv.h2$RHO <- samples.surv.h2$COR
+            samples.surv.h2$SEX <- samples.surv.h2$donor_sex
+            samples.surv.h2$SEX <- gsub("female", "F", samples.surv.h2$SEX)   ## BUG FIX 07/05/19: 0=alive, 1=dead
+            samples.surv.h2$SEX <- gsub("male",   "M", samples.surv.h2$SEX)
+            res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + RHO + SEX + AGE, data=samples.surv.h2)
+            pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hists/hazard_in-silico_", hist, ".pdf"), height=2.7, width=5)
+            ggforest(res.cox, data=samples.surv.h2, main=hist, cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
             dev.off()
          }
-      }
-   }
+      #}
+   #}
 }
 
-samples.surv <- survICGC(samples)
-samples.surv$COR_P_OS     <- NA
-samples.surv$COR_P_HAZARD <- NA
-for (s in 1:nrow(samples.surv)) {
-   sample <- samples.surv[s,]
+#samples.surv <- survICGC(samples)
+samples.surv.h$COR_P_OS     <- NA
+samples.surv.h$COR_P_HAZARD <- NA
+for (s in 1:nrow(samples.surv.h)) {
+   sample <- samples.surv.h[s,]
    
-   samples.surv$SG1 <- "G1"
-   idx <- which(samples.surv$COR >= samples.surv$COR[s])
+   samples.surv.h$SG1 <- "G1"
+   idx <- which(samples.surv.h$COR >= samples.surv.h$COR[s])
    if (length(idx) != 0)
-      samples.surv[idx,]$SG1 <- "S"
-   samples.surv$SG1 <- as.factor(samples.surv$SG1)
+      samples.surv.h[idx,]$SG1 <- "S"
+   samples.surv.h$SG1 <- as.factor(samples.surv.h$SG1)
  
    ##
-   fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv)
-   #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", s, "_", sample$icgc_specimen_id, "_80_0.07_2_3_1.6"))
-   #main.text <- c("Overall survival (OS)", paste0("Divided by rho = ", round0(sample$COR, 2)))   ##, expression(italic('in silico')~"sorting"))
-   #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
-   samples.surv$COR_P_OS[s] <- surv_pvalue(fit)$pval
- 
-   #res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + SEX + AGE, data=samples.surv)
-   #pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_", sample$icgc_specimen_id, "_2.5.pdf"), height=2.5, width=5)
-   #ggforest(res.cox, data=samples.surv, main=paste0("Hazard ratio divided by rho = ", round0(sample$COR, 2)), cpositions = c(0.02, 0.22, 0.4), fontsize=2)
-   #dev.off()
-}
-samples.surv <- samples.surv[!is.na(samples.surv$COR_P_OS),]
-spot <- which(samples.surv$COR_P_OS == min(samples.surv$COR_P_OS))
+   fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.h)
+   file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", s, "_", sample$icgc_specimen_id, "_80_0.07_2_3_1.6_1580_Proliferation_00"))
+   main.text <- c("Overall survival (OS)", "")   ##samples.surv.h paste0("Divided by rho = ", round0(sample$COR, 2)))   ##, expression(italic('in silico')~"sorting"))
+   plotSurvfit(fit, file.name, main.text, c("Resting", "Proliferating"), c(blue, red))
+   samples.surv.h$COR_P_OS[s] <- surv_pvalue(fit)$pval
 
-x <- samples.surv$COR
-y <- -log10(samples.surv$COR_P_OS)
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_P_KM_OS_1679_P_bold")
+   samples.surv.h2 <- samples.surv.h
+   samples.surv.h2$SORTING <- samples.surv.h2$SG
+   samples.surv.h2$RHO <- samples.surv.h2$COR
+   samples.surv.h2$SEX <- samples.surv.h2$donor_sex
+   samples.surv.h2$SEX <- gsub("female", "F", samples.surv.h2$SEX)   ## BUG FIX 07/05/19: 0=alive, 1=dead
+   samples.surv.h2$SEX <- gsub("male",   "M", samples.surv.h2$SEX)
+   res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + RHO + SEX + AGE, data=samples.surv.h2)
+   pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_", sample$icgc_specimen_id, "_2.7_1580_fontsize=2.8_01_3*6_test2.pdf"), height=3, width=6)
+   #ggforest(res.cox, data=samples.surv.h2, main=paste0("Hazard ratio divided by rho = ", round0(sample$COR, 2)), cpositions = c(0.02, 0.15, 0.35), fontsize=2.5)
+   ggforest(res.cox, data=samples.surv.h2, main="", cpositions = c(0.01, 0.15, 0.35), fontsize=2.8)
+   dev.off()
+}
+samples.surv.h2 <- samples.surv.h[!is.na(samples.surv.h$COR_P_OS),]
+s <- which(samples.surv.h2$COR_P_OS == min(samples.surv.h2$COR_P_OS))
+
+s <- which(samples.surv.h$icgc_specimen_id == "SP76867")
+sample <- samples.surv.h[s,]
+cor <- sample$COR
+ 
+samples.surv.h$SG1 <- "G1"
+idx <- which(samples.surv.h$COR >= cor)
+if (length(idx) != 0)
+   samples.surv.h[idx,]$SG1 <- "S"
+samples.surv.h$SG1 <- as.factor(samples.surv.h$SG1)
+
+x <- samples.surv.h2$COR
+y <- -log10(samples.surv.h2$COR_P_OS)
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_P_KM_OS_1580_P_offset_bold_new_14.5_lwd=3_lwd=3")
 #plotJust(file.name, "Kaplan-Meier OS", expression(italic('in silico')~"sorting"), "-log10(p-value)", x, y, line=2.7, ymax=19.5)
-plotJust(file.name, "OS of 1,679 patients", "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, line=2.53)
+plotJust(file.name, "OS of 1,580 patients", "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, line=2.53)
+
+save(icgc, samples, samples.surv, samples.surv.h, samples.surv.h2, sample, s, mapping, clinicals, hists, file="/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/icgc-wgs-rt-surv_1580.RData")
+
+
 
 ##
 test <- toTable(0, 2, 2, c("G1", "S"))

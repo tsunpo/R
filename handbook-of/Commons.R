@@ -89,7 +89,7 @@ separator <- function(number) {
 }
 
 scientific <- function(number, digits=2) {
-   return(formatC(number, format="e", digits=digits))
+   return(formatC(number, format="E", digits=digits))
 }
 
 # -----------------------------------------------------------------------------

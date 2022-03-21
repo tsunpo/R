@@ -23,11 +23,32 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
    dev.off()
 }
 
-plotJust <- function(file.name, main.text, xlab.text, ylab.text, x, y, line=2.75) {
-   pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(y ~ x, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
+plotJust0 <- function(file.name, main.text, xlab.text, ylab.text, x, y, cor, line=2.75) {
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(y ~ x, ylab="", xaxt="n", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   
+   points(cor, max(y), pch=1, col=red, cex=2, lwd=2)
+   abline(v=cor, lty=5, lwd=3, col=red)
+   
+   axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
+   axis(side=1, at=cor, labels=round(cor, 2), cex.axis=1.7, col.axis=red, font.axis=2)
+   
+   mtext(ylab.text, side=2, line=line, cex=1.7)
+   dev.off()
+}
 
-   mtext(ylab.text, side=2, line=line, cex=1.85)
+plotJust <- function(file.name, main.text, xlab.text, ylab.text, x, y, line=2.75) {
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(y ~ x, ylim=c(0, 16.5), ylab="", xaxt="n", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+
+   points(sample$COR, -log10(sample$COR_P_OS), pch=1, col=red, cex=2, lwd=2)
+   abline(v=sample$COR, lty=5, lwd=3, col=red)
+   text(sample$COR, 14.5, expression(italic('                  P')~"="~"7.74E-15"), pos=3, cex=1.6)
+   
+   axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
+   axis(side=1, at=sample$COR, labels=round(sample$COR, 2), cex.axis=1.7, col.axis=red, font.axis=2)
+   
+   mtext(ylab.text, side=2, line=line, cex=1.7)
    dev.off()
 }
 
