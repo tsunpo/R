@@ -10,6 +10,7 @@
 # Last Modified: 23/01/18
 # -----------------------------------------------------------------------------
 getSNVinEnsGene <- function(vcf, ensGene) {
+   colnames <- colnames(vcf)
    vcf.gene <- toTable("", length(colnames), 0, colnames)
    
    for (c in 1:24) {

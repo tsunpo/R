@@ -12,14 +12,6 @@
 #          https://support.minitab.com/en-us/minitab/18/help-and-how-to/modeling-statistics/reliability/supporting-topics/reliability-metrics/what-is-the-survival-probability/
 # Last Modified: 03/05/19
 # -----------------------------------------------------------------------------
-library(survival)
-library(survminer)
-library(tidyverse)
-library(broom)
-library(grid)
-library(ggalt)
-library(dplyr)
-
 ## https://www.rdocumentation.org/packages/survminer/versions/0.4.3/topics/surv_pvalue
 get_surv_pvalue <- function(fit) {
    #surv_pvalue(fit, method="log-rank")$pval.txt

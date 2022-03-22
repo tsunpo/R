@@ -27,7 +27,7 @@ BASE <- "ICGC"
 base <- tolower(BASE)
 
 wd.icgc     <- file.path(wd, BASE, "consensus")
-wd.icgc.vcf <- file.path(wd.icgc, "point_mutations", "Converted_Data")
+wd.icgc.cna <- file.path(wd.icgc, "copy_number_alterations")
 
 wd.meta     <- file.path(wd, BASE, "metadata", "data_release")
 
@@ -45,28 +45,29 @@ rownames(release) <- release$tumor_wgs_aliquot_id
 nrow(release)
 # [1] 2834
 
-list <- strsplit0(readTable(file.path(wd.icgc.vcf, "../point_mutations.list"), header=F, rownames=F, sep=""), "_mutcall_filtered.vcf", 1)
+list <- strsplit0(readTable(file.path(wd.icgc.cna, "copy_number_alterations.list"), header=F, rownames=F, sep=""), "_mutcall_filtered.vcf", 1)
 length(list)
-# [1] 2703
+# [1] 2777
 
 overlaps <- intersect(rownames(release), list)
 length(overlaps)
-# [1] 2521
+# [1] 2595
 release <- release[overlaps,]
 rownames(release) <- release$tumor_wgs_icgc_specimen_id
 
 overlaps <- intersect(rownames(samples), rownames(release))
 length(overlaps)
-# [1] 2373
+# [1] 2443
 release     <- release[overlaps,]
-samples.mut <- samples[overlaps,]
-samples.mut$tumor_wgs_aliquot_id <- release$tumor_wgs_aliquot_id
-samples.mut <- setProliferation(samples.mut, cor)
-nrow(samples.mut)
-# [1] 2373
+samples.cna <- samples[overlaps,]
+samples.cna$tumor_wgs_aliquot_id <- release$tumor_wgs_aliquot_id
+samples.cna <- setProliferation(samples.cna, cor)
+nrow(samples.cna)
+# [1] 2443
+writeTable(samples.cna[, c("icgc_specimen_id", "tumor_wgs_aliquot_id")], file.path(wd.meta, paste0("copy_number_alterations.txt")), colnames=F, rownames=F, sep="\t")
 
 # -----------------------------------------------------------------------------
-# Assigning Ensembl genes to each SNVs
+# Assigning copy numbers for each Ensembl gene in each sample
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
 for (s in 1:nrow(samples.mut)) {

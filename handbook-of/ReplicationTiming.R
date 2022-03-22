@@ -52,6 +52,14 @@ getBEDFromSegment <- function(bed.gc.o, seg.gc) {
    return(bed.gc.chr.end.start)
 }
 
+getEnsGenesFromSegment <- function(seg) {
+   ensGene.chr <- subset(ensGene, chromosome_name == seg$CHR)
+   ensGene.chr.end <- ensGene.chr[which(ensGene.chr$end_position >= seg$START),]
+   ensGene.chr.end.start <- ensGene.chr.end[which(ensGene.chr.end$start_position <= seg$END),]
+ 
+   return(ensGene.chr.end.start)
+}
+
 setNRDCN <- function(nrd.gc.cn, segs.gc, bed.gc.o) {
    bed.gc.o$BED <- rownames(bed.gc.o)
  

@@ -222,6 +222,14 @@ save(table, table.histology, icgc, samples.h, samples.v, file=file.path(wd.rt.pl
 # Pan-cancer survival analysis
 # Last Modified: 16/03/22
 # -----------------------------------------------------------------------------
+library(survival)
+library(survminer)
+library(tidyverse)
+library(broom)
+library(grid)
+library(dplyr)
+#library(ggalt)
+
 samples.surv <- survICGC(samples)
 nrow(samples.surv)
 # [1] 1680
@@ -346,7 +354,8 @@ file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/correlation_
 plotJust(file.name, "OS of 1,580 patients", "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, line=2.53)
 
 save(icgc, samples, samples.surv, samples.surv.h, samples.surv.h2, sample, s, mapping, clinicals, hists, file="/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc-wgs-rt-surv_1580.RData")
-
+writeTable(samples, file.path(wd.meta, paste0("samples.txt")), colnames=T, rownames=T, sep="\t")
+writeTable(cor, file.path(wd.meta, paste0("cor.txt")), colnames=F, rownames=F, sep="")
 
 
 ##
