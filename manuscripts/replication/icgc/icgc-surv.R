@@ -30,7 +30,7 @@ base  <- tolower(BASE)
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 wd.meta  <- file.path(wd, BASE, "metadata")
 
-wd.rt.plots <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/"
+wd.rt.plots <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/"
 
 # -----------------------------------------------------------------------------
 # 
@@ -112,7 +112,7 @@ for (h in 1:length(histologies)) {
    sum <- c()
    for (s in 1:nrow(samples)) {
       sample <- rownames(samples)[s]
-      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
       
       sum <- c(sum, as.numeric(cor))
    }
@@ -123,7 +123,7 @@ writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replica
 
 ###
 ##
-wd.rt.data <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/"
+wd.rt.data <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/"
 donors <- c("icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
 samples <- toTable(0, 11, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "icgc_specimen_id", "histology_abbreviation", donors))
 idx.cor    <- 0
@@ -250,14 +250,14 @@ for (h in 1:length(hists)) {
          if (!is.na(surv_pvalue(fit)$pval)) {
             pvals <- c(pvals, surv_pvalue(fit)$pval)
             rhos <- c(rhos, samples.surv.h2$COR[s])
-            #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", h, "_", hist))
+            #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_in-silico_", h, "_", hist))
             #main.text <- c("PCAWG", hist)   ##, expression(italic('in silico')~"sorting"))
             #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
             #icgc$COR_P_OS[h] <- surv_pvalue(fit)$pval
           
             #res.cox <- coxph(Surv(OS_month, OS_censor) ~ COR + donor_sex + donor_age_at_diagnosis, data=samples.hist.surv)
             #res.cox <- coxph(Surv(OS_month, OS_censor) ~ COR, data=samples.hist.surv)
-            #pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", hist, ".pdf"), height=3, width=5)
+            #pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/hazard_", hist, ".pdf"), height=3, width=5)
             #ggforest(res.cox, data=samples.hist.surv, main=paste0("Hazard ratio in ", hist), cpositions = c(0.02, 0.22, 0.4), fontsize=0.7)
             #dev.off()
          }
@@ -274,11 +274,11 @@ for (h in 1:length(hists)) {
          if (as.numeric(summary(samples.surv.h2$SG1)[1]) >= 10 && as.numeric(summary(samples.surv.h2$SG1)[2]) >= 10) {
             x <- rhos
             y <- -log10(pvals)
-            file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hists/correlation_in-silico_P_KM_OS_", hist)
+            file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hists/correlation_in-silico_P_KM_OS_", hist)
             #plotJust0(file.name, hist, "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, samples.surv.h2$COR[s], line=2.53)
     
             fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.h2)
-            file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hists/survfit_in-silico_", hist))
+            file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hists/survfit_in-silico_", hist))
             main.text <- c(hist, paste0("Divided by rho = ", round0(rhos[s], 2)))   ##, expression(italic('in silico')~"sorting"))
             #plotSurvfit(fit, file.name, main.text, c("Resting", "Proliferating"), c(blue, red))
             
@@ -287,7 +287,7 @@ for (h in 1:length(hists)) {
             samples.surv.h2$SEX <- gsub("female", "F", samples.surv.h2$SEX)   ## BUG FIX 07/05/19: 0=alive, 1=dead
             samples.surv.h2$SEX <- gsub("male",   "M", samples.surv.h2$SEX)
             res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + RHO + SEX + AGE, data=samples.surv.h2)
-            pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hists/hazard_in-silico_", hist, ".pdf"), height=2.7, width=5)
+            pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hists/hazard_in-silico_", hist, ".pdf"), height=2.7, width=5)
             ggforest(res.cox, data=samples.surv.h2, main=hist, cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
             dev.off()
          }
@@ -309,7 +309,7 @@ for (s in 1:nrow(samples.surv.h)) {
  
    ##
    fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.h)
-   file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_in-silico_", s, "_", sample$icgc_specimen_id, "_80_0.07_2_3_1.6_1580_Proliferation_00"))
+   file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_in-silico_", s, "_", sample$icgc_specimen_id, "_80_0.07_2_3_1.6_1580_Proliferation_00"))
    main.text <- c("Overall survival (OS)", "")   ##samples.surv.h paste0("Divided by rho = ", round0(sample$COR, 2)))   ##, expression(italic('in silico')~"sorting"))
    plotSurvfit(fit, file.name, main.text, c("Resting", "Proliferating"), c(blue, red))
    samples.surv.h$COR_P_OS[s] <- surv_pvalue(fit)$pval
@@ -321,7 +321,7 @@ for (s in 1:nrow(samples.surv.h)) {
    samples.surv.h2$SEX <- gsub("female", "F", samples.surv.h2$SEX)   ## BUG FIX 07/05/19: 0=alive, 1=dead
    samples.surv.h2$SEX <- gsub("male",   "M", samples.surv.h2$SEX)
    res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + RHO + SEX + AGE, data=samples.surv.h2)
-   pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/hazard_", sample$icgc_specimen_id, "_2.7_1580_fontsize=2.8_01_3*6_test2.pdf"), height=3, width=6)
+   pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hazard_", sample$icgc_specimen_id, "_2.7_1580_fontsize=2.8_01_3*6_test2.pdf"), height=3, width=6)
    #ggforest(res.cox, data=samples.surv.h2, main=paste0("Hazard ratio divided by rho = ", round0(sample$COR, 2)), cpositions = c(0.02, 0.15, 0.35), fontsize=2.5)
    ggforest(res.cox, data=samples.surv.h2, main="", cpositions = c(0.01, 0.15, 0.35), fontsize=2.8)
    dev.off()
@@ -341,11 +341,11 @@ samples.surv.h$SG1 <- as.factor(samples.surv.h$SG1)
 
 x <- samples.surv.h2$COR
 y <- -log10(samples.surv.h2$COR_P_OS)
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_P_KM_OS_1580_P_offset_bold_new_14.5_lwd=3_lwd=3")
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/correlation_in-silico_P_KM_OS_1580_P_offset_bold_new_14.5_lwd=3_lwd=3")
 #plotJust(file.name, "Kaplan-Meier OS", expression(italic('in silico')~"sorting"), "-log10(p-value)", x, y, line=2.7, ymax=19.5)
 plotJust(file.name, "OS of 1,580 patients", "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, line=2.53)
 
-save(icgc, samples, samples.surv, samples.surv.h, samples.surv.h2, sample, s, mapping, clinicals, hists, file="/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/icgc-wgs-rt-surv_1580.RData")
+save(icgc, samples, samples.surv, samples.surv.h, samples.surv.h2, sample, s, mapping, clinicals, hists, file="/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc-wgs-rt-surv_1580.RData")
 
 
 
@@ -360,7 +360,7 @@ fisher.test(test)[[1]]
 # [1] 0.5063105
 
 file.name <- paste0("boxplot_", sample$icgc_specimen_id, "_M1-vs-M2_Age")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/", file.name, subset(samples.surv, SG1 == "G1")$donor_age_at_diagnosis, subset(samples.surv, SG1 == "S")$donor_age_at_diagnosis, hist, names=c("G1-like", "S-like"), cols=c(blue, red))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/", file.name, subset(samples.surv, SG1 == "G1")$donor_age_at_diagnosis, subset(samples.surv, SG1 == "S")$donor_age_at_diagnosis, hist, names=c("G1-like", "S-like"), cols=c(blue, red))
 
 
 
@@ -381,7 +381,7 @@ for (h in nrow(icgc):1) {
    if (nrow(samples.hist) > 1) {
       x <- samples.hist[, colname]
       y <- samples.hist$COR
-      file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/correlation_in-silico_vs_", colname, "_", hist)
+      file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", colname, "_", hist)
       plotCorrelation(file.name, hist, "Age", expression(bolditalic('in silico')~"sorting"), x, y, "topright", line=2.4)
       
       cor <- cor.test(y, x, method="spearman", exact=F)
@@ -405,7 +405,7 @@ for (h in 1:nrow(icgc)) {
    if (nrow(samples.hist) > 0) {
       x <- samples.hist[, colname]
       y <- samples.hist$COR
-      file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_vs_", colname, "_", hist)
+      file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/correlation_in-silico_vs_", colname, "_", hist)
       #plotCorrelation(file.name, hist, "Survival time", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
   
       cor <- cor.test(y, x, method="spearman", exact=F)
@@ -446,25 +446,25 @@ for (h in 1:nrow(icgc)) {
      
        ##
        #fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.hist.surv)
-       #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/M2/survfit_", hist, "_in-silico"))
+       #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/M2/survfit_", hist, "_in-silico"))
        #main.text <- c(hist, expression(italic('in silico')~"sorting"))
        #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
      
        ##
        fit <- survfit(Surv(OS_month, OS_censor) ~ M2, data=samples.hist.surv)
-       file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", hist, "_M2"))
+       file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_", hist, "_M2"))
        main.text <- c(hist, expression(italic('in silico')~"sample sorting"))
        plotSurvfit(fit, file.name, main.text, c("M1", "M2"), c(blue, red))
      
        ##
        #fit <- survfit(Surv(OS_month, OS_censor) ~ Q4, data=samples.hist.surv)
-       #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/Q4/survfit_", hist, "_Q4"))
+       #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/Q4/survfit_", hist, "_Q4"))
        #main.text <- c(hist, expression(bolditalic('in silico')~"sorting"))
        #plotSurvfit(fit, file.name, main.text, c("Q1", "Q2", "Q3", "Q4"), c(blue, blue.lighter, red.lighter, red))
      
        ##
        #fit <- survfit(Surv(OS_month, OS_censor) ~ Sex, data=samples.hist.surv)
-       #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", hist, "_SEX"))
+       #file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_", hist, "_SEX"))
        #main.text <- c(hist, expression(bolditalic('in silico')~"sorting"))
        #plotSurvfit(fit, file.name, main.text, c("M", "F"), c(blue.lighter, red.lighter))
    }
@@ -479,49 +479,49 @@ res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + SEX + AGE, data=samples
 colname <- "donor_survival_time"
 x <- samples.surv[, colname]
 y <- samples.surv$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_vs_", colname, "_", "ALL")
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/correlation_in-silico_vs_", colname, "_", "ALL")
 plotCorrelation(file.name, "1,683 PCAWG samples", "Survival time", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
 
 colname <- "donor_age_at_diagnosis"
 x <- samples.surv[, colname]
 y <- samples.surv$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/correlation_in-silico_vs_", colname, "_", "ALL_flip")
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/correlation_in-silico_vs_", colname, "_", "ALL_flip")
 plotCorrelation(file.name, "1,683 PCAWG samples", expression(italic('in silico')~"sorting"), "Age at diagnosis", y, x, "topright", line=2.4)
 
 x <- samples.surv.pos[, colname]
 y <- samples.surv.pos$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/correlation_in-silico_vs_", colname, "_", "ALL_RHO>0_flip")
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", colname, "_", "ALL_RHO>0_flip")
 plotCorrelation(file.name, "879 PCAWG samples (RHO > 0)", expression(italic('in silico')~"sorting"), "Age at diagnosis", y, x, "topright", line=2.4)
 
 x <- samples.surv.neg[, colname]
 y <- samples.surv.neg$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/correlation_in-silico_vs_", colname, "_", "ALL_RHO<0_flip")
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", colname, "_", "ALL_RHO<0_flip")
 plotCorrelation(file.name, "764 PCAWG samples (RHO < 0)",  expression(italic('in silico')~"sorting"), "Age at diagnosis", y, x, "topright", line=2.4)
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ donor_sex, data=samples.surv)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_ALL_Sex"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_ALL_Sex"))
 main.text <- c("Sex", "")
 plotSurvfit(fit, file.name, main.text, c("F", "M"), c(red.lighter, blue.lighter))
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ donor_sex, data=samples.surv.pos)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_ALL_Sex_pos"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_ALL_Sex_pos"))
 main.text <- c("Sex", "Slope > 0")
 plotSurvfit(fit, file.name, main.text, c("F", "M"), c(red.lighter, blue.lighter))
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ donor_sex, data=samples.surv.neg)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_ALL_Sex_neg"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_ALL_Sex_neg"))
 main.text <- c("Sex", "Slope < 0")
 plotSurvfit(fit, file.name, main.text, c("F", "M"), c(red.lighter, blue.lighter))
 
 ## Wow
 file.name <- paste0("boxplot_PCAWG_F-vs-M_COR")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(samples.surv, donor_sex == "male")$COR, subset(samples.surv, donor_sex == "female")$COR, expression(italic('in silico')~"sorting"), names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", file.name, subset(samples.surv, donor_sex == "male")$COR, subset(samples.surv, donor_sex == "female")$COR, expression(italic('in silico')~"sorting"), names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
 
 file.name <- paste0("boxplot_PCAWG_F-vs-M_Age")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(samples.surv, donor_sex == "male")$donor_age_at_diagnosis, subset(samples.surv, donor_sex == "female")$donor_age_at_diagnosis, "All", names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", file.name, subset(samples.surv, donor_sex == "male")$donor_age_at_diagnosis, subset(samples.surv, donor_sex == "female")$donor_age_at_diagnosis, "All", names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
 
 file.name <- paste0("boxplot_PCAWG_G1-vs-S_Age")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(samples.surv, SG1 == "G1")$donor_age_at_diagnosis, subset(samples.surv, SG1 == "S")$donor_age_at_diagnosis, "All", names=c("G1", "S"), cols=c(blue, red))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", file.name, subset(samples.surv, SG1 == "G1")$donor_age_at_diagnosis, subset(samples.surv, SG1 == "S")$donor_age_at_diagnosis, "All", names=c("G1", "S"), cols=c(blue, red))
 
 
 ###
@@ -529,7 +529,7 @@ plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(sa
 res.cox <- coxph(Surv(OS_month, OS_censor) ~ SG1 + COR + donor_sex + donor_age_at_diagnosis, data=samples.surv)
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_", "ALL", "_S-vs-G1"))
 main.text <- c("Cell cycle statue", "")
 plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
@@ -553,7 +553,7 @@ dev.off()
 ##
 #res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv.pos)
 #fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.pos)
-#file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope>0"))
+#file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope>0"))
 #main.text <- c("Cell cycle statue", "Slope > 0")
 #plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
@@ -565,11 +565,11 @@ dev.off()
 ##
 #res.cox <- coxph(Surv(OS_month, OS_censor) ~ In_silico + G1_vs_S + Sex + Age, data=samples.surv.neg)
 fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.neg)
-file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope<0"))
+file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/survfit_", "ALL", "_S-vs-G1_Slope<0"))
 main.text <- c("Cell cycle statue", "Slope < 0")
 plotSurvfit(fit, file.name, main.text, c("G1-like", "S-like"), c(blue, red))
 
-pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/hazard_", "ALL_RHO<0", "_label.pdf"), height=3, width=5)
+pdf(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/hazard_", "ALL_RHO<0", "_label.pdf"), height=3, width=5)
 ggforest(res.cox, data=samples.surv.neg, main=paste0("Hazard ratio in ", "RHO < 0"), cpositions = c(0.02, 0.22, 0.4), fontsize=2)
 dev.off()
 
@@ -603,13 +603,13 @@ test[2, 2] <- nrow(subset(subset(samples.hist.surv, donor_sex == "female"), SG1 
 
 ## Wow
 file.name <- paste0("boxplot_", hist, "_F-vs-M_COR")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(samples.hist.surv, donor_sex == "male")$COR, subset(samples.hist.surv, donor_sex == "female")$COR, hist, names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", file.name, subset(samples.hist.surv, donor_sex == "male")$COR, subset(samples.hist.surv, donor_sex == "female")$COR, hist, names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
 
 file.name <- paste0("boxplot_", hist, "_F-vs-M_Age")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(samples.hist.surv, donor_sex == "male")$donor_age_at_diagnosis, subset(samples.hist.surv, donor_sex == "female")$donor_age_at_diagnosis, hist, names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", file.name, subset(samples.hist.surv, donor_sex == "male")$donor_age_at_diagnosis, subset(samples.hist.surv, donor_sex == "female")$donor_age_at_diagnosis, hist, names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
 
 file.name <- paste0("boxplot_", hist, "_M1-vs-M2_Age")
-plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/", file.name, subset(samples.hist.surv, M2 == 1)$donor_age_at_diagnosis, subset(samples.hist.surv, M2 == 2)$donor_age_at_diagnosis, hist, names=c("M1", "M2"), cols=c(blue, red))
+plotBox02("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", file.name, subset(samples.hist.surv, M2 == 1)$donor_age_at_diagnosis, subset(samples.hist.surv, M2 == 2)$donor_age_at_diagnosis, hist, names=c("M1", "M2"), cols=c(blue, red))
 
 
 

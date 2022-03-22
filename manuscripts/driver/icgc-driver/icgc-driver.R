@@ -54,28 +54,22 @@ for (s in 1:nrow(drivers)) {
    }
 }
 drivers <- drivers[which(!is.na(drivers$icgc_specimen_id)),]
-drivers.genes <- testFishers(drivers, samples.surv.h, s=20, f=1)
+drivers.genes <- testFishers(drivers, samples.sg1, s=20, f=1)
 
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 18/02/22
 # -----------------------------------------------------------------------------
 testFishers <- function(drivers, samples.sg1, s=20, f=5) {
-   genes <- as.data.frame(sort(table(drivers$gene), decreasing=T))
-   colnames(genes) <- c("gene", "gene_freq")
+   genes <- toTable(NA, 10, nrow(table(drivers$gene)), c("gene", "gene_freq", "sample_freq", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "ttype", "top_category"))
+   genes[, 1:2] <- as.data.frame(sort(table(drivers$gene), decreasing=T))
    
-   genes$sample_freq <- NA
+   ## sample_freq
    for (g in 1:nrow(genes))
       genes$sample_freq[g] <- length(unique(subset(drivers, gene == genes$gene[g])$icgc_specimen_id))
    genes <- subset(genes, sample_freq >= s)
 
-   genes$MUT_G1 <- NA
-   genes$MUT_S  <- NA
-   genes$WT_G1  <- NA
-   genes$WT_S   <- NA
-   genes$Fishers_P <- NA
-   genes$ttype <- NA
-   genes$top_category <- NA
+   ## Fishers' test
    for (g in 1:nrow(genes)) {
       ids   <- unique(subset(drivers, gene == genes$gene[g])$icgc_specimen_id)
       types <- unique(subset(drivers, gene == genes$gene[g])$ttype)
@@ -87,23 +81,25 @@ testFishers <- function(drivers, samples.sg1, s=20, f=5) {
          samples.mut <- subset(samples.sg1, icgc_specimen_id %in% ids)
          samples.wt  <- samples.sg1[setdiff(rownames(samples.sg1), rownames(samples.mut)),]
       
-         test <- toTable(0, 2, 2, c("G1", "S"))
-         rownames(test) <- c("MUT", "WT")
-         test[1, 1] <- nrow(subset(samples.mut, SG1 == "G1"))
-         test[1, 2] <- nrow(subset(samples.mut, SG1 == "S"))
-         test[2, 1] <- nrow(subset(samples.wt,  SG1 == "G1"))
-         test[2, 2] <- nrow(subset(samples.wt,  SG1 == "S"))
+         if (nrow(samples.mut) >= s) {
+            test <- toTable(0, 2, 2, c("G1", "S"))
+            rownames(test) <- c("MUT", "WT")
+            test[1, 1] <- nrow(subset(samples.mut, SG1 == "G1"))
+            test[1, 2] <- nrow(subset(samples.mut, SG1 == "S"))
+            test[2, 1] <- nrow(subset(samples.wt,  SG1 == "G1"))
+            test[2, 2] <- nrow(subset(samples.wt,  SG1 == "S"))
          
-         genes$MUT_G1[g] <- nrow(subset(samples.mut, SG1 == "G1"))
-         genes$MUT_S[g]  <- nrow(subset(samples.mut, SG1 == "S"))
-         genes$WT_G1[g]  <- nrow(subset(samples.wt,  SG1 == "G1"))
-         genes$WT_S[g]   <- nrow(subset(samples.wt,  SG1 == "S"))
-         genes$Fishers_P[g] <- fisher.test(test)[[1]]
+            genes$MUT_G1[g] <- nrow(subset(samples.mut, SG1 == "G1"))
+            genes$MUT_S[g]  <- nrow(subset(samples.mut, SG1 == "S"))
+            genes$WT_G1[g]  <- nrow(subset(samples.wt,  SG1 == "G1"))
+            genes$WT_S[g]   <- nrow(subset(samples.wt,  SG1 == "S"))
+            genes$P[g]      <- fisher.test(test)[[1]]
+         }
       }
    }
-   genes <- genes[order(genes$Fishers_P),]
+   genes <- genes[order(genes$P),]
    
-   return(genes[which(!is.na(genes$Fishers_P)),])
+   return(genes[which(!is.na(genes$P)),])
 }
 
 #samples.sg1 <- samples
@@ -202,8 +198,8 @@ mutationals <- as.data.frame(sort(table(drivers.mutational$gene), decreasing=T))
 # 31      NF1   20
 
 ##
-ids   <- unique(subset(drivers, gene == "SMAD4")$icgc_specimen_id)
-types <- unique(subset(drivers, gene == "SMAD4")$ttype)
+ids   <- unique(subset(drivers, gene == "PARK2")$icgc_specimen_id)
+types <- unique(subset(drivers, gene == "PARK2")$ttype)
 samples.mut <- subset(samples.sg1, icgc_specimen_id %in% ids)
 samples.wt  <- samples.sg1[setdiff(rownames(samples.sg1), rownames(samples.mut)),]
 

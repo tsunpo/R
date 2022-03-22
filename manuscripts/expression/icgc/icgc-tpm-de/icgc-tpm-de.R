@@ -27,7 +27,7 @@ base <- tolower(BASE)
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
 #wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias")
 
-wd.anlys <- file.path(wd, BASE, BASE, "analysis")
+wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")

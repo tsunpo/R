@@ -141,6 +141,16 @@ survICGC <- function(samples.hist) {
       return(samples.hist[1,][-1,])
 }
 
+setProliferation <- function(samples.sg1, cor) {
+   samples.sg1$SG1 <- "G1"
+   idx <- which(samples.sg1$COR >= cor)
+   if (length(idx) != 0)
+      samples.sg1[idx,]$SG1 <- "S"
+   samples.sg1$SG1 <- as.factor(samples.sg1$SG1)
+   
+   return(samples.sg1)
+}
+
 # -----------------------------------------------------------------------------
 # Methods:  analysis
 # Last Modified: 09/08/21
