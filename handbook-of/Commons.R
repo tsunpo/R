@@ -96,6 +96,10 @@ strsplit0 <- function(list, sep, pos) {
    return(mapply(x = 1:length(list), function(x) unlist(strsplit(list[x], sep))[pos]))
 }
 
+which0 <- function(df, value) {
+   return(which(rownames(df) == value))
+}
+
 # -----------------------------------------------------------------------------
 # Method: Shortcuts for fetching an Ensembl gene
 # Usages: getGene("ENSG00000157168")

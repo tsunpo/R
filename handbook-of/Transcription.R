@@ -100,7 +100,7 @@ plotDensity <- function(medians, BASE, file.name, title, pseudocount, ymax) {
    dev.off()
 }
 
-plotDensity0 <- function(medians, BASE, file.name, title, pseudocount, ymax) {
+plotDensity0 <- function(medians, BASE, file.name, title, pseudocount, ymax, tpm=0) {
    xlab.text <- paste0("log2(TPM + ", pseudocount, ")")
    ylab.text <- "Density"
    d <- density(medians)
@@ -115,7 +115,7 @@ plotDensity0 <- function(medians, BASE, file.name, title, pseudocount, ymax) {
    abline(v=q, col=c("black", "black", "black", "black", "black"), lty=c(1, 5, 1, 5, 1), lwd=c(1, 1, 1, 1, 1))
    #for (x in 2:5)
    #   text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
-   text(q[1], ymax, "TPM = 0", cex=1.3, col="black") 
+   text(q[1], ymax, paste0("TPM = ", tpm), cex=1.3, col="black") 
    #text(q[3], ymax, "Median", cex=1, col="black") 
    #text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
  
@@ -139,13 +139,13 @@ plotHistogram <- function(medians, BASE, file.name, title, pseudocount, ymax, br
    dev.off()
 }
 
-plotDensityHistogram <- function(tpm.gene, file.main, title) {
+plotDensityHistogram <- function(tpm.gene, file.main, title, tpm=0) {
    pcs <- c(1, 0.1, 0.01)
    for (c in 1:1) {
       pc <- pcs[c]
   
       tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=pc)
-      plotDensity0(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc", pc, ".pdf"), title, pseudocount=pc, NULL)
+      plotDensity0(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_density_pc", pc, ".pdf"), title, pseudocount=pc, NULL, tpm=tpm)
       #plotHistogram(tpm.gene.log2$MEDIAN, BASE, paste0(file.main, "_hist_pc", pc, ".pdf"), title, pseudocount=pc, NULL)
    }
 }
@@ -390,6 +390,10 @@ getFinalExpression <- function(expr, pheno.expr) {
 
 getExpressed <- function(expr) {   ## Not expressed (TPM = 0) genes in any of the samples 
    return(mapply(x = 1:nrow(expr), function(x) !any(as.numeric(expr[x,]) == 0)))
+}
+
+removeMissing <- function(expr) {
+   return(mapply(x = 1:nrow(expr), function(x) !any(is.na(expr[x,]))))
 }
 
 ## Differential expression analysis methods

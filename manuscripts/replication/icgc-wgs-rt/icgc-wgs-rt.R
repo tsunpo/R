@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 19/02/22
 # =============================================================================
-wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "Survival.R", "Transcription.R", "survminer/ggforest.R")
@@ -21,66 +21,100 @@ load(file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 # Step 0: Set working directory
 # Last Modified: 18/02/22
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "ICGC"
 base  <- tolower(BASE)
 
 wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 wd.meta  <- file.path(wd, BASE, "metadata")
 
-wd.rt.plots <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/"
+wd.anlys  <- file.path(wd, BASE, "analysis")
+wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data")
+wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
 # 
-# Last Modified: 18/02/22
+# Last Modified: 29/03/22
 # -----------------------------------------------------------------------------
-raw <- readTable(file.path(wd.meta, "PCAWG.raw.data.copy_number.converted_data.list"), header=F, rownames=F, sep="\t")
-# > length(raw)
+raws <- readTable(file.path(wd.meta, "PCAWG.raw.data.copy_number.converted_data.list"), header=F, rownames=F, sep="\t")
+length(raws)
 # [1] 2951
-seg <- readTable(file.path(wd.meta, "PCAWG.raw.data.copy_number.sclust_final_copy_number_analysis_files.list"), header=F, rownames=F, sep="\t")
-# > length(seg)
+segs <- readTable(file.path(wd.meta, "PCAWG.raw.data.copy_number.sclust_final_copy_number_analysis_files.list"), header=F, rownames=F, sep="\t")
+length(segs)
 # [1] 2778
-overlaps <- intersect(seg, gsub("_CONVERTED", "", raw))
-# > length(overlaps)
+overlaps <- intersect(segs, gsub("_CONVERTED", "", raws))
+length(overlaps)
 # [1] 2777
 
-table <- readTable(file.path(wd.meta, "PCAWG.wgs_id_histology_appreviations.txt"), header=T, rownames=T, sep="\t")
-dim(table)
-overlaps.2 <- intersect(rownames(table), overlaps)
-table <- table[overlaps.2,]
-table$project_code <- ""
+totals <- readTable(file.path(wd.meta, "PCAWG.wgs_id_histology_appreviations.txt"), header=T, rownames=T, sep="\t")
+nrow(totals)
+# [1] 2883
 
-mapping <- readTable(file.path(wd.meta, "PCAWG.wgs_id_histology_table_mached.txt"), header=T, rownames=F, sep="\t")
-# > dim(mapping)
-# [1] 3911   29
+overlaps.2 <- intersect(rownames(totals), overlaps)
+totals <- totals[overlaps.2,]
+totals$project_code <- ""
+nrow(totals)
+# [1] 2747
 
-idx <- which(table$wgs_id %in% mapping$pcawg_wgs_id)
-table <- table[idx,]
-rownames(table) <- table$specimen_id
+mappings <- readTable(file.path(wd.meta, "PCAWG.wgs_id_histology_table_mached.txt"), header=T, rownames=F, sep="\t")
+nrow(mappings)
+# [1] 3911
+idx <- which(totals$wgs_id %in% mappings$pcawg_wgs_id)
+totals <- totals[idx,]
+nrow(totals)
+# [1] 2744
 
-for (s in 1:nrow(table)) {
-   codes <- mapping[which(mapping$pcawg_wgs_id == table$wgs_id[s]),]$project_code
+dim(subset(as.data.frame(table(samples$icgc_donor_id)), Freq > 1))
+# [1] 53  2
+sum(subset(as.data.frame(table(samples$icgc_donor_id)), Freq > 1)$Freq)
+# [1] 163
+dim(subset(as.data.frame(table(samples.surv$icgc_donor_id)), Freq > 1))
+# [1] 38  2
+sum(subset(as.data.frame(table(samples.surv$icgc_donor_id)), Freq > 1)$Freq)
+# [1] 131
+dim(subset(as.data.frame(table(samples.surv.h$icgc_donor_id)), Freq > 1))
+# [1] 33  2
+sum(subset(as.data.frame(table(samples.surv.h$icgc_donor_id)), Freq > 1)$Freq)
+# [1] 120
+                
+###
+## CAUTION: There are multiple tumor_wgs_aliquot_ids
+release <- readTable(file.path(wd.meta, "data_release", "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
+rownames(release) <- release$tumor_wgs_aliquot_id
+nrow(release)
+# [1] 2834
+#idx <- which(table$wgs_id %in% release$tumor_wgs_aliquot_id)   ## f942b732-7c0b-7ec6-e040-11ac0c483f86,f8f024e5-7096-3047-e040-11ac0d481c0f,f8e61a02-6e5e-c8e2-e040-11ac0d481b70
+#table <- table[idx,]
+#rownames(table) <- table$specimen_id
+#nrow(table)
+# [1] 2566
+
+for (s in 1:nrow(totals)) {
+   codes <- mappings[which(mappings$pcawg_wgs_id == totals$wgs_id[s]),]$project_code
    if (length(codes) > 1) {
       if (codes[1] != codes[2])
          print(codes)
-      table$project_code[s] <- codes[1]
+      totals$project_code[s] <- codes[1]
    } else {
-      table$project_code[s] <- codes
+      totals$project_code[s] <- codes
    }
 }
-sort(table(table$project_code), decreasing=T)
-sort(table(table$histology_abbreviation), decreasing=T)
+#sort(table(totals$project_code), decreasing=T)
+sort(table(totals$histology_abbreviation), decreasing=T)
 
 ###
 ##
 clinicals <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DATA_RELEASE", "pcawg_donor_clinical_August2016_v9.txt"), header=T, rownames=F, sep="\t")
-# > dim(clinicals)
-# [1] 1462   18
-
+nrow(clinicals)
+# [1] 2834
 idx2 <- which(clinicals$icgc_donor_id %in% mapping$icgc_donor_id)
 clinicals <- clinicals[idx2,]
+nrow(clinicals)
+# [1] 2757
+
 clinicals$icgc_specimen_id <- NA
 for (s in 1:nrow(clinicals)) {
    ids <- mapping[which(mapping$icgc_donor_id == clinicals$icgc_donor_id[s]),]$icgc_specimen_id
@@ -90,50 +124,48 @@ for (s in 1:nrow(clinicals)) {
       clinicals$icgc_specimen_id[s] <- paste0(ids, ",")
    }
 }
-rownames(clinicals) <- clinicals$icgc_specimen_id
+rownames(clinicals) <- clinicals$icgc_donor_id
 writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DATA_RELEASE/pcawg_donor_clinical_August2016_v9_tyang2.txt", colnames=T, rownames=F, sep="\t")
+
+save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
 
 # -----------------------------------------------------------------------------
 # Stripchart
 # Last Modified: 21/04/19
 # -----------------------------------------------------------------------------
-projects <- unique(table$histology_abbreviation)
-removes  <- c("SoftTissue-Liposarc", "Cervix-SCC", "CNS-Oligo", "Bone-Benign", "Myeloid-AML", "SoftTissue-Leiomyo", "Breast-LobularCA", "Bone-Epith", "Breast-DCIS", "Myeloid-MDS", "Cervix-AdenoCA")
-diffs    <- setdiff(projects, removes)
-table.histology <- subset(table, histology_abbreviation %in% diffs)
+hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
+totals.hist <- subset(totals, histology_abbreviation %in% hists)
 
-histologies <- unique(table.histology$histology_abbreviation)
-icgc <- toTable(0, 2, length(histologies), c("MEDIAN", "N"))
-rownames(icgc) <- histologies
-for (h in 1:length(histologies)) {
-   samples   <- subset(table.histology, histology_abbreviation == histologies[h])
-   icgc$N[h] <- nrow(samples)
+icgc <- toTable(0, 2, length(hists), c("MEDIAN", "N"))
+rownames(icgc) <- hists
+for (h in 1:length(hists)) {
+   samples.hist   <- subset(totals.hist, histology_abbreviation == hists[h])
+   icgc$N[h] <- nrow(samples.hist)
    
    sum <- c()
-   for (s in 1:nrow(samples)) {
-      sample <- rownames(samples)[s]
-      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+   for (s in 1:nrow(samples.hist)) {
+      sample <- samples.hist$specimen_id[s]
+      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
       
       sum <- c(sum, as.numeric(cor))
    }
    icgc$MEDIAN[h] <- median(sum)
 }
 icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
-writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
+writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
 
 ###
 ##
-wd.rt.data <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/replication/icgc-wgs-rt/data/"
-donors <- c("icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
-samples <- toTable(0, 11, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "icgc_specimen_id", "histology_abbreviation", donors))
+donors <- c("project_code", "icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
+samples <- toTable(0, 12, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "icgc_specimen_id", "histology_abbreviation", donors))
 idx.cor    <- 0
 idx.sample <- 0
 for (h in nrow(icgc):1) {
-   samples.list <- subset(table.histology, histology_abbreviation == rownames(icgc)[h])
-   samples.q4   <- setSamplesQ4(wd.rt.data, rownames(samples.list))
+   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
+   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)
    
-   for (s in 1:nrow(samples.list)) {
-      sample <- rownames(samples.list)[s]
+   for (s in 1:nrow(samples.hist)) {
+      sample <- samples.hist$specimen_id[s]
       load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
   
       samples$COR[idx.sample + s] <- as.numeric(cor)
@@ -142,13 +174,111 @@ for (h in nrow(icgc):1) {
       
       samples[idx.sample + s, c(donors)] <- clinicals[grep(paste0(sample, ","), clinicals$icgc_specimen_id), c(donors)]
    }
-   samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.list))] <- idx.cor
-   samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.list))] <- samples.q4$Q4
-   samples$M2[(idx.sample+1):(idx.sample+nrow(samples.list))] <- samples.q4$M2
+   samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- idx.cor
+   samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q4
+   samples$M2[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$M2
    
    idx.cor <- idx.cor + 1
-   idx.sample <- idx.sample + nrow(samples.list)
+   idx.sample <- idx.sample + nrow(samples.hist)
 }
+rownames(samples) <- samples$icgc_specimen_id
+#samples.h <- samples
+samples.v <- samples
+
+###
+##
+file.name <- "stripchart_ICGC_H_black_0.25"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,612 ICGC PCAWG samples"))
+#labels <- paste0(labels=rownames(icgc), " (n=", icgc$N, ")")
+labels <- rownames(icgc)
+#cols <- c(blue, blue.lighter, red.lighter, red)
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+par(mar = c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+text(labels=labels, x=1:26, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+stripchart(COR ~ CANCER, data=samples.h, method="jitter", cex=1.5, pch=19, col=adjustcolor.gray, vertical=T, add=T, at=c(1:26))
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("Spearman's rho", side=2, line=3.5, cex=1.9)
+#mtext("", cex=1.2, line=0.3)
+#mtext(text=rownames(icgc), side=1, cex=1.9, line=1.3, at=par("usr")[3], srt=35, adj=0, xpd=T)
+
+#legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.8)
+dev.off()
+
+save(hists, totals.hist, icgc, samples.h, samples.v, samples, file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")), version=2)
+
+# -----------------------------------------------------------------------------
+# Purities
+# Last Modified: 28/03/22
+# ----------------------------------------------------------------------------
+purities <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/consensus/consensus_cnv/consensus.20170218.purity.ploidy.txt", header=T, rownames=F, sep="\t")
+
+purities$icgc_specimen_id <- NA
+for (s in 1:nrow(purities)) {
+   id <- release[which(release$tumor_wgs_aliquot_id == purities$samplename[s]),]$tumor_wgs_icgc_specimen_id
+ 
+   if (length(id) == 1) {
+      purities$icgc_specimen_id[s] <- id
+   } else {
+      print(s)
+      print(purities$samplename[s])
+      print(id)
+   }
+}
+dim(purities[!is.na(purities$icgc_specimen_id),])
+# [1] 2373    7
+purities <- purities[!is.na(purities$icgc_specimen_id),]
+rownames(purities) <- purities$icgc_specimen_id
+
+overlaps <- intersect(rownames(samples), rownames(purities))
+length(overlaps)
+# [1] 2373
+
+x <- purities[overlaps,]$purity
+y <- samples[overlaps,]$COR
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", "purity", "_n2373")
+plotCorrelation(file.name, "PCAWG (n=2,373)", "Purity", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
+
+x <- purities[overlaps,]$ploidy
+y <- samples[overlaps,]$COR
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", "ploidy", "_n2373")
+plotCorrelation(file.name, "PCAWG (n=2,373)", "Ploidy", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
+
+x <- samples$donor_age_at_diagnosis
+y <- samples$COR
+file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", "age", "_n2612")
+plotCorrelation(file.name, "PCAWG (n=2,612)", "Age at diagnosis", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
+
+##
+plotBox55("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", "boxplot_in-silico_F-vs-M", subset(samples, donor_sex == "male")$COR, subset(samples, donor_sex == "female")$COR, "PCAWG (n=2,612)", names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ###
 ##

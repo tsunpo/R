@@ -44,6 +44,12 @@ getSNVinEnsGene <- function(vcf, ensGene) {
    return(vcf.gene)
 }
 
+filtered <- function(df, colnames, cutoff) {
+   for (c in 1:length(colnames))
+      df <- df[which(df[,colnames[c]] >= cutoff),]
+   return(df)
+}
+
 # =============================================================================
 # Inner Class  : PeifLyne File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)

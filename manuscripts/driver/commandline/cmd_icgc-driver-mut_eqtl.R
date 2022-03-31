@@ -1,3 +1,7 @@
+#!/usr/bin/env Rscript
+args  <- commandArgs(TRUE)
+STRAND <- args[1]
+
 # =============================================================================
 # Manuscript   : 
 # Chapter      : Chromosome replication timing of the human genome
@@ -5,9 +9,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/06/18
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "Asymmetry.R", "Mutation.R", "Survival.R")
@@ -20,16 +24,16 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Set up working directory
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "ICGC"
 base <- tolower(BASE)
 
 wd.icgc     <- file.path(wd, BASE, "consensus")
 wd.icgc.vcf <- file.path(wd.icgc, "point_mutations", "Converted_Data")
 
-wd.meta     <- file.path(wd, BASE, "metadata", "data_release")
+wd.meta     <- file.path(wd, BASE, "metadata")
 
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.driver <- file.path(wd.anlys, "driver", paste0(base, "-driver"))
@@ -40,7 +44,10 @@ wd.driver.plots <- file.path(wd.driver, "plots")
 # Load data
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-release <- readTable(file.path(wd.meta, "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
+samples <- readTable(file.path(wd.meta, paste0("samples.txt")), header=T, rownames=T, sep="\t")[, -1]
+rho <- readTable(file.path(wd.meta, paste0("cor.txt")), header=F, rownames=F, sep="")
+
+release <- readTable(file.path(wd.meta, "data_release", "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
 rownames(release) <- release$tumor_wgs_aliquot_id
 nrow(release)
 # [1] 2834
@@ -61,22 +68,9 @@ length(overlaps)
 release     <- release[overlaps,]
 samples.mut <- samples[overlaps,]
 samples.mut$tumor_wgs_aliquot_id <- release$tumor_wgs_aliquot_id
-samples.mut <- setProliferation(samples.mut, sample$COR)
+samples.mut <- setProliferation(samples.mut, rho)
 nrow(samples.mut)
 # [1] 2373
-
-# -----------------------------------------------------------------------------
-# Assigning Ensembl genes to each SNVs
-# Last Modified: 22/03/22
-# -----------------------------------------------------------------------------
-for (s in 1:nrow(samples.mut)) {
-   sample.mut <- samples.mut[s,]
- 
-   vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(sample.mut$tumor_wgs_aliquot_id, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
-   vcf.gene <- getSNVinEnsGene(vcf, ensGene)
- 
-   writeTable(vcf.gene, gzfile(file.path(wd.driver.data, "point_mutations", paste0(sample.mut$icgc_specimen_id, "_mutcall_filtered_ens.vcf.gz"))), colnames=T, rownames=F, sep="\t")
-}
 
 # -----------------------------------------------------------------------------
 # Differential point mutations (SNV)
@@ -98,16 +92,17 @@ for (s in 1:nrow(samples.mut)) {
    mut.gene[overlaps, s] <- mut[overlaps,]$Freq
 }
 
-save(samples.mut, mut.gene, file=file.path(wd.driver.data, "icgc-driver-mut.RData"), version=2)
+save(samples.mut, mut.gene, file=file.path(wd.driver.data, "icgc-driver-mut.RData"))
 
 # -----------------------------------------------------------------------------
 # Differential point mutations (SNV)
 # Last Modified: 23/03/22
 # -----------------------------------------------------------------------------
-de.mut.gene <- toTable(0, 8, nrow(table(rownames(mut.gene))), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P"))
-de.mut.gene$MUT <- rownames(mut.gene)
+load(file.path(wd.driver.data, "icgc-driver-mut.RData"))
 
 ## Fishers' test
+de.mut.gene <- toTable(0, 8, nrow(table(rownames(mut.gene))), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P"))
+de.mut.gene$MUT <- rownames(mut.gene)
 for (g in 1:nrow(mut.gene)) {
    mut <- mut.gene[g,]
  
@@ -148,27 +143,9 @@ de.mut.gene <- cbind(annot[rownames(de),], de[, -1])
 de.mut.gene <- de.mut.gene[intersect(rownames(de.mut.gene), rownames(tpm.gene.log2)),]
 de.mut.gene$FDR <- testFDR(de.mut.gene$P, "Q")
 
-###
-##
-file.name <- 
+file.name <- paste0("de_", base, "_mut-gene_SG1_fishers_q_n2373")
 save(de.mut.gene,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
 writeTable(de.mut.gene, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-##
-overlaps <- intersect(rownames(de.mut.gene), rownames(de.tpm.gene))
-x <- -log10(de.tpm.gene[overlaps,]$P)
-y <- -log10(de.mut.gene[overlaps,]$P)
-file.name <- file.path(wd.driver.data, paste0("correlation_", base, "_de-mut-gene_vs_de-tpm-gene_SG1_fishers_q_n2373-n902_g18392"))
-plotCorrelation(file.name, "Differental mutational expression", "Differental expression", "Differental mutation", x, y, pos="topright", line=2.75)
-
-sig.mut <- rownames(subset(de.mut.gene, P <= 4.37075393850223E-07))
-sig.mut.tpm <- rownames(subset(de.tpm.gene[sig.mut,], P <= 3.93766312113366E-17))
-
-sig.mut.tpm.o <- intersect(rownames(de.mut.tpm), sig.mut.tpm)
-writeTable(de.mut.tpm[sig.mut.tpm.o,], file.path(wd.driver.data, paste0(paste0("de_", base, "_mut-tpm-gene_SG1_fishers_q_n267"), ".txt")), colnames=T, rownames=F, sep="\t")
-
-
-de.mut.tpm["ENSG00000125730",]
 
 # -----------------------------------------------------------------------------
 # Differential point mutations (SNV)
@@ -263,34 +240,23 @@ save(de.mut.tpm,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
 writeTable(de.mut.tpm, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 ##
-file.name <- paste0("de_", base, "_mut-tpm_SG1_chisq_q_n902_unfiltered")
-load(file=file.path(wd.driver.data, paste0(file.name, ".RData")))
-de.mut.tpm <- subset(de.mut.tpm, SAMPLE_FREQ >= 65)                                            ## Number of patients >= 65
-nrow(de.mut.tpm)
-# [1] 10927
-
-de.mut.tpm <- filtered(de.mut.tpm, c("MUT_G1", "MUT_S", "WT_G1", "WT_S"), cutoff=10)           ## At least 10 patients in each test
-nrow(de.mut.tpm)
-# [1] 10735
-
-#de.mut.tpm <- filtered(de.mut.tpm, c("MUT_G1_2", "MUT_S_2", "WT_G1_2", "WT_S_2"), cutoff=1)   ## Expressed genes (TPM >= 5)
-overlaps <- intersect(rownames(de.mut.tpm), genes.tpm1)
-de.mut.tpm <- de.mut.tpm[overlaps,]
-nrow(de.mut.tpm)
-# [1] 8142
+#file.name <- paste0("de_", base, "_mut-tpm_SG1_chisq_q_n902_unfiltered")
+#load(file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+de.mut.tpm <- subset(de.mut.tpm, SAMPLE_FREQ >= 65)                                           ## Number of patients >= 65
+#de.mut.tpm <- filtered(de.mut.tpm, c("MUT_G1_2", "MUT_S_2", "WT_G1_2", "WT_S_2"), cutoff=5)   ## Expressed genes (TPM >= 5)
 de.mut.tpm$FDR   <- testFDR(de.mut.tpm$P,   "Q")
 de.mut.tpm$FDR_2 <- testFDR(de.mut.tpm$P_2, "Q")
 nrow(de.mut.tpm)
 # [1] 10927   ## N > 65
 # [1] 5497    ## N > 65; TPM > 5
 
-file.name <- paste0("de_", base, "_mut-tpm_SG1_chisq_q_n902_p>65_p>10_tpm>1_g8142")
+file.name <- paste0("de_", base, "_mut-tpm_SG1_chisq_q_n902_p>65_g10927")
 save(de.mut.tpm,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
 writeTable(de.mut.tpm, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 x <- -log10(de.mut.tpm$P_2)
 y <- -log10(de.mut.tpm$P)
-file.name <- file.path(wd.driver.data, paste0("correlation_", base, "_mut-tpm_SG1_chisq_q_n902_p>65_p>10_tpm>1_g8142"))
+file.name <- file.path(wd.driver.data, paste0("correlation_", base, "_mut-tpm_SG1_chisq_q_n902_p>65_g10927"))
 plotCorrelation(file.name, "Differental mutational expression", "Differental expression", "Differental mutation", x, y, pos="topright", line=2.75)
 
 ##

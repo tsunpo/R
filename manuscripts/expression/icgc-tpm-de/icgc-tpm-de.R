@@ -27,45 +27,70 @@ base <- tolower(BASE)
 wd.rna <- file.path(wd, BASE, "ngs/RNA")
 #wd.rna.raw <- file.path(wd.rna, "kallisto_hg19.ensembl_quant-b100--bias")
 
-wd.anlys <- file.path(wd, BASE, BASE, "analysis")
+wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.RData")))
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")))
 dim(tpm.gene)
 # [1] 20720  1359
-# [1] 18502  1359
 
-icgc.pos <- subset(icgc, survival_rho > 0)
-samples.surv.pos <- subset(samples.surv, histology_abbreviation %in% rownames(icgc.pos))
-nrow(samples.surv.pos)
-# [1] 905
+nrow(samples)
+# [1] 2612
 
-overlaps <- intersect(samples.surv.pos$icgc_specimen_id, colnames(tpm.gene))
+overlaps <- intersect(samples$icgc_specimen_id, colnames(tpm.gene))
+#overlaps <- intersect(samples.surv$icgc_specimen_id, colnames(tpm.gene))
 length(overlaps)
-# [1] 236
-samples.tpm <- samples.pos[overlaps,]
+# [1] 904
+# [1] 395
+samples.tpm <- samples[overlaps,]
+samples.tpm$SG1 <- "G1"
+samples.tpm[which(samples.tpm$COR >= sample$COR),]$SG1 <- "S"
+samples.tpm$SG1 <- as.factor(samples.tpm$SG1)
+
 tpm.gene <- tpm.gene[, overlaps]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.m <- tpm.gene
+tpm.gene.m$MEDIAN <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
+save(samples.tpm, tpm.gene.m, tpm.gene.log2, tpm.gene.log2.m, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.log2.m.RData")), version=2)
+
+#load(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.log2.m.RData"))
 tpm.gene.log2 <- tpm.gene.log2[rownames(subset(tpm.gene.log2.m, MEDIAN != 0)),]
+tpm.gene <- tpm.gene[rownames(tpm.gene.log2),]
 nrow(tpm.gene.log2)
-# [1] 
+# [1] 18523
+# [1] 18601
+
+for (tpm in 1:4) {
+   genes.expressed <- rownames(tpm.gene[rownames(subset(tpm.gene.m, MEDIAN >= tpm)),])
+   length(genes.expressed)
+ 
+   file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.tpm", tpm))
+   plotDensityHistogram(tpm.gene[genes.expressed,], file.main, paste0("Expressed (TPM > ", tpm, ")"), tpm=tpm)
+}
+
+genes.tpm1 <- rownames(tpm.gene[rownames(subset(tpm.gene.m, MEDIAN >= 1)),])
+length(genes.tpm1)
+# [1] 13475   ## TPM >1
+# [1] 10260   ## TPM >5
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric)
 # Last Modified: 12/03/22
 # -----------------------------------------------------------------------------
-## Test: Wilcoxon
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ## FDR : Q
 argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_SG1_wilcox_q_RHO>0_n236")
+file.name <- paste0("de_", base, "_tpm-gene-median0_SG1_wilcox_q_n904")
 file.main <- paste0("", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-# Samples with MUT SG1: 62
-# Samples with  WT SG1: 174
+# Samples with MUT SG1: 594   ## N=904
+# Samples with  WT SG1: 310
+# Samples with MUT SG1: 247   ## N=395
+# Samples with  WT SG1: 148
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
@@ -74,24 +99,72 @@ de.tpm.gene <- cbind(annot[rownames(de),], de)
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 nrow(de.tpm.gene)
-# [1] 18432
-
-pos.bad <- rownames(subset(subset(de.tpm.gene, P <= 1E-6), LOG2_FC < 0))
-pos.good <- rownames(subset(subset(de.tpm.gene, P <= 1E-6), LOG2_FC > 0))
+# [1] 18523
+# [1] 18601
 
 # -----------------------------------------------------------------------------
-# Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
+# Wilcoxon rank sum test (corrected for median COR)
+# Last Modified: 12/03/22
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+## FDR : Q
+argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-median0-log2-res_MEDAIN_SG1_wilcox_q_n904")
+file.main <- paste0("", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2.res, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+# Samples with MUT SG1: 594
+# Samples with  WT SG1: 310
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+nrow(de.tpm.gene)
+# [1] 18523
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (divided by median COR)
+# Last Modified: 19/03/22
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+## FDR : Q
+argv      <- data.frame(predictor="SG1", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-log2-div-median0_SG1_wilcox_q_n904")
+file.main <- paste0("", BASE)
+
+tpm.gene.log2.div <- tpm.gene.log2
+for (s in 1:nrow(samples.tpm)) {
+   tpm.gene.log2.div[, s] <- tpm.gene.log2[, s] / abs(samples.tpm$MEDIAN_COR[s])
+}
+
+de <- differentialAnalysis(tpm.gene.log2.div, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+# Samples with MUT SG1: 594   ## N=904
+# Samples with  WT SG1: 310
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+nrow(de.tpm.gene)
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric)
 # Last Modified: 12/03/22
 # -----------------------------------------------------------------------------
 ## Test: Wilcoxon
 ## FDR : Q
 argv      <- data.frame(predictor="donor_sex", predictor.wt="male", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0_SEX_wilcox_q_RHO>0_n236")
+file.name <- paste0("de_", base, "_tpm-gene-median0_SEX_wilcox_q_n904")
 file.main <- paste0("", BASE)
 
 de <- differentialAnalysis(tpm.gene.log2, samples.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
-# Samples with MUT donor_sex: 160
-# Samples with  WT donor_sex: 76
+# Samples with MUT donor_sex: 476
+# Samples with  WT donor_sex: 428
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
@@ -102,35 +175,34 @@ de.tpm.gene$FDR <- qvalue(de.tpm.gene$P)$qvalue
 save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
 writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 nrow(de.tpm.gene)
-# [1] 17751
+# [1] 18502
 
-pos.bad <- rownames(subset(subset(de.tpm.gene, P <= 1E-9), LOG2_FC > 0))
-pos.good <- rownames(subset(subset(de.tpm.gene, P <= 1E-9), LOG2_FC < 0))
-
-
-
-
-plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0) {
+###
+##
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, fold=1, ymax=0, line=0) {
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
    de$log10P <- -log10(de$P)
    xmax <- max(de$LOG2_FC)
    xmin <- min(de$LOG2_FC)
-   if (ymax ==0) ymax <- max(de$log10P)
+   if (ymax == 0) ymax <- max(de$log10P)
    #ymax <- 7
    
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
-   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
- 
-   abline(h=c(-log10(pvalue)), lty=5)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab="", col="lightgray", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+   
+   abline(h=c(-log10(pvalue)), lty=5, lwd=2)
 
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lighter, cex=1.4)
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue.lighter, cex=1.4)
- 
+   de.up   <- subset(de.sig, LOG2_FC > fold)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red, cex=1.4)
+   de.down <- subset(de.sig, LOG2_FC < -fold)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue, cex=1.4)
+
+   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
+   abline(v=fold, lty=5, col=red, lwd=2)
+   abline(v=-fold, lty=5, col=blue, lwd=2)
+   
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
          gene <- subset(de, external_gene_name == genes[g,]$GENE)
@@ -141,32 +213,61 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
     
             if (!is.na(gene$ADJ_1))
                if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.2)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
             else
                if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=1.2)
                else
-                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
+                  text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=1.2)
          } else
             print(genes[g,])
       }
    }
  
-   axis(side=1, at=seq(-12, 12, by=4), labels=c(-12, -8, -4, 0, 4, 8, 12), cex.axis=1.2)
+   mtext(expression("Significance [-log10("*italic('P')*")]"), side=2, line=line, cex=1.25)
+   #axis(side=1, at=seq(-4, 4, by=2), labels=c(-4, 0, 4), cex.axis=1.2)
    mtext(file.main[2], cex=1.25, line=0.3)
-   legend("topleft", legend=c("Up-regulated (L < H)", "Down-regulated (L > H)"), col=c(red.lightest, blue.lightest), pch=19, cex=1.25)
+   #legend("topleft", legend=c(paste0(nrow(de.up), " Up (G1 < S)"), paste0(nrow(de.down), " Down (G1 > S)")), col=c(red, blue), pch=19, cex=1.2)
+   legend("topleft", legend=c(paste0(nrow(de.up), " Proliferating"), paste0("    ", nrow(de.down), " Resting")), col=c(red, blue), pch=19, cex=1.2)
    dev.off()
 }
 
-## NBL expressed genes
-xlab.text <- "High/Low risk fold change [log2]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0+1_DE_p1e-3_TERT")
+## ICGC expressed genes
+xlab.text <- "Proliferating/Resting fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE_n=904_p1e-36_Proliferation")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-file.main <- c("NBL risk group-associated genes", "Low (L) vs. High (H)")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text)
+file.main <- c("Differential expression of 904 PACWG samples", "")
+plotVolcano(de.tpm.gene, 1E-36, genes, file.de, file.main, xlab.text, line=2.85)
+
+## ICGC expressed genes
+xlab.text <- "S/G1 fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE-RES_n=904_p1e-45")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("After corrected for cell cycle status", "G1-like vs. S-like")
+plotVolcano(de.tpm.gene, 1E-45, genes, file.de, file.main, xlab.text)
+
+## ICGC expressed genes
+xlab.text <- "S/G1 fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0-log2-div_DE_n=904_p1e-45")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("After divided by cell cycle status", "G1-like vs. S-like")
+plotVolcano(de.tpm.gene, 1E-45, genes, file.de, file.main, xlab.text)
+
+
+## ICGC expressed genes
+xlab.text <- "S/G1 fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_icgc_median0_DE_n=395_p1e-21")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("395 PCAWG samples", "G1-like vs. S-like")
+plotVolcano(de.tpm.gene, 1E-21, genes, file.de, file.main, xlab.text)
+
+
 
 # -----------------------------------------------------------------------------
 # Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
@@ -246,6 +347,31 @@ dev.off()
 
 
 
+# -----------------------------------------------------------------------------
+# Residuals of expression
+# Last Modified: 26/03/21; 28/08/20
+# -----------------------------------------------------------------------------
+hists <- unique(samples.tpm$histology_abbreviation)
+samples.tpm$MEDIAN_COR <- NA
+for (h in 1:length(hists)) {
+   hist <- hists[h]
+   samples.tpm[which(samples.tpm$histology_abbreviation == hist),]$MEDIAN_COR <- as.numeric(icgc[hist,]$MEDIAN)
+}
+
+#tpm.gene.res <- t(mapply(x = 1:nrow(tpm.gene), function(x) as.numeric(resid(lm(as.numeric(tpm.gene[x,]) ~ samples.tpm$MEDIAN_COR)))))
+#colnames(tpm.gene.res) <- rownames(samples.tpm)
+#rownames(tpm.gene.res) <- rownames(tpm.gene)
+#save(tpm.gene.res, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.meidan0.res.MEDIAN_COR.RData")))
+
+tpm.gene.log2.res <- t(mapply(x = 1:nrow(tpm.gene.log2), function(x) as.numeric(resid(lm(as.numeric(tpm.gene.log2[x,]) ~ samples.tpm$MEDIAN_COR)))))
+colnames(tpm.gene.log2.res) <- rownames(samples.tpm)
+rownames(tpm.gene.log2.res) <- rownames(tpm.gene.log2)
+save(tpm.gene.log2.res, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.log2.res.MEDIAN_COR.RData")))
+
+
+
+
+
 
 
 # -----------------------------------------------------------------------------
@@ -263,8 +389,9 @@ src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm
 
 ## Log2 fold change
 src$G1 <- median00(tpm.gene.log2, rownames(subset(samples.tpm, SG1 == "G1")))
-src$S <- median00(tpm.gene.log2, rownames(subset(samples.tpm, SG1 == "S")))
+src$S  <- median00(tpm.gene.log2, rownames(subset(samples.tpm, SG1 == "S")))
 src$LOG2_FC <- src$S - src$G1
+src <- src[!is.na(src$P),]
 
 ## FDR
 library(qvalue)
@@ -275,10 +402,10 @@ src <- src[order(src$P),]
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
 src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 
-writeTable(src.tpm.gene, file.path(wd.de.data, "icgc_tpm-gene-median0_src_q_RHO<0_n368.txt"), colnames=T, rownames=F, sep="\t")
-save(src.tpm.gene, samples.tpm, file=file.path(wd.de.data, "icgc_tpm-gene-median0_src_q_RHO<0_n368.RData"))
+writeTable(src.tpm.gene, file.path(wd.de.data, "src_tpm-gene-median0_icgc_q_n904.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples.tpm, file=file.path(wd.de.data, "src_tpm-gene-median0_icgc_q_n904.RData"))
 nrow(src.tpm.gene)
-# [1] 
+# [1] 18523
 
 
 

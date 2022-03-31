@@ -40,7 +40,7 @@ for (c in START:END) {
 
    colnames <- c("ensembl_gene_id", "CN")
    ensGene.cna <- toTable("", length(colnames), 0, colnames)
-   segs <- read.peiflyne.cn.seg(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/sclust_final_copy_number_analysis_files", sample$V2, paste0(sample$V2, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+   segs <- read.peiflyne.cn.seg(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/sclust_final_copy_number_analysis_files", sample$V2, paste0(sample$V2, "_iCN.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
    for (s in 1:nrow(segs)) {
       seg <- segs[s,]
       ensGene.chr.end.start <- getEnsGenesFromSegment(seg)
