@@ -15,7 +15,6 @@ invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
 load(file.path(wd.src.ref, "hg19.RData"))
-load(file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 
 # -----------------------------------------------------------------------------
 # Step 0: Set working directory
@@ -27,7 +26,7 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "ICGC"
 base  <- tolower(BASE)
 
-wd.ngs <- file.path(wd, BASE, "ngs/WGS")
+#wd.ngs <- file.path(wd, BASE, "ngs/WGS")
 wd.meta  <- file.path(wd, BASE, "metadata")
 
 wd.anlys  <- file.path(wd, BASE, "analysis")
@@ -130,7 +129,7 @@ writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DAT
 save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
 
 # -----------------------------------------------------------------------------
-# Stripchart
+# samples
 # Last Modified: 21/04/19
 # -----------------------------------------------------------------------------
 hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
@@ -157,7 +156,7 @@ writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/
 ###
 ##
 donors <- c("project_code", "icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
-samples <- toTable(0, 12, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "icgc_specimen_id", "histology_abbreviation", donors))
+samples <- toTable(0, 13, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "Q35", "icgc_specimen_id", "histology_abbreviation", donors))
 idx.cor    <- 0
 idx.sample <- 0
 for (h in nrow(icgc):1) {
@@ -177,6 +176,7 @@ for (h in nrow(icgc):1) {
    samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- idx.cor
    samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q4
    samples$M2[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$M2
+   #samples$Q35[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q35
    
    idx.cor <- idx.cor + 1
    idx.sample <- idx.sample + nrow(samples.hist)
@@ -185,9 +185,11 @@ rownames(samples) <- samples$icgc_specimen_id
 #samples.h <- samples
 samples.v <- samples
 
-###
-##
-file.name <- "stripchart_ICGC_H_black_0.25"
+# -----------------------------------------------------------------------------
+# Stripchart (black)
+# Last Modified: 21/04/19
+# -----------------------------------------------------------------------------
+file.name <- "stripchart_ICGC_samples_black_0.25"
 main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,612 ICGC PCAWG samples"))
 #labels <- paste0(labels=rownames(icgc), " (n=", icgc$N, ")")
 labels <- rownames(icgc)
@@ -212,49 +214,219 @@ dev.off()
 save(hists, totals.hist, icgc, samples.h, samples.v, samples, file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")), version=2)
 
 # -----------------------------------------------------------------------------
+# Stripchart (sorting)
+# Last Modified: 31/03/22
+# -----------------------------------------------------------------------------
+samples <- samples.h
+samples$SORTING <- "G1"
+idx <- which(samples$COR >= sample$COR)
+if (length(idx) != 0)
+   samples[idx,]$SORTING <- "S"
+samples$SORTING <- as.factor(samples$SORTING)
+
+save(hists, totals.hist, icgc, samples.h, samples.v, samples, file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")), version=2)
+
+##
+file.name <- "stripchart_ICGC_samples_0.5_1.7"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,612 ICGC PCAWG samples"))
+#labels <- paste0(labels=rownames(icgc), " (n=", icgc$N, ")")
+labels <- rownames(icgc)
+adjustcolor.red  <- adjustcolor(red, alpha.f=0.5)
+adjustcolor.blue <- adjustcolor(blue, alpha.f=0.5)
+cols <- c(adjustcolor.blue, adjustcolor.red)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+par(mar = c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+text(labels=labels, x=1:26, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+abline(h=sample$COR, lty=5, lwd=5, col=green)
+
+#stripchart(COR ~ CANCER, data=samples.h, method="jitter", cex=1.5, pch=19, col=adjustcolor.gray, vertical=T, add=T, at=c(1:26))
+stripchart(COR ~ CANCER, data=subset(samples, SORTING == "G1"), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T, at=c(1:6, 8:26))
+stripchart(COR ~ CANCER, data=subset(samples, SORTING == "S"),  method="jitter", cex=1.5, pch=19, col=cols[2], vertical=T, add=T, at=c(1:26))
+
+axis(side=2, at=seq(-0.4, 0.8, by=0.4), labels=c(-0.4, 0, 0.4, 0.8), cex.axis=1.8)
+axis(side=2, at=sample$COR, labels=round(sample$COR, 2), cex.axis=1.8, col.axis=green, font.axis=2)
+mtext("Spearman's rho", side=2, line=3.5, cex=1.9)
+
+legend("topright", legend=c(paste0("Proliferative (n=", separator(nrow(subset(samples, SORTING == "S"))), ")"), paste0("Non-proliferative (n=", separator(nrow(subset(samples, SORTING == "G1"))), ")")), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.7)
+dev.off()
+
+# -----------------------------------------------------------------------------
 # Purities
 # Last Modified: 28/03/22
 # ----------------------------------------------------------------------------
 purities <- readTable("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/consensus/consensus_cnv/consensus.20170218.purity.ploidy.txt", header=T, rownames=F, sep="\t")
+nrow(purities)
+# [1] 2778
 
 purities$icgc_specimen_id <- NA
 for (s in 1:nrow(purities)) {
-   id <- release[which(release$tumor_wgs_aliquot_id == purities$samplename[s]),]$tumor_wgs_icgc_specimen_id
- 
-   if (length(id) == 1) {
-      purities$icgc_specimen_id[s] <- id
-   } else {
-      print(s)
-      print(purities$samplename[s])
-      print(id)
+   ids <- unique(mappings[which(mappings$pcawg_wgs_id == purities$samplename[s]),]$icgc_specimen_id)
+   if (length(ids) > 1) {
+      purities$icgc_specimen_id[s] <- paste0(paste(unique(ids), collapse=","), ",")
+   } else if (length(ids) == 1) {
+      purities$icgc_specimen_id[s] <- ids
    }
 }
-dim(purities[!is.na(purities$icgc_specimen_id),])
-# [1] 2373    7
 purities <- purities[!is.na(purities$icgc_specimen_id),]
 rownames(purities) <- purities$icgc_specimen_id
+nrow(purities)
+# [1] 2745
 
+###
+##
 overlaps <- intersect(rownames(samples), rownames(purities))
 length(overlaps)
-# [1] 2373
+# [1] 2612
 
 x <- purities[overlaps,]$purity
 y <- samples[overlaps,]$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", "purity", "_n2373")
-plotCorrelation(file.name, "PCAWG (n=2,373)", "Purity", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612"))
+plotCorrelation(file.name, "PCAWG (n=2,612)", "Purity", txt.In.silico, x, y, "topleft")
 
 x <- purities[overlaps,]$ploidy
 y <- samples[overlaps,]$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", "ploidy", "_n2373")
-plotCorrelation(file.name, "PCAWG (n=2,373)", "Ploidy", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
-
-x <- samples$donor_age_at_diagnosis
-y <- samples$COR
-file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/correlation_in-silico_vs_", "age", "_n2612")
-plotCorrelation(file.name, "PCAWG (n=2,612)", "Age at diagnosis", expression(italic('in silico')~"sorting"), x, y, "topright", line=2.4)
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "ploidy", "_n2612"))
+plotCorrelation(file.name, "PCAWG (n=2,612)", "Ploidy", txt.In.silico, x, y, "topright")
 
 ##
-plotBox55("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/", "boxplot_in-silico_F-vs-M", subset(samples, donor_sex == "male")$COR, subset(samples, donor_sex == "female")$COR, "PCAWG (n=2,612)", names=c("Male", "Female"), cols=c(blue.lighter, red.lighter))
+quantile(samples$COR)
+# 0%        25%        50%        75%       100% 
+# -0.7861177 -0.7335852 -0.7081717 -0.4922725  0.7518429 
+(-0.7335852 + -0.7081717)/2
+# [1] -0.7208785
+sample$COR
+# [1] -0.7233351
+
+##
+s  <- rownames(subset(samples, SORTING == "S"))
+g1 <- rownames(subset(samples, SORTING == "G1"))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_S_n1629"))
+plotCorrelation(file.name, "Proliferative (n=1,629)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_G1_n983"))
+plotCorrelation(file.name, "Non-proliferative (n=983)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+##
+s  <- rownames(subset(samples, M2 == 2))
+g1 <- rownames(subset(samples, M2 == 1))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_M2_n1297"))
+plotCorrelation(file.name, "M2 (n=1,297)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_M1_n1315"))
+plotCorrelation(file.name, "M1 (n=1,315)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+##
+m  <- quantile(samples$COR)[3]
+s  <- rownames(subset(samples, COR >= m))
+g1 <- rownames(subset(samples, COR <  m))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_global_M2_n1306"))
+plotCorrelation(file.name, "Global M2 (n=1,306)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_global_M1_n1306"))
+plotCorrelation(file.name, "Global M1 (n=1,306)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+##
+s  <- rownames(subset(samples.surv, SORTING == "S"))
+g1 <- rownames(subset(samples.surv, SORTING == "G1"))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n1580_S_n909"))
+plotCorrelation(file.name, "Proliferative (n=909)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n1580_G1_n671"))
+plotCorrelation(file.name, "Non-proliferative (n=671)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+##
+s  <- rownames(subset(samples.surv.hist, SORTING == "S"))
+g1 <- rownames(subset(samples.surv.hist, SORTING == "G1"))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n1580_hists_S_n612"))
+plotCorrelation(file.name, "Proliferative (n=612)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n1580_hists_G1_n968"))
+plotCorrelation(file.name, "Non-proliferative (n=968)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+(-0.7081717-0.4922725)/2
+##
+q3.5  <- (quantile(samples$COR)[3] + quantile(samples$COR)[4])/2
+s  <- rownames(subset(samples, COR >= q3.5))
+g1 <- rownames(subset(samples, COR <  q3.5))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_global_q3.5_M2_846"))
+plotCorrelation(file.name, "Global Q3.5 ~ Q4 (n=846)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_global_q3.5_M1_n1766"))
+plotCorrelation(file.name, "Global Q1 ~ Q3.5 (n=1,766)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+##
+s  <- rownames(subset(samples, Q35 == 3.5))
+g1 <- rownames(subset(samples, Q35 == 1))
+
+x <- purities[s,]$purity
+y <- samples[s,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_q3.5_M2_936"))
+plotCorrelation(file.name, "Q3.5 ~ Q4 (n=936)", "Purity", txt.In.silico, x, y, "topleft", col=red)
+
+x <- purities[g1,]$purity
+y <- samples[g1,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "purity", "_n2612_q3.5_M1_n1676"))
+plotCorrelation(file.name, "Q1 ~ Q3.5 (n=1,676)", "Purity", txt.In.silico, x, y, "topleft", col=blue)
+
+
+
+
+###
+##
+idx.na <- which(is.na(samples$donor_age_at_diagnosis))
+x <- samples$donor_age_at_diagnosis[-idx.na]
+y <- samples$COR[-idx.na]
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "age", "_n2548_5*5"))
+plotCorrelation(file.name, "PCAWG (n=2,548)", "Age at diagnosis", txt.In.silico, x, y, "topleft")
+
+##
+file.name <- file.path(wd.rt.plots, "boxplot_in-silico_F-vs-M")
+plotBox(file.name, subset(samples, donor_sex == "male")$COR, subset(samples, donor_sex == "female")$COR, "PCAWG (n=2,612)", names=c("Male", "Female"), cols=c("white", "white"))
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

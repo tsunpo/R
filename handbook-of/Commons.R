@@ -157,7 +157,16 @@ getGenes <- function(genes) {
 }
 
 # -----------------------------------------------------------------------------
-# Method: Brand colours
+# Collections: Texts for plot
+# Last Modified: 01/04/22
+# -----------------------------------------------------------------------------
+text.In.silico  <- expression(italic("In silico") ~ "sorting")
+
+text.Log10.P    <- expression("-Log" * ""[10] * "(" * italic("P") * ")")
+text.Log2.TPM.1 <- expression("Log" * ""[2] * "(TPM + 1)")
+
+# -----------------------------------------------------------------------------
+# Collections: Colours for plot
 # Links: https://blog.datawrapper.de/beautifulcolors/
 #        https://medium.com/nightingale/how-to-choose-the-colors-for-your-data-visualizations-50b2557fa335
 #        https://cran.r-project.org/web/packages/unikn/vignettes/colors.html

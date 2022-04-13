@@ -44,6 +44,41 @@ getSNVinEnsGene <- function(vcf, ensGene) {
    return(vcf.gene)
 }
 
+getSNVEnsGeneTSS <- function(vcf, ensGene, window=1000000) {
+   colnames <- colnames(vcf)
+   vcf.gene <- toTable("", length(colnames), 0, colnames)
+ 
+   for (c in 1:24) {
+      chr <- chrs[c]
+      vcf.chr <- subset(vcf, CHROM == chr)
+      ensGene.chr <- subset(ensGene, chromosome_name == chr)  
+  
+      vcf.gene.chr <- toTable("", length(colnames), 0, colnames)
+      for (g in 1:nrow(ensGene.chr)) {
+         ensGene.chr.gene <- ensGene.chr[g,]
+   
+         vcf.gene.chr0 <- getEnsGeneTSS(vcf.chr, ensGene.chr.gene, window)
+         if (nrow(vcf.gene.chr0) != 0) {
+            if (nrow(vcf.gene.chr) == 0)
+               vcf.gene.chr <- getMergedTable(ensGene.chr.gene, vcf.gene.chr0)
+            else
+               vcf.gene.chr <- rbind(vcf.gene.chr, getMergedTable(ensGene.chr.gene, vcf.gene.chr0))
+         }
+      }
+  
+      if (nrow(vcf.gene.chr) != 0) {
+         vcf.gene.chr <- vcf.gene.chr[order(vcf.gene.chr$POS),]
+   
+         if (nrow(vcf.gene) == 0)
+            vcf.gene <- vcf.gene.chr
+         else
+            vcf.gene <- rbind(vcf.gene, vcf.gene.chr)
+      }
+   }
+ 
+   return(vcf.gene)
+}
+
 filtered <- function(df, colnames, cutoff) {
    for (c in 1:length(colnames))
       df <- df[which(df[,colnames[c]] >= cutoff),]

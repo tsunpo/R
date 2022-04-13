@@ -41,47 +41,53 @@ wd.driver <- file.path(wd.anlys, "driver", paste0(base, "-driver"))
 wd.driver.data  <- file.path(wd.driver, "data")
 wd.driver.plots <- file.path(wd.driver, "plots")
 
+wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt.data  <- file.path(wd.rt, "data")
+wd.rt.plots <- file.path(wd.rt, "plots")
+
+load(file=file.path(wd.rt.data, paste0("icgc_wgs.RData")))
+load(file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")))
+
 # -----------------------------------------------------------------------------
-# Set working directory
+# Load data
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-samples <- readTable(file.path(wd.meta, paste0("samples.txt")), header=T, rownames=T, sep="\t")[, -1]
-cor <- readTable(file.path(wd.meta, paste0("cor.txt")), header=F, rownames=F, sep="")
-
-release <- readTable(file.path(wd.meta, "data_release", "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
-rownames(release) <- release$tumor_wgs_aliquot_id
-nrow(release)
-# [1] 2834
-
 list <- strsplit0(readTable(file.path(wd.icgc.vcf, "../point_mutations.list"), header=F, rownames=F, sep=""), "_mutcall_filtered.vcf", 1)
 length(list)
 # [1] 2703
 
-overlaps <- intersect(rownames(release), list)
-length(overlaps)
+#overlaps <- intersect(rownames(release), list)
+#length(overlaps)
 # [1] 2521
-release <- release[overlaps,]
-rownames(release) <- release$tumor_wgs_icgc_specimen_id
-
-overlaps <- intersect(rownames(samples), rownames(release))
+overlaps <- intersect(totals$wgs_id, list)
 length(overlaps)
+# [1] 2674
+
+#nrow(samples.mut)
 # [1] 2373
-release     <- release[overlaps,]
-samples.mut <- samples[overlaps,]
-samples.mut$tumor_wgs_aliquot_id <- release$tumor_wgs_aliquot_id
-samples.mut <- setProliferation(samples.mut, cor)
-nrow(samples.mut)
-# [1] 2373
+overlaps <- intersect(rownames(samples), totals[overlaps,]$specimen_id)
+length(overlaps)
+# [1] 2542
+samples.vcf <- samples[overlaps,]
+rownames(totals) <- totals$specimen_id
+samples.vcf$tumor_wgs_aliquot_id <- totals[overlaps,]$wgs_id
+
+rm(totals)
+rm(totals.hist)
+rm(samples)
+rm(mappings)
+rm(release)
 
 # -----------------------------------------------------------------------------
 # Step 1: Finding mutations locate within Ensembl genes
 # Last Modified: 23/01/18
 # -----------------------------------------------------------------------------
 for (s in START:END) {
-   sample.mut <- samples.mut[s,]
+   sample.vcf <- samples.vcf[s,]
  
-   vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(sample.mut$tumor_wgs_aliquot_id, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
-   vcf.gene <- getSNVinEnsGene(vcf, ensGene)
+   vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(sample.vcf$tumor_wgs_aliquot_id, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
+   vcf.gene <- getSNVEnsGeneTSS(vcf, ensGene, window=500000)
  
-   writeTable(vcf.gene, gzfile(file.path(wd.driver.data, "point_mutations", paste0(sample.mut$icgc_specimen_id, "_mutcall_filtered_ens.vcf.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(vcf.gene, gzfile(file.path(wd.driver.data, "point_mutations_eqtl_1mb", paste0(sample.vcf$icgc_specimen_id, "_mutcall_filtered_ens.vcf.gz"))), colnames=T, rownames=F, sep="\t")
+   rm(vcf.gene)
 }

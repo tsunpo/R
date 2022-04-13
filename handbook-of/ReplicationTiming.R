@@ -972,6 +972,7 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
  
    q <- quantile(as.numeric(cors.all$COR))
    print(q)
+   #q35 <- (as.numeric(q[3]) + as.numeric(q[4]))/2
 
    samples.q4 <- list()
    samples.q4[[4]] <- rownames(subset(cors.all, COR > as.numeric(q[4])))
@@ -987,6 +988,9 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
    cors.all$M2[which(cors.all$Q4 %in% c(3, 4))] <- 2
    cors.all$M2[which(cors.all$Q4 %in% c(1, 2))] <- 1
 
+   #cors.all$Q35[which(cors.all$COR >= q35)] <- 3.5
+   #cors.all$Q35[which(cors.all$COR < q35)] <- 1
+   
    return(cors.all)
 }
 

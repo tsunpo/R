@@ -70,6 +70,7 @@ writeTable(genes.NBX.up.pe3, file.path(wd.de.data, paste0(file.name, ".txt")), c
 
 file.name <- paste0("genes_N-B-X_p1e-3_n14_down")
 writeTable(genes.NBX.down.pe3, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+#genes.NBX.down.pe3 <- readTable(file.path(wd.de.data, paste0(file.name, ".txt")), header=F, rownames=F, sep="\t")
 
 ##
 genes <- c(genes.NBX.up.pe3, genes.NBX.down.pe3)
@@ -450,7 +451,7 @@ p <- wilcox.test(samples.b$tumorcontent_per_sample ~ trait, exact=F)$p.value
 # -----------------------------------------------------------------------------
 plotStripchart <- function(wd.de.plots, file.name, phenos, main, names, cols, height, width, p, ymax, ymin) {
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(COR ~ group, data=phenos, xaxt="n", ylab="", ylim=c(ymin, ymax), main="", col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=2)
+   boxplot(COR ~ group, data=phenos, xaxt="n", xlab="", ylab="", ylim=c(ymin, ymax), main="", col="white", outline=F, cex.axis=1.7, cex.lab=1.8, cex.main=2)
  
    stripchart(COR ~ group, data=phenos, method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T)
    #stripchart(COR ~ group, data=subset(phenos, group == 0), method="jitter", cex=1.5, pch=19, col=cols[1], vertical=T, add=T)

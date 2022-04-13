@@ -26,9 +26,9 @@ getEnsGeneSNVs <- function(vcf.chr, ensGene.chr.gene) {
 getEnsGeneTSS <- function(vcf.chr, ensGene.chr.gene, distance) {
    if (ensGene.chr.gene$strand == 1) {
       vcf.chr.start <- subset(vcf.chr, POS >= ensGene.chr.gene$start_position - distance)
-      vcf.chr.start.end <- subset(vcf.chr.start, POS <= ensGene.chr.gene$start_position)
+      vcf.chr.start.end <- subset(vcf.chr.start, POS <= ensGene.chr.gene$start_position + distance)
    } else {
-      vcf.chr.start <- subset(vcf.chr, POS >= ensGene.chr.gene$end_position)
+      vcf.chr.start <- subset(vcf.chr, POS >= ensGene.chr.gene$end_position - distance)
       vcf.chr.start.end <- subset(vcf.chr.start, POS <= ensGene.chr.gene$end_position + distance)
    }
  

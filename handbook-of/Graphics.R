@@ -9,50 +9,21 @@
 # 
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos, line=2.75) {
-   pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(y ~ x, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=1.9)
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos, line=2.4, col="dimgray") {
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   plot(y ~ x, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    lm.fit <- lm(y ~ x)
-   abline(lm.fit, lwd=2.5)
+   abline(lm.fit, lwd=5)
  
    cor <- cor.test(y, x, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.9)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.7)
 
-   mtext(ylab.text, side=2, line=line, cex=1.85)
-   dev.off()
-}
-
-plotJust0 <- function(file.name, main.text, xlab.text, ylab.text, x, y, cor, line=2.75) {
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(y ~ x, ylab="", xaxt="n", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
-   
-   points(cor, max(y), pch=1, col=red, cex=2, lwd=2)
-   abline(v=cor, lty=5, lwd=3, col=red)
-   
-   axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
-   axis(side=1, at=cor, labels=round(cor, 2), cex.axis=1.7, col.axis=red, font.axis=2)
-   
-   mtext(ylab.text, side=2, line=line, cex=1.7)
-   dev.off()
-}
-
-plotJust <- function(file.name, main.text, xlab.text, ylab.text, x, y, line=2.75) {
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(y ~ x, ylim=c(0, 16.5), ylab="", xaxt="n", xlab=xlab.text, main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-
-   #points(sample$COR, -log10(sample$COR_P_OS), pch=1, col=yellow, cex=2, lwd=4)
-   abline(v=sample$COR, lty=5, lwd=5, col=green)
-   text(sample$COR, 14.5, expression(italic('                 P')~"="~"7.74E-15"), pos=3, cex=1.7)
-   
-   axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
-   axis(side=1, at=sample$COR, labels=round(sample$COR, 2), cex.axis=1.8, col.axis=green, font.axis=2)
-   
    mtext(ylab.text, side=2, line=line, cex=1.8)
    dev.off()
 }
 
-plotBox55 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
+plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, ylab.txt) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
    trait <- as.factor(trait)
@@ -60,20 +31,21 @@ plotBox55 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
    expr <- as.numeric(c(tpm.1, tpm.2))
    ylim <- c(min(expr), max(expr))
  
-   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=5, width=5)
-   boxplot(expr ~ trait, outline=T, names=names, main="", col=cols, xlab="", xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   boxplot(expr ~ trait, outline=T, names=names, main=main, col=cols, outcol="dimgray", xlab="", xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
-   offset <- (ylim[2] - ylim[1])/35
-   #text(1.5, ylim[2] - offset, getPvalueSignificanceLevel(p), col="black", cex=4)
- 
-   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.9)
-   axis(side=1, at=1, labels=paste0("n=", length(tpm.1)), line=1.8, col=NA, cex.axis=1.9)
-   axis(side=1, at=2, labels=paste0("n=", length(tpm.2)), line=1.8, col=NA, cex.axis=1.9)
+   legend("topleft", paste0("  p-value = ", scientific(p, digits=2)), bty="n", cex=1.7)
+   
+   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.8)
+   axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, col=NA, cex.axis=1.8)
+   axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, col=NA, cex.axis=1.8)
    #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
-   mtext(main, font=2, cex=2, line=2)
-   mtext(paste0("p-value = ", scientific(p)), cex=2, line=0.3)
-   mtext(expression(italic('in silico')~"sorting [rho]"), side=2, line=2.45, cex=1.85)
+   
+   #mtext(main, font=2, cex=1.9, line=2)
+   #mtext(paste0("p-value = ", scientific(p)), cex=1.7, line=0.3)
+   #mtext(expression(italic('In silico')~"sorting"), side=2, line=2.45, cex=1.8)
+   mtext(ylab.txt, side=2, line=2.45, cex=1.8)
    dev.off()
 }
 

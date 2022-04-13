@@ -40,11 +40,11 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 # -----------------------------------------------------------------------------
 library(survival)
 library(survminer)
-library(tidyverse)
-library(broom)
-library(grid)
-library(dplyr)
-library(ggalt)
+#library(tidyverse)
+#library(broom)
+#library(grid)
+#library(dplyr)
+#library(ggalt)
 
 icgc$survival_N <- NA
 for (h in 1:nrow(icgc)) {
@@ -70,6 +70,7 @@ samples.surv <- survICGC(samples.surv)
 nrow(samples.surv)
 # [1] 1580
 
+fdrs <- c()   ## 07/04/22
 pvals <- c()
 for (s in 1:nrow(samples.surv)) {
    samples.surv$SORTING <- "G1"
@@ -84,6 +85,8 @@ for (s in 1:nrow(samples.surv)) {
    } else {
       pvals <- c(pvals, NA)
    }
+   
+   ##
 }
 
 idx  <- which(is.na(pvals))
@@ -108,10 +111,6 @@ rho
 save(icgc, hists.surv, icgc.surv, samples.surv, pvals, sample, rho, file=file.path(wd.rt.data, paste0("icgc_wgs_samples.surv_n1580.RData")), version=2)
 writeTable(samples.surv, file.path(wd.meta, paste0("samples.surv.txt")), colnames=T, rownames=T, sep="\t")
 writeTable(rho, file.path(wd.meta, paste0("rho.txt")), colnames=F, rownames=F, sep="")
-
-fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv)
-file.name <- file.path(wd.rt.plots, "survfit_in-silico_samples.surv_5*6")
-plotSurvfit(fit, file.name, "Overall survival (OS)", c("Non-proliferative", "Proliferative"), c(blue, red))
 
 # -----------------------------------------------------------------------------
 # Stripchart
@@ -146,20 +145,6 @@ legend("bottomright", legend=c("Non-proliferative", "              "), pch=19, p
 legend("bottomright", legend="Proliferative", pch=19, pt.cex=2.5, col=red, text.col="black", bty="n", cex=1.7, horiz=T, text.width=0.49)
 dev.off()
 
-###
-##
-size <- nrow(samples.surv)
-sigs <- 0
-for (p in 1:10000) {
-   idx <- sample(1:size, size, replace=F)
-   fit <- survfit(Surv(OS_month[idx], OS_censor[idx]) ~ SORTING, data=samples.surv)
- 
-   if (surv_pvalue(fit)$pval <= pvals[877])
-      sigs <- sigs + 1
-}
-sigs/10000
-# [1] 0
-
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 31/03/22
@@ -173,110 +158,58 @@ file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replicati
 plotOS(file.name, "OS of 1,580 patients", txt.In.silico, txt.Log10.P, x, y, pvals[877], lwd=3)
 
 # -----------------------------------------------------------------------------
-# 
-# Last Modified: 11/04/22; 03/04/22
+# 10,000 times permutation
+# Last Modified: 10/04/22
 # -----------------------------------------------------------------------------
-samples.surv.hist0 <- samples.surv[1,][-1,]
-results <- toTable(0, 6, length(hists.surv), c("histology_abbreviation", "RHO", "G1", "S", "P", "FDR"))
-results$histology_abbreviation <- hists.surv
 for (h in 1:length(hists.surv)) {
+   #h <- 8
    hist <- hists.surv[h]
    samples.surv.hist <- subset(samples.surv, histology_abbreviation == hist)
-   #samples.surv.hist <- samples.surv.hist[order(samples.surv.hist$COR),]
+   samples.surv.hist <- samples.surv.hist[order(samples.surv.hist$COR),]
  
-   size <- nrow(samples.surv.hist)
    pvals <- c()
+   rhos  <- c()
+   fdrs  <- c()
+   size <- nrow(samples.surv.hist)
    for (s in 1:size) {
       samples.surv.hist$SORTING <- "G1"
       idx <- which(samples.surv.hist$COR >= samples.surv.hist$COR[s])
       if (length(idx) != 0)
          samples.surv.hist[idx,]$SORTING <- "S"
       samples.surv.hist$SORTING <- as.factor(samples.surv.hist$SORTING)
-    
+  
+      ##
       fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
-      if (length(unique(samples.surv.hist$SORTING)) != 1){
-         pvals <- c(pvals, surv_pvalue(fit)$pval)
-      } else {
-         pvals <- c(pvals, NA)
+      pval <- surv_pvalue(fit)$pval
+      if (!is.na(pval)) {
+         pvals <- c(pvals, pval)
+         rhos <- c(rhos, samples.surv.hist$COR[s])
+         
+         sigs <- 0
+         for (p in 1:10000) {
+            idx <- sample(1:size, size, replace=F)
+            fit <- survfit(Surv(OS_month[idx], OS_censor[idx]) ~ SORTING, data=samples.surv.hist)
+            
+            if (surv_pvalue(fit)$pval <= pval)
+               sigs <- sigs + 1
+         }
+         fdrs <- c(fdrs, sigs/10000)
       }
    }
-   idx <- which(is.na(pvals))
-   s <- which(pvals == min(pvals[-idx]))
-   rho <- samples.surv.hist$COR[s]
-   samples.surv.hist$SORTING <- "G1"
-   idx <- which(samples.surv.hist$COR >= samples.surv.hist$COR[s])
+   
+   #if (-log10(min(pvals)) > 3) {
+   s <- which(pvals == min(pvals))
+   samples.surv.h2$SG1 <- "G1"
+   idx <- which(samples.surv.h2$COR > samples.surv.h2$COR[s])
    if (length(idx) != 0)
-      samples.surv.hist[idx,]$SORTING <- "S"
-   samples.surv.hist$SORTING <- as.factor(samples.surv.hist$SORTING)
+    samples.surv.h2[idx,]$SG1 <- "S"
+   samples.surv.h2$SG1 <- as.factor(samples.surv.h2$SG1)
    
-   fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
-   pval <- surv_pvalue(fit)$pval
-   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, ""))
-   #plotSurvfit55(fit, file.name, hist, c("Resting", "Proliferating"), c(blue, red))
-   
-   idx <- which(is.na(pvals))
-   x <- samples.surv.hist$COR[-idx]
-   y <- -log10(pvals[-idx])
-   file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", hist)
-   #plotOS(file.name, hist, txt.In.silico, txt.Log10.P, x, y, pvals[s], rho, lwd=3)
-   
-   samples.surv.hist0 <- rbind(samples.surv.hist0, samples.surv.hist)
-   results$RHO[h] <- rho
-   results$G1[h]  <- nrow(subset(samples.surv.hist, SORTING == "G1"))
-   results$S[h]   <- nrow(subset(samples.surv.hist, SORTING == "S"))
-   results$P[h]   <- pval
-   
-   #sigs <- 0
-   #for (p in 1:10000) {
-   #   idx <- sample(1:size, size, replace=F)
-   #   fit <- survfit(Surv(OS_month[idx], OS_censor[idx]) ~ SORTING, data=samples.surv.hist)
-   #  
-   #   if (surv_pvalue(fit)$pval <= pval)
-   #      sigs <- sigs + 1
-   #}
-   #results$FDR[h] <- sigs/10000
-   
-}
-samples.surv.hist <- samples.surv.hist0
-writeTable(results, file.path(wd.meta, paste0("samples.surv.hist.results.txt")), colnames=T, rownames=F, sep="\t")
-
-##
-file.name <- "stripchart_ICGC_samples.surv.hist"
-main.text <- paste0(separator(nrow(samples.surv.hist)), " PCAWG patients")
-plotStripchartV(wd.rt.plots, file.name, main.text, samples.v, hists.surv, samples.surv.hist)
-
-fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist"))
-plotSurvfit(fit, file.name, "", c("Non-proliferative", "Proliferative"), c(blue, red))
-
-res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + SEX + AGE, data=samples.surv.hist)
-pdf(paste0(wd.rt.plots, "/hists/hazard_in-silico_samples.surv.hist", ".pdf"), height=2.7, width=5)
-ggforest(res.cox, data=samples.surv.hist, main="", cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
-dev.off()
-
-###
-##
-for (h in 1:length(hists.surv)) {
-   hist <- hists.surv[h]
-   samples.surv.hist <- subset(samples.surv, histology_abbreviation == hist)
-
-   fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
-   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, "_rho-0.72"))
-   plotSurvfit55(fit, file.name, hist, c("Resting", "Proliferating"), c(blue, red))
-}
-
-
-
-
-
-
-
-
-   if (as.numeric(summary(samples.surv.hist$SORTING)[1]) >= 10 && as.numeric(summary(samples.surv.hist$SORTING)[2]) >= 10) {
-      x <- rhos
-      y <- -log10(pvals)
-      file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hists/correlation_in-silico_P_KM_OS_", hist)
-      #plotJust0(file.name, hist, "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, samples.surv.h2$COR[s], line=2.53)
+   if (as.numeric(summary(samples.surv.h2$SG1)[1]) >= 10 && as.numeric(summary(samples.surv.h2$SG1)[2]) >= 10) {
+    x <- rhos
+    y <- -log10(pvals)
+    file.name <- paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hists/correlation_in-silico_P_KM_OS_", hist)
+    #plotJust0(file.name, hist, "Spearman's rho", expression('-log10('*italic('P')*')'), x, y, samples.surv.h2$COR[s], line=2.53)
     
     fit <- survfit(Surv(OS_month, OS_censor) ~ SG1, data=samples.surv.h2)
     file.name <- file.path(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/plots/hists/survfit_in-silico_", hist))
@@ -295,8 +228,6 @@ for (h in 1:length(hists.surv)) {
    #}
    
 }
-
-
 
 
 

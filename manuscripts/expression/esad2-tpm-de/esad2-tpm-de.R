@@ -93,16 +93,22 @@ plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_N-B_n97_ALL", size=6, file.m
 # -----------------------------------------------------------------------------
 n <- which(samples$Type == "N")
 trait <- samples[, "Responder"]
-trait[n] <- "NA"
-trait.v <- c("Complete", "Major", "Minor", "NA")
-cols    <- c(green, yellow, red, "white")
+trait[n] <- "Normal"
+trait.v <- c("Complete", "Major", "Minor", "Normal")
+cols    <- c(green, yellow, red, "lightgray")
 
 ###
 ##
 test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
 file.main <- c("EAC2 samples (n=97)", "Expressed genes (n=15,381)")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n97_ALL", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n97_ALL_normal", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+
+test <- tpm.gene[genes.NBX.down.pe3, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+file.main <- c("EAC2 samples (n=97)", "14 Basal-like genes")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n97_14-basal-like-gene", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+
 
 ###
 ##
@@ -184,16 +190,16 @@ genes <- rownames(getGenes(genes))
 genes <- intersect(genes, rownames(tpm.gene))
 test <- tpm.gene[genes, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
-file.main <- c("EAC2 samples (n=97)", paste0("HUPER_BREAST_BASAL_VS_LUMINAL (n=", length(genes), ")"))
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n68_Guo_Huper", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=-1, flip.y=1, legend.title=NA)
+file.main <- c("EAC2 samples (n=97)", paste0(length(genes), " HUPER_BREAST_BASAL_VS_LUMINAL"))
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n68_Guo_Huper_normal", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=-1, flip.y=1, legend.title=NA)
 
 genes <- c("TRIM29", "CDA", "S100A2", "CSTA", "ARL4D", "LY6G6C", "KRT6A", "MAL", "KRT4", "SLURP1", "SERPINB3", "PAX9", "SULT2B1", "NFRKB", "VAT1")
 genes <- rownames(getGenes(genes))
 genes <- intersect(genes, rownames(tpm.gene))
 test <- tpm.gene[genes, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
 pca.de <- getPCA(t(test))
-file.main <- c("EAC2 samples (n=97)", paste0("WANG_BE_AND_EAC_DN (n=", length(genes), ")"))
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n68_Guo_Wang", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=-1, flip.y=-1, legend.title=NA)
+file.main <- c("EAC2 samples (n=97)", paste0(length(genes), " WANG_BE_AND_EAC_DN genes"))
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Responder_n68_Guo_Wang_normal", size=6, file.main, "topleft", trait.v, cols, NULL, flip.x=-1, flip.y=-1, legend.title=NA)
 
 ###
 ##

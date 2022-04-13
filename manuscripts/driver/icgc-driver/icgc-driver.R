@@ -26,20 +26,22 @@ wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "ICGC"
 base  <- tolower(BASE)
 
-wd.ngs <- file.path(wd, BASE, "ngs/WGS")
-wd.meta  <- file.path(wd, BASE, "metadata", "driver_mutations")
+wd.meta  <- file.path(wd, BASE, "metadata")
 
-wd.rt.plots <- "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/ICGC/analysis/driver/icgc-driver/data/"
+wd.anlys  <- file.path(wd, BASE, "analysis")
+wd.driver <- file.path(wd.anlys, "driver", paste0(base, "-driver"))
+wd.driver.data  <- file.path(wd.driver, "data")
+wd.driver.plots <- file.path(wd.driver, "plots")
 
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 18/02/22
 # -----------------------------------------------------------------------------
-drivers <- readTable(file.path(wd.meta, "TableS3_panorama_driver_mutations_ICGC_samples.public.txt"), header=T, rownames=F, sep="")
+drivers <- readTable(file.path(wd.meta, "driver_mutations", "TableS3_panorama_driver_mutations_ICGC_samples.public.txt"), header=T, rownames=F, sep="")
 
 drivers$icgc_specimen_id <- NA
 for (s in 1:nrow(drivers)) {
-   ids <- mapping[which(mapping$pcawg_wgs_id == drivers$sample_id[s]),]$icgc_specimen_id
+   ids <- mappings[which(mappings$pcawg_wgs_id == drivers$sample_id[s]),]$icgc_specimen_id
    if (length(ids) != 0) {
       if (length(ids) > 1) {
          if (length(unique(ids)) == 1) {
@@ -54,46 +56,51 @@ for (s in 1:nrow(drivers)) {
    }
 }
 drivers <- drivers[which(!is.na(drivers$icgc_specimen_id)),]
-drivers.genes <- testFishers(drivers, samples.sg1, s=20, f=1)
 
 # -----------------------------------------------------------------------------
 # 
-# Last Modified: 18/02/22
+# Last Modified: 02/04/22
 # -----------------------------------------------------------------------------
-testFishers <- function(drivers, samples.sg1, s=20, f=5) {
-   genes <- toTable(NA, 10, nrow(table(drivers$gene)), c("gene", "gene_freq", "sample_freq", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "ttype", "top_category"))
+testChiSquared <- function(drivers, samples.sg1, s=20, f=1) {
+   genes <- toTable(NA, 14, nrow(table(drivers$gene)), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "ttype", "top_category"))
    genes[, 1:2] <- as.data.frame(sort(table(drivers$gene), decreasing=T))
    
-   ## sample_freq
+   ## Number of samples
    for (g in 1:nrow(genes))
-      genes$sample_freq[g] <- length(unique(subset(drivers, gene == genes$gene[g])$icgc_specimen_id))
-   genes <- subset(genes, sample_freq >= s)
+      genes$SAMPLE_FREQ[g] <- length(unique(subset(drivers, gene == genes$MUT[g])$icgc_specimen_id))
+   genes <- subset(genes, SAMPLE_FREQ >= s)
 
-   ## Fishers' test
+   ## Chi squared / Fishers' test
    for (g in 1:nrow(genes)) {
-      ids   <- unique(subset(drivers, gene == genes$gene[g])$icgc_specimen_id)
-      types <- unique(subset(drivers, gene == genes$gene[g])$ttype)
+      ids   <- unique(subset(drivers, gene == genes$MUT[g])$icgc_specimen_id)
+      types <- unique(subset(drivers, gene == genes$MUT[g])$ttype)
       
       genes$ttype[g] <- paste(types, collapse=",")
-      genes$top_category[g] <- paste(unique(subset(drivers, gene == genes$gene[g])$top_category), collapse=",")
+      genes$top_category[g] <- paste(unique(subset(drivers, gene == genes$MUT[g])$top_category), collapse=",")
       
       if (length(types) > f) {
-         samples.mut <- subset(samples.sg1, icgc_specimen_id %in% ids)
-         samples.wt  <- samples.sg1[setdiff(rownames(samples.sg1), rownames(samples.mut)),]
+         samples.mut <- subset(samples, icgc_specimen_id %in% ids)
+         samples.wt  <- samples[setdiff(rownames(samples), rownames(samples.mut)),]
       
+         ## E.g. there are 611 samples with TP53 reported in direvers, but only 605 of them are in our 2,612 samples with in silico sorting information
          if (nrow(samples.mut) >= s) {
             test <- toTable(0, 2, 2, c("G1", "S"))
             rownames(test) <- c("MUT", "WT")
-            test[1, 1] <- nrow(subset(samples.mut, SG1 == "G1"))
-            test[1, 2] <- nrow(subset(samples.mut, SG1 == "S"))
-            test[2, 1] <- nrow(subset(samples.wt,  SG1 == "G1"))
-            test[2, 2] <- nrow(subset(samples.wt,  SG1 == "S"))
+            test[1, 1] <- nrow(subset(samples.mut, SORTING == "G1"))
+            test[1, 2] <- nrow(subset(samples.mut, SORTING == "S"))
+            test[2, 1] <- nrow(subset(samples.wt,  SORTING == "G1"))
+            test[2, 2] <- nrow(subset(samples.wt,  SORTING == "S"))
          
-            genes$MUT_G1[g] <- nrow(subset(samples.mut, SG1 == "G1"))
-            genes$MUT_S[g]  <- nrow(subset(samples.mut, SG1 == "S"))
-            genes$WT_G1[g]  <- nrow(subset(samples.wt,  SG1 == "G1"))
-            genes$WT_S[g]   <- nrow(subset(samples.wt,  SG1 == "S"))
-            genes$P[g]      <- fisher.test(test)[[1]]
+            genes$MUT_G1[g] <- nrow(subset(samples.mut, SORTING == "G1"))
+            genes$MUT_S[g]  <- nrow(subset(samples.mut, SORTING == "S"))
+            genes$WT_G1[g]  <- nrow(subset(samples.wt,  SORTING == "G1"))
+            genes$WT_S[g]   <- nrow(subset(samples.wt,  SORTING == "S"))
+            #genes$P[g]      <- fisher.test(test)[[1]]
+            genes$P[g]      <- chisq.test(test)[[3]]
+            
+            genes$G1MR[g] <- genes$MUT_G1[g] / genes$WT_G1[g]
+            genes$SMR[g]  <- genes$MUT_S[g]  / genes$WT_S[g]
+            genes$PMR[g]  <- genes$SMR[g]    / genes$G1MR[g]
          }
       }
    }
@@ -102,28 +109,84 @@ testFishers <- function(drivers, samples.sg1, s=20, f=5) {
    return(genes[which(!is.na(genes$P)),])
 }
 
-#samples.sg1 <- samples
-#samples.sg1$SG1 <- "G1"
-#samples.sg1[which(samples.sg1$COR >= sample$COR),]$SG1 <- "S"
-#samples.sg1$SG1 <- as.factor(samples.sg1$SG1)
+###
+##
+drivers.genes <- testChiSquared(drivers, samples, s=20, f=1)
+#genes$FDR <- qvalue(genes$P)$qvalue
+writeTable(drivers.genes, file.path(wd.driver.data, paste0("icgc_driver_s>20_f>1_chisq.txt")), colnames=T, rownames=F, sep="\t")
+#save(drivers, drivers.genes, file=file.path(wd.driver.data, paste0("icgc_driver_s>20_f>1_chisq.RData")), version=2)
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 02/04/22
+# -----------------------------------------------------------------------------
+pipePlotCorrelation <- function(file.name, main.text, drivers.genes, de.tpm.gene) {
+   drivers.genes$ensembl_gene_id <- NA
+   for (g in 1:nrow(drivers.genes)) {
+      if (nrow(getGene(drivers.genes$MUT[g])) > 0)
+      drivers.genes$ensembl_gene_id[g] <- getGene(drivers.genes$MUT[g])$ensembl_gene_id
+   }
+   drivers.genes.ens <- drivers.genes[!is.na(drivers.genes$ensembl_gene_id),]
+   rownames(drivers.genes.ens) <- drivers.genes.ens$ensembl_gene_id
+   
+   drivers.genes.ens <- drivers.genes.ens[!is.infinite(drivers.genes.ens$PMR),]
+   
+   overlaps <- intersect(rownames(drivers.genes.ens), rownames(de.tpm.gene))
+   x <- -log10(de.tpm.gene[overlaps,]$P)
+   y <- drivers.genes.ens[overlaps,]$PMR
+   plotCorrelation(file.name, main.text, expression("DE [-log" * ""[10] * "(" * italic("P") * ")]"), "PMR [ratio]", x, y, pos="topright", line=2.75)
+}
 
 ###
-## SNV
-drivers.mutational <- subset(drivers, top_category == "mutational")
-nrow(drivers.mutational)
-# [1] 3658
-drivers.mutational.genes <- testFishers(drivers.mutational, samples.sg1, s=20, f=1)
+##
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_driver.gene.s>20.f>1.chisq_vs_de.tpm.gene"))
+pipePlotCorrelation(file.name, "Drivers", drivers.genes, de.tpm.gene)
 
 ##
-drivers.mutational.coding <- subset(drivers.mutational, category == "coding")
-nrow(drivers.mutational.coding)
-# [1] 3181
-drivers.mutational.coding.genes <- testFishers(drivers.mutational.coding, samples.sg1, s=20, f=1)
+#overlaps <- intersect(rownames(drivers.genes.ens), rownames(de.tpm.gene))
+#x <- -log10(de.tpm.gene[overlaps,]$P)
+#y <- -log10(drivers.genes.ens[overlaps,]$P)
+#file.name <- file.path(wd.driver.plots, paste0("correlation_", base, "_driver.gene.ens.s>20.f>1.chisq_vs_de.tpm.gene"))
+#plotCorrelation(file.name, "Differental mutational expression", "Differental expression", "Differental mutation", x, y, pos="topright", line=2.75)
 
-drivers.mutational.noncoding <- subset(drivers.mutational, category == "noncoding")
-nrow(drivers.mutational.noncoding)
+##
+#drivers.genes.ens.sig <- subset(drivers.genes.ens, P < 1E-2)
+#overlaps <- intersect(rownames(drivers.genes.ens.sig), rownames(de.tpm.gene))
+#x <- -log10(de.tpm.gene[overlaps,]$P)
+#y <- -log10(drivers.genes.ens[overlaps,]$P)
+#file.name <- file.path(wd.driver.plots, paste0("correlation_", base, "_driver.gene.s>20.f>1.chisq.p1e02_vs_de.tpm.gene"))
+#plotCorrelation(file.name, "Differental mutational expression", "Differental expression", "Differental mutation", x, y, pos="topright")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 02/04/22
+# -----------------------------------------------------------------------------
+###
+## SNV
+drivers.snv <- subset(drivers, top_category == "mutational")
+nrow(drivers.snv)
+# [1] 3658
+drivers.genes.snv <- testChiSquared(drivers.snv, samples, s=20, f=1)
+writeTable(drivers.genes.snv, file.path(wd.driver.data, paste0("icgc_driver_s>20_f>1_chisq_snv.txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_drivers.genes.snv.s>20.f>1.chisq_vs_de.tpm.gene"))
+pipePlotCorrelation(file.name, "SNV", drivers.genes.snv, de.tpm.gene)
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_driver_s>20_f>1_chisq_snv"))
+x <- drivers.genes.snv$PMR
+y <- -log10(drivers.genes.snv$P)
+plotPMR(file.name, "SNV", "PMR", text.Log10.P, x, y)
+
+##
+#drivers.mut.coding <- subset(drivers.mutational, category == "coding")
+#nrow(drivers.mut.coding)
+# [1] 3181
+#drivers.genes.mut.coding <- testChiSquared(drivers.mut.coding, samples, s=20, f=1)
+
+#drivers.mut.noncoding <- subset(drivers.mut, category == "noncoding")
+#nrow(drivers.mut.noncoding)
 # [1] 477
-drivers.mutational.noncoding.genes <- testFishers(drivers.mutational.noncoding, samples.sg1, s=20, f=1)
+#drivers.genes.mut.noncoding <- testChiSquared(drivers.mut.noncoding, samples, s=20, f=1)
 
 ###
 ## CNA
@@ -135,27 +198,65 @@ nrow(drivers.cna)
 drivers.cna.amp <- subset(drivers.cna, category == "coding_amplification")
 nrow(drivers.cna.amp)
 # [1] 675
-drivers.cna.amp.genes <- testFishers(drivers.cna.amp, samples.sg1, s=20, f=1)
+drivers.genes.cna.amp <- testChiSquared(drivers.cna.amp, samples, s=20, f=1)
+writeTable(drivers.genes.cna.amp, file.path(wd.driver.data, paste0("icgc_driver_s>20_f>1_chisq_cna.amp.txt")), colnames=T, rownames=F, sep="\t")
 
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_drivers.genes.cna.amp.s>20.f>1.chisq_vs_de.tpm.gene"))
+pipePlotCorrelation(file.name, "Amplification", drivers.genes.cna.amp, de.tpm.gene)
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_driver_s>20_f>1_chisq_cna.amp"))
+x <- drivers.genes.cna.amp$PMR
+y <- -log10(drivers.genes.cna.amp$P)
+plotPMR(file.name, "Amplification", "PMR", text.Log10.P, x, y)
+
+##
 drivers.cna.del <- subset(drivers.cna, category == "coding_deletion")
 nrow(drivers.cna.del)
 # [1] 3127
-drivers.cna.del.genes <- testFishers(drivers.cna.del, samples.sg1, s=20, f=1)
+drivers.genes.cna.del <- testChiSquared(drivers.cna.del, samples, s=20, f=1)
+writeTable(drivers.genes.cna.del, file.path(wd.driver.data, paste0("icgc_driver_s>20_f>1_chisq_cna.del.txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_drivers.genes.cna.del.s>20.f>1.chisq_vs_de.tpm.gene"))
+pipePlotCorrelation(file.name, "Deletion", drivers.genes.cna.del, de.tpm.gene)
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_driver_s>20_f>1_chisq_cna.del"))
+x <- drivers.genes.cna.del$PMR
+y <- -log10(drivers.genes.cna.del$P)
+plotPMR(file.name, "Deletion", "PMR", text.Log10.P, x, y)
 
 ###
 ## SV
 drivers.sv <- subset(drivers, top_category == "SV")
 nrow(drivers.sv)
 # [1] 574
-drivers.sv.genes <- testFishers(drivers.sv, samples.sg1, s=10, f=1)
+drivers.genes.sv <- testChiSquared(drivers.sv, samples, s=10, f=1)
+writeTable(drivers.genes.sv, file.path(wd.driver.data, paste0("icgc_driver_s>10_f>1_chisq_sv.txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_drivers.genes.sv.s>10.f>1.chisq_vs_de.tpm.gene"))
+pipePlotCorrelation(file.name, "SV", drivers.genes.sv, de.tpm.gene)
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_driver_s>20_f>1_chisq_sv"))
+x <- drivers.genes.sv$PMR[-3]
+y <- -log10(drivers.genes.sv$P[-3])
+plotPMR(file.name, "SV", "PMR", text.Log10.P, x, y,)
 
 ###
 ## Germline
-drivers.germline <- subset(drivers, top_category == "germline")
-nrow(drivers.germline)
+drivers.germ <- subset(drivers, top_category == "germline")
+nrow(drivers.germ)
 # [1] 317
-drivers.germline.genes <- testFishers(drivers.germline, samples.sg1, s=20, f=1)
+drivers.genes.germ <- testChiSquared(drivers.germ, samples, s=10, f=1)
+writeTable(drivers.genes.germ, file.path(wd.driver.data, paste0("icgc_driver_s>10_f>1_chisq_germ.txt")), colnames=T, rownames=F, sep="\t")
 
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_drivers.genes.germ.s>10.f>1.chisq_vs_de.tpm.gene"))
+pipePlotCorrelation(file.name, "Germline", drivers.genes.germ, de.tpm.gene)
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_driver_s>20_f>1_chisq_germ"))
+x <- drivers.genes.germ$PMR
+y <- -log10(drivers.genes.germ$P)
+plotPMR(file.name, "Germline", "PMR", text.Log10.P, x, y)
+
+save(drivers, drivers.genes, drivers.genes.snv, drivers.genes.cna.amp, drivers.genes.cna.del, drivers.genes.sv, drivers.genes.germ,file=file.path(wd.driver.data, paste0("icgc_driver_s>20_f>1_chisq.RData")), version=2)
 
 
 

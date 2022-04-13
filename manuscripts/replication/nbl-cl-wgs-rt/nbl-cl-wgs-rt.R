@@ -128,8 +128,9 @@ samples$COR <- samples.nbl.cl$COR
 samples$Q4  <- samples.nbl.cl$Q4
 samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_black_1.7_cex=2.5.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_black_1.7_cex=2.5_black.pdf"), height=6, width=4.2)
 ymax <- 0.5
 ymin <- -0.367
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", xlab="", main=expression(bolditalic('In silico')~bold("estimation")), yaxt="n", boxwex=0.75, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
@@ -139,7 +140,7 @@ boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), 
 #points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col=blue, pch=19, cex=2)
 #points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col=red.lighter, pch=19, cex=2)
 #points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, pch=19, cex=2)
-points(samples$CANCER, samples$COR, col="black", pch=19, cex=2.5)
+points(samples$CANCER, samples$COR, col=adjustcolor.gray, pch=19, cex=2.5)
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
@@ -214,9 +215,10 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", col=col2[3], pch=15, cex=2.5, lwd=0, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    lm.fit <- lm(n3 ~ snr3)
-   abline(lm.fit, col=col[3], lwd=4)
+   abline(lm.fit, col=col[3], lwd=5)
    
-   legend(pos, c(expression(paste("S   (", rho, " = 0.8)")), expression(paste("G2 (", rho, " = 0.4)")), expression(paste("G1 (", rho, " = -0.8)"))), text.col=c(col[2], col[3], col[1]), pch=15, col="white", pt.cex=3, cex=1.6, pt.lwd=0, text.font=2, bty="n")
+   legend(pos, c(expression(paste("S   (", rho, " = 0.8)")), expression(paste("G2 (", rho, " = 0.4)")), expression(paste("G1 (", rho, " = -0.8)"))), text.col=c(col[2], col[3], col[1]), pch=15, col="white", pt.cex=3, cex=1.7, pt.lwd=0, text.font=2, bty="n")
+   #legend(pos, c(expression(paste(bold("S"), "   (", rho, " = 0.8)")), expression(paste(bold("G2"), " (", rho, " = 0.4)")), expression(paste(bold("G1"), " (", rho, " = -0.8)"))), text.col=c(col[2], col[3], col[1]), pch=15, col="white", pt.cex=3, cex=1.7, pt.lwd=0, text.font=2, bty="n")
    #legend(pos, c(expression(bold("S")), expression(bold("G2")), expression(bold("G1"))), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), pt.cex=3, cex=1.7, pt.lwd=0, text.font=c(2,2,2))
    #legend(pos, c("S", "G2", "G1"), text.col=c(col[2], col[3], col[1]), pch=c(15, 15, 15), col=c(col2[2], col2[3], col2[1]), pt.cex=3, cex=1.7, pt.lwd=0, text.font=c(2,2,2))
    #cor <- cor.test(n1, snr1, method="spearman", exact=F)
@@ -228,9 +230,9 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    points(n1 ~ snr1, col=col2[1], pch=15, cex=2.5, lwd=0)
    points(n2 ~ snr2, col=col2[2], pch=15, cex=2.5, lwd=0)
    lm.fit <- lm(n1 ~ snr1)
-   abline(lm.fit, col=col[1], lwd=4)
+   abline(lm.fit, col=col[1], lwd=5)
    lm.fit <- lm(n2 ~ snr2)
-   abline(lm.fit, col=col[2], lwd=4)
+   abline(lm.fit, col=col[2], lwd=5)
 
    cor2 <- cor.test(n2, snr2, method="spearman", exact=F)
    cor2 <- round0(cor2[[4]], digits=1)
@@ -259,7 +261,7 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Spearmans's rho"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_1.6_3_100_bty=n")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_1.6_3_100_bty=n_1.7_lwd=5")
 main.text <- c(expression(bolditalic('In silico')~bold("vs.")~bolditalic('in vitro')), "")
 xlab.text <- "% Cell count"
 ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
