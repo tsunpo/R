@@ -45,7 +45,7 @@ plotSurvfit <- function(fit, file.name, main.text, legends.text, cols) {
    mtext("% OS", side=2, line=2.85, cex=1.7)
    
    max <- max(fit[[2]])
-   text(max/5.5, 0.18, "                HR = 1.90 (1.61 - 2.25)", cex=1.7)
+   #text(max/5.5, 0.18, "                HR = 1.90 (1.61 - 2.25)", cex=1.7)
    text(max/5.5, 0.07, expression(italic('P')~"="~"                "), cex=1.7)
    text(max/5.5, 0.07, paste0("      ", scientific(surv_pvalue(fit)$pval, digits=2)), cex=1.7)
    #legend("bottomleft", expression(italic('P')~"="~scientific(surv_pvalue(fit)$pval)), bty="n", cex=1.6)
@@ -319,6 +319,31 @@ survSCLC <- function(phenos, samples, isCensored) {
       return(phenos.surv)
    } else
       return(phenos)
+}
+
+survESAD <- function(purities2) {
+   purities2 <- purities2[!is.na(purities2$os_days),]
+   
+   purities2$Tumor_content_pathology <- as.numeric(purities2$Tumor_content_pathology)
+   
+   ## https://docs.icgc.org/submission/guide/donor-clinical-data-guidelines/#donor-clinical-data-guidelines
+   purities2$OS_month <- purities2$os_days / 30.44
+ 
+   purities2$OS_censor <- purities2$death
+   purities2$OS_censor <- as.numeric(purities2$OS_censor)
+     
+   purities2$Survival <- "Short"
+   idx <- which(purities2$os_days >= 730)
+   purities2[idx,]$Survival <- "Long"
+   purities2$Survival <- as.factor(purities2$Survival)
+   
+   purities2$Response <- gsub("Complete Responder", "Complete", purities2$Response)
+   purities2$Response <- gsub("Majorresponder",     "Major",    purities2$Response)
+   purities2$Response <- gsub("Minorresponder",     "Minor",    purities2$Response)
+   purities2$Response <- as.factor(purities2$Response)
+   
+   rownames(purities2) <- paste0(purities2$Patient_ID, "_B")
+   return(purities2)
 }
 
 ## https://docs.icgc.org/submission/guide/donor-clinical-data-guidelines/#donor-clinical-data-guidelines

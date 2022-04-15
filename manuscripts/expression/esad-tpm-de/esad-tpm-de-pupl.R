@@ -30,8 +30,8 @@ wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples  <- readTable(file.path(wd.rna, "esad_3rna_n68.txt2"), header=T, rownames=T, sep="\t")
-purities <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
+samples1  <- readTable(file.path(wd.rna, "esad_3rna_n68.txt2"), header=T, rownames=T, sep="\t")
+purities1 <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
 
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #tpm.gene.log2 <- log2(tpm.gene + 0.01)   ## Use pseudocount=0.01
@@ -44,11 +44,11 @@ purities <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, 
 # PCA vs. Purites
 # Last Modified: 02/06/21
 # -----------------------------------------------------------------------------
-rownames(samples) <- samples$PATIENT_ID2
-overlaps <- intersect(samples$PATIENT_ID2, purities$sample_name)
-samples <- samples[overlaps,]
-samples$purity <- purities[overlaps,]$purity
-rownames(samples) <- samples$SAMPLE_ID
+rownames(samples1) <- samples1$PATIENT_ID2
+overlaps <- intersect(samples1$PATIENT_ID2, purities1$sample_name)
+samples1 <- samples1[overlaps,]
+samples1$purity <- purities1[overlaps,]$purity
+rownames(samples1) <- samples1$SAMPLE_ID
 
 #load("/Users/tpyang/Work/uni-koeln/tyang2/ESAD/analysis/expression/kallisto/esad-tpm-de/data/PCA_EAC_N-B-X.RData")
 scores <- pcaScores(pca.de)

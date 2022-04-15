@@ -64,6 +64,7 @@ ensGene.transcript <- ensGene.transcript[, -c(7,8,10)]   ## CHANGED 14/06/19 Now
 
 ## REMOVED 02/11/17: Keep all transcripts (including *_PATCH) to run "sleuth_prep" to avoid warning messages
 #ensGene.transcript <- subset(ensGene.transcript, chromosome_name %in% c(1:22, "X", "Y", "MT"))   ## ADD 23/02/17
+writeTable(ensGene.transcript, gzfile(file.path(wd.src.ref, paste0("ensGene.transcript.GRCh37.p13.txt.gz"))), colnames=T, rownames=F, sep="\t")
 
 # =============================================================================
 # Reference    : UCSC Genome Browser (Feb 2009/GRCh37/hg19)
