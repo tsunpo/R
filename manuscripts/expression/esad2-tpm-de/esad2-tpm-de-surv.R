@@ -34,7 +34,7 @@ colnames <- c("NR_intern", "CCG_ID", "PATIENT_ID2", "FILE_NAME", "FILE_NAME_2", 
 samples2  <- readTable(file.path(wd.rna, "esad2_3rna_n97.txt"), header=F, rownames=3, sep="\t")
 colnames(samples2) <- colnames
 purities1 <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
-purities2 <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_2.0_test.txt"), header=T, rownames=T, sep="\t")
+purities2 <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_3.0.txt"), header=T, rownames=T, sep="\t")
 purities2 <- survESAD(purities2)
 
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))

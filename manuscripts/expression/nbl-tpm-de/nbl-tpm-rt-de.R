@@ -43,10 +43,13 @@ rownames(samples) <- samples$V1
 nrow(samples)
 # [1] 53
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+samples.nbl.tpm <- cbind(samples.nbl[samples$V2,], samples)
+rownames(samples.nbl.tpm) <- samples.nbl.tpm$V1
+
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene <- tpm.gene[, rownames(samples.nbl.tpm)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 nrow(tpm.gene.log2.m)
@@ -67,9 +70,8 @@ load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/d
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples.atrx)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
-tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 01)
+tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 nrow(tpm.gene.log2.m)
-
 
 # -----------------------------------------------------------------------------
 # Purities
@@ -271,19 +273,19 @@ dev.off()
 # Correlation bwteen TPM and in-silico sorting
 # Last Modified: 12/12/19; 08/01/19; 17/08/17
 # -----------------------------------------------------------------------------
-colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
 src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
 rownames(src) <- rownames(tpm.gene.log2)
 
 ## SRC
-src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
-src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm$COR, method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm$COR, method="spearman", exact=F)[[3]])
 src <- src[!is.na(src$P),]
 
 ## Log2 fold change
-src$M1 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 0)))
-src$M2 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 1)))
-src$LOG2_FC <- src$M2 - src$M1
+src$G1 <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "G1")))
+src$S <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "S")))
+src$LOG2_FC <- src$S - src$G1
 
 ## FDR
 library(qvalue)
@@ -294,11 +296,20 @@ src <- src[order(src$P),]
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
 src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 
-writeTable(src.tpm.gene, file.path(wd.de.data, "src_nbl_tpm-gene-median0+1_src_q_n53.txt"), colnames=T, rownames=F, sep="\t")
-save(src.tpm.gene, samples, file=file.path(wd.de.data, "src_nbl_tpm-gene-median0+1_src_q_n53.RData"))
+writeTable(src.tpm.gene, file.path(wd.de.data, "src_nbl_tpm-gene-median0_SORTING_q_n53.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples, file=file.path(wd.de.data, "src_nbl_tpm-gene-median0_SORTING_q_n53.RData"))
 nrow(src.tpm.gene)
 # [1] 22899
 # [1] 18764
+
+src.nbl.up   <- subset(subset(src.tpm.gene, P < 1E-6), LOG2_FC > 0)
+src.nbl.down <- subset(subset(src.tpm.gene, P < 1E-6), LOG2_FC < 0)
+
+up.cycling   <- c(intersect(rownames(src.nbl.up),   rownames(de.icgc.g1)), intersect(rownames(src.nbl.up),   rownames(de.icgc.s)))
+down.cycling <- c(intersect(rownames(src.nbl.down), rownames(de.icgc.g1)), intersect(rownames(src.nbl.down), rownames(de.icgc.s)))
+
+src.nbl.up[setdiff(rownames(src.nbl.up), up.cycling),]
+src.nbl.down[setdiff(rownames(src.nbl.down), down.cycling),]
 
 # -----------------------------------------------------------------------------
 # Last Modified: 15/08/21

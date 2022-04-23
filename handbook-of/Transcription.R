@@ -45,9 +45,9 @@ getGeneTPM <- function(tpm.gene.patch, ensGene) {
    return(tpm.gene)
 }
 
-removeMedian0 <- function(tpm.gene) {
+removeMedian0 <- function(tpm.gene, tpm=0) {
    medians <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
-   tpm.gene <- tpm.gene[-which(medians == 0),]
+   tpm.gene <- tpm.gene[-which(medians == tpm),]
  
    return(tpm.gene)
 }

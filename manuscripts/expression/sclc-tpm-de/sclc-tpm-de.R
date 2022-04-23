@@ -44,9 +44,15 @@ samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 0))
 # [1] 35
 
+samples.sclc.tpm <- samples
+samples.sclc.tpm$SORTING <- "G1"
+idx <- which(samples.sclc.tpm$COR >= rho.sclc)
+samples.sclc.tpm[idx,]$SORTING <- "S"
+samples.sclc.tpm$SORTING <- as.factor(samples.sclc.tpm$SORTING)
+
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
@@ -54,6 +60,62 @@ nrow(tpm.gene.log2.m)
 # [1] 34908
 # [1] 23572
 # [1] 19131
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
+# Last Modified: 22/08/20
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : TR (1) vs UN (0) as factor
+argv      <- data.frame(predictor="SORTING", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_SORTING_wilcox_q_n70")
+file.main <- paste0("G1 (n=21) vs S (n=49) in ", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples.sclc.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(de) <- rownames(tpm.gene.log2)
+
+## SRC
+de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
+de <- de[!is.na(de$P),]
+
+## Log2 fold change
+de$G1 <- median00(tpm.gene.log2, rownames(subset(samples.sclc.tpm, SORTING == "G1")))
+de$S  <- median00(tpm.gene.log2, rownames(subset(samples.sclc.tpm, SORTING == "S")))
+de$LOG2_FC <- de$S - de$G1
+
+## FDR
+library(qvalue)
+de$Q <- qvalue(de$P)$qvalue
+de <- de[order(de$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
+
+writeTable(de.tpm.gene, file.path(wd.de.data, "src_sclc_tpm-gene-r5p47_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
+save(de.tpm.gene, samples, file=file.path(wd.de.data, "src_sclc_tpm-gene-r5p47_src_q_n70.RData"))
+nrow(de.tpm.gene)
+# [1] 23572
+# [1] 19131
+
+# -----------------
 
 # -----------------------------------------------------------------------------
 # Stage UICC
@@ -133,7 +195,7 @@ de <- de[order(de$P),]
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
 de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
 
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
 save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.RData"))
 nrow(de.tpm.gene)
 # [1] 23572

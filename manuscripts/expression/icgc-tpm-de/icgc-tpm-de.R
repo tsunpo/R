@@ -121,6 +121,9 @@ writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnam
 nrow(de.tpm.gene)
 # [1] 18595
 
+de.icgc.g1 <- subset(subset(de.tpm.gene, P < 1E-6), LOG2_FC > 0)
+de.icgc.s  <- subset(subset(de.tpm.gene, P < 1E-6), LOG2_FC < 0)
+
 # -----------------------------------------------------------------------------
 # Purities
 # Last Modified: 10/10/21

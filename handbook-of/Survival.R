@@ -267,83 +267,99 @@ plotPMR <- function(file.name, main.text, xlab.text, ylab.text, x, y, line=2.4) 
 # 
 # Last Modified:
 # -----------------------------------------------------------------------------
+survESAD <- function(purities2) {
+   purities2 <- purities2[!is.na(purities2$os_days),]
+ 
+   purities2$Tumor_content_pathology <- as.numeric(purities2$Tumor_content_pathology)
+ 
+   ## https://docs.icgc.org/submission/guide/donor-clinical-data-guidelines/#donor-clinical-data-guidelines
+   purities2$OS_month <- purities2$os_days / 30.44
+ 
+   purities2$OS_censor <- purities2$death
+   purities2$OS_censor <- as.numeric(purities2$OS_censor)
+ 
+   purities2$Survival <- "Short"
+   idx <- which(purities2$os_days >= 730)
+   purities2[idx,]$Survival <- "Long"
+   purities2$Survival <- as.factor(purities2$Survival)
+ 
+   purities2$Response <- gsub("Complete Responder", "Complete", purities2$Response)
+   purities2$Response <- gsub("Majorresponder",     "Major",    purities2$Response)
+   purities2$Response <- gsub("Minorresponder",     "Minor",    purities2$Response)
+   purities2$Response <- as.factor(purities2$Response)
+ 
+   rownames(purities2) <- paste0(purities2$Patient_ID, "_B")
+   return(purities2)
+}
+
 ## https://www.rdocumentation.org/packages/survival/versions/2.11-4/topics/Surv
 ## https://media.nature.com/original/nature-assets/nature/journal/v524/n7563/extref/nature14664-s1.xlsx
 survSCLC <- function(phenos, samples, isCensored) {
    overlaps <- intersect(rownames(samples), rownames(phenos))   ## ADD 08/05/19
-   phenos <- cbind(phenos[overlaps,], samples[overlaps,])
+   phenos <- cbind(samples[overlaps,], phenos[overlaps,])
 
    ## Stage UICC
-   phenos$Stage <- NA
-   phenos[which(phenos$stage_UICC == "I"), ]$Stage <- 1
-   phenos[which(phenos$stage_UICC == "Ia"),]$Stage <- 1
-   phenos[which(phenos$stage_UICC == "Ib"),]$Stage <- 1
-   #phenos[which(phenos$stage_UICC == "IB"),]$Stage <- 1
+   phenos$STAGE <- NA
+   phenos[which(phenos$stage_UICC == "I"), ]$STAGE <- "I-II"
+   phenos[which(phenos$stage_UICC == "Ia"),]$STAGE <- "I-II"
+   phenos[which(phenos$stage_UICC == "Ib"),]$STAGE <- "I-II"
+   #phenos[which(phenos$stage_UICC == "IB"),]$STAGE <- "I-II"
    
-   phenos[which(phenos$stage_UICC == "II"), ]$Stage <- 2
-   phenos[which(phenos$stage_UICC == "IIa"),]$Stage <- 2
-   phenos[which(phenos$stage_UICC == "IIb"),]$Stage <- 2
+   phenos[which(phenos$stage_UICC == "II"), ]$STAGE <- "I-II"
+   phenos[which(phenos$stage_UICC == "IIa"),]$STAGE <- "I-II"
+   phenos[which(phenos$stage_UICC == "IIb"),]$STAGE <- "I-II"
    
-   #phenos[which(phenos$stage_UICC == "III"), ]$Stage <- 3
-   phenos[which(phenos$stage_UICC == "IIIa"),]$Stage <- 3
-   phenos[which(phenos$stage_UICC == "IIIb"),]$Stage <- 3
+   #phenos[which(phenos$stage_UICC == "III"), ]$STAGE <- "III-IV"
+   phenos[which(phenos$stage_UICC == "IIIa"),]$STAGE <- "III-IV"
+   phenos[which(phenos$stage_UICC == "IIIb"),]$STAGE <- "III-IV"
    
-   phenos[which(phenos$stage_UICC == "IV"),]$Stage <- 4
-   #phenos$Stage <- as.factor(phenos$Stage)
+   phenos[which(phenos$stage_UICC == "IV"),]$STAGE <- "III-IV"
+   phenos$STAGE <- as.factor(phenos$STAGE)
    
    ## Q4
    #phenos$Q4 <- as.factor(phenos$Q4)
    #phenos$RT <- as.factor(phenos$RT)
-   
+   phenos$M2 <- phenos$M2 + 1
+    
    ## For Cox regression model
-   phenos$Surgery <- "no"
-   phenos$Surgery[which(phenos$tissue.sampling == "surgical resection")] <- "yes"
-   phenos$Sex          <- phenos$sex
-   phenos$Chemotherapy <- phenos$chemotherapy..yes.no.
-   phenos$Radiation    <- phenos$radiation..yes.no.
+   #phenos$Surgery <- "no"
+   #phenos$Surgery[which(phenos$tissue.sampling == "surgical resection")] <- "yes"
+   #phenos$Chemotherapy <- phenos$chemotherapy..yes.no.
+   #phenos$Radiation    <- phenos$radiation..yes.no.
    
    ## OS_censor
    phenos.surv <- phenos[!is.na(phenos$overall_survival..months.),]
    phenos.surv$OS_month <- phenos.surv$overall_survival..months.
-   phenos.surv$Groups   <- phenos.surv$Stage
+   #phenos.surv$Groups   <- phenos.surv$Stage
  
    phenos.surv$OS_censor <- phenos.surv$Status..at.time.of.last.follow.up.
-   phenos.surv$OS_censor <- gsub("dead",  1, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
-   phenos.surv$OS_censor <- gsub("alive", 0, phenos.surv$OS_censor)
+   phenos.surv$OS_censor <- gsub("dead",  2, phenos.surv$OS_censor)   ## BUG FIX 07/05/19: 0=alive, 1=dead
+   phenos.surv$OS_censor <- gsub("alive", 1, phenos.surv$OS_censor)
    phenos.surv$OS_censor <- as.numeric(phenos.surv$OS_censor)
    
-   phenos.surv$SG1 <- "G1"
-   phenos.surv[which(phenos.surv$COR > -0.6503083),]$SG1 <- "S"
-   
+   #phenos.surv$SG1 <- "G1"
+   #phenos.surv[which(phenos.surv$COR > -0.6503083),]$SG1 <- "S"
+   #phenos$SEX   <- phenos$sex
+   #phenos$AGE   <- phenos$age
+   phenos$SORTING <- NA
+    
    if (isCensored) {
       return(phenos.surv)
    } else
       return(phenos)
 }
 
-survESAD <- function(purities2) {
-   purities2 <- purities2[!is.na(purities2$os_days),]
-   
-   purities2$Tumor_content_pathology <- as.numeric(purities2$Tumor_content_pathology)
-   
-   ## https://docs.icgc.org/submission/guide/donor-clinical-data-guidelines/#donor-clinical-data-guidelines
-   purities2$OS_month <- purities2$os_days / 30.44
+survNBL <- function(samples.nbl) {
+   ## OS_censor
+   samples.nbl$OS_month <- samples.nbl$OS_d / 30.44
+
+   samples.nbl$OS_censor <- samples.nbl$OS_bin
+   samples.nbl$OS_censor <- as.numeric(samples.nbl$OS_censor)
  
-   purities2$OS_censor <- purities2$death
-   purities2$OS_censor <- as.numeric(purities2$OS_censor)
-     
-   purities2$Survival <- "Short"
-   idx <- which(purities2$os_days >= 730)
-   purities2[idx,]$Survival <- "Long"
-   purities2$Survival <- as.factor(purities2$Survival)
-   
-   purities2$Response <- gsub("Complete Responder", "Complete", purities2$Response)
-   purities2$Response <- gsub("Majorresponder",     "Major",    purities2$Response)
-   purities2$Response <- gsub("Minorresponder",     "Minor",    purities2$Response)
-   purities2$Response <- as.factor(purities2$Response)
-   
-   rownames(purities2) <- paste0(purities2$Patient_ID, "_B")
-   return(purities2)
+   samples.nbl$AGE <- as.numeric(samples.nbl$pat_age)
+   samples.nbl$SORTING <- NA
+ 
+   return(samples.nbl)
 }
 
 ## https://docs.icgc.org/submission/guide/donor-clinical-data-guidelines/#donor-clinical-data-guidelines
@@ -382,18 +398,18 @@ survICGC <- function(samples.hist) {
       return(samples.hist[1,][-1,])
 }
 
-getSurvfitPvals <- function(samples.surv) {
+getSurvfitPvals <- function(pvals, samples.surv.sclc) {
    pvals <- c()
    
-   for (s in 1:nrow(samples.surv)) {
-      samples.surv$SORTING <- "G1"
-      idx <- which(samples.surv$COR >= samples.surv$COR[s])
+   for (s in 1:nrow(samples.surv.sclc)) {
+      samples.surv.sclc$SORTING <- "G1"
+      idx <- which(samples.surv.sclc$COR >= samples.surv.sclc$COR[s])
       if (length(idx) != 0)
-         samples.surv[idx,]$SORTING <- "S"
-      samples.surv$SORTING <- as.factor(samples.surv$SORTING)
+         samples.surv.sclc[idx,]$SORTING <- "S"
+      samples.surv.sclc$SORTING <- as.factor(samples.surv.sclc$SORTING)
   
-      fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv)
-      if (length(unique(samples.surv$SORTING)) != 1){
+      if (length(unique(samples.surv.sclc$SORTING)) != 1){
+         fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.sclc)
          pvals <- c(pvals, surv_pvalue(fit)$pval)
       } else {
          pvals <- c(pvals, NA)

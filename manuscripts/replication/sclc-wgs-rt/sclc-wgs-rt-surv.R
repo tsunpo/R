@@ -39,6 +39,64 @@ phenos  <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, row
 
 # -----------------------------------------------------------------------------
 # 
+# Last Modified: 15/04/22
+# -----------------------------------------------------------------------------
+samples.surv.sclc <- survSCLC(phenos, samples, isCensored=T)
+pvals <- c()
+pvals <- getSurvfitPvals(pvals, samples.surv.sclc)
+
+idx <- which(is.na(pvals))
+s <- which(pvals == min(pvals[-idx]))
+rho.sclc <- samples.surv.sclc$COR[s]
+samples.surv.sclc$SORTING <- "G1"
+idx <- which(samples.surv.sclc$COR >= samples.surv.sclc$COR[s])
+if (length(idx) != 0)
+   samples.surv.sclc[idx,]$SORTING <- "S"
+samples.surv.sclc$SORTING <- as.factor(samples.surv.sclc$SORTING)
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.sclc)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.SCLC))
+plotSurvfit55(fit, file.name, text.SCLC, c("Resting", "Proliferating"), c(blue, red))
+
+idx <- which(is.na(pvals))
+x <- samples.surv.sclc$COR[-idx]
+y <- -log10(pvals[-idx])
+file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", text.SCLC)
+plotOS(file.name, text.SCLC, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
+
+res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + STAGE + SEX + AGE, data=samples.surv.sclc)
+pdf(paste0(wd.rt.plots, "/hists/hazard_in-silico_samples.surv.hist_", text.SCLC, "_.pdf"), height=2.7, width=5)
+ggforest(res.cox, data=samples.surv.sclc, main=text.SCLC, cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
+dev.off()
+
+###
+##
+size <- nrow(samples.surv.sclc)
+sigs <- 0
+for (p in 1:10000) {
+   idx <- sample(1:size, size, replace=F)
+   fit <- survfit(Surv(OS_month[idx], OS_censor[idx]) ~ SORTING, data=samples.surv.sclc)
+ 
+   if (surv_pvalue(fit)$pval <= pval)
+      sigs <- sigs + 1
+}
+sigs/10000
+
+###
+##
+test <- toTable(0, 2, 2, c("I-II", "III-IV"))
+rownames(test) <- c("S", "G1")
+
+test[1, 1] <- nrow(subset(subset(samples.surv.sclc, SORTING == "S"), STAGE == "I-II"))
+test[1, 2] <- nrow(subset(subset(samples.surv.sclc, SORTING == "S"), STAGE == "III-IV"))
+test[2, 1] <- nrow(subset(subset(samples.surv.sclc, SORTING == "G1"), STAGE == "I-II"))
+test[2, 2] <- nrow(subset(subset(samples.surv.sclc, SORTING == "G1"), STAGE == "III-IV"))
+fisher.test(test)[[1]]
+# [1] 0.6590286
+
+# -----------------------------------------------------------------------------
+# 
 # Last Modified: 27/09/19
 # -----------------------------------------------------------------------------
 phenos.surv <- survSCLC(phenos, samples, isCensored=T)

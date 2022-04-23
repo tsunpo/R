@@ -36,14 +36,106 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
 phenos  <- readTable(file.path(wd.meta, "NB_WGS_Mutations_Overview.txt"), header=T, rownames=T, sep="")
-science <- readTable(file.path(wd.meta, "NB_RAS_Science_Table S10.txt"), header=T, rownames=T, sep="\t")
+#science <- readTable(file.path(wd.meta, "NB_RAS_Science_Table S10.txt"), header=T, rownames=T, sep="\t")
+survival <- readTable(file.path(wd.meta, "NB_survival_416.txt"), header=T, rownames=T, sep="\t")
+survival$Patient.number <- paste0("P", survival$Patient.number)
+rownames(survival) <- survival$Patient.number
 #q4 <- rownames(subset(samples, Q4 == 4))
 #q3 <- rownames(subset(samples, Q4 == 3))
 #q2 <- rownames(subset(samples, Q4 == 2))
 #q1 <- rownames(subset(samples, Q4 == 1))
 
+overlaps <- intersect(intersect(rownames(samples), rownames(phenos)), rownames(survival))
+samples.nbl <- cbind(samples[overlaps,], phenos[overlaps,], survival[overlaps,])
+ 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 15/04/22
+# -----------------------------------------------------------------------------
+samples.surv.nbl <- survNBL(samples.nbl)
+
+pvals <- c()
+for (s in 1:nrow(samples.surv.nbl)) {
+   samples.surv.nbl$SORTING <- "G1"
+   idx <- which(samples.surv.nbl$COR >= samples.surv.nbl$COR[s])
+   if (length(idx) != 0)
+      samples.surv.nbl[idx,]$SORTING <- "S"
+   samples.surv.nbl$SORTING <- as.factor(samples.surv.nbl$SORTING)
+ 
+   if (length(unique(samples.surv.nbl$SORTING)) != 1){
+      fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.nbl)
+      pvals <- c(pvals, surv_pvalue(fit)$pval)
+   } else {
+     pvals <- c(pvals, NA)
+   }
+}
+
+idx <- which(is.na(pvals))
+s <- which(pvals == min(pvals[-idx]))
+rho.nbl <- samples.surv.nbl$COR[s]
+samples.surv.nbl$SORTING <- "G1"
+idx <- which(samples.surv.nbl$COR >= samples.surv.nbl$COR[s])
+if (length(idx) != 0)
+   samples.surv.nbl[idx,]$SORTING <- "S"
+samples.surv.nbl$SORTING <- as.factor(samples.surv.nbl$SORTING)
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL))
+plotSurvfit55(fit, file.name, text.NBL, c("Resting", "Proliferating"), c(blue, red))
+
+idx <- which(is.na(pvals))
+x <- samples.surv.nbl$COR[-idx]
+y <- -log10(pvals[-idx])
+file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", text.NBL)
+plotOS(file.name, text.NBL, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
+
+res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + RISK + AGE, data=samples.surv.nbl)
+pdf(paste0(wd.rt.plots, "/hists/hazard_in-silico_samples.surv.hist_", text.NBL, ".pdf"), height=2.7, width=5)
+ggforest(res.cox, data=samples.surv.nbl, main=text.NBL, cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
+dev.off()
+
+###
+##
+size <- nrow(samples.surv.nbl)
+sigs <- 0
+for (p in 1:10000) {
+   idx <- sample(1:size, size, replace=F)
+   fit <- survfit(Surv(OS_month[idx], OS_censor[idx]) ~ SORTING, data=samples.surv.nbl)
+ 
+   if (surv_pvalue(fit)$pval <= pval)
+      sigs <- sigs + 1
+}
+sigs/10000
+
+###
+##
 overlaps <- intersect(rownames(samples), rownames(phenos))
-phenos <- cbind(samples[overlaps,], phenos[overlaps,])
+samples.nbl <- cbind(samples[overlaps,], phenos[overlaps,])
+
+samples.nbl$SORTING <- "G1"
+idx <- which(samples.nbl$COR >= rho.nbl)
+samples.nbl[idx,]$SORTING <- "S"
+samples.nbl$SORTING <- as.factor(samples.nbl$SORTING)
+
+test <- toTable(0, 2, 2, c("Low", "High"))
+rownames(test) <- c("S", "G1")
+test[1, 1] <- nrow(subset(subset(samples.nbl, SORTING == "S"), RISK == "low"))
+test[1, 2] <- nrow(subset(subset(samples.nbl, SORTING == "S"), RISK == "high"))
+test[2, 1] <- nrow(subset(subset(samples.nbl, SORTING == "G1"), RISK == "low"))
+test[2, 2] <- nrow(subset(subset(samples.nbl, SORTING == "G1"), RISK == "high"))
+fisher.test(test)[[1]]
+# [1] 6.156504e-07
+test
+#    Low High
+# S    0   27
+# G1  17   12
+
+fisher.test(test)[[1]]
+# [1] 8.061812e-07
+#    Low High
+# S    0   26
+# G1  17   12
 
 # -----------------------------------------------------------------------------
 # 
