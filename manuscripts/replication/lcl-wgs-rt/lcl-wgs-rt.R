@@ -139,10 +139,10 @@ plotRD2(sprs, file.name, main.text, 0.1, 0.75)
 
 
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_LCL-S-G1_spline_spearman_chr2")
-main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
-ylab.text <- "LCL RTS"
-plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2="0.08", offset="           ")
+file.name <- file.path(wd.rt.plots, "RTS_LCL-S-G1_spline_spearman_chr2_NEW_2")
+main.text <- c("Replication timing skew", "")
+ylab.text <- "RTS = (E-L)/(E+L)"
+plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2)
 
 
 

@@ -64,20 +64,48 @@ for (s in 1:nrow(g4rs)) {
    g4rs$rho[s] <- cor3[[4]]
 
    sample <- samples$SAMPLE_ID[s]
-   file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample))
+   file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample, "_NEW"))
    #main.text <- c(paste0(sample, " G-quadruplex region skew"), "G4RS = (E-L)/(E+L)")
    main.text <- c(paste0(sample, ""), "")
-   xlab.text <- "G4RS (Chromosome)"
-   ylab.text <- "LCL RTS"
+   xlab.text <- "G-quadruplex region skew"
+   ylab.text <- "Replicaiton timing skew"
    cols <- c(red, blue, "black", green)
    plotG4RS(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols, "topright")
 }
 
 ## G4RS E vs. L
 ylim <- c(min(c(g4rs$L, g4rs$E)), max(c(g4rs$L, g4rs$E)))
-file.name <- paste0("boxplot_brca_g4rs_E+L_darkgray")
+file.name <- paste0("boxplot_brca_g4rs_E+L_darkgray_NEW_mar=4.6")
 main.txt <- c("BRCA G4R", "")
-plotBoxG4R(wd.rt.plots, file.name, g4rs$L, g4rs$E, main.txt, names=c("Late", "Early"), cols=c("darkgray", "darkgray"), ylim)
+#plotBoxG4R(wd.rt.plots, file.name, g4rs$L, g4rs$E, main.txt, , ylim)
+tpm.1 <- g4rs$L
+tpm.2 <- g4rs$E
+names <- c("Late", "Early")
+cols <- c("darkgray", "darkgray")
+
+trait <- rep(0, length(tpm.1))
+trait <- c(trait, rep(1, length(tpm.2)))
+trait <- as.factor(trait)
+expr <- as.numeric(c(tpm.1, tpm.2))
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=4.2)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+boxplot(expr ~ trait, outline=T, xaxt="n", ylab="Number of G4R", xlab="", main=main.txt[1], col=cols, ylim=ylim, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+
+p <- testU(tpm.1, tpm.2)
+#text(1.5, ylim[2]-1250, paste0("p-value = ", scientific(wilcox.test(expr ~ trait, exact=F)$p.value)), col="black", cex=1.5)
+#text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=3)
+text(1.5, ylim[2]-1500, expression(italic('P')~'= 3.24E-08'), col="black", cex=1.8)
+text(1.5, ylim[2], "*", col="black", cex=3)
+
+##
+axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.8)
+axis(side=1, at=1, labels=paste0("n=", format(sum(tpm.1), big.mark=",", scientific=F)), line=1.7, col=NA, cex.axis=1.7)
+axis(side=1, at=2, labels=paste0("n=", format(sum(tpm.2), big.mark=",", scientific=F)), line=1.7, col=NA, cex.axis=1.7)
+
+#mtext("Number of G4R", side=2, line=2.7, cex=1.8)   
+#mtext("", line=0.3, cex=1.25)
+dev.off()
 
 
 
@@ -145,7 +173,8 @@ plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col,
    ylim <- c(-0.34, 0.25)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+
+   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], yaxt="n", col=col2, pch=15, cex=2, lwd=0, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col, lwd=4)
    
@@ -156,7 +185,7 @@ plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col,
    
    axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
    axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
-   mtext(ylab.text, side=2, line=2.75, cex=1.6)
+   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
    mtext(main.text[2], line=0.3, cex=1.6)
    dev.off()
 }
@@ -200,7 +229,7 @@ samples.tmp <- samples
 samples <- samples[setdiff(rownames(samples), c("STG139M-2", "STG143-2", "STG201-2", "VHIO098-2", "VHIO179-2")),]
 samples <- samples.tmp
 
-file.name <- file.path(wd.rt.plots, "G4R_BRCA_3P_n22")
+file.name <- file.path(wd.rt.plots, "G4R_BRCA_3P_n22_mar=4.6")
 main.text <- c(paste("In silico vs. G4R"), "n=22")
 xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
 ylab.text <- "Overall read depth vs. RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"

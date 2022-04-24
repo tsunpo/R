@@ -62,13 +62,15 @@ samples1 <- samples1[samples4,]
 # -----------------------------------------------------------------------------
 cors.samples <- getSAMPLEvsRT(wd.rt.data, rownames(samples))
 
-
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1[,1])
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.8376235
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.7286896
+
+samples <- readTable(file.path(wd.ngs, "brca_wgs_n22.txt"), header=T, rownames=T, sep="\t")
+load(file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_brca-vs-lcl_spline_spearman.RData")))
 file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_BRCA-CL-vs-LCL_spline_spearman")
@@ -148,51 +150,63 @@ samples$CANCER[1:n.brca] <- 1
 #samples$SAMPLE_ID <- samples$SAMPLE_ID
 #rownames(samples) <- samples$SAMPLE_ID
 
-pdf(file.path(wd.rt.plots, "boxplot_brca_n22.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_brca_n22_NEW_mar=4.6.pdf"), height=6, width=4.2)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
 ymax <- 0.24
 ymin <- -0.35
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", main="In silico prediction", yaxt="n", boxwex=0.75, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-abline(h=0, lty=5, lwd=2)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="", main=expression(bolditalic('In silico')~bold("estimation")), yaxt="n", boxwex=0.75, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+#abline(h=0, lty=5, lwd=2)
 
-points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col=lighterblue, pch=19, cex=2)
-points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col=blue, pch=19, cex=2)
-points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col=lighterred, pch=19, cex=2)
-points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, pch=19, cex=2)
+points(subset(samples, COR > 0)$CANCER, subset(samples, COR > 0)$COR, col=red,  pch=19, cex=2.5)
+points(subset(samples, COR < 0)$CANCER, subset(samples, COR < 0)$COR, col=blue, pch=19, cex=2.5)
+#points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col=lighterblue, pch=19, cex=2)
+#points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col=blue, pch=19, cex=2)
+#points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col=lighterred, pch=19, cex=2)
+#points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, pch=19, cex=2)
 for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
-   if (sample$SAMPLE_ID == "HCI005")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.27, -0.55), cex=1.5)
-   else if (sample$SAMPLE_ID == "VHIO098" || sample$SAMPLE_ID == "STG331" || sample$SAMPLE_ID == "PAR1006")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, -0.55), cex=1.5)
-   else if (sample$SAMPLE_ID == "")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.23, -0.55), cex=1.5)
-   else if (sample$SAMPLE_ID == "")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.3, 0.5), cex=1.5)
-   else if (sample$SAMPLE_ID == "AB555M")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 1.17), cex=1.5)
-   else if (sample$SAMPLE_ID == "STG139M" || sample$SAMPLE_ID == "STG282M" || sample$SAMPLE_ID == "STG195M")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.19, 1.17), cex=1.5)
-   else if (sample$SAMPLE_ID == "STG143")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 1.17), cex=1.5)
-   else if (sample$SAMPLE_ID == "AB790")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.28, 1.17), cex=1.5)
-   else if (sample$SAMPLE_ID == "AB580")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.28, 0.5), cex=1.5)
-   else
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 0.5), cex=1.5)
+   #if (sample$SAMPLE_ID == "HCI005")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.27, -0.55), cex=1.5)
+   #else if (sample$SAMPLE_ID == "VHIO098" || sample$SAMPLE_ID == "STG331" || sample$SAMPLE_ID == "PAR1006")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, -0.55), cex=1.5)
+   #else if (sample$SAMPLE_ID == "")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.23, -0.55), cex=1.5)
+   #else if (sample$SAMPLE_ID == "")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.3, 0.5), cex=1.5)
+   #else if (sample$SAMPLE_ID == "AB555M")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 1.17), cex=1.5)
+   #else if (sample$SAMPLE_ID == "STG139M" || sample$SAMPLE_ID == "STG282M" || sample$SAMPLE_ID == "STG195M")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.19, 1.17), cex=1.5)
+   #else if (sample$SAMPLE_ID == "STG143")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 1.17), cex=1.5)
+   #else if (sample$SAMPLE_ID == "AB790")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.28, 1.17), cex=1.5)
+   #else if (sample$SAMPLE_ID == "AB580")
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.28, 0.5), cex=1.5)
+   #else
+   #   text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 0.5), cex=1.5)
+      
+   if (sample$SAMPLE_ID == "HCI005" || sample$SAMPLE_ID == "AB790")
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID2, col="black", adj=c(1.22, 0.5), cex=1.8)
 }
 
-legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, lighterred, lighterblue, blue), cex=1.5)
+#legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, lighterred, lighterblue, blue), cex=1.5)
 
-axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.5)
-mtext("Overall read depth vs. LCL RT [rho]", side=2, line=2.75, cex=1.6)
+axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.7)
+axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.7)
+#mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
+
+#mtext("Overall read depth vs. LCL RT [rho]", side=2, line=2.75, cex=1.6)
 #mtext("Overall read depth correlation [rho]", side=2, line=2.75, cex=1.6)
 #mtext("", cex=1.2, line=0.3)
-axis(side=1, at=1, labels="BRCA", cex.axis=1.6)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
-mtext(text=c("n=22"), side=1, cex=1.6, line=2.4, at=c(1,2,3))
+#mtext(text=c("n=22"), side=1, cex=1.6, line=2.4, at=c(1,2,3))
+
+axis(side=1, at=1, labels="BRCA-CL", cex.axis=1.8)
+#mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
+mtext(text=c("(n = 22)"), side=1, cex=1.8, line=2.45, at=c(1,2,3))
+
 dev.off()
 
 # -----------------------------------------------------------------------------
@@ -237,24 +251,30 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
 }
 
 # https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
-plotFACS3 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
-   xlim <- c(0, xlim.max)
+plotFACS3 <- function(n3, snr3, SAMPLE_IDs, file.name, main.text, xlab.text, ylab.text, col, col2, pos, xlim.max) {
+   xlim <- c(0.1, xlim.max+0.1)
    ylim <- c(-0.34, 0.24)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", pch=15, col=col2, lwd=0, cex=2, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+   par(mar=c(5.1, 4.6, 4.1, 1.5))
+   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], yaxt="n", pch=15, col=col2, lwd=0, cex=2.5, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col, lwd=4)
+   
+   idx <- which(SAMPLE_IDs == "HCI005")
+   text(snr3[idx], n3[idx], "HCI005", pos=3, cex=1.8)
+   idx <- which(SAMPLE_IDs == "AB790")
+   text(snr3[idx], n3[idx], "AB790", pos=3, cex=1.8)
    
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
    #cor3 <- round0(cor3[[4]], digits=2)
    #legend(pos, paste("rho = ", cor3), text.col=col, pch=15, col=col2, pt.cex=2.5, cex=1.5, pt.lwd=0, text.font=1)
-   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
-   
-   axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
-   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.5)
-   mtext(ylab.text, side=2, line=2.75, cex=1.6)
-   mtext(main.text[2], line=0.3, cex=1.6)
+   #legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), expression(italic('P')~'= 4.05E-02')), text.col=cols, text.font=2, bty="n", cex=1.8)
+   axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.7)
+   axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.7)
+   #mtext(ylab.text, side=2, line=2.73, cex=1.8)
+   mtext(main.text[2], line=0.3, cex=1.7)
    dev.off()
 }
 
@@ -270,7 +290,7 @@ plotFACS30 <- function(n3, snr3, file.name, main.text, xlab.text, ylab.text, col
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
    #cor3 <- round0(cor3[[4]], digits=2)
    #legend(pos, paste("rho = ", cor3), text.col=col, pch=15, col=col2, pt.cex=2.5, cex=1.5, pt.lwd=0, text.font=1)
-   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=1, bty="n", cex=1.5)
  
    axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.5)
    axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c(-0.3, -0.1, 0.1), cex.axis=1.5)
@@ -304,15 +324,30 @@ samples$SAMPLE_ID <- gsub("-1", "", samples$SAMPLE_ID)
 
 ###
 ##
-file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4R_n22")
-main.text <- c(paste("In silico vs. G4R"), "")
+file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4R_n22_NEW2_mar=4.6")
+main.text <- c(expression(bolditalic('In silico')~bold("vs. G4R")), "")
 #xlab.text <- expression(paste("Number of ", Delta, "G4R [#]"))
-xlab.text <- "Number of G4R (Hänsel-Hertsch et al.) [#]"
-ylab.text <- "Overall read depth vs. LCL RT [rho]"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+xlab.text <- "Number of G4R"
+ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 #ylab.text <- "Overall read depth correlation [rho]"         
 cols <- "black"
 cols2 <- "darkgray"
-plotFACS3(samples$COR, samples$G4R, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
+plotFACS3(samples$COR, samples$G4R, samples$SAMPLE_ID, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", 16531)
+
+###
+##
+file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4RS_RHO_E-L_NEW2_mar=4.6")
+main.text <- c(paste("In silico vs. G4RS"), "")
+xlab.text <- "G4RS correlation [rho]"
+ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
+#ylab.text <- "Overall read depth correlation [rho]"   
+cols <- "black"
+cols2 <- green
+plotFACS3(samples$COR, g4rs$rho, samples$SAMPLE_ID, file.name, main.text, xlab.text, ylab.text, cols, cols2, "topright", max(g4rs$rho))
+
+
+
+
 
 ##
 file.name <- file.path(wd.rt.plots, "G4R_BRCA_G4RS")

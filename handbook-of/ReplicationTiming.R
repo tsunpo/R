@@ -864,9 +864,10 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    #ylim <- getYlim(sprs$spr, unit)
    ylim <- c(-1.1, 1.1)
     
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
+   pdf(paste0(file.name, ".pdf"), height=6, width=6)
+   par(mar=c(5.1, 4.6, 4.1, 1.5))
    #plot(sprs$skew ~ sprs$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", yaxt="n", pch=19, cex.axis=1.2, cex.lab=1.3, cex.main=1.35)
+   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main="Repicatioin timing skew", col=cols[3], xaxt="n", yaxt="n", pch=19, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    
    abline(h=sprs$spr[2], lty=5, lwd=1.3)
    lines(sprs$spr, y=NULL, type="l", lwd=2, col=cols[3])
@@ -877,26 +878,26 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    points(sprs$spr[idx] ~ sprs$chr[idx], col=cols[2], pch=19, cex=cex)
    points(sprs$spr[2] ~ sprs$chr[2], col=cols[3], pch=19, cex=cex)
  
-   text(sprs$chr[2], sprs$spr[2], "Chr2", col=cols[3], pos=3, cex=1.3)
+   text(sprs$chr[2], sprs$spr[2], "Chr2", col=cols[3], pos=3, cex=1.7)
    #text(sprs$chr[2], sprs$spr[2], paste0(offset, "Chr2 (", chr2, ")"), col=cols[3], pos=3, cex=1.3)
    #text(sprs$chr[2]+1.8, sprs$spr[2], paste0("Chr2 (", round0(sprs$spr[2], digits=digits), ")"), cex=1.1, col=cols[3], pos=3)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
          c <- cs[c]
          if (sprs$spr[c] > sprs$spr[2])
-            text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), col="red", pos=3, cex=1.3)
+            text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), col="red", pos=3, cex=1.7)
             #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[1], pos=3)
          else
-            text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), col="blue", pos=1, cex=1.3)
+            text(sprs$chr[c], sprs$spr[c], paste0("Chr", c), col="blue", pos=1, cex=1.7)
             #text(sprs$chr[c]+1.8, sprs$spr[c], paste0("Chr", c, " (", round0(sprs$spr[c], digits=digits), ")"), cex=1.1, col=cols[2], pos=1)
       }
-   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=1.5, col=cols[1], cex=1.3)   
-   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=19, pt.cex=1.5, col=cols[2], cex=1.3)
+   legend("topleft", "Earlier than chr2", text.col=cols[1], pch=19, pt.cex=2.5, col=cols[1], cex=1.7)   
+   legend("bottomleft", "Later than chr2", text.col=cols[2], pch=19, pt.cex=2.5, col=cols[2], cex=1.7)
 
-   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.2)
-   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.2)
-   axis(side=2, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.2)
-   mtext(main.text[2], line=0.3, cex=1.3)
+   axis(side=1, at=seq(2, 22, by=4), cex.axis=1.7)
+   axis(side=1, at=seq(4, 20, by=4), cex.axis=1.7)
+   axis(side=2, at=seq(-1, 1, by=0.5), labels=c(-1, -0.5, 0, 0.5, 1), cex.axis=1.7)
+   #mtext(main.text[2], line=0.3, cex=1.3)
    dev.off()
 }
 
