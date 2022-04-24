@@ -88,8 +88,12 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
    abline(lm.fit, col=cols[4], lwd=5)
    
    cor3 <- cor.test(rts, g4s, method="spearman", exact=F)
-   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("   = ", scientific(cor3[[3]]))), text.col=cols[4], text.font=2, bty="n", cex=1.8)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[4], "white"), text.font=2, bty="n", cex=1.8)
    legend("bottomright", expression(bolditalic('P')~"                   "), text.col=cols[4], text.font=2, bty="n", cex=1.8)
+   legend("bottomright", paste0("   = ", scientific(cor3[[3]])), text.col=cols[4], text.font=2, bty="n", cex=1.8)
+   
+   #text(max/4, 0.07, expression(italic('P')~"="~"                "), cex=1.7)
+   #text(max/4, 0.07, paste0("      ", scientific(surv_pvalue(fit)$pval, digits=2)), cex=1.7)
    
    text(g4s[2], rts[2], "Chr2", col=cols[3], pos=3, cex=1.7)
    text(g4s[17], rts[17], "Chr17", col=cols[1], pos=3, cex=1.7)
