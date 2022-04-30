@@ -23,29 +23,70 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
    dev.off()
 }
 
-plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, ylab.txt) {
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos, col="dimgray", size) {
+   pdf(paste0(file.name, ".pdf"), height=size, width=size)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))  
+   plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+ 
+   lm.fit <- lm(y ~ x)
+   abline(lm.fit, lwd=5)
+ 
+   cor <- cor.test(y, x, method="spearman", exact=F)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.7)
+ 
+   dev.off()
+}
+
+plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, h=6, w=4.5, ylab.txt="") {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
    trait <- as.factor(trait)
  
    expr <- as.numeric(c(tpm.1, tpm.2))
    ylim <- c(min(expr), max(expr))
- 
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   boxplot(expr ~ trait, outline=T, names=names, main=main, col=cols, outcol="dimgray", xlab="", xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   if (ylab.txt == "")
+      ylab.txt <- expression("Log" * ""[2] * "(TPM + 1)")
+   
+   pdf(paste0(file.name, ".pdf"), height=h, width=w)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   boxplot(expr ~ trait, outline=T, main=main, col=cols, xlab="", xaxt="n", ylab=ylab.txt, ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
-   legend("topleft", paste0("  p-value = ", scientific(p, digits=2)), bty="n", cex=1.7)
+   offset <- (ylim[2] - ylim[1])/35
+   text(1.5, ylim[2] - offset, expression(italic('P')~"                   "), col="black", cex=1.8)
+   text(1.5, ylim[2] - offset, paste0("   = ", scientific(p)), col="black", cex=1.8)
    
    axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.8)
    axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, col=NA, cex.axis=1.8)
    axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, col=NA, cex.axis=1.8)
-   #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
-   
-   #mtext(main, font=2, cex=1.9, line=2)
-   #mtext(paste0("p-value = ", scientific(p)), cex=1.7, line=0.3)
-   #mtext(expression(italic('In silico')~"sorting"), side=2, line=2.45, cex=1.8)
-   mtext(ylab.txt, side=2, line=2.45, cex=1.8)
+
+   dev.off()
+}
+
+plotSRC <- function(gene, cn, snr, pch, col, pos, size=6) {
+   unit <- (max(snr) - min(snr))/10
+   xlim <- c(min(snr) - unit, max(snr) + unit)
+   unit <- (max(cn) - min(cn))/10
+   ylim <- c(min(cn) - unit, max(cn) + unit)
+ 
+   xlab.text <- expression(italic('In silico')~'sorting')
+   ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
+   id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
+   file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], "_size", size))
+ 
+   pdf(paste0(file.name, ".pdf"), height=size, width=size)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xaxt="n", xlab=xlab.text, main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+ 
+   lm.fit <- lm(cn ~ snr)
+   abline(lm.fit, col=col, lwd=7)
+ 
+   cor <- cor.test(cn, snr, method="spearman", exact=F)
+   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
+   legend("bottomright", expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
+   legend("bottomright", paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
+ 
+   axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
    dev.off()
 }
 
@@ -66,7 +107,7 @@ getPvalueSignificanceLevel <- function(p) {
    return(text)
 }
 
-plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3) {
+plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3, cols) {
    trait <- rep(0, nrow(tpm.1))
    trait <- c(trait, rep(1, nrow(tpm.2)))
    trait <- as.factor(trait)
@@ -114,29 +155,26 @@ plotBox00 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, y
    dev.off()
 }
 
-plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols) {
+plotBox02 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab.text) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
    trait <- as.factor(trait)
- 
+   
    expr <- as.numeric(c(tpm.1, tpm.2))
    ylim <- c(min(expr), max(expr))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=4.5)
-   boxplot(expr ~ trait, outline=T, names=names, main="", col=cols, xaxt="n", ylab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   par(mar=c(5.1, 4.6, 4.1, 1.5))
+   boxplot(expr ~ trait, outline=T, names=names, main=main, col=cols, xaxt="n", ylab=ylab.text, xlab="", ylim=ylim, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
    offset <- (ylim[2] - ylim[1])/35
-   #text(1.5, ylim[2] - offset, getPvalueSignificanceLevel(p), col="black", cex=4)
- 
+   text(1.5, ylim[2], expression(italic('P')~'= 5.75E-01'), col="black", cex=1.8)
+   
    axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.9)
    axis(side=1, at=1, labels=paste0("n=", length(tpm.1)), line=1.8, col=NA, cex.axis=1.9)
    axis(side=1, at=2, labels=paste0("n=", length(tpm.2)), line=1.8, col=NA, cex.axis=1.9)
-   #axis(side=2, at=seq(5, 8, by=1), cex.axis=1.2)
-   mtext(main, font=2, cex=2, line=2)
-   mtext(paste0("p-value = ", scientific(p)), cex=2, line=0.3)
-   #mtext("log2(TPM + 1)", side=2, line=2.74, cex=1.85)
-   mtext(expression(italic('in silico')~"sorting [rho]"), side=2, line=2.74, cex=1.85)
+
    dev.off()
 }
 

@@ -270,7 +270,11 @@ plotFACS3 <- function(n3, snr3, SAMPLE_IDs, file.name, main.text, xlab.text, yla
    #cor3 <- round0(cor3[[4]], digits=2)
    #legend(pos, paste("rho = ", cor3), text.col=col, pch=15, col=col2, pt.cex=2.5, cex=1.5, pt.lwd=0, text.font=1)
    #legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("p-value = ", scientific(cor3[[3]]))), text.col=cols, text.font=2, bty="n", cex=1.5)
-   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), expression(italic('P')~'= 4.05E-02')), text.col=cols, text.font=2, bty="n", cex=1.8)
+   #legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), expression(italic('P')~'= 4.05E-02')), text.col=cols, text.font=2, bty="n", cex=1.8)
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[4], "white"), text.font=2, bty="n", cex=1.8)
+   legend("bottomright", expression(bolditalic('P')~"                   "), text.col=cols[4], text.font=2, bty="n", cex=1.8)
+   legend("bottomright", paste0("   = ", scientific(cor3[[3]])), text.col=cols[4], text.font=2, bty="n", cex=1.8)
+   
    axis(side=2, at=seq(-0.2, 0.2, by=0.2), labels=c(-0.2, 0, 0.2), cex.axis=1.7)
    axis(side=2, at=seq(-0.3, 0.1, by=0.2), labels=c("", "", ""), cex.axis=1.7)
    #mtext(ylab.text, side=2, line=2.73, cex=1.8)
@@ -337,7 +341,7 @@ plotFACS3(samples$COR, samples$G4R, samples$SAMPLE_ID, file.name, main.text, xla
 ###
 ##
 file.name <- file.path(wd.rt.plots, "BRCA_IS-vs-G4RS_RHO_E-L_NEW2_mar=4.6")
-main.text <- c(paste("In silico vs. G4RS"), "")
+main.text <- c(expression(bolditalic('In silico')~bold("vs. G4RS")), "")
 xlab.text <- "G4RS correlation [rho]"
 ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 #ylab.text <- "Overall read depth correlation [rho]"   

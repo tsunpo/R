@@ -37,11 +37,13 @@ purities1 <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T,
 purities2 <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_3.0.txt"), header=T, rownames=T, sep="\t")
 purities2 <- survESAD(purities2)
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples2)]
 dim(tpm.gene.log2)
 # [1] 15381    97
+# [1] 13004    97
 
 # -----------------------------------------------------------------------------
 # Survival analysis
@@ -139,14 +141,16 @@ samples2.surv$Tumor_content_pathology <- purities2.surv$Tumor_content_pathology
 tpm2.gene.log2 <- tpm.gene.log2[, rownames(samples2.surv)]
 dim(tpm2.gene.log2)
 # [1] 15381    57
+# [1] 13004    47
 
 ## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
 ##       Student's/t.test
 ## FDR : Q/BH
 ## DE  : TR (1) vs UN (0) as factor
 argv      <- data.frame(predictor="Survival", predictor.wt="Long", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
-file.name <- paste0("de_", base, "_tpm-gene-median0-Long-vs-Short_wilcox_q_n57")
-file.main <- paste0("Long (n=36) vs Short (n=21) in ", BASE)
+file.name <- paste0("de_", base, "_tpm-gene-median0-Long-vs-Short_wilcox_q_n47")
+#file.main <- paste0("Long (n=36) vs Short (n=21) in ", BASE)
+file.main <- paste0("Long (n=32) vs Short (n=15) in ", BASE)
 
 de <- differentialAnalysis(tpm2.gene.log2, samples2.surv, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
 

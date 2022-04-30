@@ -43,7 +43,21 @@ phenos  <- readTable(file.path(wd.meta, "nature14664-s1_ST1.txt"), header=T, row
 # -----------------------------------------------------------------------------
 samples.surv.sclc <- survSCLC(phenos, samples, isCensored=T)
 pvals <- c()
-pvals <- getSurvfitPvals(pvals, samples.surv.sclc)
+
+for (s in 1:nrow(samples.surv.sclc)) {
+   samples.surv.sclc$SORTING <- "G1"
+   idx <- which(samples.surv.sclc$COR >= samples.surv.sclc$COR[s])
+   if (length(idx) != 0)
+      samples.surv.sclc[idx,]$SORTING <- "S"
+   samples.surv.sclc$SORTING <- as.factor(samples.surv.sclc$SORTING)
+ 
+   if (length(unique(samples.surv.sclc$SORTING)) != 1){
+      fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.sclc)
+      pvals <- c(pvals, surv_pvalue(fit)$pval)
+   } else {
+      pvals <- c(pvals, NA)
+   }
+}
 
 idx <- which(is.na(pvals))
 s <- which(pvals == min(pvals[-idx]))
@@ -56,14 +70,17 @@ samples.surv.sclc$SORTING <- as.factor(samples.surv.sclc$SORTING)
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.sclc)
 pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.SCLC))
-plotSurvfit55(fit, file.name, text.SCLC, c("Resting", "Proliferating"), c(blue, red))
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.SCLC, "G1-S"))
+plotSurvfit(fit, file.name, text.SCLC, legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
+
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.SCLC, "S-G1"))
+plotSurvfit(fit, file.name, text.SCLC, legend.labs=c("Proliferative", "Resting"), name="SORTING", strata=c("S", "G1"), cols=c(red, blue), size=5)
 
 idx <- which(is.na(pvals))
 x <- samples.surv.sclc$COR[-idx]
 y <- -log10(pvals[-idx])
 file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", text.SCLC)
-plotOS(file.name, text.SCLC, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
+plotOS(file.name, text.SCLC, text.In.silico, text.Log10.P, x, y, pvals[s], rho.sclc, lwd=3)
 
 res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + STAGE + SEX + AGE, data=samples.surv.sclc)
 pdf(paste0(wd.rt.plots, "/hists/hazard_in-silico_samples.surv.hist_", text.SCLC, "_.pdf"), height=2.7, width=5)
@@ -94,6 +111,31 @@ test[2, 1] <- nrow(subset(subset(samples.surv.sclc, SORTING == "G1"), STAGE == "
 test[2, 2] <- nrow(subset(subset(samples.surv.sclc, SORTING == "G1"), STAGE == "III-IV"))
 fisher.test(test)[[1]]
 # [1] 0.6590286
+
+file.name <- paste0("boxplot_STAGAE_SORTING")
+ylab.text <- expression(italic('in silico')~"sorting [rho]")
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2/SCLC/analysis/expression/kallisto/sclc-tpm-de/plots"
+plotBox02(wd, file.name, subset(samples.surv.sclc, STAGE == "I-II")$COR, subset(samples.surv.sclc, STAGE == "III-IV")$COR, "Lung-SCLC", names=c("I-II", "III-IV"), cols=c("lightgray", "dimgray"), ylab.text)
+
+
+
+###
+##
+fit <- survfit(Surv(OS_month, OS_censor) ~ STAGE, data=samples.surv.sclc)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd, "/survfit_STAGE_samples.surv.hist_", text.SCLC))
+plotSurvfit55(fit, file.name, text.SCLC, c("I-II", "III-IV"), c("lightgray", "dimgray"))
+
+idx <- which(is.na(pvals))
+x <- samples.surv.sclc$COR[-idx]
+y <- -log10(pvals[-idx])
+file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", text.SCLC)
+plotOS(file.name, text.SCLC, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
+
+res.cox <- coxph(Surv(OS_month, OS_censor) ~ STAGE + SORTING + SEX + AGE, data=samples.surv.sclc)
+pdf(paste0(wd.rt.plots, "/hazard_in-silico_samples.surv.hist_", text.SCLC, "_.pdf"), height=2.7, width=5)
+ggforest(res.cox, data=samples.surv.sclc, main=text.SCLC, cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
+dev.off()
 
 # -----------------------------------------------------------------------------
 # 

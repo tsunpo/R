@@ -867,9 +867,9 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
    #plot(sprs$skew ~ sprs$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main="Repicatioin timing skew", col=cols[3], xaxt="n", yaxt="n", pch=19, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", yaxt="n", pch=19, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    
-   abline(h=sprs$spr[2], lty=5, lwd=1.3)
+   abline(h=sprs$spr[2], lty=5, lwd=3)
    lines(sprs$spr, y=NULL, type="l", lwd=2, col=cols[3])
    
    idx <- which(sprs$spr > sprs$spr[2])

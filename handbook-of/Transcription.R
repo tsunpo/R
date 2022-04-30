@@ -47,7 +47,7 @@ getGeneTPM <- function(tpm.gene.patch, ensGene) {
 
 removeMedian0 <- function(tpm.gene, tpm=0) {
    medians <- mapply(x = 1:nrow(tpm.gene), function(x) median(as.numeric(tpm.gene[x,])))
-   tpm.gene <- tpm.gene[-which(medians == tpm),]
+   tpm.gene <- tpm.gene[which(medians > tpm),]
  
    return(tpm.gene)
 }
@@ -150,7 +150,6 @@ plotDensityHistogram <- function(tpm.gene, file.main, title, tpm=0) {
    }
 }
 
-###
 ##
 plotTxDensityHistogram <- function(gene, BASE, wd.rt.plots, tpm.gene.log2, ensGene.rt.tx, tx.q4.fix.all, pseudocount) {
    ensembl_gene_id <- rownames(subset(ensGene.rt.tx, external_gene_name == gene))
@@ -461,6 +460,66 @@ getVolcanoGenes <- function(file.tab, de) {
    rownames(genes) <- genes$GENE
    
    return(genes[intersect(genes$GENE, de$external_gene_name),])
+}
+
+adjustcolor.red   <- adjustcolor(red, alpha.f=0.25)
+adjustcolor.blue  <- adjustcolor(blue, alpha.f=0.25)
+adjustcolor.green <- adjustcolor(green, alpha.f=0.25)
+adjustcolor.gray  <- adjustcolor("lightgray", alpha.f=0.25)
+
+## Bottom-right	-0.12	1.25
+##  Level-right	-0.05	
+
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, legends, fold=1, ymax=0) {
+   de.sig <- subset(de, P <= pvalue)
+   de.sig$log10P <- -log10(de.sig$P)
+ 
+   de$log10P <- -log10(de$P)
+   xmax <- max(de$LOG2_FC)
+   xmin <- min(de$LOG2_FC)
+   if (ymax == 0) ymax <- max(de$log10P)
+   #ymax <- 7
+ 
+   pdf(file.de, height=6, width=6)
+   par(mar=c(5.1, 4.35, 4.1, 1.75))
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab=ylab.text, col=adjustcolor.gray, main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
+ 
+   abline(h=c(-log10(pvalue)), lty=5, lwd=2)
+ 
+   de.up   <- subset(de.sig, LOG2_FC > fold)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=adjustcolor.red, cex=1.4)
+   de.down <- subset(de.sig, LOG2_FC < -fold)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=adjustcolor.green, cex=1.4)
+ 
+   abline(v=fold, lty=5, col=red, lwd=2)
+   abline(v=-fold, lty=5, col=green, lwd=2)
+ 
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+   
+         if (nrow(gene) > 0) {
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+    
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.2)
+               else
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
+            else
+               if (gene$LOG2_FC > 0)
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.2)
+               else
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.5), cex=1.2)
+         } else
+            print(genes[g,])
+      }
+   }
+ 
+   #axis(side=1, at=seq(-8, 8, by=1), labels=c(-3, -2, -1, 0, 1, 2, 3), cex.axis=1.2)
+   legend("topleft", legend=legends, col=c(red, green), pch=19, pt.cex=1.6, cex=1.2)
+   dev.off()
 }
 
 # -----------------------------------------------------------------------------

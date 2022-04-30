@@ -53,12 +53,13 @@ length(overlaps)
 
 #nrow(samples.mut)
 # [1] 2373
-overlaps <- intersect(rownames(samples), totals[overlaps,]$specimen_id)
-length(overlaps)
+rownames(totals) <- totals$wgs_id
+overlaps2 <- intersect(rownames(samples), totals[overlaps,]$specimen_id)
+length(overlaps2)
 # [1] 2542
-samples.mut <- samples[overlaps,]
+samples.mut <- samples[overlaps2,]
 rownames(totals) <- totals$specimen_id
-samples.mut$tumor_wgs_aliquot_id <- totals[overlaps,]$wgs_id
+samples.mut$tumor_wgs_aliquot_id <- totals[overlaps2,]$wgs_id
 
 # -----------------------------------------------------------------------------
 # Assigning Ensembl genes to each SNVs
@@ -204,7 +205,7 @@ nrow(de.tpm.gene)
 load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/expression/icgc-tpm-de/data/icgc_kallisto_0.42.1_tpm.gene.RData")
 load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/expression/icgc-tpm-de/data/icgc_kallisto_0.42.1_tpm.gene.log2.m.RData")
 
-tpm.gene <- tpm.gene[rownames(subset(tpm.gene.m, MEDIAN >= 0)),]
+tpm.gene <- tpm.gene[rownames(subset(tpm.gene.m, MEDIAN >= 5)),]
 nrow(tpm.gene)
 # [1] 20720   ## TPM > 0
 # [1] 13475   ## TPM > 1
@@ -492,21 +493,58 @@ save(de.mut.tpm,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
 writeTable(de.mut.tpm, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
 ###
+## 27/04/22
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g6605_mean_MUT_TP53_EP300_MYC"))
+plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, de.mut.tpm, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL"))
+
+overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(de.tpm.gene))
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_log2FC"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "", "PMR", expression("Log" * ""[2] * " fold change"), x, y, pos="bottomright", col="dimgray", size=6)
+
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_P"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- -log10(de.tpm.gene[overlaps,]$P)
+plotCorrelation(file.name, "", "PMR", text.Log10.P, x, y, pos="bottomright", col="dimgray", size=6)
+
+## Up
+overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_log2FC_DOWN"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "", "PMR", expression("Log" * ""[2] * " fold change"), x, y, pos="bottomright", col="dimgray", size=6)
+
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_P_DOWN"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- -log10(de.tpm.gene[overlaps,]$P)
+plotCorrelation(file.name, "", "PMR", text.Log10.P, x, y, pos="bottomright", col="dimgray", size=6)
+
+
+
+
+
+
+###
 ##
 file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g6605_mean_TPM"))
 x <- de.mut.tpm$PMR_2
 y <- -log10(de.mut.tpm$P_2)
 plotPMR(file.name, "", "EPMR", text.Log10.P, x, y)
 
-file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g6605_mean_MUT"))
-x <- de.mut.tpm$PMR
-y <- -log10(de.mut.tpm$P)
-plotPMR(file.name, "", "PMR", text.Log10.P, x, y)
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g6605_mean_MUT_TP53_EP300_MYC"))
+plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, de.mut.tpm, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL"))
 
 file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g6605_mean_MUT_NPMR"))
 x <- de.mut.tpm$G1MR/de.mut.tpm$SMR
 y <- -log10(de.mut.tpm$P)
 plotPMR(file.name, "", "NPMR", text.Log10.P, x, y)
+
+
+
+
+
+
 
 ###
 ##

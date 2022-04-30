@@ -53,6 +53,200 @@ nrow(tpm.gene.log2.m)
 # [1] 19131
 
 # -----------------------------------------------------------------------------
+# Prepare Normal and SCLC samples
+# Last Modified: 26/04/22
+# -----------------------------------------------------------------------------
+samples.sclc.normal <- toTable("", 2, length(samples), c("SAMPLE_ID", "NORMAL"))
+samples.sclc.normal$SAMPLE_ID <- samples
+rownames(samples.sclc.normal) <- samples
+samples.sclc.normal[samples.normal,]$NORMAL <- 0
+samples.sclc.normal[samples.sclc,  ]$NORMAL <- 1
+samples.sclc.normal$NORMAL <- as.factor(samples.sclc.lung$NORMAL)
+
+load(file=file.path(wd.de.data, paste0("sclc+normal", "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+tpm.gene <- tpm.gene[, rownames(samples.sclc.normal)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2 <- log2(tpm.gene + 1)
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric)
+# Last Modified: 24/04/22; 22/08/20
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : TR (1) vs UN (0) as factor
+argv      <- data.frame(predictor="NORMAL", predictor.wt=0, test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_NORMAL_wilcox_q_n122")
+file.main <- paste0("NORMAL (n=41) vs SCLC (n=81) in ", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples.sclc.normal, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Volcano plots
+# Last Modified: 29/05/20
+# -----------------------------------------------------------------------------
+xlab.text <- expression("-Log" * ""[2] * " SCLC to normal fold change")
+ylab.text <- expression("-Log" * ""[10] * "(" * italic("P") * ") significance")
+
+plot.de <- file.path(wd.de.plots, "volcanoplot_normal+sclc_r5p47")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("Differentially expressed genes", "")
+legends <- c("SCLC", "Normal lung")
+plotVolcano(de.tpm.gene, 1E-16, genes, file.de, file.main, xlab.text, ylab.text, legends, fold=1)
+
+# -----------------------------------------------------------------------------
+# Volcano plots
+# Last Modified: 29/05/20
+# -----------------------------------------------------------------------------
+genes <- c("TERT", "PIF1", "BLM", "DHX36", "DNAJC2")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   tpm.1 <- as.numeric(tpm.gene.log2[id, samples.normal])
+   tpm.2 <- as.numeric(tpm.gene.log2[id, samples.sclc])
+   
+   file.name <- file.path(wd.de.plots, paste0("boxplot_TPM_", genes[g]))
+   plotBox(file.name, tpm.1, tpm.2, genes[g], names=c("Normal", "SCLC"), cols=c(green, red))
+}
+
+
+
+# -----------------------------------------------------------------------------
+# D.E. LUNG vs. SCLC (ALL)
+# Last Modified: 25/04/22; 24/02/21; 25/10/20; 01/09/20; 08/01/20
+# -----------------------------------------------------------------------------
+overlaps <- intersect(rownames(tpm.gene.log2), rownames(tpm.gene.lung.log2))
+length(overlaps)
+# [1] 14013
+tpm.gene.log2.o      <- tpm.gene.log2[overlaps,]
+tpm.gene.lung.log2.o <- tpm.gene.lung.log2[overlaps,]
+
+colnames <- c("P", "FDR", "N", "T", "LOG2_FC")
+de3 <- toTable(0, length(colnames), nrow(tpm.gene.log2.o), colnames)
+rownames(de3) <- rownames(tpm.gene.log2.o)
+
+## SRC
+de3$P <- mapply(x = 1:nrow(tpm.gene.log2.o), function(x) testU(as.numeric(tpm.gene.log2.o[x,]), as.numeric(tpm.gene.lung.log2.o[x,])))
+
+## Log2 fold change
+de3$N <- mapply(x = 1:nrow(tpm.gene.log2.o), function(x) median(as.numeric(tpm.gene.lung.log2.o[x,])))
+de3$T <- mapply(x = 1:nrow(tpm.gene.log2.o), function(x) median(as.numeric(tpm.gene.log2.o[x,])))
+de3$LOG2_FC <- de3$T - de3$N
+
+## FDR
+#library(qvalue)
+#de2$Q   <- qvalue(de2$P)$qvalue
+de3$FDR <- p.adjust(de3$P, method="BH", n=length(de3$P))
+#de$ANOVA_Q <- qvalue(de$ANOVA_P)$qvalue
+de3 <- de3[order(de3$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de3.tpm.gene <- cbind(annot[rownames(de3),], de3)   ## BE EXTRA CAREFUL!!
+
+save(de3.tpm.gene, samples, file=file.path(wd.de.data, "de3_sclc_tpm-gene-median1-lung_U_BH_n70+41.RData"))
+writeTable(de3.tpm.gene, file.path(wd.de.data, "de3_sclc_tpm-gene-medain1-lung_U_BH_n70+41.txt"), colnames=T, rownames=F, sep="\t")
+nrow(de3.tpm.gene)
+
+###
+##
+plotNormal <- function(gene, id, tpm.gene.log2, tpm.gene.lung.log2) {
+   file.name <- paste0("boxplot_sclc_tpm.gene.r5p47_gene_", gene)
+   plotBox2(wd.de.plots, file.name, as.numeric(tpm.gene.lung.log2[id,]), as.numeric(tpm.gene.log2[id,]), main=gene, names=c("Lung", "SCLC"))
+}
+
+genes <- c("RSAD2", "IRF2", "IFI35", "IFI6", "IFIT1", "IFIT2", "IFIT3", "IFIT5")
+genes <- c("BRD9", "SMARCD1")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotNormal(genes[g], id, tpm.gene.log2, tpm.gene.lung.log2)
+}
+
+# -----------------------------------------------------------------------------
+# D.E. LUNG vs. SCLC
+# Last Modified: 25/10/20; 01/09/20; 08/01/20
+# -----------------------------------------------------------------------------
+plotVolcano0 <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0, cols, fc) {
+ #pvalue <- fdrToP(fdr, de)
+ #fdr <- pvalueToFDR(pvalue, de)
+ de.sig <- subset(de, P <= pvalue)
+ de.sig$log10P <- -log10(de.sig$P)
+ 
+ de$log10P <- -log10(de$P)
+ xlim <- c(min(de$LOG2_FC), max(de$LOG2_FC))
+ if (ymax ==0) ymax <- max(de$log10P)
+ 
+ pdf(file.de, height=6, width=6)
+ plot(de$LOG2_FC, de$log10P, pch=16, xlim=xlim, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col="gray88", main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
+ #text(xmax*-1 + 2*xmax/15, -log10(pvalue) - ymax/30, paste0("FDR=", fdr, "%"), cex=1.15)    ## SCLC (IZ)
+ #text(xmax*-1 + 2*xmax/13, -log10(pvalue) - ymax/30, paste0("FDR=", fdr*100, "%"), cex=1.1)   ## SCLC (AA)
+ #text(xmax*-1 + 2*xmax/9.5, -log10(pvalue) - ymax/30, paste0("BH=1.00E-16"), cex=1.1)
+ #text(xmax*-1 + 2*xmax/30, -log10(pvalue) + ymax/30, paste0("***"), cex=2)
+ 
+ de.up   <- subset(de.sig, LOG2_FC > log2(fc))
+ points(de.up$LOG2_FC, de.up$log10P, pch=16, col=cols[1], cex=1.4)
+ de.down <- subset(de.sig, LOG2_FC < -log2(fc))
+ points(de.down$LOG2_FC, de.down$log10P, pch=16, col=cols[2], cex=1.4)
+ 
+ #abline(v=log2(fc), lty=5, lwd=1.8, col=cols[1]) 
+ #abline(v=-log2(fc), lty=5, lwd=1.8, col=cols[2])
+ abline(h=c(-log10(pvalue)), lty=5, lwd=1.5)
+ 
+ if (nrow(genes) != 0) {
+  for (g in 1:nrow(genes)) {
+   gene <- subset(de, external_gene_name == genes[g,]$GENE)
+   gene <- cbind(gene, genes[g,])
+   
+   if (nrow(gene) > 0) {
+    points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+    
+    if (!is.na(gene$ADJ_1))
+     if (is.na(gene$ADJ_2))
+      text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=1.25)
+    else
+     text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.25)
+    else
+     if (gene$LOG2_FC > 0)
+      text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.6), cex=1.25)
+    else
+     text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.6), cex=1.25)
+   } else
+    print(genes[g])
+  }
+ }
+ 
+ axis(side=1, at=seq(-10, 10, by=4), labels=c(-10, -6, -2, 2, 6, 10), cex.axis=1.2)
+ axis(side=1, at=seq(-8, 8, by=4), labels=c(-8, -4, 0, 4, 8), cex.axis=1.2)
+ mtext(file.main[2], cex=1.25, line=0.3)
+ legend("topleft", legend=c("Upregulated (SCLC > Lung)", "Downregulated (SCLC < Lung)"), col=cols, pch=19, cex=1.25)
+ dev.off()
+}
+
+## Volcano
+xlab.text <- "SCLC to lung fold change [log2]"
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_r5p47_iz_e_cd_p1e-15_lung")
+
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.main <- c("Differential expression between SCLC and lung", paste0("Early IZ, CD genes (n=1,159)"))
+file.de <- paste0(plot.de, ".pdf")
+plotVolcano0(de2.tpm.gene, 1E-15, genes, file.de, file.main, xlab.text, ymax=23, c(yellow, lightblue), 1)
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # RFD vs. TPM
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------

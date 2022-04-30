@@ -623,27 +623,24 @@ plotSRC <- function(gene, cn, snr, pch, col, pos, xlab.text="") {
    ylim <- c(min(cn) - unit, max(cn) + unit)
  
    if (xlab.text == "")
-      xlab.text <- expression(italic('In silico')~'sorting [rho]')
-   ylab.text <- "log2(TPM + 1)"
+      xlab.text <- expression(italic('In silico')~'sorting')
+   ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
    file.name <- file.path(wd.de.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   #plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab=xlab.text, main=paste0(gene, " (", id, ")"), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab="", xaxt="n", xlab="", main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.9, cex.main=2)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xaxt="n", xlab=xlab.text, main=gene, col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    
    lm.fit <- lm(cn ~ snr)
    abline(lm.fit, col=col, lwd=7)
  
    cor <- cor.test(cn, snr, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), text.col=col, text.font=2, bty="n", cex=1.9)
- 
+   legend("bottomright", c(paste0("rho = ", round0(cor3[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
+   legend("bottomright", expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
+   legend("bottomright", paste0("   = ", scientific(cor3[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
+   
    axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
-   #axis(side=2, at=seq(6, 8, by=1), labels=c(6, 7, 8), cex.axis=1.7)   ## MARS
-   #axis(side=2, at=seq(4, 6, by=1), labels=c(4, 5, 6), cex.axis=1.7)   ## GTPBP3
-   mtext(ylab.text, side=2, line=2.74, cex=1.85)
-   mtext(xlab.text, side=1, line=3.5, cex=1.9)
-   #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
 

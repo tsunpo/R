@@ -12,13 +12,14 @@
 #          https://support.minitab.com/en-us/minitab/18/help-and-how-to/modeling-statistics/reliability/supporting-topics/reliability-metrics/what-is-the-survival-probability/
 # Last Modified: 03/05/19
 # -----------------------------------------------------------------------------
-plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, rho, line=2.75, lwd=4) {
+plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, rho, lwd=4) {
    ymax <- -log10(p)
    ymax <- ymax + ymax/5.5
    xmin <- min(x)
     
    pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(y ~ x, ylim=c(0, ymax), ylab="", xaxt="n", xlab=xlab.text, col="dimgray", main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(y ~ x, ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab=ylab.text, col="dimgray", main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    points(rho, -log10(p), pch=1, col=green, cex=2, lwd=lwd)
    abline(v=rho, lty=5, lwd=5, col=green)
@@ -28,33 +29,34 @@ plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, rho, lin
    axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
    axis(side=1, at=rho, labels=round(rho, 2), cex.axis=1.7, col.axis=green, font.axis=2)
  
-   mtext(ylab.text, side=2, line=2.4, cex=1.8)
    dev.off()
 }
 
-plotSurvfit <- function(fit, file.name, main.text, legends.text, cols) {
+plotSurvfit <- function(fit, file.name, main.text, legend.labs, name, strata, cols, size) {
    legends <- c()
-   for (l in 1:length(legends.text))
-      legends <- c(legends, paste0(legends.text[l], " (n=", fit[[1]][l], ")"))
+   strata.cols <- cols
+   for (l in 1:length(legend.labs)) {
+      strata.idx <- grep(strata[l], gsub(name, "", names(fit$strata)))
+    
+      legends <- c(legends, paste0(legend.labs[l], " (n=", fit[[1]][strata.idx], ")"))
+      strata.cols[strata.idx] <- cols[l]
+   }
  
-   pdf(paste0(file.name, ".pdf"), height=5, width=6)
-   plot(fit, ylim=c(0, 1), xlab="Months", ylab="", col=cols, main=main.text[1], mark.time=T, lwd=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   pdf(paste0(file.name, ".pdf"), height=size, width=size)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(fit, ylim=c(0, 1), xlab="Months", ylab="% OS", col=strata.cols, main=main.text[1], mark.time=T, lwd=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    legend("topright", legend=legends, lwd=4, col=cols, cex=1.7)
-   #mtext(main.text[2], cex=1.25, line=0.2)
-   
-   mtext("% OS", side=2, line=2.85, cex=1.7)
-   
+
    max <- max(fit[[2]])
    #text(max/5.5, 0.18, "                HR = 1.90 (1.61 - 2.25)", cex=1.7)
-   text(max/5.5, 0.07, expression(italic('P')~"="~"                "), cex=1.7)
-   text(max/5.5, 0.07, paste0("      ", scientific(surv_pvalue(fit)$pval, digits=2)), cex=1.7)
-   #legend("bottomleft", expression(italic('P')~"="~scientific(surv_pvalue(fit)$pval)), bty="n", cex=1.6)
-   #legend("bottomleft", expression(italic('P')~"="~"2.62e-18"), bty="n", cex=1.6)
-   
+   text(max/4, 0.07, expression(italic('P')~"="~"                "), cex=1.7)
+   text(max/4, 0.07, paste0("      ", scientific(surv_pvalue(fit)$pval, digits=2)), cex=1.7)
+ 
    dev.off()
 }
 
-plotSurvfit55 <- function(fit, file.name, main.text, legends.text, cols) {
+
+plotSurvfit55 <- function(fit, file.name, main.text, legends.original, legends.text, cols) {
    legends <- c()
    for (l in 1:length(legends.text))
       legends <- c(legends, paste0(legends.text[l], " (n=", fit[[1]][l], ")"))
@@ -230,36 +232,47 @@ getEPMR <- function(mut.gene.tpm.hist, samples.mut.tpm.hist) {
    return(de.mut.tpm)
 }
 
-plotPMR <- function(file.name, main.text, xlab.text, ylab.text, x, y, line=2.4) {
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(y ~ x, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, col="dimgray", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
- 
+plotPMR <- function(file.name, main.text, xlab.text, ylab.text, de.mut.tpm, genes, size=6, xmax="", ymax="", cols=c(adjustcolor.blue, adjustcolor.red)) {
+   x <- de.mut.tpm$PMR
+   y <- -log10(de.mut.tpm$P)
+   
+   xlim <- c(0, max(x))
+   if (xmax != "") xlim <- c(0, xmax)
+   ylim <- c(0, max(y))
+   if (ymax != "") ylim <- c(0, ymax)
+   
+   pdf(paste0(file.name, ".pdf"), height=size, width=size)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=1, cex=2, col="white", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+
+   idx.down   <- which(de.mut.tpm$PMR < 1)
+   points(x[idx.down], y[idx.down], pch=1, col=cols[1], cex=2)
+   idx.up   <- which(de.mut.tpm$PMR >= 1)
+   points(x[idx.up],   y[idx.up],   pch=1, col=cols[2], cex=2)   
+   
    abline(v=1, lty=5, col="black", lwd=2)
 
-   if (nrow(genes) != 0) {
-      for (g in 1:nrow(genes)) {
-         gene <- subset(de, external_gene_name == genes[g,]$GENE)
-         gene <- cbind(gene, genes[g,])
-     
-         if (nrow(gene) > 0) {
-            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
-      
-            if (!is.na(gene$ADJ_1))
-               if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.2)
+   if (length(genes) != 0) {
+      for (g in 1:length(genes)) {
+         idx <- which(de.mut.tpm$MUT == genes[g])
+         #idx <- which(de.mut.tpm$external_gene_name == genes[g])
+         
+         if (length(idx) > 0) {
+            if (x[idx] > 1) {
+               points(x[idx], y[idx], pch=1, col=cols[2], cex=2)
+               if (genes[g] == "TP53")
+                  text(x[idx], y[idx], genes[g], col="black", adj=-0.12, cex=1.8)
                else
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
-            else
-               if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.2)
-               else
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.5), cex=1.2)
-         } else
-            print(genes[g,])
+                  text(x[idx], y[idx], genes[g], col="black", adj=c(0, -0.5), cex=1.8)
+            } else {
+               points(x[idx], y[idx], pch=1, col=cols[1], cex=2)
+               #text(x[idx], y[idx], genes[g], col="black", adj=c(0, -0.5), cex=1.8)
+               text(x[idx], y[idx], genes[g], col="black", adj=c(1, -0.5), cex=1.8)
+            }
+         }
       }
    }
    
-   mtext(ylab.text, side=2, line=line, cex=1.8)
    dev.off()
 }
 

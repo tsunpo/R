@@ -131,10 +131,11 @@ samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_black_1.7_cex=2.5_colour_n=8.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6.pdf"), height=6, width=4.2)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
 ymax <- 0.5
 ymin <- -0.367
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="", xlab="", main=expression(bolditalic('In silico')~bold("estimation")), yaxt="n", col="white", boxwex=0.75, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="", main=expression(bolditalic('In silico')~bold("estimation")), yaxt="n", col="white", boxwex=0.75, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 #abline(h=0, lty=5, lwd=2)
 
 points(subset(samples, M2 == 2)$CANCER, subset(samples, M2 == 2)$COR, col=red,  pch=19, cex=2.5)
@@ -164,7 +165,7 @@ for (s in 1:nrow(samples)) {
 #legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.5)
 
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.7)
-mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
+#mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="NBL-CL", cex.axis=1.8)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
@@ -187,7 +188,8 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    ylim <- c(-0.367, 0.5)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2.5, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   par(mar=c(5.1, 4.6, 4.1, 1.5))
+   plot(n1 ~ snr1, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col=col[1], pch=19, cex=2.5, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    points(n2 ~ snr2, col=col[2], pch=19, cex=2.5)
 
    lm.fit <- lm(n1 ~ snr1)
@@ -207,7 +209,7 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
    #legend(pos[2], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[2], bty="n", cex=1.75)
    legend(pos[2], paste0("S (rho = ", round0(cor[[4]], digits=1), ")"), text.col=col[2], pch=c(NA), col=col[2], bty="n", cex=1.5)
  
-   mtext(ylab.text, side=2, line=2.75, cex=1.7)
+   #mtext(ylab.text, side=2, line=2.75, cex=1.7)
    #mtext(main.text[2], cex=1.2, line=0.3)
    dev.off()
 }
@@ -218,7 +220,8 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    ylim <- c(-0.367, 0.5)
  
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
-   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab="", xlab=xlab.text, main=main.text[1], yaxt="n", col=col2[3], pch=15, cex=2.5, lwd=0, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   par(mar=c(5.1, 4.6, 4.1, 1.5))
+   plot(n3 ~ snr3, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], yaxt="n", col=col2[3], pch=15, cex=2.5, lwd=0, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    lm.fit <- lm(n3 ~ snr3)
    abline(lm.fit, col=col[3], lwd=5)
    
@@ -252,7 +255,7 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    text(mean(snr1), mean(n1)-0.05, label=paste("rho = ", cor1), col=col[1], cex=1.7, font=2)
    
    axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.7)
-   mtext(ylab.text, side=2, line=2.75, cex=1.8)
+   #mtext(ylab.text, side=2, line=2.75, cex=1.8)
    dev.off()
 }
 
@@ -271,7 +274,7 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Spearmans's rho"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_1.6_3_100_bty=n_1.7_lwd=5_rho=")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_1.6_3_100_bty=n_1.7_lwd=5_rho=_mar=4.6")
 main.text <- c(expression(bolditalic('In silico')~bold("vs.")~bolditalic('in vitro')), "")
 xlab.text <- "% Cell count"
 ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
@@ -290,7 +293,7 @@ plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.
 
 ###
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic_count_1.7_pt.cex=3_pch=15_black_tilted-4")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic_count_1.7_pt.cex=3_pch=15_black_tilted-4_mar=4.6")
 main.text <- c(expression(bolditalic('In vitro')~bold("flow cytometry validation")), "")
 xlab.text <- ""
 ylab.text <- "% Cell count"
@@ -303,8 +306,8 @@ cols2 <- c(flowjo.blue, flowjo.red, flowjo.grey)
 facs1 <- t(as.matrix(facs[,-1]))
 
 pdf(paste0(file.name, ".pdf"), height=6, width=9.3)
-par(mar=c(5.1, 4.2, 4.1, 3.7), xpd=TRUE)
-barplot(facs1, col=cols2, ylim=c(0, 100), xaxt="n", main=main.text[1], cex.names=1.7, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+par(mar=c(5.1, 4.6, 4.1, 3.7), xpd=TRUE)
+barplot(facs1, col=cols2, ylim=c(0, 100), ylab=ylab.text, xaxt="n", main=main.text[1], cex.names=1.7, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 text(labels=facs$SAMPLE_ID, x=c(0.8, 2, 3.2, 4.4, 5.6, 6.8, 8, 9.2), y=par("usr")[3] - 4, srt=45, adj=0.965, xpd=NA, cex=1.8)
 
 #mids <- barplot(facs1, xlab="")   ## To capture the midpoints
@@ -313,7 +316,7 @@ text(labels=facs$SAMPLE_ID, x=c(0.8, 2, 3.2, 4.4, 5.6, 6.8, 8, 9.2), y=par("usr"
 #axis(1, at=7.9, labels="NGP", cex.axis=1.7, las=0, lwd.tick=0)
 
 legend("right", rownames(facs1)[3:1], text.col="black", pch=c(15, 15, 15), col=cols2[3:1], pt.cex=3, cex=1.7, horiz=F, bty="n", inset=c(-0.11, 0))
-mtext(ylab.text, side=2, line=2.75, cex=1.8)
+#mtext(ylab.text, side=2, line=2.75, cex=1.8)
 dev.off()
 
 

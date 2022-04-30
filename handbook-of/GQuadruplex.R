@@ -74,8 +74,8 @@ plotG4RS <- function(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols,
    pdf(paste0(file.name, ".pdf"), height=6, width=6)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
    plot(rts ~ g4s, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], yaxt="n", xaxt="n", pch=19, col="white", cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   abline(h=rts[2], lty=5, lwd=1.3)
-
+   abline(h=rts[2], lty=5, lwd=3)
+   
    idx <- which(rts > rts[2])
    points(rts[idx] ~ g4s[idx], col=cols[1], pch=19, cex=2)
    idx <- which(rts < rts[2])

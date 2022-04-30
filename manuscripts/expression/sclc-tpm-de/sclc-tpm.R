@@ -43,7 +43,7 @@ samples <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=
 # -----------------------------------------------------------------------------
 library("sleuth")
 
-tsv <- file.path(wd.rna.raw, samples)
+tsv.sclc <- file.path(wd.rna.raw, samples)
 s2c <- data.frame(path=tsv, sample=samples, stringsAsFactors=F)
 t2g <- tx2Ens(ensGene.transcript)
 
@@ -80,6 +80,12 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 nrow(tpm.gene)
 # [1] 23572
 
+load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+tpm.gene <- removeMedian0(tpm.gene, 1)
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
+nrow(tpm.gene)
+# [1] 15803
+
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
@@ -113,7 +119,12 @@ file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.media
 load(paste0(file.main, ".RData"))
 plotDensityHistogram(tpm.gene, file.main, "Expressed")
 
+## Expressed genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median1"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "Expressed", tpm=1)
+
 ## Consistently expressed genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Consistently expressed")
+plotDensityHistogram(tpm.gene, file.main, "Expressed")

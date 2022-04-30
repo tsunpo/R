@@ -45,6 +45,7 @@ library(broom)
 library(grid)
 library(dplyr)
 library(ggalt)
+library(gridExtra)
 
 icgc$survival_N <- NA
 for (h in 1:nrow(icgc)) {
@@ -113,6 +114,31 @@ fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv)
 file.name <- file.path(wd.rt.plots, "survfit_in-silico_samples.surv_5*6")
 plotSurvfit(fit, file.name, "Overall survival (OS)", c("Non-proliferative", "Proliferative"), c(blue, red))
 
+icgc.surv$G1 <- 0
+icgc.surv$S  <-0
+for (h in 1:nrow(icgc.surv)) {
+   hist <- rownames(icgc.surv)[h]
+   
+   samples.surv.hist <- subset(samples.surv, histology_abbreviation == hist)
+   icgc.surv$G1[h] <- summary(samples.surv.hist$SORTING)[[1]]
+   icgc.surv$S[h]  <- summary(samples.surv.hist$SORTING)[[2]]
+}
+writeTable(icgc.surv, file.path(wd.meta, paste0("icgc.surv.txt")), colnames=T, rownames=T, sep="\t")
+
+icgc.surv.mut.tpm <- icgc
+for (h in 1:nrow(icgc.surv.mut.tpm)) {
+   hist <- rownames(icgc.surv.mut.tpm)[h]
+ 
+   samples.surv.hist.mut.tpm <- subset(samples.mut.tpm, histology_abbreviation == hist)
+   icgc.surv.mut.tpm$G1[h] <- summary(samples.surv.hist.mut.tpm$SORTING)[[1]]
+   icgc.surv.mut.tpm$S[h]  <- summary(samples.surv.hist.mut.tpm$SORTING)[[2]]
+}
+writeTable(icgc.surv.mut.tpm, file.path(wd.meta, paste0("icgc.surv.mut.tpm.904.txt")), colnames=T, rownames=T, sep="\t")
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # Stripchart
 # Last Modified: 31/03/22
@@ -180,6 +206,7 @@ samples.surv.hist0 <- samples.surv[1,][-1,]
 results <- toTable(0, 6, length(hists.surv), c("histology_abbreviation", "RHO", "G1", "S", "P", "FDR"))
 results$histology_abbreviation <- hists.surv
 for (h in 1:length(hists.surv)) {
+   h <- 6
    hist <- hists.surv[h]
    samples.surv.hist <- subset(samples.surv, histology_abbreviation == hist)
    #samples.surv.hist <- samples.surv.hist[order(samples.surv.hist$COR),]
@@ -211,14 +238,16 @@ for (h in 1:length(hists.surv)) {
    
    fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
    pval <- surv_pvalue(fit)$pval
-   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, ""))
+   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, "_S-G1"))
    #plotSurvfit55(fit, file.name, hist, c("Resting", "Proliferating"), c(blue, red))
+   plotSurvfit(fit, file.name, hist, legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
+   plotSurvfit(fit, file.name, hist, legend.labs=c("Proliferative", "Resting"), name="SORTING", strata=c("S", "G1"), cols=c(red, blue), size=5)
    
    idx <- which(is.na(pvals))
    x <- samples.surv.hist$COR[-idx]
    y <- -log10(pvals[-idx])
    file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", hist)
-   #plotOS(file.name, hist, txt.In.silico, txt.Log10.P, x, y, pvals[s], rho, lwd=3)
+   plotOS(file.name, hist, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
    
    samples.surv.hist0 <- rbind(samples.surv.hist0, samples.surv.hist)
    results$RHO[h] <- rho
@@ -267,6 +296,84 @@ for (h in 1:length(hists.surv)) {
 
 
 
+# -----------------------------------------------------------------------------
+# Eso-AdenoCA
+# Last Modified: 28/04/22
+# -----------------------------------------------------------------------------
+h <- 6
+samples.esad <- samples.surv.hist
+
+test <- toTable(0, 2, 2, c("M", "F"))
+rownames(test) <- c("S", "G1")
+test[1, 1] <- nrow(subset(subset(samples.esad, SORTING == "S"), SEX == "M"))
+test[1, 2] <- nrow(subset(subset(samples.esad, SORTING == "S"), SEX == "F"))
+test[2, 1] <- nrow(subset(subset(samples.esad, SORTING == "G1"), SEX == "M"))
+test[2, 2] <- nrow(subset(subset(samples.esad, SORTING == "G1"), SEX == "F"))
+fisher.test(test)[[1]]
+# [1] 1
+test
+#     M  F
+# S  60 10
+# G1 16  2
+
+##
+tpm.1 <- subset(samples.esad, SORTING == "G1")$donor_age_at_diagnosis
+tpm.2 <- subset(samples.esad, SORTING == "S")$donor_age_at_diagnosis
+
+file.name <- file.path(wd.rt.plots, paste0("boxplot_", hist, "_Age"))
+plotBox(file.name, tpm.1, tpm.2, hist, names=c("G1", "S"), cols=c(blue, red), ylab.txt="Age at diagnosis")
+
+###
+##
+samples.esad$N_of_mut <-NA
+for (s in 1:nrow(samples.esad)) {
+   if (!is.na(samples.mut[samples.esad[s,]$icgc_specimen_id,]$CANCER)) {
+      sample.mut <- samples.mut[samples.esad[s,]$icgc_specimen_id,]
+      
+      muts <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(sample.mut$tumor_wgs_aliquot_id, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
+      samples.esad$N_of_mut[s] <- nrow(muts)
+   }
+}
+
+tpm.1 <- subset(samples.esad, SORTING == "G1")$N_of_mut
+tpm.2 <- subset(samples.esad, SORTING == "S")$N_of_mut
+tpm.2 <- tpm.2[-1]
+
+file.name <- file.path(wd.rt.plots, paste0("boxplot_", hist, "_N-of-muts"))
+plotBox(file.name, tpm.1, tpm.2, hist, names=c("G1", "S"), cols=c(blue, red), ylab.txt="N of mutations")
+
+###
+##
+overlaps <- intersect(rownames(samples.esad), rownames(purities))
+length(overlaps)
+# [1] 88
+
+samples.esad$purity <- NA
+samples.esad[overlaps,]$purity <- purities[overlaps,]$purity
+
+tpm.1 <- subset(samples.esad, SORTING == "G1")$purity
+tpm.2 <- subset(samples.esad, SORTING == "S")$purity
+
+file.name <- file.path(wd.rt.plots, paste0("boxplot_", hist, "_purity"))
+plotBox(file.name, tpm.1, tpm.2, hist, names=c("G1", "S"), cols=c(blue, red), ylab.txt="Purity")
+
+###
+##
+overlaps <- intersect(rownames(samples.esad), colnames(mut.gene))
+mut.gene.hist <- mut.gene[,overlaps]
+samples.esad.hist <- samples.esad[overlaps,]
+
+de.mut.gene.hist <- getPMR(mut.gene.hist, samples.esad.hist)
+expressed <- intersect(rownames(de.mut.gene.hist), rownames(tpm.gene))
+de.mut.gene.hist.tpm1 <- de.mut.gene.hist[expressed,]
+
+file.name <- paste0("pmr_", base, "_mut-gene_chisq_q_tpm>1_s>20_g", nrow(de.mut.gene.hist.tpm1), hist)
+save(de.mut.tpm.hist,  file=file.path(wd.driver.data, "hists", paste0(file.name, ".RData")))
+writeTable(de.mut.tpm.hist, file.path(wd.driver.data, "hists", paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+##
+file.name <- file.path(wd.driver.plots, paste0("PMR_", hist, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g", nrow(de.mut.gene.hist.tpm1)))
+plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, de.mut.gene.hist.tpm1, c("RAPGEF2", "EMR2"))
 
 
 

@@ -21,9 +21,9 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # Step 0: Set working directory
 # Last Modified: 04/07/19
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "BRCA"
 PAIR1 <- "T"
 base  <- tolower(BASE)
@@ -66,9 +66,9 @@ for (s in 1:nrow(g4rs)) {
    sample <- samples$SAMPLE_ID[s]
    file.name <- file.path(wd.rt.plots, paste0("BRCA-G4RS_vs_LCL-RTS_", sample, "_NEW"))
    #main.text <- c(paste0(sample, " G-quadruplex region skew"), "G4RS = (E-L)/(E+L)")
-   main.text <- c(paste0(sample, ""), "")
-   xlab.text <- "G-quadruplex region skew"
-   ylab.text <- "Replicaiton timing skew"
+   main.text <- c(paste0(sample, " G4RS correlation"), "")
+   xlab.text <- "G-quadruplex region skew (G4RS)"
+   ylab.text <- "RTS = (E-L)/(E+L)"
    cols <- c(red, blue, "black", green)
    plotG4RS(rts, g4s, file.name, main.text, xlab.text, ylab.text, cols, "topright")
 }

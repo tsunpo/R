@@ -81,14 +81,34 @@ samples.surv.nbl$SORTING <- as.factor(samples.surv.nbl$SORTING)
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.nbl)
 pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL))
-plotSurvfit55(fit, file.name, text.NBL, c("Resting", "Proliferating"), c(blue, red))
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_G1-S"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
+
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_S-G1"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Proliferative", "Resting"), name="SORTING", strata=c("S", "G1"), cols=c(red, blue), size=5)
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ RISK, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_L-H_size=6"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Low-risk", "High-risk"), name="RISK", strata=c("low", "high"), cols=c(blue.lighter, red.lighter), size=6)
+
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_H-L"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("High-risk", "Low-risk"), name="RISK", strata=c("high", "low"), cols=c(red.lighter, blue.lighter), size=5)
+
+
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ RISK, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_H-L"))
+plotSurvfit55(fit, file.name, text.NBL, c("High-risk", "Low-risk"), c(red.lighter, blue.lighter))
+
+
 
 idx <- which(is.na(pvals))
 x <- samples.surv.nbl$COR[-idx]
 y <- -log10(pvals[-idx])
 file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", text.NBL)
-plotOS(file.name, text.NBL, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
+plotOS(file.name, text.NBL, text.In.silico, text.Log10.P, x, y, pvals[s], rho.nbl, lwd=3)
 
 res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + RISK + AGE, data=samples.surv.nbl)
 pdf(paste0(wd.rt.plots, "/hists/hazard_in-silico_samples.surv.hist_", text.NBL, ".pdf"), height=2.7, width=5)
