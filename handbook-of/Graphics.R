@@ -9,31 +9,19 @@
 # 
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos, line=2.4, col="dimgray") {
-   pdf(paste0(file.name, ".pdf"), height=5, width=5)
-   plot(y ~ x, ylab="", xlab=xlab.text, main=main.text, pch=1, cex=2, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
- 
-   lm.fit <- lm(y ~ x)
-   abline(lm.fit, lwd=5)
- 
-   cor <- cor.test(y, x, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.7)
-
-   mtext(ylab.text, side=2, line=line, cex=1.8)
-   dev.off()
-}
-
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos, col="dimgray", size) {
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomright", cols=c("dimgray", "black"), size) {
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))  
-   plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=cols[1], cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    lm.fit <- lm(y ~ x)
-   abline(lm.fit, lwd=5)
+   abline(lm.fit, lwd=5, col=cols[2])
  
    cor <- cor.test(y, x, method="spearman", exact=F)
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("p-value = ", scientific(cor[[3]], digits=2))), bty="n", cex=1.7)
- 
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=2, bty="n", cex=1.8)
+   legend(pos, expression(bolditalic('P')~"                   "), text.col=cols[2], text.font=2, bty="n", cex=1.8)
+   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=cols[2], text.font=2, bty="n", cex=1.8)
+   
    dev.off()
 }
 
@@ -63,7 +51,7 @@ plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, h=6, w=4.5, ylab
    dev.off()
 }
 
-plotSRC <- function(gene, cn, snr, pch, col, pos, size=6) {
+plotSRC <- function(gene, cn, snr, pch, pos="bottomright", col, size=6) {
    unit <- (max(snr) - min(snr))/10
    xlim <- c(min(snr) - unit, max(snr) + unit)
    unit <- (max(cn) - min(cn))/10
@@ -82,9 +70,9 @@ plotSRC <- function(gene, cn, snr, pch, col, pos, size=6) {
    abline(lm.fit, col=col, lwd=7)
  
    cor <- cor.test(cn, snr, method="spearman", exact=F)
-   legend("bottomright", c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
-   legend("bottomright", expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
-   legend("bottomright", paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
+   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
+   legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
+   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
  
    axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
    dev.off()

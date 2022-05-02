@@ -465,6 +465,7 @@ getVolcanoGenes <- function(file.tab, de) {
 adjustcolor.red   <- adjustcolor(red, alpha.f=0.25)
 adjustcolor.blue  <- adjustcolor(blue, alpha.f=0.25)
 adjustcolor.green <- adjustcolor(green, alpha.f=0.25)
+adjustcolor.yellow <- adjustcolor(yellow, alpha.f=0.25)
 adjustcolor.gray  <- adjustcolor("lightgray", alpha.f=0.25)
 
 ## Bottom-right	-0.12	1.25

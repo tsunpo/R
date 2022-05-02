@@ -37,18 +37,24 @@ samples.rna <- readTable(file.path(wd.rna, "nbl_rna_n54.list"), header=F, rownam
 samples.wgs <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="\t")
 
 overlaps <- intersect(samples.rna$V2, samples.wgs$SAMPLE_ID)
-samples  <- cbind(samples.rna[overlaps,], samples.wgs[overlaps,])
-samples$M2 <- as.factor(samples$M2)
-rownames(samples) <- samples$V1
-nrow(samples)
+samples.n  <- cbind(samples.rna[overlaps,], samples.wgs[overlaps,])
+samples$M2 <- as.factor(samples.n$M2)
+rownames(samples.n) <- samples.n$V1
+nrow(samples.n)
 # [1] 53
 
-samples.nbl.tpm <- cbind(samples.nbl[samples$V2,], samples)
+samples.nbl.tpm <- cbind(samples.nbl[samples.n$V2,], samples.n)
 rownames(samples.nbl.tpm) <- samples.nbl.tpm$V1
 
+samples.nbl.tpm$SORTING <- "G1"
+idx <- which(samples.nbl.tpm$COR >= rho.nbl)
+samples.nbl.tpm[idx,]$SORTING <- "S"
+samples.nbl.tpm$SORTING <- as.factor(samples.nbl.tpm$SORTING)
+
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
 tpm.gene <- tpm.gene[, rownames(samples.nbl.tpm)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
@@ -56,6 +62,224 @@ nrow(tpm.gene.log2.m)
 # [1] 34908
 # [1] 22899
 # [1] 18764
+# [1] 16458
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
+# Last Modified: 22/08/20
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : High (n=36) vs Low (n=17) as factor
+argv      <- data.frame(predictor="RISK", predictor.wt="low", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("DE_", "NBL", "_tpm-gene-r5p47_RISK_wilcox_q_n53")
+file.main <- paste0("", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples.nbl.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+nrow(de.tpm.gene)
+# [1] 18764
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(src) <- rownames(tpm.gene.log2)
+
+## SRC
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm$COR, method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm$COR, method="spearman", exact=F)[[3]])
+src <- src[!is.na(src$P),]
+
+## Log2 fold change
+src$G1 <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "G1")))
+src$S  <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "S")))
+src$LOG2_FC <- src$S - src$G1
+
+## FDR
+library(qvalue)
+src$Q <- qvalue(src$P)$qvalue
+src <- src[order(src$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+
+writeTable(src.tpm.gene, file.path(wd.de.data, "SRC_NBL_tpm-gene-r5p47_SORTING_q_n53.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples, file=file.path(wd.de.data, "SRC_NBL_tpm-gene-r5p47_SORTING_q_n53.RData"))
+nrow(src.tpm.gene)
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 01/05/22; 17/09/21
+# -----------------------------------------------------------------------------
+## DE
+overlaps.up   <- intersect(rownames(subset(de.tpm.gene, LOG2_FC >= 0)), rownames(subset(src.tpm.gene, LOG2_FC >= 0)))
+overlaps.down <- intersect(rownames(subset(de.tpm.gene, LOG2_FC < 0)),  rownames(subset(src.tpm.gene, LOG2_FC < 0)))
+overlaps      <- c(overlaps.up, overlaps.down)
+
+overlaps.up.pe3   <- rownames(subset(subset(de.tpm.gene, P <= 1E-3), LOG2_FC >= 0))
+overlaps.down.pe3 <- rownames(subset(subset(de.tpm.gene, P <= 1E-3), LOG2_FC < 0))
+                                                                      
+## DE + SRC
+overlaps.up.pe3.pe3   <- intersect(rownames(subset(subset(de.tpm.gene, P <= 1E-3), LOG2_FC >= 0)), rownames(subset(subset(src.tpm.gene, P <= 1E-3), LOG2_FC >= 0)))
+overlaps.down.pe3.pe3 <- intersect(rownames(subset(subset(de.tpm.gene, P <= 1E-3), LOG2_FC < 0)),  rownames(subset(subset(src.tpm.gene, P <= 1E-3), LOG2_FC < 0)))
+overlaps.pe3.pe3      <- c(overlaps.up.pe3.pe3, overlaps.down.pe3.pe3)
+
+## Overlaps with early CD genes
+genes.iz.e.cd <- readTable(file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_e_cd_n53.txt"), header=T, rownames=T, sep="")
+genes.iz.e.ho <- readTable(file.path(wd.de.data, "de_nbl_tpm-gene-median0_src_q_rfd_iz_e_ho_n53.txt"), header=T, rownames=T, sep="")
+genes.iz.e <- c(genes.iz.e.cd$ensembl_gene_id, genes.iz.e.ho$ensembl_gene_id)
+
+
+###
+## 1st tier
+xlab.text <- expression("Log" * ""[2] * " high/low-risk fold change")
+ylab.text <- expression("-Log" * ""[10] * "(" * italic("P") * ") significance")
+
+plot.de <- file.path(wd.de.plots, "volcanoplot_NBL_r5p47_DE_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL high-risk genes", "")
+plotVolcano(de.tpm.gene.nbl, 1E-3, genes, file.de, file.main, xlab.text, ylab.text, NA, NA, "282 High-risk", yellow)
+
+####
+## 2nd tier
+plot.de <- file.path(wd.de.plots, "volcanoplot_NBL_r5p47_DE+SRC_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL high-risk genes", "")
+plotVolcano(de.tpm.gene.nbl, 1E-3, genes, file.de, file.main, xlab.text, ylab.text, overlaps.up.pe3.pe3, NA, c("128 High-risk", "154 High-risk and proliferative"), c(yellow, red))
+
+nbl <- setdiff(overlaps.up.pe3, overlaps.up.pe3.pe3)
+writeTable(de.tpm.gene[overlaps.up.pe3.pe3,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_S_n154.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene[nbl,],                 file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_H_n128.txt"), colnames=T, rownames=F, sep="\t")
+save(overlaps.up.pe3, overlaps.down.pe3, overlaps.up.pe3.pe3, overlaps.down.pe3.pe3, file=file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53.RData"))
+
+####
+## 3rd tier
+plot.de <- file.path(wd.de.plots, "volcanoplot_NBL_r5p47_DE+SRC+IZ_p1e-3_TERT")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("NBL high-risk genes", "")
+plotVolcano(de.tpm.gene.nbl, 1E-3, genes, file.de, file.main, xlab.text, ylab.text, overlaps.up.pe3.pe3, NA, c("128 High-risk", "154 High-risk and proliferative"), c(yellow, red))
+
+nbl <- setdiff(overlaps.up.pe3, overlaps.up.pe3.pe3)
+writeTable(de.tpm.gene[overlaps.up.pe3.pe3,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_S_n154.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(de.tpm.gene[nbl,],                 file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_H_n128.txt"), colnames=T, rownames=F, sep="\t")
+save(overlaps.up.pe3, overlaps.down.pe3, overlaps.up.pe3.pe3, overlaps.down.pe3.pe3, file=file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53.RData"))
+
+
+genes.iz.e
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 01/05/22
+# -----------------------------------------------------------------------------
+de.tpm.gene.nbl  <- de.tpm.gene
+src.tpm.gene.nbl <- src.tpm.gene
+load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/expression/icgc-tpm-de/data/de_icgc_tpm-gene-median0_SG1_wilcox_q_n904.RData")
+
+xlab <- "High/Low-risk fold change"
+ylab <- "Proliferative/Resting (ICGC)"
+cycle.icgc <- intersect(overlaps.up.pe3.pe3, rownames(subset(de.tpm.gene, LOG2_FC >= 0)))
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_S_g154"))
+x <- de.tpm.gene.nbl[cycle.icgc,]$LOG2_FC
+y <- de.tpm.gene[cycle.icgc,]$LOG2_FC
+plotCorrelation(file.name, "154 High-risk, S genes", xlab, ylab, x, y, pos="bottomright", cols=c(red, red), size=5)
+
+nbl.icgc <- intersect(nbl, rownames(subset(de.tpm.gene, LOG2_FC >= 0)))
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_H_g128"))
+x <- de.tpm.gene.nbl[nbl.icgc,]$LOG2_FC
+y <- de.tpm.gene[nbl.icgc,]$LOG2_FC
+plotCorrelation(file.name, "128 High-risk genes", xlab, ylab, x, y, pos="bottomright", cols=c(yellow, yellow), size=5)
+
+## Early genes
+overlaps <- intersect(cycle.icgc, genes.iz.e)
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_S-IZ_g18"))
+x <- de.tpm.gene.nbl[overlaps,]$LOG2_FC
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "18 High-risk, S, early IZ", xlab, ylab, x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+writeTable(de.tpm.gene.nbl[overlaps,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_S-IZ_n18.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(nbl.icgc, genes.iz.e)
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_H-IZ_g20"))
+x <- de.tpm.gene.nbl[overlaps,]$LOG2_FC
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "20 High-risk, early IZ", xlab, ylab, x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+writeTable(de.tpm.gene.nbl[overlaps,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_H-IZ_n20.txt"), colnames=T, rownames=F, sep="\t")
+
+## Early CD genes
+overlaps <- intersect(cycle.icgc, genes.iz.e.cd$ensembl_gene_id)
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_S-IZ-CD_g11"))
+x <- de.tpm.gene.nbl[overlaps,]$LOG2_FC
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "11 High-risk, S, early IZ, CD", xlab, ylab, x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+writeTable(de.tpm.gene.nbl[overlaps,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_S-IZ-CD_n11.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(nbl.icgc, genes.iz.e.cd$ensembl_gene_id)
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_H-IZ-CD_g7"))
+x <- de.tpm.gene.nbl[overlaps,]$LOG2_FC
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "7 High-risk, early IZ, CD", xlab, ylab, x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+writeTable(de.tpm.gene.nbl[overlaps,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_H-IZ-CD_n7.txt"), colnames=T, rownames=F, sep="\t")
+
+## Early HO genes
+overlaps <- intersect(cycle.icgc, genes.iz.e.ho$ensembl_gene_id)
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_S-IZ-HO_g7"))
+x <- de.tpm.gene.nbl[overlaps,]$LOG2_FC
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "7 High-risk, S, early IZ, HO", xlab, ylab, x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+writeTable(de.tpm.gene.nbl[overlaps,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_S-IZ-HO_n7.txt"), colnames=T, rownames=F, sep="\t")
+
+overlaps <- intersect(nbl.icgc, genes.iz.e.ho$ensembl_gene_id)
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL-vs-ICGC_H-IZ-HO_g13"))
+x <- de.tpm.gene.nbl[overlaps,]$LOG2_FC
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "13 High-risk, early IZ, HO", xlab, ylab, x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+writeTable(de.tpm.gene.nbl[overlaps,], file.path(wd.de.data, "NBL_tpm-gene-r5p47_DE+SRC_p1e3_n53_H-IZ-HO_n13.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Wilcoxon rank sum test
+# Last Modified: 01/05/22
+# -----------------------------------------------------------------------------
+## Test: Wilcoxon/Mann–Whitney/U/wilcox.test
+##       Student's/t.test
+## FDR : Q/BH
+## DE  : 
+argv      <- data.frame(predictor="SORTING", predictor.wt="G1", test="Wilcoxon", test.fdr="Q", stringsAsFactors=F)
+file.name <- paste0("de_", base, "_tpm-gene-r5p47_SORTING_wilcox_q_n53")
+file.main <- paste0("", BASE)
+
+de <- differentialAnalysis(tpm.gene.log2, samples.nbl.tpm, argv$predictor, argv$predictor.wt, argv$test, argv$test.fdr)
+# Samples with MUT SORTING: 24
+# Samples with  WT SORTING: 29
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)
+
+save(de.tpm.gene, file=file.path(wd.de.data, paste0(file.name, ".RData")))
+writeTable(de.tpm.gene, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+nrow(de.tpm.gene)
+# [1] 22899
+
+
+
+
 
 ###
 ## 13/09/21
@@ -72,6 +296,11 @@ tpm.gene <- tpm.gene[, rownames(samples.atrx)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 nrow(tpm.gene.log2.m)
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Purities
@@ -190,7 +419,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ymax=0
 
 ## NBL expressed genes
 xlab.text <- "High/Low risk fold change [log2]"
-plot.de <- file.path(wd.de.plots, "volcanoplot_nbl_median0+1_DE_p1e-3_TERT")
+plot.de <- file.path(wd.de.plots, "volcanoplot_NBL_median1_DE_p1e-3_TERT")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 file.main <- c("NBL risk group-associated genes", "Low (L) vs. High (H)")
@@ -314,8 +543,7 @@ src.nbl.down[setdiff(rownames(src.nbl.down), down.cycling),]
 # -----------------------------------------------------------------------------
 # Last Modified: 15/08/21
 # -----------------------------------------------------------------------------
-plotVolcanoFDR <- function(de, fdr, genes, file.de, file.main, xlab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd, legend, col) {
-   pvalue <- fdrToP(fdr/100, de)
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, overlaps.up.pe3, overlaps.up.pe3.iz.e.cd, legend, cols) {
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
    adjustcolor.gray  <- adjustcolor("lightgray", alpha.f=0.125)
@@ -326,18 +554,17 @@ plotVolcanoFDR <- function(de, fdr, genes, file.de, file.main, xlab.text, overla
    ymax <- max(de$log10P)
 
    pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab="P-value significance [-log10]", col=adjustcolor.gray, main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.25, cex.main=1.3)
-   #abline(v=c(-log2(1.5), log2(1.5)), lty=5, col="darkgray")
+   par(mar=c(5.1, 4.6, 4.1, 1.5))
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xaxt="n", xlab=xlab.text, ylab=ylab.text, col=adjustcolor.gray, main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
  
-   abline(h=c(-log10(pvalue)), lty=5)
-   text(xmin + (xmax-xmin)/13, -log10(pvalue) + ymax/26, paste0("FDR = ", fdr, "%"), cex=1.2)
-   
+   abline(h=c(-log10(pvalue)), lty=5, lwd=2)
+
    de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red.lightest, cex=1.4)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=cols[1], cex=1.4)
  
    if (is.null(nrow(overlaps.up.pe3))) {
       de.up <- de[overlaps.up.pe3,]
-      points(de.up$LOG2_FC, de.up$log10P, pch=16, col=flowjo.red, cex=1.4)
+      points(de.up$LOG2_FC, de.up$log10P, pch=16, col=cols[2], cex=1.4)
    }
    if (is.null(nrow(overlaps.up.pe3.iz.e.cd))) {
       de.up <- de[overlaps.up.pe3.iz.e.cd,]
@@ -368,13 +595,13 @@ plotVolcanoFDR <- function(de, fdr, genes, file.de, file.main, xlab.text, overla
    }
  
    axis(side=1, at=seq(-4, 4, by=2), labels=c(-4, -2, 0, 2, 4), cex.axis=1.2)
-   mtext(file.main[2], cex=1.25, line=0.3)
+   #mtext(file.main[2], cex=1.25, line=0.3)
    #if (!is.null(nrow(overlaps.up.pe3)) && !is.null(nrow(overlaps.up.pe3.iz.e.cd))) {
       #legend("topleft", , pch=19, cex=1.25) 
    #} else if (!is.null(nrow(overlaps.up.pe3)) && is.null(nrow(overlaps.up.pe3.iz.e.cd))) {
       #legend("topleft", legend=c("309 L < H", "158 S-like"), col=c(red.lightest, flowjo.red), pch=19, cex=1.25)  
    #} else {
-      legend("topleft", legend=legend, col=col, pch=19, cex=1.25)
+      legend("topleft", legend=legend, col=cols, pch=19, cex=1.25)
    #}
  
    dev.off()

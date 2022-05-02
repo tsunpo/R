@@ -53,6 +53,7 @@ samples.nbl <- cbind(samples[overlaps,], phenos[overlaps,], survival[overlaps,])
 # Last Modified: 15/04/22
 # -----------------------------------------------------------------------------
 samples.surv.nbl <- survNBL(samples.nbl)
+writeTable(samples.surv.nbl, file.path(wd.meta, paste0("samples.surv.nbl.txt")), colnames=T, rownames=T, sep="\t")
 
 pvals <- c()
 for (s in 1:nrow(samples.surv.nbl)) {
@@ -89,11 +90,11 @@ plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Proliferative", "Resting"),
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ RISK, data=samples.surv.nbl)
 pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_L-H_size=6"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Low-risk", "High-risk"), name="RISK", strata=c("low", "high"), cols=c(blue.lighter, red.lighter), size=6)
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", "NB", "_RISK_L-H"))
+plotSurvfit(fit, file.name, "NB", legend.labs=c("Low-risk", "High-risk"), name="RISK", strata=c("low", "high"), cols=c("skyblue", yellow), size=5)
 
 file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_H-L"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("High-risk", "Low-risk"), name="RISK", strata=c("high", "low"), cols=c(red.lighter, blue.lighter), size=5)
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("High-risk", "Low-risk"), name="RISK", strata=c("high", "low"), cols=c(yellow, "skyblue"), size=5)
 
 
 
@@ -145,6 +146,7 @@ test[1, 2] <- nrow(subset(subset(samples.nbl, SORTING == "S"), RISK == "high"))
 test[2, 1] <- nrow(subset(subset(samples.nbl, SORTING == "G1"), RISK == "low"))
 test[2, 2] <- nrow(subset(subset(samples.nbl, SORTING == "G1"), RISK == "high"))
 fisher.test(test)[[1]]
+chisq.test(test)[[3]]
 # [1] 6.156504e-07
 test
 #    Low High

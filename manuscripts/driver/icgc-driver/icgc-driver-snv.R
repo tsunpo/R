@@ -97,6 +97,105 @@ for (s in 1:nrow(samples.mut)) {
 save(samples.mut, mut.gene, file=file.path(wd.driver.data, "icgc-driver-mut.RData"), version=2)
 
 # -----------------------------------------------------------------------------
+# PMRs on total 2,542 (out of 2,612) tumours
+# Last Modified: 30/04/22
+# -----------------------------------------------------------------------------
+pmr.mut.gene <- getPMR(mut.gene, samples.mut, s=20, mut=10)
+#pmr.mut.gene <- subset(subset(pmr.mut.gene, MUT_G1 > 10), MUT_S > 10)
+nrow(pmr.mut.gene)
+# [1] 23656
+
+file.name <- paste0("pmr_", base, "_mut.gene_n=", nrow(samples.mut), "_s>20_mut>10_g=", nrow(pmr.mut.gene), "_chisq")
+save(pmr.mut.gene,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+writeTable(pmr.mut.gene, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene_n=", nrow(samples.mut), "_s>20_mut>10_g=", nrow(pmr.mut.gene), "_chisq"))
+plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, pmr.mut.gene, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL", "CD86"))
+
+# -----------------------------------------------------------------------------
+# PMRs on 1,545 (out of 1,580) tumours with survival data
+# Last Modified: 30/04/22
+# -----------------------------------------------------------------------------
+overlaps <- intersect(rownames(samples.mut), rownames(samples.surv))
+
+pmr.mut.gene.surv <- getPMR(mut.gene[, overlaps], samples.surv[overlaps,], s=20, mut=0)
+nrow(pmr.mut.gene.surv)
+# [1] 21216
+
+file.name <- paste0("pmr_", base, "_mut.gene_n=", length(overlaps), "_s>20_mut>10_g=", nrow(pmr.mut.gene.surv), "_chisq")
+save(pmr.mut.gene.surv,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+writeTable(pmr.mut.gene.surv, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene_n=", length(overlaps), "_s>20_mut>10_g=", nrow(pmr.mut.gene.surv), "_chisq"))
+plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, pmr.mut.gene.surv, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL", "CD86"))
+
+# -----------------------------------------------------------------------------
+# PMRs on 904 tumours with RNA-seq data
+# Last Modified: 30/04/22
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/expression/icgc-tpm-de/data/icgc_kallisto_0.42.1_tpm.gene.RData")
+overlaps <- intersect(colnames(mut.gene), colnames(tpm.gene))   ## 904 patients
+length(overlaps)
+# [1] 904
+
+pmr.mut.gene.tpm <- getPMR(mut.gene[, overlaps], samples[overlaps,], s=20, mut=10)
+nrow(pmr.mut.gene.tpm)
+# [1] 16625
+
+file.name <- paste0("pmr_", base, "_mut.gene.tpm_n=", length(overlaps), "_s>20_mut>10_g=", nrow(pmr.mut.gene.tpm), "_chisq")
+save(pmr.mut.gene.tpm,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+writeTable(pmr.mut.gene.tpm, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_n=", length(overlaps), "_s>20_mut>10_g=", nrow(pmr.mut.gene.tpm), "_chisq"))
+plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, pmr.mut.gene.tpm, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL", "CD86"))
+
+# -----------------------------------------------------------------------------
+# PMRs on expressed genes
+# Last Modified: 30/04/22
+# -----------------------------------------------------------------------------
+load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/expression/icgc-tpm-de/data/icgc_kallisto_0.42.1_tpm.gene.RData")
+load("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/expression/icgc-tpm-de/data/icgc_kallisto_0.42.1_tpm.gene.log2.m.RData")
+
+
+
+
+
+
+###
+##
+overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(subset(pmr.mut.gene, PMR >= 1)))
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR-vs-PMR_mut.gene_chisq_tpm>5_s>20_mut>10_g6591"))
+x <- pmr.mut.gene[overlaps,]$PMR
+y <- de.mut.tpm[overlaps,]$PMR
+plotCorrelation(file.name, "SNV", "PMR > 1 (2,542 tumours)", "PMR > 1 (904 tumours)", x, y, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+
+
+overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(de.tpm.gene))
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_log2FC"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "", "PMR", expression("Log" * ""[2] * " fold change"), x, y, pos="bottomright", col="dimgray", size=6)
+
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_P"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- -log10(de.tpm.gene[overlaps,]$P)
+plotCorrelation(file.name, "", "PMR", text.Log10.P, x, y, pos="bottomright", col="dimgray", size=6)
+
+## Up
+overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(subset(de.tpm.gene, LOG2_FC < 0)))
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_log2FC_DOWN"))
+x <- de.mut.tpm[overlaps,]$PMR
+y <- de.tpm.gene[overlaps,]$LOG2_FC
+plotCorrelation(file.name, "", "PMR", expression("Log" * ""[2] * " fold change"), x, y, pos="bottomright", col="dimgray", size=6)
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # Differential point mutations (SNV)
 # Last Modified: 11/04/22; 23/03/22
 # -----------------------------------------------------------------------------
@@ -497,6 +596,14 @@ writeTable(de.mut.tpm, file.path(wd.driver.data, paste0(file.name, ".txt")), col
 file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chisq_tpm>5_s>20_mut>10_g6605_mean_MUT_TP53_EP300_MYC"))
 plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, de.mut.tpm, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL"))
 
+overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(subset(pmr.mut.gene, PMR >= 1)))
+file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR-vs-PMR_mut.gene_chisq_tpm>5_s>20_mut>10_g6591"))
+x <- pmr.mut.gene[overlaps,]$PMR
+y <- de.mut.tpm[overlaps,]$PMR
+plotCorrelation(file.name, "SNV", "PMR > 1 (2,542 tumours)", "PMR > 1 (904 tumours)", x, y, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+
+
 overlaps <- intersect(rownames(subset(de.mut.tpm, PMR >= 1)), rownames(de.tpm.gene))
 file.name <- file.path(wd.driver.plots, paste0("Correlation_PMR_", base, "_mut.gene_chisq_tpm>5_s>20_mut>10_g6605_DE_S-G1_log2FC"))
 x <- de.mut.tpm[overlaps,]$PMR
@@ -572,6 +679,9 @@ file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_chis
 x <- -log10(de.mut.tpm$P)
 y <- de.mut.tpm$SAMPLE_FREQ
 plotPMR(file.name, "", text.Log10.P, "N of samples", x, y)
+
+
+
 
 
 
