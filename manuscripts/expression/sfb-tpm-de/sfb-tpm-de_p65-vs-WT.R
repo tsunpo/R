@@ -40,6 +40,18 @@ dim(tpm.gene.log2)
 # [1] 15381
 
 # -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 10/10/21
+# -----------------------------------------------------------------------------
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+
+trait <- samples$GROUP_NAME
+file.main <- c("p65 + WT", "")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_SFB_median0_p65+WT_n11", size=6, file.main, "topright", c("p65", "WT"), c(purple, grey), flip.x=1, flip.y=1)
+
+# -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
 # Last Modified: 22/08/20
 # -----------------------------------------------------------------------------
@@ -86,70 +98,24 @@ de.tpm.gene[1012, "FDR"]
 # Figure(s)    : Figure S1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("DE_SFB_tpm-gene-median0_p65-vs-WT_wilcox_q_n11")
-load(file=file.path(wd.de.data, paste0(file.name, ".RData")))
+load("/Users/tpyang/Work/uni-koeln/tyang2/SFB/analysis/expression/kallisto/sfb-tpm-de/data/DE_SFB_tpm-gene-median0_p65-vs-WT_wilcox_q_n11.RData")
 
-plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
-   #pvalue <- fdrToP(fdr, de)
-   fdr <- pvalueToFDR(pvalue, de)
-   de.sig <- subset(de, P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   ymax <- max(de$log10P)
-   #ymax <- 9
- 
-   pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="p65 to WT fold change [log2]", ylab="P-value significance [-log10]", col="lightgray", main=file.main[1])
+xlab.text <- expression("Fold change " * "[log" * ""[2] * "]")
+ylab.text <- expression("Significance " * "[-log" * ""[10] * "(" * italic("P") * ")]")
 
-   text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
-   #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
-   #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
-
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=green)
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=grey)
- 
-   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
-   abline(h=c(-log10(pvalue)), lty=5, col="black")
-   
-   for (g in 1:nrow(genes)) {
-      gene <- subset(de, external_gene_name == genes[g,]$GENE)
-      gene <- cbind(gene, genes[g,])
-      
-      if (nrow(gene) > 0) {
-         points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
-         
-         if (!is.na(gene$ADJ_1))
-            if (is.na(gene$ADJ_2))
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=0.75)
-         else
-            if (gene$LOG2_FC > 0)
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=0.75)
-      } else
-         print(genes[g])
-   }
-   
-   mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Up-regulated (WT < p65)", "Down-regulated (WT > p65)"), col=c(green, grey), pch=19)
-   dev.off()
-}
-
-##
-plot.main <- "153 differentially expressed genes"
-plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_p65-vs-WT_p1e-2")
-
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "WT vs. p65")
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_p65-vs-WT_p0.01_fc1_log2")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 1.00E-02, genes, file.de, file.main)
+file.main <- c("p65 vs. WT", "")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topright", c("p65 > WT", "p65 < WT"), c(red, blue), c(red, blue), fold=1)
+
+pvalue <- 0.01
+fold <- 1
+de.sig <- subset(de.tpm.gene, P <= pvalue)
+de.down <- subset(de.sig, LOG2_FC < -fold)
+de.up   <- subset(de.sig, LOG2_FC > fold)
+nrow(de.up)
+nrow(de.down)
 
 # -----------------------------------------------------------------------------
 # 

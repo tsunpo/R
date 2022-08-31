@@ -59,6 +59,30 @@ getEnsGenesFromSegment <- function(seg) {
  
    return(ensGene.chr.end.start)
 }
+# > subset(cna.dupl, ensembl_gene_id == rownames(cna.2)[1])
+# ensembl_gene_id CN
+# 19872 ENSG00000085382  3
+# 19873 ENSG00000085382 16
+# 19874 ENSG00000085382 36
+# 19875 ENSG00000085382 38
+# 19912 ENSG00000085382 40
+
+getSegmentFromEnsGenes <- function(segs, gene) {
+   ensGene.gene <- subset(ensGene, ensembl_gene_id == gene)
+
+   segs.chr <- subset(segs, CHR == ensGene.gene$chromosome_name)
+   segs.chr.end <- segs.chr[which(segs.chr$END >= ensGene.gene$start_position),]
+   segs.chr.end.start <- segs.chr.end[which(segs.chr.end$START <= ensGene.gene$end_position),]
+ 
+   return(segs.chr.end.start)
+}
+# > segs.chr.end.start
+# SAMPLE  CHR     START       END   V5 CN
+# 65 P13264 chr6 103766424 105219954 1463  3
+# 66 P13264 chr6 105219955 105222954    3 16
+# 67 P13264 chr6 105222955 105224598    2 36
+# 68 P13264 chr6 105224599 105226196    6 38
+# 69 P13264 chr6 105226197 108185868 3117 40
 
 setNRDCN <- function(nrd.gc.cn, segs.gc, bed.gc.o) {
    bed.gc.o$BED <- rownames(bed.gc.o)
@@ -356,7 +380,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    nrds.chr.N  <- setSpline0(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline0(nrds.chr, bed.gc.chr, "RT")
    if (!is.null(nrds.lcl.chr))
-      nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
+      nrds.lcl.chr.RT <- setSpline0(nrds.lcl.chr, bed.gc.chr, "RT")
     
    #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
    #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## NOT HERE?
@@ -1011,6 +1035,15 @@ read.peiflyne.icgc.cn.txt <- function(cn.file) {
    cn <- readTable(cn.file, header=F, rownames=T, sep="")
    colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "RD_T", "RD_N", "V10")
  
+   return(cn)
+}
+
+read.peiflyne.wes.cn.txt <- function(cn.file) {
+   cn <- readTable(cn.file, header=F, rownames=F, sep="")
+   colnames(cn) <- c("BED", "CHR", "START", "END", "V5", "V6", "V7", "RD_T", "RD_N", "V10")
+   cn$BED <- mapply(x = 1:nrow(cn), function(x) paste0("P", x, "_", cn$BED[x]))
+   rownames(cn) <- cn$BED
+   
    return(cn)
 }
 

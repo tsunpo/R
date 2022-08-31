@@ -251,8 +251,8 @@ for (c in 2:22) {
 
 ##
 test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
-pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
+pca.1kb <- getPCA(t(test))
+save(pca.1kb, file=file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_sclc_chrs.RData")))
 file.main <- c("SCLC", "")
@@ -266,6 +266,51 @@ plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_SCLC", size=6, file.main, "bottom
 ## SG1
 #trait <- samples.sclc.sg1$SG1
 #plotPCA(1, 2, pca.de, trait, wd.rt.plots, "pca_sclc_T_chrs_spline_spearman_SG1", size=6, file.main, "bottomright", c("red", "lightgray", "blue"), NULL, flip.x=1, flip.y=1, legend.title="Consist. CM in all chrs")
+
+###
+## WGD (28/06/22)
+scores.1kb <- pcaScores(pca.1kb)
+overlaps <- intersect(rownames(scores.1kb), rownames(wgds))
+
+x <- scores.1kb[overlaps,]$PC1
+y <- wgds[overlaps,]$decision_value
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-WGD"))
+plotCorrelation(file.name, "SCLC 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb, 1), "%)"), "WGD", x, y, size=5)
+
+x <- scores.1kb[overlaps,]$PC1
+y <- samples.sclc[overlaps,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-COR"))
+plotCorrelation(file.name, "SCLC 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb, 1), "%)"), "Proliferation rate", x, y, size=5)
+
+x <- scores.1kb[overlaps,]$PC1
+y <- samples.wgs[overlaps,]$purity
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-purity"))
+plotCorrelation(file.name, "SCLC 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb, 1), "%)"), "Purity", x, y, size=5)
+
+x <- scores.1kb[overlaps,]$PC1
+y <- samples.wgs[overlaps,]$ploidy
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-ploidy"))
+plotCorrelation(file.name, "SCLC 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb, 1), "%)"), "Ploidy", x, y, size=5)
+
+##
+trait <- wgds[overlaps,]$wgd_predicted
+file.main <- c("SCLC 1 kb read depth", "")
+plotPCA(1, 2, pca.1kb, trait, wd.rt.plots, "PCA-1KB_SCLC_WGD", size=5, file.main, "bottomright", c("WGD", "non-WGD"), c("black", "lightgray"), flip.x=1, flip.y=1)
+
+trait <- samples.sclc[overlaps,]$M2
+trait[which(trait == 2)] <- "Proliferative"
+trait[which(trait == 1)] <- "Resting"
+file.main <- c("SCLC 1 kb read depth", "")
+plotPCA(1, 2, pca.1kb, trait, wd.rt.plots, "PCA-1KB_SCLC_SORTING", size=5, file.main, "bottomright", c("Proliferative", "Resting"), c(red, blue), flip.x=1, flip.y=1)
+
+
+
+
+
+y <- samples.sclc$COR
+x <- scores$PC2
+file.name <- file.path(wd.rt.plots, paste0("correlation_SORTING_vs_PC2"))
+plotCorrelation(file.name, "SCLC 1 kb windows", paste0("PC", 2, " (", pcaProportionofVariance(pca.de, 2), "%)"), expression(italic("In silico") ~ "sorting"), x, y, size=6)
 
 # -----------------------------------------------------------------------------
 # Beeswarm plots

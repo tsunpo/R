@@ -30,14 +30,20 @@ wd.wgs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.meta  <- file.path(wd, BASE, "metadata", "Peifer 2015")
 
+wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
+wd.de.data  <- file.path(wd.de, "data")
+wd.de.gsea  <- file.path(wd.de, "gsea")
+wd.de.plots <- file.path(wd.de, "plots")
+
 wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-samples <- readTable(file.path(wd.wgs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
+samples0 <- readTable(file.path(wd.wgs, "nbl_wgs_n56.list"), header=F, rownames=F, sep="")
+samples <- readTable(file.path(wd.wgs, "nbl_wgs_n56.txt"), header=T, rownames=T, sep="")
 phenos  <- readTable(file.path(wd.meta, "NB_WGS_Mutations_Overview.txt"), header=T, rownames=T, sep="")
 #science <- readTable(file.path(wd.meta, "NB_RAS_Science_Table S10.txt"), header=T, rownames=T, sep="\t")
-survival <- readTable(file.path(wd.meta, "NB_survival_416.txt"), header=T, rownames=T, sep="\t")
+survival <- readTable(file.path(wd.meta, "NB_survival_416_P24719.txt"), header=T, rownames=T, sep="\t")
 survival$Patient.number <- paste0("P", survival$Patient.number)
 rownames(survival) <- survival$Patient.number
 #q4 <- rownames(subset(samples, Q4 == 4))
@@ -50,10 +56,49 @@ samples.nbl <- cbind(samples[overlaps,], phenos[overlaps,], survival[overlaps,])
  
 # -----------------------------------------------------------------------------
 # 
-# Last Modified: 15/04/22
+# Last Modified: 17/08/22; 15/04/22
 # -----------------------------------------------------------------------------
 samples.surv.nbl <- survNBL(samples.nbl)
-writeTable(samples.surv.nbl, file.path(wd.meta, paste0("samples.surv.nbl.txt")), colnames=T, rownames=T, sep="\t")
+writeTable(samples.surv.nbl, file.path(wd.meta, paste0("samples.surv.nbl_n56.txt")), colnames=T, rownames=T, sep="\t")
+
+###
+##
+text.NBL <- "Neuroblastoma"
+samples.surv.nbl$GROUP_ID <- "LR"
+samples.surv.nbl[rownames(subset(samples.surv.nbl, RISK == "high")),]$GROUP_ID <- "HR"
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ GROUP_ID, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR_red_all"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("LR", "All-HR"), name="GROUP_ID", strata=c("LR", "HR"), cols=c(blue, red), size=5)
+
+###
+##
+samples.surv.nbl$GROUP_ID2 <- "LR"
+samples.surv.nbl[rownames(subset(samples.surv.nbl, RISK == "high")),]$GROUP_ID2 <- "HR"
+#samples.surv.nbl[rownames(subset(samples.surv.nbl, TERT_Rearrangement == 1)),]$GROUP_ID  <- "TERT"
+samples.surv.nbl[rownames(subset(samples.surv.nbl, MYCN_amp == 1)),]$GROUP_ID2 <- "MYCN"
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ GROUP_ID2, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR-MYCN"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("LR", "HR", "MYCN"), name="GROUP_ID2", strata=c("LR", "HR", "MYCN"), cols=c(blue, "lightgray", red), size=5)
+
+###
+##
+samples.surv.nbl$GROUP_ID3 <- "LR"
+samples.surv.nbl[rownames(subset(samples.surv.nbl, RISK == "high")),]$GROUP_ID3 <- "HR"
+samples.surv.nbl[rownames(subset(samples.surv.nbl, TERT_Rearrangement == 1)),]$GROUP_ID3  <- "TERT"
+samples.surv.nbl[rownames(subset(samples.surv.nbl, MYCN_amp == 1)),]$GROUP_ID3 <- "MYCN"
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ GROUP_ID3, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR-MYCN-TERT_black"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("LR", "HR", "TERT", "MYCN"), name="GROUP_ID3", strata=c("LR", "HR", "TERT", "MYCN"), cols=c(blue, "black", yellow, red), size=5)
+
+
+
+
 
 pvals <- c()
 for (s in 1:nrow(samples.surv.nbl)) {
@@ -80,41 +125,39 @@ if (length(idx) != 0)
    samples.surv.nbl[idx,]$SORTING <- "S"
 samples.surv.nbl$SORTING <- as.factor(samples.surv.nbl$SORTING)
 
+###
+##
 fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.nbl)
 pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_G1-S"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", "Neuroblastoma", "_G1-S_n=56"))
+plotSurvfit(fit, file.name, "Neuroblastoma", legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
 
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_S-G1"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("Proliferative", "Resting"), name="SORTING", strata=c("S", "G1"), cols=c(red, blue), size=5)
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", "Neuroblastoma", "_S-G1_n=56"))
+plotSurvfit(fit, file.name, "Neuroblastoma", legend.labs=c("Proliferative", "Resting"), name="SORTING", strata=c("S", "G1"), cols=c(red, blue), size=5)
 
-fit <- survfit(Surv(OS_month, OS_censor) ~ RISK, data=samples.surv.nbl)
-pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", "NB", "_RISK_L-H"))
-plotSurvfit(fit, file.name, "NB", legend.labs=c("Low-risk", "High-risk"), name="RISK", strata=c("low", "high"), cols=c("skyblue", yellow), size=5)
-
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_H-L"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("High-risk", "Low-risk"), name="RISK", strata=c("high", "low"), cols=c(yellow, "skyblue"), size=5)
-
-
-
-fit <- survfit(Surv(OS_month, OS_censor) ~ RISK, data=samples.surv.nbl)
-pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_RISK_H-L"))
-plotSurvfit55(fit, file.name, text.NBL, c("High-risk", "Low-risk"), c(red.lighter, blue.lighter))
-
-
-
+##
+text.NBL <- "Neuroblastoma"
 idx <- which(is.na(pvals))
 x <- samples.surv.nbl$COR[-idx]
 y <- -log10(pvals[-idx])
 file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", text.NBL)
 plotOS(file.name, text.NBL, text.In.silico, text.Log10.P, x, y, pvals[s], rho.nbl, lwd=3)
 
-res.cox <- coxph(Surv(OS_month, OS_censor) ~ SORTING + RISK + AGE, data=samples.surv.nbl)
-pdf(paste0(wd.rt.plots, "/hists/hazard_in-silico_samples.surv.hist_", text.NBL, ".pdf"), height=2.7, width=5)
-ggforest(res.cox, data=samples.surv.nbl, main=text.NBL, cpositions=c(0.02, 0.15, 0.35), fontsize=2.5)
-dev.off()
+
+
+
+##
+samples.surv.nbl$GROUP_ID <- "LR"
+samples.surv.nbl[rownames(subset(subset(samples.surv.nbl, RISK == "high"), SORTING == "G1")),]$GROUP_ID <- "G1-HR"
+samples.surv.nbl[rownames(subset(subset(samples.surv.nbl, RISK == "high"), SORTING == "S")),]$GROUP_ID  <- "S-HR"
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ GROUP_ID, data=samples.surv.nbl)
+pval <- surv_pvalue(fit)$pval
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_LR-G1-S_skyblue"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("LR", "G1-HR", "S-HR"), name="GROUP_ID", strata=c("LR", "G1-HR", "S-HR"), cols=c("skyblue", yellow, red), size=5)
+
+file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_S-G1-LR_skyblue"))
+plotSurvfit(fit, file.name, text.NBL, legend.labs=c("S-HR", "G1-HR", "LR"), name="GROUP_ID", strata=c("S-HR", "G1-HR", "LR"), cols=c(red, yellow, "skyblue"), size=5)
 
 ###
 ##
@@ -145,19 +188,15 @@ test[1, 1] <- nrow(subset(subset(samples.nbl, SORTING == "S"), RISK == "low"))
 test[1, 2] <- nrow(subset(subset(samples.nbl, SORTING == "S"), RISK == "high"))
 test[2, 1] <- nrow(subset(subset(samples.nbl, SORTING == "G1"), RISK == "low"))
 test[2, 2] <- nrow(subset(subset(samples.nbl, SORTING == "G1"), RISK == "high"))
-fisher.test(test)[[1]]
 chisq.test(test)[[3]]
-# [1] 6.156504e-07
+# [1] 7.58948e-06
 test
 #    Low High
 # S    0   27
 # G1  17   12
 
 fisher.test(test)[[1]]
-# [1] 8.061812e-07
-#    Low High
-# S    0   26
-# G1  17   12
+# [1] 6.156504e-07
 
 # -----------------------------------------------------------------------------
 # 

@@ -4,6 +4,7 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 07/01/19
 # =============================================================================
+library(qvalue)
 
 # -----------------------------------------------------------------------------
 # Methods: Transcript-level TPM estimates using sleuth
@@ -243,17 +244,17 @@ isNA <- function(input) {
 }
 
 ## http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
-plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, cols, samples, flip.x, flip.y, legend.title=NA) {
+plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, legend, legend.title, cols, flip.x, flip.y) {
    scores <- pcaScores(pca)
    trait[is.na(trait)] <- "NA"
-   trait.v <- sort(unique(trait), decreasing=T)
+   trait.v <- legend.title
    
    #if (isNA(cols))
    #   cols <- c("red", "deepskyblue", "forestgreen", "purple3", "blue", "gold", "lightsalmon", "turquoise1", "limegreen")   #, "salmon", "tomato", "steelblue2", "cyan")
    #if (length(trait.v) > length(cols))
    #   cols <- rainbow(length(trait.v))
    #else
-      cols <- cols[1:length(trait.v)]
+   #   cols <- cols[1:length(trait.v)]
    trait.col <- mapply(x = 1:length(trait), function(x) return(cols[which(trait[x] == trait.v)]))   ## Assign colours to each subtypes
    
    cols[which(trait.v == "NA")] <- "lightgray"
@@ -262,10 +263,11 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    ylab.txt <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
    
    pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
-   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=19, cex=2, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=19, cex=2, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
 
-   mtext(file.main[2], cex=1.2, line=0.3)
+   #mtext(file.main[2], cex=1.2, line=0.3)
    for (l in 1:length(trait.v))
       trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
       #trait.v[l] <- trait.v[l]
@@ -276,11 +278,11 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #   trait.v <- paste0(BASE, " ", trait.v)
    #   cols <- cols[1:4]
    #}
-   if (is.na(legend.title))
-      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
-   else
-      legend(legend, title=legend.title, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)
-   mtext(ylab.txt, side=2, line=2.75, cex=1.9)
+   #if (is.na(legend.title))
+   #   legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
+   #else
+      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.6)
+   #mtext(ylab.txt, side=2, line=2.75, cex=1.9)
    dev.off()
 }
 
@@ -466,12 +468,14 @@ adjustcolor.red   <- adjustcolor(red, alpha.f=0.25)
 adjustcolor.blue  <- adjustcolor(blue, alpha.f=0.25)
 adjustcolor.green <- adjustcolor(green, alpha.f=0.25)
 adjustcolor.yellow <- adjustcolor(yellow, alpha.f=0.25)
-adjustcolor.gray  <- adjustcolor("lightgray", alpha.f=0.25)
+adjustcolor.skyblue <- adjustcolor("skyblue", alpha.f=0.25)
+adjustcolor.gray  <- adjustcolor("black", alpha.f=0.25)
+adjustcolor.lightgray  <- adjustcolor("darkgray", alpha.f=0.25)
+adjustcolor.white   <- adjustcolor("white", alpha.f=0)
 
 ## Bottom-right	-0.12	1.25
 ##  Level-right	-0.05	
-
-plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, legends, fold=1, ymax=0) {
+plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, legend, legends, cols, cols2, fold=1, ymax=0) {
    de.sig <- subset(de, P <= pvalue)
    de.sig$log10P <- -log10(de.sig$P)
  
@@ -482,18 +486,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
    #ymax <- 7
  
    pdf(file.de, height=6, width=6)
-   par(mar=c(5.1, 4.35, 4.1, 1.75))
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab=ylab.text, col=adjustcolor.gray, main=file.main[1], cex=1.4, cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
- 
-   abline(h=c(-log10(pvalue)), lty=5, lwd=2)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab=ylab.text, col="white", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   #abline(h=c(-log10(pvalue)), lty=5, lwd=2)
  
    de.up   <- subset(de.sig, LOG2_FC > fold)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=adjustcolor.red, cex=1.4)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=cols[1], cex=1.7)
    de.down <- subset(de.sig, LOG2_FC < -fold)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=adjustcolor.green, cex=1.4)
- 
-   abline(v=fold, lty=5, col=red, lwd=2)
-   abline(v=-fold, lty=5, col=green, lwd=2)
+   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=cols[2], cex=1.7)
+   #abline(v=fold, lty=5, col=red, lwd=2)
+   #abline(v=-fold, lty=5, col=blue, lwd=2)
  
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
@@ -501,25 +503,116 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
          gene <- cbind(gene, genes[g,])
    
          if (nrow(gene) > 0) {
-            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.4)
+            points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.7)
     
             if (!is.na(gene$ADJ_1))
                if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.7)
                else
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.7)
             else
                if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.7)
                else
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.5), cex=1.2)
+                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.3), cex=1.7)
          } else
             print(genes[g,])
       }
    }
  
+   #legends[1] <- paste0(nrow(de.up), " ", legends[1])
+   #legends[2] <- paste0(nrow(de.down), " ", legends[2])
    #axis(side=1, at=seq(-8, 8, by=1), labels=c(-3, -2, -1, 0, 1, 2, 3), cex.axis=1.2)
-   legend("topleft", legend=legends, col=c(red, green), pch=19, pt.cex=1.6, cex=1.2)
+   legend(legend, legend=legends, col=cols2, pch=19, pt.cex=2, cex=1.6)
+   dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Method: Cannoli plot
+# Last Modified: 01/07/22
+# -----------------------------------------------------------------------------
+getCannoli <- function(de.data, BASE, n, gene.list=NULL, TEST="SORTING") {
+   load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_", TEST, "-vs-TPM_q_n", n, ".RData")))
+   de1 <- src.tpm.gene
+   load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_CNA-vs-TPM_q_n", n, ".RData")))
+   de2 <- src.tpm.gene
+ 
+   overlaps <- intersect(rownames(de1), rownames(de2))
+   de <- cbind(de1[overlaps, c("P", "Q", "RHO")], de2[overlaps, c("P", "Q", "RHO")])
+   rownames(de) <- overlaps
+   de <- cbind(de1[overlaps,]$external_gene_name, de)
+   colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+ 
+   if (!is.null(gene.list))
+      de <- de[intersect(rownames(de), gene.list),]
+   
+   #de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+   #de.positive.sig <- subset(subset(de.positive, P1 <= 0.001), P2 <= 0.001)
+   #de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+   #de.negative.sig <- subset(subset(de.negative, P1 <= 0.001), P2 <= 0.001)
+   
+   return(de)
+}
+
+plotCannoli<- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, legend, legends, cols, cols2, fold=1, ymax=0, col="black", pos="bottomright") {
+   pdf(file.de, height=6, width=6)
+   par(mar=c(5.1, 4.7, 4.1, 1.4), xpd=F)
+   plot(de$Effect1, de$Effect2, pch=16, xlab=xlab.text, ylab=ylab.text, xaxt="n", yaxt="n", col="lightgray", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   #abline(h=c(-log10(pvalue)), lty=5, lwd=2)
+   
+   de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+   de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= pvalue), P2 <= pvalue)
+   points(de.pos.pos$Effect1,     de.pos.pos$Effect2,     pch=16, col=cols[1], cex=1.7)
+   points(de.pos.pos.sig$Effect1, de.pos.pos.sig$Effect2, pch=16, col=cols2[1], cex=1.7)
+   
+   de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+   de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= pvalue), P2 <= pvalue)
+   points(de.pos.neg$Effect1,     de.pos.neg$Effect2,     pch=16, col=cols[2], cex=1.7)
+   points(de.pos.neg.sig$Effect1, de.pos.neg.sig$Effect2, pch=16, col=cols2[2], cex=1.7)
+   
+   text(max(de.pos.pos$Effect1)/2, max(de.pos.pos$Effect2)/2, paste0(round0(nrow(de.pos.pos)/nrow(de)*100, 1), " %"), col="white", font=2, cex=1.8)
+   text(min(de.pos.neg$Effect1)/2, max(de.pos.pos$Effect2)/2, paste0(round0(nrow(de.pos.neg)/nrow(de)*100, 1), " %"), col="white", font=2, cex=1.8)
+   
+   abline(v=0, lty=5, col="black", lwd=2)
+   abline(h=0, lty=5, col="black", lwd=2)
+ 
+   lm.fit <- lm(de$Effect1 ~ de$Effect2)
+   abline(lm.fit, col=col, lwd=7)
+   
+   cor <- cor.test(de$Effect1, de$Effect2, method="spearman", exact=F)
+   legend(pos, c(paste0("N = ", separator(nrow(de))), paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, col, adjustcolor.white), text.font=2, bty="n", cex=1.8)
+   legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
+   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
+   
+   par(xpd=T)
+   if (nrow(genes) != 0) {
+      for (g in 1:nrow(genes)) {
+         gene <- subset(de, external_gene_name == genes[g,]$GENE)
+         gene <- cbind(gene, genes[g,])
+     
+         if (nrow(gene) > 0) {
+            points(gene$Effect1, gene$Effect2, pch=1, col="black", cex=1.7)
+      
+            if (!is.na(gene$ADJ_1))
+               if (is.na(gene$ADJ_2))
+                  text(gene$Effect1, gene$Effect2, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.7)
+               else
+                  text(gene$Effect1, gene$Effect2, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.7)
+            else
+               if (gene$Effect1 > 0)
+                  text(gene$Effect1, gene$Effect2, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.7)
+               else
+                  text(gene$Effect1, gene$Effect2, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.3), cex=1.7)
+         } else
+            print(genes[g,])
+      }
+   }
+   
+   legends[1] <- paste0(nrow(de.pos.pos.sig), " ", legends[1])
+   legends[2] <- paste0(nrow(de.pos.neg.sig), " ", legends[2])
+   axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
+   axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
+   legend(legend, legend=legends, col=cols2, pch=19, pt.cex=2, cex=1.6)
    dev.off()
 }
 
@@ -544,17 +637,41 @@ fishers <- function(x, y) {
 ## http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#RNK:_Ranked_list_file_format_.28.2A.rnk.29
 writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
    #de.sorted <- de.tpm.gene[order(de.tpm.gene$LOG2_FC, decreasing=T),]
-   de.tpm.gene$WEIGHT <- de.tpm.gene$LOG2_FC*(-log10(de.tpm.gene$P))
+   de.tpm.gene$WEIGHT <- de.tpm.gene$LOG2_FC * (-log10(de.tpm.gene$P))
+   #de.tpm.gene$WEIGHT <- de.tpm.gene$RHO
    de.sorted <- de.tpm.gene[order(de.tpm.gene$WEIGHT, decreasing=T),]
    
    file <- file.path(wd.de.data, paste0(file.name, ".rnk"))
-   writeTable(de.sorted[,c("ensembl_gene_id", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
+   #writeTable(de.sorted[,c("ensembl_gene_id", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
+   writeTable(de.sorted[,c("external_gene_name", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
+}
+
+writeRNKformatCNA <- function(de, wd.de.data, file.name, pos) {
+   de$WEIGHT <- de$Effect2 * de$Effect1
+  
+   de.sorted <- de[order(de$WEIGHT, decreasing=T),]
+ 
+   file <- file.path(wd.de.data, paste0(file.name, ".rnk"))
+   writeTable(de.sorted[,c("external_gene_name", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
+}
+
+writeRNKformatNOCNA <- function(de, wd.de.data, file.name, pos) {
+   de$WEIGHT <- de$Effect1
+ 
+   de.sorted <- de[order(de$WEIGHT, decreasing=T),]
+ 
+   file <- file.path(wd.de.data, paste0(file.name, ".rnk"))
+   writeTable(de.sorted[,c("external_gene_name", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
 }
 
 ## http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GRP
 writeGRPformat <- function(list, wd.de.data, file.name) {
    writeTable(list, file.path(wd.de.data, paste0(file.name, ".grp")), colnames=F, rownames=F, sep="\t")
 }
+
+## Gene sets in GMT format
+## https://www.gsea-msigdb.org/gsea/downloads.jsp (MSigDB 7.5.1)
+## https://www.gsea-msigdb.org/gsea/msigdb/mouse_geneset_resources.jsp
 
 # =============================================================================
 # Inner Class: Collections of test/obsolete/deprecated methods

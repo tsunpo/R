@@ -87,67 +87,24 @@ de.tpm.gene[308, "FDR"]
 # Figure(s)    : Figure S1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
-   #pvalue <- fdrToP(fdr, de)
-   fdr <- pvalueToFDR(pvalue, de)
-   de.sig <- subset(de, P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   #ymax <- max(de$log10P)
-   ymax <- 9
- 
-   pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="B to N fold change [log2]", ylab="P-value significance [-log10]", col="lightgray", main=file.main[1])
+load("/Users/tpyang/Work/uni-koeln/tyang2/SFB/analysis/expression/kallisto/sfb-tpm-de/data/DE_SFB_tpm-gene-median0_TNFR1LEC-KO-vs-WT_wilcox_q_n11.RData")
 
-   #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
-   #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
-   #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
+xlab.text <- expression("Fold change " * "[log" * ""[2] * "]")
+ylab.text <- expression("Significance " * "[-log" * ""[10] * "(" * italic("P") * ")]")
 
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red)
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue)
- 
-   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
-   abline(h=c(-log10(pvalue)), lty=5, col="black")
-   
-   for (g in 1:nrow(genes)) {
-      gene <- subset(de, external_gene_name == genes[g,]$GENE)
-      gene <- cbind(gene, genes[g,])
-      
-      if (nrow(gene) > 0) {
-         points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
-         
-         if (!is.na(gene$ADJ_1))
-            if (is.na(gene$ADJ_2))
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=0.75)
-         else
-            if (gene$LOG2_FC > 0)
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=0.75)
-      } else
-         print(genes[g])
-   }
-   
-   mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Up-regulated (WT < NEMO)", "Down-regulated (WT > NEMO)"), col=c(red, blue), pch=19)
-   dev.off()
-}
-
-##
-plot.main <- "1,240 differentially expressed genes in EAC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_DE_EAC_median0_N-vs-B_p1e-6_CNA")
-
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "Normal (N) vs. Tumour (B)")
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_TNFR1LEC-KO-vs-WT_p0.01_fc1_log2")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
+file.main <- c("TNFR1LEC-KO vs. WT", "")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topright", c("TNFR1LEC-KO >. WT", "TNFR1KO < WT"), c(red, blue), c(red, blue), fold=1)
+
+pvalue <- 0.01
+fold <- 1
+de.sig <- subset(de.tpm.gene, P <= pvalue)
+de.down <- subset(de.sig, LOG2_FC < -fold)
+de.up   <- subset(de.sig, LOG2_FC > fold)
+nrow(de.up)
+nrow(de.down)
 
 # -----------------------------------------------------------------------------
 # 

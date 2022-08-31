@@ -93,6 +93,7 @@ load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb,
 
 genes <- c("MRPL47", "ANAPC11", "C20orf24", "MED10", "RPL38", "TRIAP1", "ICT1", "SDHAF2")
 genes <- c("TERT", "MYCN", "ALK", "ATRX", "TRIAP1")
+genes <- c("TERT", "STRA6", "IGLV6-57")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -424,11 +425,12 @@ for (c in 1:22) {
 # Transcription vs. replication time
 # Last Modified: 08/11/18
 # -----------------------------------------------------------------------------
-load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene_r5p47.RData")))
+load(file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene      <- getEnsGeneFiltered(tpm.gene, ensGene, autosomeOnly=T, proteinCodingOnly=F)
-tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=0.01)
+tpm.gene.log2 <- getLog2andMedian(tpm.gene, pseudocount=1)
 # > nrow(tpm.gene.log2)
 # [1] 18440
+# [1] 18081
 
 load(file=file.path(wd.rt.data, paste0("ensGene.rt_", base, "_bstrps", bstrps, ".RData")))   ## Load objects ensGene.rt.start and ensGene.rt.end
 ensGene.rt.tx <- getEnsGeneTxRFD(ensGene, ensGene.rt.start, ensGene.rt.end, tpm.gene.log2)

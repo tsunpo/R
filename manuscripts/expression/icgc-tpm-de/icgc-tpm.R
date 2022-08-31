@@ -70,7 +70,7 @@ for (g in 1:length(genes)) {
       tpm.gene <- rbind(tpm.gene, tpm.g)
    }
 }
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")))
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")), version=2)
 #writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.txt.gz"))), colnames=T, rownames=T, sep="\t")
 dim(tpm.gene)
 # [1] 20720  1359
@@ -78,7 +78,7 @@ dim(tpm.gene)
 ## Gene-level TPMs (Expressed)
 #load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.RData")))
 tpm.gene <- removeMedian0(tpm.gene)
-save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.RData")))
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.RData")), version=2)
 #writeTable(tpm.gene, gzfile(file.path(wd.de.data, paste0(base, "_kallisto_0.42.1_tpm.gene.median0.txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrow(tpm.gene)
 # [1] 18502

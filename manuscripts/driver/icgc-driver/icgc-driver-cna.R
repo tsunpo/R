@@ -40,8 +40,11 @@ wd.driver.plots <- file.path(wd.driver, "plots")
 # Load data
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-samples <- readTable(file.path(wd.meta, paste0("samples.txt")), header=T, rownames=T, sep="\t")[, -1]
-cor.rho <- readTable(file.path(wd.meta, paste0("cor.txt")), header=F, rownames=F, sep="")
+#samples <- readTable(file.path(wd.meta, paste0("samples.txt")), header=T, rownames=T, sep="\t")[, -1]
+#cor.rho <- readTable(file.path(wd.meta, paste0("cor.txt")), header=F, rownames=F, sep="")
+load(file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")))
+nrow(samples)
+# [1] 2612
 
 release <- readTable(file.path(wd.meta, "data_release", "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
 rownames(release) <- release$tumor_wgs_aliquot_id
@@ -64,7 +67,7 @@ length(overlaps)
 release     <- release[overlaps,]
 samples.cna <- samples[overlaps,]
 samples.cna$tumor_wgs_aliquot_id <- release$tumor_wgs_aliquot_id
-samples.cna <- setProliferation(samples.cna, cor.rho)
+#samples.cna <- setProliferation(samples.cna, cor.rho)
 nrow(samples.cna)
 # [1] 2443
 #writeTable(samples.cna[, c("icgc_specimen_id", "tumor_wgs_aliquot_id")], file.path(wd.meta, paste0("copy_number_alterations.txt")), colnames=F, rownames=F, sep="\t")
@@ -87,28 +90,28 @@ rownames(cna.gene) <- rownames
 for (s in 1:nrow(samples.cna)) {
    sample.cna <- samples.cna[s,]
  
-   cna.dupl <- readTable(file.path(wd.driver.data, "copy_number_alterations", paste0(sample.cna$icgc_specimen_id, "_ens.cn.seg.gz")), header=T, rownames=F, sep="")
+   cna.dupl <- readTable(file.path(wd.driver.data, "copy_number_alterations", paste0(sample.cna$icgc_specimen_id, "_ens.iCN.seg.gz")), header=T, rownames=F, sep="")
    cna <- as.data.frame(sort(table(cna.dupl$ensembl_gene_id), decreasing=T))
    rownames(cna) <- cna$Var1
  
    cna.1 <- subset(cna, Freq == 1)
-   cna.1$CN <- cna.dupl[which(cna.dupl$ensembl_gene_id %in% rownames(cna.1)),]$CN
+   cna.1$CN <- mapply(x = 1:nrow(cna.1), function(x) subset(cna.dupl, ensembl_gene_id == rownames(cna.1)[x])$CN)
  
    cna.2 <- subset(cna, Freq > 1)
-   cna.2$CN <- NA
-   for (c in 1:nrow(cna.2)) {
-      ens <- rownames(cna.2[c,])
-      cna.2$CN[c] <- mean(subset(cna.dupl, ensembl_gene_id == ens)$CN)
-   }
+   cna.2$CN <- mapply(x = 1:nrow(cna.2), function(x) median(subset(cna.dupl, ensembl_gene_id == rownames(cna.2)[x])$CN))
+ 
    cna <- rbind(cna.1[,c(1,3)], cna.2[,c(1,3)])
    colnames(cna) <- c("ensembl_gene_id", "CN")
- 
+   
    overlaps <- intersect(rownames, cna$ensembl_gene_id)
    cna.gene[overlaps, s] <- cna[overlaps,]$CN
 }
-
 cna.gene.nona <- cna.gene[removeMissing(cna.gene),]
-save(samples.cna, cna.gene, cna.gene.nona, file=file.path(wd.driver.data, "icgc-driver-cna_cn.seg.RData"))
+save(samples.cna, cna.gene, cna.gene.nona, file=file.path(wd.driver.data, "icgc-driver-cna_iCN.seg.RData"), version=2)
+dim(cna.gene)
+# [1]
+dim(cna.gene.nona)
+# [1]
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test

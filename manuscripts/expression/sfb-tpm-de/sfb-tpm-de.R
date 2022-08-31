@@ -21,7 +21,7 @@ BASE <- "SFB"
 base <- tolower(BASE)
 
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2/projects"   ## tpyang@localhost
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 wd.rna   <- file.path(wd, BASE, "ngs/3RNA")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
@@ -39,9 +39,21 @@ tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 # PCA
 # Last Modified: 10/10/21
 # -----------------------------------------------------------------------------
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+
 trait <- samples$GROUP_NAME
 trait.v <- c("NEMO", "p65", "IKK2ca", "TNFR1KO", "TNFR1LEC-KO", "MLKLS345_7A", "MLKLWT", "WT")
 cols    <- c(green, purple, orange, blue, blue.lighter, red, red.lighter, grey)
+file.main <- c("Total samples (n=41)", "")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_SFB_median0_n41", size=6, file.main, "topright", trait.v, cols, flip.x=-1, flip.y=1)
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 10/10/21
+# -----------------------------------------------------------------------------
+trait <- samples$GROUP_NAME
 
 ###
 ##

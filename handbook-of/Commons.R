@@ -168,6 +168,13 @@ text.Log2.TPM.1 <- expression("Log" * ""[2] * "(TPM + 1)")
 text.SCLC <- "Lung-SCLC"
 text.NBL  <- "CNS-NB"
 
+firstup <- function(x) {
+   x <- tolower(x)
+   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+   
+   return(x)
+}
+
 # -----------------------------------------------------------------------------
 # Collections: Colours for plot
 # Links: https://blog.datawrapper.de/beautifulcolors/

@@ -94,8 +94,10 @@ for (c in 2:2) {
 sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
-#load(file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+#load(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 sprs.lcl <- sprs
+rts.lcl <- sprs
+colnames(rts.lcl)[7] <- "rts"
 
 for (c in 2:2) {
    chr <- chrs[c]

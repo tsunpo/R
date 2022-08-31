@@ -47,7 +47,7 @@ n0 <- length(samples0)
 # -----------------------------------------------------------------------------
 # NBL T vs LCL S/G1
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
-# Last Modified: 05/06/19; 20/04/19; 06/03/19
+# Last Modified: 23/06/22; 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
@@ -78,17 +78,47 @@ nrow(nrds.d)
 # [1] 2659570
 
 # -----------------------------------------------------------------------------
+# Last Modified: 23/06/22
+# -----------------------------------------------------------------------------
+nrds <- getOverallReadDepth(wd.rt.data, base, method, PAIR1, n1)
+nrow(nrds)
+# [1] 
+nrds.m <- subset(nrds, MEDIAN != 0)   ## ADD 30/11/20
+nrow(nrds.m)
+# [1] 
+nrds.d <- getOverallDetectedRD(wd.rt.data, base, method, PAIR1, n1, samples1)
+nrow(nrds.d)
+# [1] 
+
+# -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
 # Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
 samples.nbl <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1.txt"), colnames=T, rownames=F, sep="\t")
-#         0%        25%        50%        75%       100% 
+writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n56.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(median(samples.nbl$COR), file.path(wd.ngs, "nbl_wgs_n57-1_COR.txt"), colnames=F, rownames=F, sep="\t")
+writeTable(median(samples.sclc$COR), file.path(wd.ngs, "nbl_wgs_n57-1_COR_SCLC.txt"), colnames=F, rownames=F, sep="\t")
+#         0%        25%        50%        75%       100%   ## n=56/57
+# -0.7603965 -0.7321717 -0.7109754 -0.4246964  0.7624673
+#         0%        25%        50%        75%       100%   ## n=57-1
 # -0.7684906 -0.7397140 -0.7200663 -0.4456056  0.7665285
 
 writeTable(subset(samples.nbl, Q4 %in% c(4,1)), file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.nbl, Q4 %in% c(3,1)), file.path(wd.ngs, "nbl_wgs_q3_n28.txt"), colnames=T, rownames=F, sep="\t")
 
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 03/06/22
+# -----------------------------------------------------------------------------
+y <- samples.nbl.old[rownames(samples.nbl),]$COR
+x <- samples.nbl$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_n56_vs_n57-1"))
+plotCorrelation(file.name, expression(italic("In silico") ~ "sorting of NBL samples (n=55)"), "n=56", "n=57-1", x, y)
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 
+# -----------------------------------------------------------------------------
 ## Random 50/50
 m2.14 <- sort(rownames(subset(samples.nbl, M2 == 1))[sample(1:28, round(28/2), replace=F)])
 m1.14 <- sort(rownames(subset(samples.nbl, M2 == 0))[sample(1:28, round(28/2), replace=F)])
@@ -134,18 +164,101 @@ for (c in 2:22) {
 
 ##
 test <- nrds.T.chr.d.all[, -1]   ## BUG 2019/10/14: Remove column BED
-pca.de <- getPCA(t(test))
-save(pca.de, file=file.path(wd.rt.data, paste0("pca_nbl_chrs.RData")))
+nrow(test)
+# [1] 2684771
+test.nona <- test[removeMissing(test),]
+nrow(test.nona)
+# [1] 2684771
+test.no0 <- test[getExpressed(test),]
+test.no0 <- test.no0[,-(ncol(test.no0))]
+nrow(test.no0)
+# [1] 2659482
+pca.1kb <- getPCA(t(test.no0[, rownames(samples.nbl)]))
+save(pca.1kb, file=file.path(wd.rt.data, paste0("PCA_1KB_NBL_n57.RData")))
 
 #load(file.path(wd.rt.data, paste0("pca_nbl_chrs.RData")))
-file.main <- c("NBL", "")
+file.main <- c("NBL 1 kb read depth", "")
 trait <- as.numeric(samples.nbl$Q4)
 trait[which(trait == 4)] <- "Q4"
 trait[which(trait == 3)] <- "Q3"
 trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
-plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL", size=6, file.main, "bottomright", c(red, red.lighter, blue.lighter, blue), NULL, flip.x=1, flip.y=1, legend.title=NA)
+#plotPCA(1, 2, pca.1kb.nbl, trait, wd.rt.plots, "PCA_NBL", size=6, file.main, "bottomright", c(red, red.lighter, blue.lighter, blue), samples.nbl, flip.x=1, flip.y=1, legend.title=NA)
+plotPCA(1, 2, pca.1kb.nbl, trait, wd.rt.plots, "PCA_1KB_NBL_Q4", size=6, file.main, "bottomright", c("Q4", "Q3", "Q2", "Q1"), c(red, red.lighter, blue.lighter, blue), flip.x=1, flip.y=1)
 
+trait <- as.numeric(samples.nbl$M2)
+trait[which(trait == 2)] <- "Proliferative"
+trait[which(trait == 1)] <- "Resting"
+plotPCA(1, 2, pca.1kb.nbl, trait, wd.rt.plots, "PCA_1KB_NBL_M2", size=6, file.main, "bottomright", c("Proliferative", "Resting"), c(red, blue), flip.x=1, flip.y=1)
+
+###
+## WGD (28/06/22)
+scores.1kb <- pcaScores(pca.1kb)
+overlaps <- intersect(rownames(scores.1kb), rownames(wgds))
+
+x <- scores.1kb[overlaps,]$PC1
+y <- wgds[overlaps,]$decision_value
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-WGD"))
+plotCorrelation(file.name, "NB 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb, 1), "%)"), "WGD", x, y, size=6)
+
+x <- scores.1kb[overlaps,]$PC1
+y <- samples.nbl[overlaps,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-SORTING"))
+plotCorrelation(file.name, "NB 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb, 1), "%)"), "Proliferation", x, y, size=6)
+
+trait <- wgds[overlaps,]$wgd_predicted
+file.main <- c("NB 1 kb read depth", "")
+plotPCA(1, 2, pca.1kb, trait, wd.rt.plots, "PCA-1KB_NB_WGD", size=6, file.main, "bottomright", c("WGD", "non-WGD"), c("black", "lightgray"), flip.x=1, flip.y=1)
+
+trait <- samples.nbl[overlaps,]$M2
+trait[which(trait == 2)] <- "Proliferative"
+trait[which(trait == 1)] <- "Resting"
+file.main <- c("NB 1 kb read depth", "")
+plotPCA(1, 2, pca.1kb, trait, wd.rt.plots, "PCA-1KB_NB_M2", size=6, file.main, "topleft", c("Proliferative", "Resting"), c(red, blue), flip.x=1, flip.y=1)
+
+trait <- as.vector(samples.nbl[overlaps,]$SORTING)
+trait[which(trait == "S")] <- "Proliferative"
+trait[which(trait == "G1")] <- "Resting"
+file.main <- c("NB 1 kb read depth", "")
+plotPCA(1, 2, pca.1kb, trait, wd.rt.plots, "PCA-1KB_NB_SORTING", size=6, file.main, "topleft", c("Proliferative", "Resting"), c(red, blue), flip.x=1, flip.y=1)
+
+
+
+
+
+###
+## WGD (28/06/22)
+scores.1kb.nbl <- pcaScores(pca.1kb.nbl)
+wgds.nbl <- readTable(file.path(wd.ngs, "nbl_wgs_n57_WGD.txt"), header=T, rownames=T, sep="\t")
+wgds.nbl[which(wgds.nbl$wgd_predicted == 0), ]$wgd_predicted <- "non-WGD"
+wgds.nbl[which(wgds.nbl$wgd_predicted == 1), ]$wgd_predicted <- "WGD"
+overlaps <- intersect(rownames(scores.1kb.nbl), rownames(wgds.nbl))
+
+x <- scores.1kb.nbl[overlaps,]$PC1
+y <- wgds.nbl[overlaps,]$decision_value
+file.name <- file.path(wd.rt.plots, paste0("correlation_1KB-PC1-vs-WGD"))
+plotCorrelation(file.name, "NB 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb.nbl, 1), "%)"), "WGD", x, y, size=6)
+
+x <- scores.1kb.nbl[overlaps,]$PC1
+y <- samples.nbl[overlaps,]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_NBL_PC1_1KB-vs-SORTING"))
+plotCorrelation(file.name, "NBL 1 kb read depth", paste0("PC", 1, " (", pcaProportionofVariance(pca.1kb.nbl, 1), "%)"), expression(italic("In silico") ~ "sorting"), x, y, size=6)
+
+trait <- as.numeric(samples.nbl$M2)
+trait[which(trait == 2)] <- "Proliferative"
+trait[which(trait == 1)] <- "Resting"
+plotPCA(1, 2, pca.1kb.nbl, trait, wd.rt.plots, "PCA_1KB_NBL_M2", size=6, file.main, "bottomright", c("Proliferative", "Resting"), c(red, blue), flip.x=1, flip.y=1)
+
+trait <- wgds.nbl$wgd_predicted
+plotPCA(1, 2, pca.1kb.nbl, trait, wd.rt.plots, "PCA_1KB_NBL_WGD", size=6, file.main, "bottomright", c("WGD", "non-WGD"), c("black", "lightgray"), flip.x=1, flip.y=1)
+
+
+
+
+y <- samples.sclc$COR
+x <- scores$PC2
+file.name <- file.path(wd.rt.plots, paste0("correlation_SORTING_vs_PC2"))
+plotCorrelation(file.name, "SCLC 1 kb windows", paste0("PC", 2, " (", pcaProportionofVariance(pca.de, 2), "%)"), expression(italic("In silico") ~ "sorting"), x, y, size=6)
 
 
 

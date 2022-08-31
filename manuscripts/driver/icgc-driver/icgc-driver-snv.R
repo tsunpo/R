@@ -75,6 +75,48 @@ for (s in 1:nrow(samples.mut)) {
 }
 
 # -----------------------------------------------------------------------------
+# N of SNVs in 2,542 (out of 2,612) tumours
+# Last Modified: 02/08/22; 27/05/22
+# -----------------------------------------------------------------------------
+hists.snv <- rownames(icgc)
+
+for (h in 3) {
+   hist <- hists.snv[h]
+   samples.mut.hist <- subset(samples.mut, histology_abbreviation == hist)
+   samples.mut.hist[rownames(subset(samples.mut.hist, M2 == 1)),]$SORTING <- "G1"
+   samples.mut.hist[rownames(subset(samples.mut.hist, M2 == 2)),]$SORTING <- "S"
+   
+   colnames <- rownames(samples.mut.hist)
+   rownames <- rownames(ensGene)
+   mut.gene <- toTable(0, length(colnames), length(rownames), colnames)
+   rownames(mut.gene) <- rownames
+   for (s in 1:nrow(samples.mut.hist)) {
+      sample.mut <- samples.mut.hist[s,]
+    
+      mut.dupl <- readTable(file.path(wd.driver.data, "point_mutations", paste0(sample.mut$icgc_specimen_id, "_mutcall_filtered_ens.vcf.gz")), header=T, rownames=F, sep="")
+      mut <- as.data.frame(sort(table(mut.dupl$ensembl_gene_id), decreasing=T))
+      rownames(mut) <- mut$Var1
+    
+      overlaps <- intersect(rownames, rownames(mut))
+      mut.gene[overlaps, s] <- mut[overlaps,]$Freq
+   }
+
+   pmr.mut.gene.hist <- getPMR(mut.gene, samples.mut.hist)
+   file.name <- paste0("PMR_", BASE, "_mut.gene_chisq_s>20_tpm>1_g", nrow(pmr.mut.gene.hist), "_", hist, "_n2542-M2")
+   save(pmr.mut.gene.hist,  file=file.path(wd.driver.data, "hists", paste0(file.name, ".RData")))
+   writeTable(pmr.mut.gene.hist, file.path(wd.driver.data, "hists", paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+ 
+   ##
+   file.name <- file.path(wd.driver.plots, "hists", paste0("PMR_", base, "_mut.gene_chisq_s>20_tpm>1_g", nrow(de.mut.gene.test), "_", hist))
+   x <- de.mut.gene.test$PMR
+   y <- -log10(de.mut.gene.test$P)
+   plotPMR(file.name, hist, "PMR", text.Log10.P, x, y)  
+}
+
+
+
+
+# -----------------------------------------------------------------------------
 # Differential point mutations (SNV)
 # Last Modified: 23/03/22
 # -----------------------------------------------------------------------------
@@ -112,6 +154,38 @@ writeTable(pmr.mut.gene, file.path(wd.driver.data, paste0(file.name, ".txt")), c
 file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene_n=", nrow(samples.mut), "_s>20_mut>10_g=", nrow(pmr.mut.gene), "_chisq"))
 plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, pmr.mut.gene, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL", "CD86"))
 
+###
+##
+mut.g1 <- mut.gene[, rownames(subset(samples.mut, SORTING == "G1"))]
+mut.s  <- mut.gene[, rownames(subset(samples.mut, SORTING == "S"))]
+
+mut.g1.total <- sum(mapply(x = 1:ncol(mut.g1), function(x) sum(as.numeric(mut.g1[, x]))))
+mut.s.total  <- sum(mapply(x = 1:ncol(mut.s),  function(x) sum(as.numeric(mut.s[, x]))))
+
+sum(as.numeric(mut.g1[,1]))
+
+# -----------------------------------------------------------------------------
+# N of SNVs in 2,542 (out of 2,612) tumours
+# Last Modified: 27/05/22
+# -----------------------------------------------------------------------------
+samples.mut.snv <- samples.mut
+
+samples.mut.snv$N     <- 0
+samples.mut.snv$N_ENS <- 0
+for (s in 1:nrow(samples.mut)) {
+   sample.mut <- samples.mut[s,]
+ 
+   #muts <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(sample.mut$tumor_wgs_aliquot_id, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
+   muts.ens <- readTable(file.path(wd.driver.data, "point_mutations", paste0(sample.mut$icgc_specimen_id, "_mutcall_filtered_ens.vcf.gz")), header=T, rownames=F, sep="")
+
+   samples.mut.snv$N_ENS[s] <- nrow(muts.ens)
+}
+
+x <- samples.mut.snv$COR
+y <- log10(samples.mut.snv$N_ENS)
+file.name <- file.path(wd.rt.plots, paste0("correlation_in-silico_vs_", "N-ENS", "_n2542"))
+plotCorrelation(file.name, "Coding regions", text.In.silico, "Number of mutations [log10]", x, y)
+
 # -----------------------------------------------------------------------------
 # PMRs on 1,545 (out of 1,580) tumours with survival data
 # Last Modified: 30/04/22
@@ -146,7 +220,7 @@ file.name <- paste0("pmr_", base, "_mut.gene.tpm_n=", length(overlaps), "_s>20_m
 save(pmr.mut.gene.tpm,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
 writeTable(pmr.mut.gene.tpm, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_n=", length(overlaps), "_s>20_mut>10_g=", nrow(pmr.mut.gene.tpm), "_chisq"))
+file.name <- file.path(wd.driver.plots, paste0("PMR_", base, "_mut.gene.tpm_n=", length(overlaps), "_s>20_mut>10_g=", nrow(pmr.mut.gene.tpm), "_chisq_MYC"))
 plotPMR(file.name, "Proliferative mutational rate", "PMR", text.Log10.P, pmr.mut.gene.tpm, c("TP53", "PIK3CA", "RB1", "NOTCH1", "EP300", "CREBBP", "TP73", "MYC", "MYCN", "MYCL", "CD86"))
 
 # -----------------------------------------------------------------------------
@@ -271,6 +345,51 @@ for (h in c(3, 6, 7, 13, 11)) {
    y <- -log10(de.mut.gene.test$P)
    plotPMR(file.name, hist, "PMR", text.Log10.P, x, y)  
 }
+
+# -----------------------------------------------------------------------------
+# NCAM2 in Kidney-RCC
+# Last Modified: 02/08/22
+# -----------------------------------------------------------------------------
+mut.dupls <- NA
+for (s in 1:nrow(samples.nbl)) {
+ sample.nbl <- samples.nbl[s,]
+ 
+ mut.dupl <- readTable(file.path(wd.driver.data, "point_mutations", paste0(sample.nbl$SAMPLE_ID, "_mutcall_filtered_ens.vcf.gz")), header=T, rownames=F, sep="")
+ mut.dupl.gene <- subset(mut.dupl, external_gene_name == "ESR1")[,-c(3:6)]
+ if (nrow(mut.dupl.gene) != 0) {
+  mut.dupl.gene$ensembl_gene_id[1:nrow(mut.dupl.gene)] <- sample.nbl$SAMPLE_ID
+  mut.dupl.gene$chromosome_name[1:nrow(mut.dupl.gene)] <- sample.nbl$M2
+  
+  if (is.na(mut.dupls))
+   mut.dupls <- mut.dupl.gene
+  else
+   mut.dupls <- rbind(mut.dupls, mut.dupl.gene)
+ }
+}
+colnames(mut.dupls)[1] <- "SAMPLE_ID"
+colnames(mut.dupls)[1] <- "M2"
+
+save(mut.dupls, samples.nbl, file=file.path(wd.driver.data, paste0("samples.nbl_n57-1.RData")))
+mut.dupls$Y <- 0.1
+
+ids.S <- rownames(subset(samples.nbl, SORTING == "S"))
+ids.G1 <- rownames(subset(samples.nbl, SORTING == "G1"))
+mut.dupls.S <- subset(mut.dupls, SAMPLE_ID %in% ids.S)
+mut.dupls.G1 <- subset(mut.dupls, SAMPLE_ID %in% ids.G1)
+mut.dupls.G1$Y <- 0.3
+
+testU(mut.dupls.S$POS, mut.dupls.G1$POS)
+
+file.name <- file.path(wd.driver.plots, paste0("NBL_ESR1_SORTING"))
+xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
+pdf(paste0(file.name, ".pdf"), height=3, width=47.2928)
+par(mar=c(2,4,4,1))
+plot(NULL, xlim=c(151977826/1E6, 152450754/1E6), ylim=c(0, 0.5), xlab=xlab.text, ylab="", yaxt="n", main="", cex.axis=2, cex.lab=2.1, cex.main=2.2)
+points(mut.dupls.S$POS/1E6, mut.dupls.S$Y, col=red, pch=6, cex=5, lwd=3)
+points(mut.dupls.G1$POS/1E6, mut.dupls.G1$Y, col=blue, pch=6, cex=5, lwd=3)
+dev.off()
+
+
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric)

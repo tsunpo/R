@@ -85,6 +85,39 @@ filtered <- function(df, colnames, cutoff) {
    return(df)
 }
 
+# -----------------------------------------------------------------------------
+# Method: CNV drivers
+# Last Modified: 03/07/22
+# -----------------------------------------------------------------------------
+getGeneCNV <- function(wd.driver.data, samples) {
+   colnames <- rownames(samples)
+   rownames <- rownames(ensGene)
+   cna.gene <- toTable(NA, length(colnames), length(rownames), colnames)
+   rownames(cna.gene) <- rownames
+ 
+   for (s in 1:nrow(samples)) {
+      sample <- rownames(samples)[s]
+  
+      cna.dupl <- readTable(file.path(wd.driver.data, paste0(sample, "_ens.iCN.seg.gz")), header=T, rownames=F, sep="")
+      cna <- as.data.frame(sort(table(cna.dupl$ensembl_gene_id), decreasing=T))
+      rownames(cna) <- cna$Var1
+  
+      cna.1 <- subset(cna, Freq == 1)
+      cna.1$CN <- mapply(x = 1:nrow(cna.1), function(x) subset(cna.dupl, ensembl_gene_id == rownames(cna.1)[x])$CN)
+  
+      cna.2 <- subset(cna, Freq > 1)
+      cna.2$CN <- mapply(x = 1:nrow(cna.2), function(x) median(subset(cna.dupl, ensembl_gene_id == rownames(cna.2)[x])$CN))
+  
+      cna <- rbind(cna.1[,c(1,3)], cna.2[,c(1,3)])
+      colnames(cna) <- c("ensembl_gene_id", "CN")
+  
+      overlaps <- intersect(rownames(cna.gene), cna$ensembl_gene_id)
+      cna.gene[overlaps, s] <- cna[overlaps,]$CN
+   }
+   
+   return(cna.gene) 
+}
+
 # =============================================================================
 # Inner Class  : PeifLyne File Reader
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)

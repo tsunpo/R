@@ -4,6 +4,14 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 09/08/21; 03/05/19
 # =============================================================================
+library(survival)
+library(survminer)
+library(tidyverse)
+library(broom)
+library(grid)
+library(dplyr)
+library(ggalt)
+library(gridExtra)
 
 # -----------------------------------------------------------------------------
 # Methods: Kaplan-Meier survival analysis
@@ -45,7 +53,7 @@ plotSurvfit <- function(fit, file.name, main.text, legend.labs, name, strata, co
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
    plot(fit, ylim=c(0, 1), xlab="Months", ylab="% OS", col=strata.cols, main=main.text[1], mark.time=T, lwd=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   legend("topright", legend=legends, lwd=4, col=cols, cex=1.7)
+   legend("topright", legend=legends, lwd=4, col=cols, cex=1.65)
 
    max <- max(fit[[2]])
    #text(max/5.5, 0.18, "                HR = 1.90 (1.61 - 2.25)", cex=1.7)
@@ -152,7 +160,7 @@ getPMR <- function(mut.gene, samples.mut, s=20, mut=10) {
    }
    pmr.mut.gene <- subset(pmr.mut.gene, P != 0)
    pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
- 
+   pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "Q")
    pmr <- pmr.mut.gene
    annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
    pmr.mut.gene <- cbind(annot[rownames(pmr),], pmr.mut.gene[, -1])
@@ -160,7 +168,7 @@ getPMR <- function(mut.gene, samples.mut, s=20, mut=10) {
    return(pmr.mut.gene)
 }
 
-plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene, genes, size=6, xmax="", ymax="", cols=c(adjustcolor.blue, adjustcolor.red)) {
+plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene, genes, size=6, cols=c(adjustcolor.blue, adjustcolor.red), xmax="", ymax="", h=3) {
    x <- pmr.mut.gene$PMR
    y <- -log10(pmr.mut.gene$P)
  
@@ -171,15 +179,17 @@ plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene, ge
  
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=1, cex=2, col="white", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=16, cex=2, col="white", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    idx.down   <- which(pmr.mut.gene$PMR < 1)
-   points(x[idx.down], y[idx.down], pch=1, col=cols[1], cex=2)
+   points(x[idx.down], y[idx.down], pch=16, col=cols[1], cex=2)
    idx.up   <- which(pmr.mut.gene$PMR >= 1)
-   points(x[idx.up],   y[idx.up],   pch=1, col=cols[2], cex=2)   
+   points(x[idx.up],   y[idx.up],   pch=16, col=cols[2], cex=2)   
  
-   abline(v=1, lty=5, col="black", lwd=2)
- 
+   #abline(v=1, lty=5, col="black", lwd=2)
+   abline(h=h, lty=5, col="black", lwd=2)
+   
+   par(xpd=T)
    if (length(genes) != 0) {
       for (g in 1:length(genes)) {
          idx <- which(pmr.mut.gene$external_gene_name == genes[g])
@@ -366,6 +376,7 @@ survSCLC <- function(phenos, samples, isCensored) {
    
    phenos[which(phenos$stage_UICC == "II"), ]$STAGE <- "I-II"
    phenos[which(phenos$stage_UICC == "IIa"),]$STAGE <- "I-II"
+   #phenos[which(phenos$stage_UICC == "2b"),]$STAGE  <- "I-II"
    phenos[which(phenos$stage_UICC == "IIb"),]$STAGE <- "I-II"
    
    #phenos[which(phenos$stage_UICC == "III"), ]$STAGE <- "III-IV"

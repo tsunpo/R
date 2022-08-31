@@ -277,13 +277,13 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=1.7)
    
    if (!is.null(samples))
-      for (s in 1:length(samples)) {
-         sample <- samples[s]
+      for (s in 1:nrow(samples)) {
+         sample <- samples$SAMPLE_ID[s]
          if (sample == "NGP" || sample == "SKNAS" || sample == "CLBGA" || sample == "LS")
             text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(1, -0.75), cex=1.7)
-         else if (sample == "TR14")
+         else if (sample == "P24719")
             text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(-0.25, 1.25), cex=1.7)
-         else
+         else if (sample == "P25012")
             text(scores[sample, x]*flip.x, scores[sample, y]*flip.y, sample, col="black", adj=c(0, -0.75), cex=1.7)
       }
    
@@ -504,8 +504,7 @@ writeRNKformat <- function(de.tpm.gene, wd.de.data, file.name) {
    de.tpm.gene$WEIGHT <- de.tpm.gene$LOG2_FC*(-log10(de.tpm.gene$P))
    de.sorted <- de.tpm.gene[order(de.tpm.gene$WEIGHT, decreasing=T),]
    
-   file <- file.path(wd.de.data, paste0(file.name, ".rnk"))
-   writeTable(de.sorted[,c("ensembl_gene_id", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
+   writeTable(de.sorted.cutoff[,c("external_gene_name", "WEIGHT")], file, colnames=F, rownames=F, sep="\t")
 }
 
 ## http://software.broadinstitute.org/cancer/software/genepattern/file-formats-guide#GRP

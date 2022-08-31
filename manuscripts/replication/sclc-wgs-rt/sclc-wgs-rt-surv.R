@@ -63,7 +63,7 @@ idx <- which(is.na(pvals))
 s <- which(pvals == min(pvals[-idx]))
 rho.sclc <- samples.surv.sclc$COR[s]
 samples.surv.sclc$SORTING <- "G1"
-idx <- which(samples.surv.sclc$COR >= samples.surv.sclc$COR[s])
+idx <- which(samples.surv.sclc$COR >= rho.sclc)
 if (length(idx) != 0)
    samples.surv.sclc[idx,]$SORTING <- "S"
 samples.surv.sclc$SORTING <- as.factor(samples.surv.sclc$SORTING)

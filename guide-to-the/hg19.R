@@ -309,3 +309,111 @@ save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 # [1] 4062897
 # > nrow(bed.gc)   ## As in hg19.bed.gc.1kb.RData
 # [1] 2861558
+
+# -----------------------------------------------------------------------------
+# PeifLyne WES (1kb)
+# Last Modified: 09/06/22
+# -----------------------------------------------------------------------------
+bed <- readTable(file.path("/projects/cangen/tyang2/SCLC/ngs/WES_1K/S00050/S00050_ANALYSIS/S00050_cn.txt"), header=F, rownames=F, sep="")[,c(1:4,10)]
+colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
+rownames(bed) <- bed$BED
+bed <- bed[,-1]
+
+bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
+save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.1kb.wes.RData"))
+# > nrow(bed)
+# [1] 2877411
+# > nrow(bed.gc)
+# [1] 2861558
+
+# -----------------------------------------------------------------------------
+# PeifLyne WES (Old partion windows)
+# Last Modified: 31/05/22
+# -----------------------------------------------------------------------------
+bed <- readTable(file.path("/projects/cangen/data/NB/WES/Cologne/P13264/P13264_ANALYSIS/P13264_cn.txt"), header=F, rownames=F, sep="")[,c(1:4,10)]
+colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
+bed$BED <- mapply(x = 1:nrow(bed), function(x) paste0("P", x, "_", bed$BED[x]))
+
+rownames(bed) <- bed$BED
+bed <- bed[,-1]
+
+bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
+save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.peiflyne.wes.RData"))
+# > nrow(bed)
+# [1] 163223
+# > nrow(bed.gc)
+# [1] 163223
+
+# -----------------------------------------------------------------------------
+# PeifLyne WES (New partion windows)
+# Last Modified: 09/06/22
+# -----------------------------------------------------------------------------
+bed <- readTable(file.path("/projects/cangen/tyang2/LCL/ngs/WES_NEW/NA12878/NA12878_ANALYSIS/NA12878_cn.txt"), header=F, rownames=F, sep="")[,c(1:4,10)]
+#bed <- readTable(file.path("/projects/cangen/tyang2/SCLC/ngs/WES_NEW/S00050/S00050_ANALYSIS/S00050_cn.txt"), header=F, rownames=F, sep="")[,c(1:4,10)]
+colnames(bed) <- c("BED", "CHR", "START", "END", "GC")
+bed$BED <- mapply(x = 1:nrow(bed), function(x) paste0("P", x, "_", bed$BED[x]))
+
+rownames(bed) <- bed$BED
+bed <- bed[,-1]
+
+bed.gc <- bed[which(bed$GC > 0),]   ## Only keep partitions (in the BED file) with valid GC content
+save(bed.gc, file=file.path(wd.src.ref, "hg19.bed.gc.peiflyne.wes.new.RData"))
+nrow(bed)
+# [1] 196239
+nrow(bed.gc)
+# [1] 196239
+
+# =============================================================================
+# Reference    : RefSeq (hg19)
+# Last Modified: 04/05/22
+# =============================================================================
+hgnc <- readTable(file.path(wd.reference, "hgnc/hgnc_complete_set_less.txt"), header=T, rownames=F, sep="\t")
+
+refGene <- readTable(file.path(wd.reference, "hgnc/hg19u_refSeq_genes.txt"), header=F, rownames=F, sep="\t")[,-12]
+colnames(refGene)[10] <- "refseq_symbol"
+refGene$refseq_accession <- mapply(x = 1:nrow(refGene), function(x) unlist(strsplit(refGene$V11[x], "\\."))[1])
+refGene.hgnc <- subset(refGene, refseq_accession %in% hgnc$refseq_accession)
+nrow(refGene)
+# [1] 45049
+nrow(refGene.hgnc)
+# [1] 18306
+writeTable(refGene.hgnc[,-11], gzfile(file.path(wd.reference, "hgnc/hg19u_refSeq_genes_HGNC.txt.gz")), colnames=F, rownames=F, sep="\t")
+
+sort(table(refGene.hgnc$refseq_accession), decreasing=T)
+subset(refGene.hgnc, refseq_accession == "NM_032291")
+subset(hgnc, refseq_accession == "NM_032291")
+       
+ensGene.hgnc <- subset(ensGene, ensembl_gene_id %in% hgnc$ensembl_gene_id)
+nrow(ensGene)
+# [1] 57773
+nrow(ensGene.hgnc)
+# [1] 38116
+
+# -----------------------------------------------------------------------------
+# RefSeq to Ensembl
+# -----------------------------------------------------------------------------
+hgnc.ref <- subset(hgnc, refseq_accession %in% refGene$refseq_accession)
+nrow(hgnc.ref)
+# [1] 18289
+
+hgnc.ref.ens <- subset(hgnc.ref, ensembl_gene_id %in% ensGene$ensembl_gene_id)
+nrow(hgnc.ref.ens)
+# [1] 17982
+
+rownames(hgnc.ref.ens) <- hgnc.ref.ens$ensembl_gene_id
+
+
+
+
+hgnc <- readTable(file.path(wd.reference, "hgnc/hgnc_complete_set_less.txt"), header=T, rownames=F, sep="\t")
+ensGene.hgnc <- subset(ensGene, ensembl_gene_id %in% hgnc$ensembl_gene_id)
+
+save(ensGene, ensGene.hgnc, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, chrs, file=file.path(wd.src.ref, "hg19.RData"))
+
+
+
+
+refseq <- readTable(file.path(wd.reference, "hgnc/hg19u_refSeq_genes.txt"), header=F, rownames=F, sep="\t")
+refseq.genes <- unique(refseq$V10)
+
+hgnc <- subset(hgnc, ensembl_gene_id %in% ensGene$ensembl_gene_id)

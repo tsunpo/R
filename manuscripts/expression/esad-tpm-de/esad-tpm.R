@@ -31,7 +31,7 @@ wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots")
 
-samples <- readTable(file.path(wd.rna, "esad_3rna_n68.txt"), header=T, rownames=T, sep="")[, 1]
+samples.aim1 <- readTable(file.path(wd.rna, "esad_3rna_n68.txt"), header=T, rownames=T, sep="")
 
 # -----------------------------------------------------------------------------
 # From transcript-level estimates to gene-level TPMs using sleuth (v0.29.0)

@@ -5,11 +5,11 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 27/05/20
 # =============================================================================
-#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
+#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Commons.R", "Transcription.R", "TranscriptionReplicationConflict.R")
+handbooks  <- c("Commons.R", "Transcription.R", "TranscriptionReplicationInteraction.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -19,8 +19,8 @@ load(file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "SCLC"
 base <- tolower(BASE)
 
@@ -31,62 +31,1017 @@ wd.meta  <- file.path(wd, BASE, "metadata", "George 2015")
 
 wd.de       <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
+wd.de.gsea  <- file.path(wd.de, "gsea")
 wd.de.plots <- file.path(wd.de, "plots")
 
 samples.rna <- readTable(file.path(wd.rna, "sclc_rna_n81.list"), header=F, rownames=T, sep="")
 samples.wgs <- readTable(file.path(wd.wgs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
 overlaps <- intersect(rownames(samples.rna), rownames(samples.wgs))
 
-samples  <- samples.wgs[overlaps,]
-samples$M2 <- as.factor(samples$M2)
-# > length(which(samples$M2 == 1))
+samples.sclc.tpm  <- samples.wgs[overlaps,]
+samples.sclc.tpm$M2 <- as.factor(samples.sclc.tpm$M2)
+# > length(which(samples.sclc.tpm$M2 == 1))
 # [1] 35
-# > length(which(samples$M2 == 0))
+# > length(which(samples.sclc.tpm$M2 == 0))
 # [1] 35
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#expressed <- rownames(tpm.gene)
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
-tpm.gene <- tpm.gene[, rownames(samples)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene <- tpm.gene[, rownames(samples.sclc.tpm)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
-tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
-nrow(tpm.gene.log2.m)
+#tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
+nrow(tpm.gene.log2)
 # [1] 34908
 # [1] 23572
 # [1] 19131
+
+# -----------------------------------------------------------------------------
+# Purities
+# Last Modified: 10/07/22
+# -----------------------------------------------------------------------------
+samples.wgs$purity <- NA
+samples.wgs$ploidy <- NA
+samples.wgs$purity2 <- NA
+samples.wgs$ploidy2 <- NA
+
+for (s in 1:nrow(samples.wgs)) {
+   sample <- samples.wgs$SAMPLE_ID[s]
+   purities <- readTable(file.path(wd.wgs, "peiflyne", sample, paste0(sample, "_ANALYSIS"), paste0(sample, "_pupl.txt")), header=F, rownames=F, sep="\t")
+   purities2 <- readTable(file.path(wd.wgs, "peiflyne/2015", sample, paste0(sample, "_ANALYSIS"), paste0(sample, "_pupl.txt")), header=F, rownames=F, sep="\t")
+   
+   samples.wgs$purity[s]  <- purities$V2
+   samples.wgs$ploidy[s]  <- purities$V3
+   samples.wgs$purity2[s] <- purities2$V2
+   samples.wgs$ploidy2[s] <- purities2$V3
+}
+
+file.name <- file.path(wd.rt.plots, paste0("Correlation_SCLC_purity"))
+x <- samples.wgs$purity
+y <- samples.wgs$purity2
+plotCorrelation(file.name, "SCLC purity", "BWA-MEM", "BWA", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+file.name <- file.path(wd.rt.plots, paste0("Correlation_SCLC_ploidy"))
+x <- samples.wgs$ploidy
+y <- samples.wgs$ploidy2
+plotCorrelation(file.name, "SCLC ploidy", "BWA-MEM", "BWA", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+save(samples.wgs, samples.sclc.tpm, file=file.path(wd.rt.data, "SCLC_purities_n101.RData"))
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 26/03/21; 23/08/20
+# -----------------------------------------------------------------------------
+dim(tpm.gene)
+# [1] 23572    70
+
+overlaps <- intersect(rownames(samples.sclc.tpm), rownames(samples.wgs))
+test <- tpm.gene[, rownames(samples.sclc.tpm)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+save(pca.de, file=file.path(wd.de.data, paste0("PCA_SCLC_n70.RData")))
+
+samples.sclc.tpm$GROUP_ID <- "Proliferative"
+samples.sclc.tpm[rownames(subset(samples.sclc.tpm, M2 == 0)),]$GROUP_ID <- "Resting"
+
+trait <- samples.sclc.tpm$GROUP_ID
+file.main <- c("SCLC expression", "")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_NBL_S-G1_n70", size=5, file.main, "topleft", c("Proliferative", "Resting"), c(red, blue), flip.x=1, flip.y=1)
+
+scores.iCN <- pcaScores(pca.de)
+x <- scores.iCN[overlaps,]$PC1
+y <- wgds[overlaps,]$decision_value
+file.name <- file.path(wd.de.plots, paste0("correlation_PCA-SCLC-TPM-MEDIAN0_PC1-vs-WGD"))
+plotCorrelation(file.name, "SCLC expression", paste0("PC", 1, " (", pcaProportionofVariance(pca.iCN, 1), "%)"), "WGD", x, y, size=5)
+
+x <- scores.iCN[overlaps,]$PC1
+y <- samples.sclc[overlaps,]$COR
+file.name <- file.path(wd.de.plots, paste0("correlation_PCA-SCLC-TPM-MEDIAN0_PC1-vs-SORTING"))
+plotCorrelation(file.name, "SCLC expression", paste0("PC", 1, " (", pcaProportionofVariance(pca.iCN, 1), "%)"), "Proliferation rate", x, y, size=5)
+
+x <- scores.iCN[overlaps,]$PC1
+y <- samples.wgs[overlaps,]$purity
+file.name <- file.path(wd.de.plots, paste0("correlation_PCA-SCLC-TPM-MEDIAN0_PC1-vs-purity"))
+plotCorrelation(file.name, "SCLC expression", paste0("PC", 1, " (", pcaProportionofVariance(pca.iCN, 1), "%)"), "Purity", x, y, size=5)
+
+x <- scores.iCN[overlaps,]$PC1
+y <- samples.wgs[overlaps,]$ploidy
+file.name <- file.path(wd.de.plots, paste0("correlation_PCA-SCLC-TPM-MEDIAN0_PC1-vs-ploidy"))
+plotCorrelation(file.name, "SCLC expression", paste0("PC", 1, " (", pcaProportionofVariance(pca.iCN, 1), "%)"), "Ploidy", x, y, size=5)
 
 # -----------------------------------------------------------------------------
 # Correlation bwteen TPM and in-silico sorting
 # Last Modified: 12/12/19; 08/01/19; 17/08/17
 # -----------------------------------------------------------------------------
 colnames <- c("RHO", "P", "Q", "M1", "M2", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
-de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
-rownames(de) <- rownames(tpm.gene.log2)
+src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(src) <- rownames(tpm.gene.log2)
 
 ## SRC
-de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
-de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
-de <- de[!is.na(de$P),]
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.sclc.tpm$COR, method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.sclc.tpm$COR, method="spearman", exact=F)[[3]])
+src <- src[!is.na(src$P),]
 
 ## Log2 fold change
-de$M1 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 0)))
-de$M2 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 1)))
-de$LOG2_FC <- de$M2 - de$M1
+#de$M1 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 0)))
+#de$M2 <- median00(tpm.gene.log2, rownames(subset(samples, M2 == 1)))
+#de$LOG2_FC <- de$M2 - de$M1
 
 ## FDR
 library(qvalue)
-de$Q <- qvalue(de$P)$qvalue
-de <- de[order(de$P),]
+src$Q <- qvalue(src$P)$qvalue
+src <- src[order(src$P),]
 
 ## Ensembl gene annotations
 annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
-de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
+src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 
-writeTable(de.tpm.gene, file.path(wd.de.data, "de_sclc_tpm-gene-r5p47_src_q_n70.txt"), colnames=T, rownames=F, sep="\t")
-save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_sclc_tpm-gene-median0_src_q_n70.RData"))
-nrow(de.tpm.gene)
+writeTable(src.tpm.gene, file.path(wd.de.data, "SRC_SCLC_tpm-gene_SORTING-vs-TPM_q_n70.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples.sclc.tpm, file=file.path(wd.de.data, "SRC_SCLC_tpm-gene_SORTING-vs-TPM_q_n70.RData"))
+nrow(src.tpm.gene)
 # [1] 23572
 # [1] 19131
+
+###
+##
+genes <- c("NSUN2", "BRD9", "HIC2", "PIF1", "BLM", "E2F3", "TONSL", "SULT1A3")
+genes <- c("RELA", "REL", "TONSL")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(genes[g], as.numeric(tpm.gene.log2[id,]), samples.sclc.tpm$COR, 1, pos="bottomright", col=red, size=5)
+}
+
+genes <- c("CMPK2", "RSAD2", "CCDC85A", "GPR37")
+genes <- c("NLRP3", "NFKB1", "NFKB2", "RELB")
+genes <- c("SLC25A46", "CDC37L1")
+genes <- c("NDUFA2", "PDHB", "ISCA1", "NDUFS4", "NDUFA8")
+genes <- c("CDC37L1")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(file.path(wd.de.plots, ""), genes[g], as.numeric(tpm.gene.log2[id,]), samples.sclc.tpm$COR, 1, pos="bottomright", col=blue, size=5)
+}
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and CNAs
+# Last Modified: 26/06/22; 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+dim(cna.gene.nona.tpm)
+# [1] 34895   101
+cna.gene.nona.tpm.src <- cna.gene.nona.tpm[, samples.sclc.tpm$SAMPLE_ID]
+tpm.gene.log2.cna <- tpm.gene.log2[rownames(cna.gene.nona.tpm.src), rownames(samples.sclc.tpm)]
+#colnames(tpm.gene.log2.cna) <- samples.sclc.tpm$SAMPLE_ID
+dim(cna.gene.nona.tpm.src)
+# [1] 34895    70
+dim(tpm.gene.log2.cna)
+# [1] 34895    70
+
+colnames <- c("RHO", "P", "Q", "DEL", "AMP", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+src <- toTable(0, length(colnames), nrow(tpm.gene.log2.cna), colnames)
+rownames(src) <- rownames(tpm.gene.log2.cna)
+
+## SRC
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2.cna), function(x) cor.test(as.numeric(tpm.gene.log2.cna[x,]), as.numeric(cna.gene.nona.tpm.src[x,]), method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2.cna), function(x) cor.test(as.numeric(tpm.gene.log2.cna[x,]), as.numeric(cna.gene.nona.tpm.src[x,]), method="spearman", exact=F)[[3]])
+
+## Log2 fold change
+#src$DEL <- mapply(x = 1:nrow(tpm.gene.log2.cna), function(x) median(as.numeric(cna.gene.nona.tpm.src[x, colnames(cna.gene.nona.tpm.src)[which(cna.gene.nona.tpm.src[x,] < 2)]])))
+#src$AMP <- mapply(x = 1:nrow(tpm.gene.log2.cna), function(x) median(as.numeric(cna.gene.nona.tpm.src[x, colnames(cna.gene.nona.tpm.src)[which(cna.gene.nona.tpm.src[x,] > 2)]])))
+#src$LOG2_FC <- src$AMP - src$DEL
+src <- src[!is.na(src$P),]
+
+## FDR
+library(qvalue)
+src$Q <- qvalue(src$P)$qvalue
+src <- src[order(src$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+
+writeTable(src.tpm.gene, file.path(wd.de.data, "SRC_SCLC_tpm-gene_CNA-vs-TPM_q_n70.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples.sclc.tpm, file=file.path(wd.de.data, "SRC_SCLC_tpm-gene_CNA-vs-TPM_q_n70.RData"))
+#writeRNKformat(src.tpm.gene, wd.de.gsea, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70")   ## GSEA
+
+###
+## Volcano plots
+#xlab.text <- "CNA difference"
+#ylab.text <- expression("Significance " * "[-log" * ""[10] * "(" * italic("P") * ")]")
+
+#plot.de <- file.path(wd.de.plots, "volcanoplot_SRC_NBL_r5p47_SORTING_TERT")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+#file.de <- paste0(plot.de, ".pdf")
+#file.main <- c("S (n=25) vs. G1 (n=29)", "")
+#plotVolcano(src.tpm.gene, 1, genes, file.de, file.main, xlab.text, ylab.text, "topright", c("S > G1", "S < G1"), c(adjustcolor.red, adjustcolor.blue), c(red, blue), fold=0)
+
+###
+##
+genes <- c("NSUN2", "BRD9", "HIC2", "PIF1", "BLM", "E2F3", "TONSL", "SULT1A3")
+genes <- c("NLRP3", "TONSL", "NFKB1", "RELB", "RELA", "REL")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotCNA(genes[g], as.numeric(tpm.gene.log2.cna[id,]), as.numeric(cna.gene.nona.tpm.src[id,]), 1, pos="bottomright", col="black", size=5)
+}
+
+genes <- c("CMPK2", "RSAD2", "CCDC85A", "GPR37")
+genes <- c("NFKB2")
+genes <- c("SLC25A46", "CDC37L1")
+genes <- c("CDC37L1")
+genes <- c("YWHAE")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotCNA(genes[g], as.numeric(tpm.gene.log2.cna[id,]), as.numeric(cna.gene.nona.tpm.src[id,]), 1, pos="bottomright", col="black", size=5)
+}
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (P < 0.001)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+xlab.text <- "Expression vs. proliferation [rho]"
+#ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+ylab.text <- "Expression vs. CNA [rho]"
+pvalue <- 0.001
+
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("CMPK2", "BLM", "E2F3", "BRD9")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+genes[2, 2] <- -0.15
+#genes[2, 3] <- 1.2
+
+## Total
+de <- getCannoli(wd.de.data, BASE, 70, NULL)
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- rownames(tpm.gene)
+
+de <- getCannoli(wd.de.data, BASE, 70, expressed)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (n=", 70, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+10290/23559
+# [1] 0.4367758
+8267/23559
+# [1] 0.3509062
+3600/23559
+# [1] 0.1528078
+1402/23559
+# [1] 0.05951017
+
+#plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_E2F3")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+#file.de <- paste0(plot.de, ".pdf")
+#file.main <- c(paste0(BASE, " total genes"), "")
+#plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+## Expressed
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- rownames(tpm.gene)
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+
+de <- getCannoli(wd.de.data, BASE, 70, expressed)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0_GSEA")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (n=", 70, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0_POS")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (n=", 70, ")"), "")
+plotCannoli(de, 1, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red.lighter, "lightgray"), c(red.lighter, "lightgray"), fold=0)
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0_NEG")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (n=", 70, ")"), "")
+plotCannoli(de, 1, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c("lightgray", blue.lighter), c("lightgray", blue.lighter), fold=0)
+
+## GSEA
+de.pos.pos <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= 0.001), P2 <= 0.001)
+
+de.pos.neg <- subset(subset(de, Effect1 > 0), Effect2 < 0)
+de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= 0.001), P2 <= 0.001)
+
+de.neg.neg <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.neg.neg.sig <- subset(subset(de.neg.neg, P1 <= 0.001), P2 <= 0.001)
+
+de.neg.pos <- subset(subset(de, Effect1 < 0), Effect2 > 0)
+de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
+
+writeTable(de.positive.sig, file.path(wd.de.data, "SRC_SCLC_tpm-gene_SORTING-CNA-TPM_q_n70_pos16.txt"), colnames=T, rownames=T, sep="\t")
+
+writeRNKformatCNA(rbind(de.pos.pos, de.neg.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_POS-SELECTION")   ## GSEA
+writeRNKformatCNA(rbind(de.neg.pos, de.pos.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_NEG-SELECTION")   ## GSEA
+
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_GAIN")   ## GSEA
+writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_LOSS")   ## GSEA
+
+# -----------------------------------------------------------------------------
+# GSEA (11/07/22)
+# -----------------------------------------------------------------------------
+## POS
+gsea.pos <- readTable(file.path(wd.de.gsea, "HALLMARK", "gsea_report_for_na_pos_1657521569538.tsv"), header=T, rownames=F, sep="\t")
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) unlist(strsplit(gsea.pos$NAME[x], "HALLMARK_"))[2])
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) gsub("_", " ", gsea.pos$NAME[x]))
+gsea.pos <- gsea.pos[5:1, c("NAME", "NES")]
+gsea.pos[5, 1] <- "E2F targets"
+gsea.pos[4, 1] <- "G2M checkpoint"
+gsea.pos[3, 1] <- "MYC targets v1"
+gsea.pos[2, 1] <- firstup(gsea.pos[2, 1])
+gsea.pos[1, 1] <- "MYC targets v2"
+ 
+main.text <- c("Hallmark enrichment score                         ", "")
+file.de <- file.path(wd.de.gsea, "HALLMARK_POS.pdf")
+pdf(file.de, height=2, width=4)
+par(mar=c(2,8.5,2,4))   # increase y-axis margin.
+barplot(gsea.pos$NES, main=main.text[1], las=1, horiz=T, xlim=c(0, 6), xaxt="n", names.arg=gsea.pos$NAME, col=red.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+#abline(v=2, lty=5)
+axis(side=1, at=seq(0, 6, by=2), labels=F)
+axis(side=1, at=seq(0, 6, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+## NEG
+gsea.neg <- readTable(file.path(wd.de.gsea, "HALLMARK", "gsea_report_for_na_neg_1657521569538.tsv"), header=T, rownames=F, sep="\t")
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) unlist(strsplit(gsea.neg$NAME[x], "HALLMARK_"))[2])
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) gsub("_", " ", gsea.neg$NAME[x]))
+gsea.neg <- gsea.neg[5:1, c("NAME", "NES")]
+gsea.neg[5, 1] <- "Epithelial mesenchymal trans"
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) firstup(gsea.neg$NAME[x]))
+
+main.text <- c("", "")
+file.de <- file.path(wd.de.gsea, "HALLMARK_NEG.pdf")
+pdf(file.de, height=1.6, width=4)
+par(mar=c(2,1,0,11.5))   # increase y-axis margin.
+posbar <- barplot(gsea.neg$NES, main=main.text[1], las=1, horiz=T, xlim=c(-6, 0), xaxt="n", names.arg="", col=blue.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=gsea.neg$NAME, xpd=NA)
+#abline(v=-2, lty=5)
+axis(side=1, at=seq(-6, 0, by=2), labels=F)
+axis(side=1, at=seq(-6, 0, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# CNA GAIN or LOSS
+# -----------------------------------------------------------------------------
+overlaps <- intersect(rownames(cna.gene.nona), expressed)
+cna.gene.nona.median0 <- cna.gene.nona[overlaps, ]
+dim(cna.gene.nona.median0)
+# [1] 23559   101
+
+cna.median0.sclc <- toTable(0, 4, nrow(cna.gene.nona.median0), c("N_LOSS", "N_2N", "N_GAIN", "MEDIAN"))
+rownames(cna.median0.sclc) <- overlaps
+cna.median0.sclc$N_LOSS <- mapply(x = 1:nrow(cna.gene.nona.median0), function(x) length(which(cna.gene.nona.median0[x,] < 2)))
+cna.median0.sclc$N_2N   <- mapply(x = 1:nrow(cna.gene.nona.median0), function(x) length(which(cna.gene.nona.median0[x,] == 2)))
+cna.median0.sclc$N_GAIN <- mapply(x = 1:nrow(cna.gene.nona.median0), function(x) length(which(cna.gene.nona.median0[x,] > 2)))
+cna.median0.sclc$MEDIAN <- mapply(x = 1:nrow(cna.gene.nona.median0), function(x) median(as.numeric(cna.gene.nona.median0[x,])))
+
+nrow(subset(cna.median0.sclc, MEDIAN < 2))
+nrow(subset(cna.median0.sclc, MEDIAN == 2))
+nrow(subset(cna.median0.sclc, MEDIAN > 2))
+
+length(which(cna.median0.sclc$N_LOSS > cna.median0.sclc$N_GAIN))
+length(which(cna.median0.sclc$N_LOSS == cna.median0.sclc$N_GAIN))
+length(which(cna.median0.sclc$N_LOSS < cna.median0.sclc$N_GAIN))
+
+loss <- unique(c(rownames(subset(cna.median0.sclc, MEDIAN < 2)), rownames(cna.median0.sclc[which(cna.median0.sclc$N_LOSS > cna.median0.sclc$N_GAIN),])))
+gain <- intersect(rownames(subset(cna.median0.sclc, MEDIAN > 2)), rownames(cna.median0.sclc[which(cna.median0.sclc$N_LOSS < cna.median0.sclc$N_GAIN),]))
+normal <- setdiff(overlaps, c(loss, gain))             
+save(expressed, overlaps, loss, normal, gain, file=file.path(wd.de.data, "SCLC-MEDIAN0-CNA_n101.RData"))
+               
+# -----------------------------------------------------------------------------
+# Cannoli plot: CNA NORMAL
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+xlab.text <- "Expression vs. proliferation [rho]"
+#ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+ylab.text <- "Expression vs. CNA [rho]"
+pvalue <- 0.001
+
+## CN = 2
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("PIF1", "BLM", "NFKB2", "RELA")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+genes[2, 2] <- -0.15
+#genes[3, 2] <- -0.1
+#genes[3, 3] <- 1
+
+de <- getCannoli(wd.de.data, BASE, 70, normal)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0_CNA_NORMAL_white_NFKB2")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (CN = 2)"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+## GSEA
+de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_CNA-NORMAL-POS")   ## GSEA
+
+## POS
+gsea.pos <- readTable(file.path(wd.de.gsea, "CNA_NORMAL_POS", "HALLMARK", "gsea_report_for_na_pos_1657718053844.tsv"), header=T, rownames=F, sep="\t")
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) unlist(strsplit(gsea.pos$NAME[x], "HALLMARK_"))[2])
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) gsub("_", " ", gsea.pos$NAME[x]))
+gsea.pos <- gsea.pos[5:1, c("NAME", "NES")]
+gsea.pos[5, 1] <- "E2F targets"
+gsea.pos[4, 1] <- "G2M checkpoint"
+gsea.pos[3, 1] <- "MYC targets v1"
+gsea.pos[2, 1] <- firstup(gsea.pos[2, 1])
+gsea.pos[1, 1] <- "MYC targets v2"
+
+main.text <- c("Hallmark enrichment score                         ", "")
+file.de <- file.path(wd.de.gsea, "CNA_NORMAL_POS", "HALLMARK_POS.pdf")
+pdf(file.de, height=2, width=4)
+par(mar=c(2,8.5,2,4))   # increase y-axis margin.
+barplot(gsea.pos$NES, main=main.text[1], las=1, horiz=T, xlim=c(0, 4), xaxt="n", names.arg=gsea.pos$NAME, col=red.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+#abline(v=2, lty=5)
+axis(side=1, at=seq(0, 4, by=2), labels=F)
+axis(side=1, at=seq(0, 4, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+## NEG
+gsea.neg <- readTable(file.path(wd.de.gsea, "CNA_NORMAL_POS", "HALLMARK", "gsea_report_for_na_neg_1657718053844.tsv"), header=T, rownames=F, sep="\t")
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) unlist(strsplit(gsea.neg$NAME[x], "HALLMARK_"))[2])
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) gsub("_", " ", gsea.neg$NAME[x]))
+gsea.neg <- gsea.neg[5:1, c("NAME", "NES")]
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) firstup(gsea.neg$NAME[x]))
+
+main.text <- c("", "")
+file.de <- file.path(wd.de.gsea, "CNA_NORMAL_POS", "HALLMARK_NEG.pdf")
+pdf(file.de, height=1.6, width=4)
+par(mar=c(2,1,0,11.5))   # increase y-axis margin.
+posbar <- barplot(gsea.neg$NES, main=main.text[1], las=1, horiz=T, xlim=c(-4, 0), xaxt="n", names.arg="", col=blue.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=gsea.neg$NAME, xpd=NA)
+#abline(v=-2, lty=5)
+axis(side=1, at=seq(-4, 0, by=2), labels=F)
+axis(side=1, at=seq(-4, 0, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Cannoli plot: CNA GAIN
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("TONSL", "E2F3", "BRD9", "RELB")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+genes[1, 2] <- 0.13
+genes[1, 3] <- 1.5
+
+de <- getCannoli(wd.de.data, BASE, 70, gain)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0_CNA_GAIN_white_RELB")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (CN > 2)"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+## GSEA
+de.pos.pos <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.pos.neg <- subset(subset(de, Effect1 > 0), Effect2 < 0)
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_CNA-GAIN-POS")   ## GSEA
+
+## POS
+gsea.pos <- readTable(file.path(wd.de.gsea, "CNA_GAIN_POS", "HALLMARK", "gsea_report_for_na_pos_1657718679317.tsv"), header=T, rownames=F, sep="\t")
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) unlist(strsplit(gsea.pos$NAME[x], "HALLMARK_"))[2])
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) gsub("_", " ", gsea.pos$NAME[x]))
+gsea.pos <- gsea.pos[5:1, c("NAME", "NES")]
+gsea.pos[5, 1] <- "G2M checkpoint"
+gsea.pos[4, 1] <- "E2F targets"
+gsea.pos[3, 1] <- firstup(gsea.pos[3, 1])
+gsea.pos[2, 1] <- "MYC targets v1"
+gsea.pos[1, 1] <- "Unfolded protein"
+
+main.text <- c("Hallmark enrichment score                         ", "")
+file.de <- file.path(wd.de.gsea, "CNA_GAIN_POS", "HALLMARK_POS.pdf")
+pdf(file.de, height=2, width=4)
+par(mar=c(2,8.5,2,4))   # increase y-axis margin.
+barplot(gsea.pos$NES, main=main.text[1], las=1, horiz=T, xlim=c(0, 4), xaxt="n", names.arg=gsea.pos$NAME, col=red.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+#abline(v=2, lty=5)
+axis(side=1, at=seq(0, 4, by=2), labels=F)
+axis(side=1, at=seq(0, 4, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+## NEG
+gsea.neg <- readTable(file.path(wd.de.gsea, "CNA_GAIN_POS", "HALLMARK", "gsea_report_for_na_neg_1657718679317.tsv"), header=T, rownames=F, sep="\t")
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) unlist(strsplit(gsea.neg$NAME[x], "HALLMARK_"))[2])
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) gsub("_", " ", gsea.neg$NAME[x]))
+gsea.neg <- gsea.neg[5:1, c("NAME", "NES")]
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) firstup(gsea.neg$NAME[x]))
+
+main.text <- c("", "")
+file.de <- file.path(wd.de.gsea, "CNA_GAIN_POS", "HALLMARK_NEG.pdf")
+pdf(file.de, height=1.6, width=4)
+par(mar=c(2,1,0,11.5))   # increase y-axis margin.
+posbar <- barplot(gsea.neg$NES, main=main.text[1], las=1, horiz=T, xlim=c(-4, 0), xaxt="n", names.arg="", col=blue.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=gsea.neg$NAME, xpd=NA)
+#abline(v=-2, lty=5)
+axis(side=1, at=seq(-4, 0, by=2), labels=F)
+axis(side=1, at=seq(-4, 0, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Cannoli plot: CNA LOSS
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("NFKB1")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+#genes[1, 2] <- -0.1
+
+de <- getCannoli(wd.de.data, BASE, 70, loss)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0_CNA_LOSS_white_NFKB1")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lung-SCLC (CN < 2)"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+## GSEA
+de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_SCLC_tpm-gene-median0_SORTING-CNA-TPM_q_n70_CNA-LOSS-POS")   ## GSEA
+
+## POS
+gsea.pos <- readTable(file.path(wd.de.gsea, "CNA_LOSS_POS", "HALLMARK", "gsea_report_for_na_pos_1657719534051.tsv"), header=T, rownames=F, sep="\t")
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) unlist(strsplit(gsea.pos$NAME[x], "HALLMARK_"))[2])
+gsea.pos$NAME <- mapply(x = 1:nrow(gsea.pos), function(x) gsub("_", " ", gsea.pos$NAME[x]))
+gsea.pos <- gsea.pos[5:1, c("NAME", "NES")]
+gsea.pos[5, 1] <- "G2M checkpoint"
+gsea.pos[4, 1] <- "E2F targets"
+gsea.pos[3, 1] <- firstup(gsea.pos[3, 1])
+gsea.pos[2, 1] <- firstup(gsea.pos[2, 1])
+gsea.pos[1, 1] <- firstup(gsea.pos[1, 1])
+
+#main.text <- c("", "")
+main.text <- c("Hallmark enrichment score                         ", "")
+file.de <- file.path(wd.de.gsea, "CNA_LOSS_POS", "HALLMARK_POS.pdf")
+pdf(file.de, height=2, width=4)
+par(mar=c(2,9.5,2,3))   # increase y-axis margin.
+barplot(gsea.pos$NES, main=main.text[1], las=1, horiz=T, xlim=c(0, 4), xaxt="n", names.arg=gsea.pos$NAME, col=red.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+#abline(v=2, lty=5)
+axis(side=1, at=seq(0, 4, by=2), labels=F)
+axis(side=1, at=seq(0, 4, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+## NEG
+gsea.neg <- readTable(file.path(wd.de.gsea, "CNA_LOSS_POS", "HALLMARK", "gsea_report_for_na_neg_1657719534051.tsv"), header=T, rownames=F, sep="\t")
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) unlist(strsplit(gsea.neg$NAME[x], "HALLMARK_"))[2])
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) gsub("_", " ", gsea.neg$NAME[x]))
+gsea.neg <- gsea.neg[5:1, c("NAME", "NES")]
+gsea.neg$NAME <- mapply(x = 1:nrow(gsea.neg), function(x) firstup(gsea.neg$NAME[x]))
+gsea.neg[1, 1] <- "UV response up"
+gsea.neg[4, 1] <- "MYC targets v1"
+
+#main.text <- c("                              Hallmark enrichment score", "")
+main.text <- c("", "")
+file.de <- file.path(wd.de.gsea, "CNA_LOSS_POS", "HALLMARK_NEG.pdf")
+pdf(file.de, height=1.6, width=4)
+par(mar=c(2,2,0,10.5))   # increase y-axis margin.
+posbar <- barplot(gsea.neg$NES, main=main.text[1], las=1, horiz=T, xlim=c(-4, 0), xaxt="n", names.arg="", col=blue.lighter, xlab="")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=gsea.neg$NAME, xpd=NA)
+#abline(v=-2, lty=5)
+axis(side=1, at=seq(-4, 0, by=2), labels=F)
+axis(side=1, at=seq(-4, 0, by=2), pos=0.5, tick=F)
+#mtext(main.text[2], line=0.3)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (RT)
+# Last Modified: 02/07/22
+# -----------------------------------------------------------------------------
+
+## Not expressed
+de <- getCannoli(wd.de.data, BASE, 70, setdiff(rownames(src.tpm.gene), expressed))
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0-0")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0(BASE, " not expressed genes"), "")
+plotCannoli(de, pvalue, toTable(NA, length(colnames), 0, colnames), file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+## Early-replicating
+de <- getCannoli(wd.de.data, BASE, 70, gene.sclc.e)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_EARLY")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0(BASE, " early-repli genes (n=", separator(nrow(de)), ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+## Late-replicating
+de <- getCannoli(wd.de.data, BASE, 70, gene.sclc.l)
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_LATE")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0(BASE, " late-repli genes (n=", separator(nrow(de)), ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (Late)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), gene.sclc.l)
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.001), P2 <= 0.001)
+
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E03_LATE")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC late-repli genes (n=4,009)", "")
+plotCannoli(de1, de2, 0.001, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (Early)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), )
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.001), P2 <= 0.001)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (IZ)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz))
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.001), P2 <= 0.001)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E03_IZ")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC IZ genes (n=3,075)", "")
+plotCannoli(de1, de2, 0.001, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (TZ)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz))
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.001), P2 <= 0.001)
+
+de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.negative.sig <- subset(subset(de.negative, P1 <= 0.001), P2 <= 0.001)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E03_TZ")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC TZ genes (n=1,944)", "")
+plotCannoli(de1, de2, 0.001, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (TTR)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), rownames(tpm.gene.log2.m.rfd.ttr))
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.001), P2 <= 0.001)
+
+de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.negative.sig <- subset(subset(de.negative, P1 <= 0.001), P2 <= 0.001)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E03_TTR")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC TTR genes (n=17,001)", "")
+plotCannoli(de1, de2, 0.001, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (P < 0.01)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+de1 <- src.tpm.gene
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene
+de2$Effect <- de2$RHO
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E02")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC expressed genes (n=23,572)", "")
+plotCannoli(de1, de2, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (Late)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), gene.sclc.l)
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.negative.sig <- subset(subset(de.negative, P1 <= 0.01), P2 <= 0.01)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E02_LATE")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC late-repli genes (n=4,009)", "")
+plotCannoli(de1, de2, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (Early)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), gene.sclc.e)
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.01), P2 <= 0.01)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E02_EARLY")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC early-repli genes (n=18,011)", "")
+plotCannoli(de1, de2, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (IZ)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.iz))
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.01), P2 <= 0.01)
+
+de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.negative.sig <- subset(subset(de.negative, P1 <= 0.01), P2 <= 0.01)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E02_IZ")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC IZ genes (n=3,075)", "")
+plotCannoli(de1, de2, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (TZ)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), rownames(tpm.gene.log2.m.rfd.ctr.tz))
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.01), P2 <= 0.01)
+
+de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.negative.sig <- subset(subset(de.negative, P1 <= 0.01), P2 <= 0.01)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E02_TZ")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC TZ genes (n=1,944)", "")
+plotCannoli(de1, de2, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (TTR)
+# Last Modified: 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_CNA-vs-TPM_q_n70.RData"))
+overlaps <- intersect(rownames(src.tpm.gene), rownames(tpm.gene.log2.m.rfd.ttr))
+de1 <- src.tpm.gene[overlaps,]
+de1$Effect <- de1$RHO
+load(file=file.path(wd.de.data, "SRC_SCLC_tpm-gene-median0_SORTING_q_n70.RData"))
+de2 <- src.tpm.gene[overlaps,]
+de2$Effect <- de2$RHO
+
+overlaps <- intersect(rownames(de1), rownames(de2))
+de <- as.data.frame(cbind(de1[overlaps, c("P", "Q", "Effect")], de2[overlaps, c("P", "Q", "Effect")]))
+rownames(de) <- overlaps
+colnames(de) <- c("P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+de <- cbind(de1[overlaps,]$external_gene_name, de)
+colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+
+de.positive <- subset(subset(de, Effect1 > 0), Effect2 > 0)
+de.positive.sig <- subset(subset(de.positive, P1 <= 0.01), P2 <= 0.01)
+
+de.negative <- subset(subset(de, Effect1 < 0), Effect2 < 0)
+de.negative.sig <- subset(subset(de.negative, P1 <= 0.01), P2 <= 0.01)
+
+###
+## Cannoli plots
+xlab.text <- "Expression vs. CNA"
+ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+
+plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_median0_TPM-CNA-SORTING_P1E02_TTR")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("SCLC TTR genes (n=17,001)", "")
+plotCannoli(de1, de2, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM
@@ -137,7 +1092,7 @@ length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
 # [1] 83
 # [1] 70
 # [1] 60
-length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
+length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD >= 0))
 # [1] 95
 # [1] 85
 # [1] 80

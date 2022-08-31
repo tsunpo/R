@@ -46,6 +46,8 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # > nrow(bed.gc)
 # [1] 2861558
 bed.gc.o <- cbind(nrds.lcl, bed.gc[rownames(nrds.lcl),])
+# > nrow(bed.gc.o)
+# [1] 2582940
 
 ###
 ## Same as getNRDGCCN() in ReplicationTiming.R to remove chrXY
@@ -53,8 +55,6 @@ load(file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 # > nrow(bed.gc)
 # [1] 4062897
 segs.gc  <- subset(bed.gc, CHR %in% chrs[1:22])
-# > nrow(bed.gc.o)
-# [1] 3810092
 
 ###
 ## Same as setNRDCN() in ReplicationTiming.R

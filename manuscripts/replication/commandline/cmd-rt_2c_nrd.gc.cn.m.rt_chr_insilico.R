@@ -41,8 +41,8 @@ wd.rt     <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data   <- file.path(wd.rt, "data")
 
 samples  <- readTable(file.path(wd.ngs, TXT), header=T, rownames=T, sep="")
-samples1 <- samples[which(samples[, INSILICO] == 1),][,1]
-samples0 <- samples[which(samples[, INSILICO] == 0),][,1]
+samples1 <- samples[which(samples[, INSILICO] == 2),][,1]
+samples0 <- samples[which(samples[, INSILICO] == 1),][,1]
 #samples1 <- gsub("\\.", "-", samples1)
 #samples0 <- gsub("\\.", "_", samples0)
 n1 <- length(samples1)

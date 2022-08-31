@@ -28,6 +28,7 @@ wd.meta  <- file.path(wd, BASE, "metadata")
 
 wd.de    <- file.path(wd.anlys, "expression/kallisto", paste0(base, "-tpm-de"))
 wd.de.data  <- file.path(wd.de, "data")
+wd.de.gsea  <- file.path(wd.de, "gsea", "GSEA_Ranked Gene Lists_IKK2ca-vs-WT", "MH_mouse-ortholog hallmark gene sets")
 wd.de.plots <- file.path(wd.de, "plots")
 
 samples <- readTable(file.path(wd.rna, "sfb_3rna_n41.txt"), header=T, rownames=T, sep="\t")
@@ -38,6 +39,18 @@ tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 dim(tpm.gene.log2)
 # [1] 15381
+
+# -----------------------------------------------------------------------------
+# PCA
+# Last Modified: 10/10/21
+# -----------------------------------------------------------------------------
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+test <- tpm.gene[, rownames(samples)]   ## BUG FIX 13/02/17: Perform PCA using normalised data (NOT log2-transformed)
+pca.de <- getPCA(t(test))
+
+trait <- samples$GROUP_NAME
+file.main <- c("IKK2ca + WT", "")
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_SFB_median0_IKK2ca+WT_n12", size=6, file.main, "topright", c("IKK2ca", "WT"), c(orange, grey), flip.x=1, flip.y=1)
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (non-parametric; n=45, 22 TR vs 23 UN)
@@ -86,143 +99,74 @@ de.tpm.gene[2284, "FDR"]
 # Figure(s)    : Figure S1 (A)
 # Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-file.name <- paste0("DE_SFB_tpm-gene-median0_IKK2ca-vs-WT_wilcox_q_n12")
-load(file=file.path(wd.de.data, paste0(file.name, ".RData")))
+load("/Users/tpyang/Work/uni-koeln/tyang2/SFB/analysis/expression/kallisto/sfb-tpm-de/data/DE_SFB_tpm-gene-median0_IKK2ca-vs-WT_wilcox_q_n12.RData")
 
-plotVolcano <- function(de, pvalue, genes, file.de, file.main) {
-   #pvalue <- fdrToP(fdr, de)
-   fdr <- pvalueToFDR(pvalue, de)
-   de.sig <- subset(de, P <= pvalue)
-   de.sig$log10P <- -log10(de.sig$P)
- 
-   de$log10P <- -log10(de$P)
-   xmax <- max(de$LOG2_FC)
-   #ymax <- max(de$log10P)
-   ymax <- 9
- 
-   pdf(file.de, height=6, width=6)
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(-xmax, xmax), ylim=c(0, ymax), xlab="B to N fold change [log2]", ylab="P-value significance [-log10]", col="lightgray", main=file.main[1])
+xlab.text <- expression("Fold change " * "[log" * ""[2] * "]")
+ylab.text <- expression("Significance " * "[-log" * ""[10] * "(" * italic("P") * ")]")
 
-   #text(xmax*-1 + 2*xmax/28, -log10(pvalue) + ymax/42, paste0("FDR=", fdr, "%"), cex=0.85)
-   #text(xmax*-1 + 2*xmax/35, -log10(pvalue) + ymax/42, "FDR=0.05", cex=0.85)
-   #abline(h=c(-log10(fdrToP(0.1, de))), lty=5, col="darkgray")
-   #text(xmax*-1 + 2*xmax/50, -log10(fdrToP(0.1, de)) + ymax/42, "FDR=0.1", col="darkgray", cex=0.85)
-
-   de.up   <- subset(de.sig, LOG2_FC > 0)
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red)
-   de.down <- subset(de.sig, LOG2_FC < 0)
-   points(de.down$LOG2_FC, de.down$log10P, pch=16, col=blue)
- 
-   abline(v=c(-log2(2), log2(2)), lty=5, col="darkgray")
-   abline(h=c(-log10(pvalue)), lty=5, col="black")
-   
-   for (g in 1:nrow(genes)) {
-      gene <- subset(de, external_gene_name == genes[g,]$GENE)
-      gene <- cbind(gene, genes[g,])
-      
-      if (nrow(gene) > 0) {
-         points(gene$LOG2_FC, gene$log10P, pch=1, col="black")
-         
-         if (!is.na(gene$ADJ_1))
-            if (is.na(gene$ADJ_2))
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=gene$ADJ_1, cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=0.75)
-         else
-            if (gene$LOG2_FC > 0)
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(0, -0.5), cex=0.75)
-            else
-               text(gene$LOG2_FC, gene$log10P, genes[g,]$GENE, col="black", adj=c(1, -0.5), cex=0.75)
-      } else
-         print(genes[g])
-   }
-   
-   mtext(file.main[2], cex=1.2, line=0.3)
-   legend("topleft", legend=c("Up-regulated (WT < NEMO)", "Down-regulated (WT > NEMO)"), col=c(red, blue), pch=19)
-   dev.off()
-}
-
-##
-plot.main <- "1,240 differentially expressed genes in EAC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_DE_EAC_median0_N-vs-B_p1e-6_CNA")
-
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-file.main <- c(plot.main, "Normal (N) vs. Tumour (B)")
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_IKK2ca-vs-WT_p0.01_fc1_log2")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene, 1.00E-06, genes, file.de, file.main)
+file.main <- c("IKK2ca vs. WT", "")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topright", c("IKK2ca > WT", "IKK2ca < WT"), c(red, blue), c(red, blue), fold=1)
+
+pvalue <- 0.01
+fold <- 1
+de.sig <- subset(de.tpm.gene, P <= pvalue)
+de.down <- subset(de.sig, LOG2_FC < -fold)
+de.up   <- subset(de.sig, LOG2_FC > fold)
+nrow(de.up)
+nrow(de.down)
 
 # -----------------------------------------------------------------------------
-# 
-# Last Modified: 11/12/21
+# Volcano plots of RB1-loss DE genes in LCNEC
+# Figure(s)    : Figure S1 (A)
+# Last Modified: 07/01/19
 # -----------------------------------------------------------------------------
-overlaps.up   <- intersect(rownames(de.tpm.gene.NB.up),   rownames(de.tpm.gene.NX.up))
-overlaps.down <- intersect(rownames(de.tpm.gene.NB.down), rownames(de.tpm.gene.NX.down))
+hallmark1 <- readTable(file.path(wd.de.gsea, "HALLMARK_INFLAMMATORY_RESPONSE.tsv"), header=T, rownames=T, sep="\t")
+hallmark2 <- readTable(file.path(wd.de.gsea, "HALLMARK_TNFA_SIGNALING_VIA_NFKB.tsv"), header=T, rownames=T, sep="\t")
+hallmarks <- rbind(hallmark1, hallmark2)
+hallmarks.core <- subset(hallmarks, CORE.ENRICHMENT == "Yes")
+nrow(hallmarks.core)
+# [1] 229
+hallmarks.core.gene <- unique(hallmarks.core$SYMBOL)
+length(hallmarks.core.gene)
+# [1] 194
 
-de.tpm.gene.NB.NX <- de.tpm.gene.NB[c(overlaps.up2, overlaps.down2),]
-dim(subset(subset(de.tpm.gene.NB.NX, P < 1E-6), LOG2_FC >= 0))
-dim(subset(subset(de.tpm.gene.NB.NX, P < 1E-6), LOG2_FC < 0))
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_IKK2ca-vs-WT_p0.05")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("IKK2ca vs. WT", "")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topright", c("IKK2ca > WT", "IKK2ca < WT"), c(red, blue), c(red, blue), fold=1)
 
 ###
 ##
-overlaps.up2   <- intersect(overlaps.up,   rownames(de.tpm.gene.BX.up))
-overlaps.down2 <- intersect(overlaps.down, rownames(de.tpm.gene.BX.down))
+overlaps <- intersect(de.up$external_gene_name, hallmarks.core.gene)
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes <- toTable(NA, length(colnames), length(overlaps), colnames)
+genes$GENE <- overlaps
+writeTable(genes, file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_IKK2ca-vs-WT_p0.01_fc1_log2_GSEA.tab"), colnames=T, rownames=F, sep="\t")
 
-de.tpm.gene.NB.NX.BX <- de.tpm.gene.NB[c(overlaps.up2, overlaps.down2),]
-dim(subset(subset(de.tpm.gene.NB.NX.BX, P < 1E-6), LOG2_FC >= 0))
-dim(subset(subset(de.tpm.gene.NB.NX.BX, P < 1E-6), LOG2_FC < 0))
-genes.NBX <- c(rownames(subset(subset(de.tpm.gene.NB.NX.BX, P < 1E-6), LOG2_FC >= 0)), rownames(subset(subset(de.tpm.gene.NB.NX.BX, P < 1E-6), LOG2_FC < 0)))
+file.name <- "DE_SFB_tpm-gene-median0_IKK2ca-vs-WT_wilcox_q_n12_GSEA"
+writeTable(subset(de.tpm.gene, external_gene_name %in% genes$GENE), file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-file.name <- paste0("DE_EAC_tpm-gene-median0_N-vs-B_wilcox_q_n46_N-B-X")
-save(de.tpm.gene.NB.NX.BX, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene.NB.NX.BX, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
-
-## Volcano plots
-plot.main <- "30 differentially expressed genes in EAC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_DE_EAC_median0_N-vs-B_p1e-6_N-B-X_CNA")
-
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-rownames(genes) <- rownames(getGenes(genes$GENE))
-genes <- genes[intersect(rownames(de.tpm.gene.NB.NX.BX), rownames(getGenes(genes$GENE))), ]
-file.main <- c(plot.main, "Normal (N) vs. Tumour (B)")
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_IKK2ca-vs-WT_p0.01_fc1_log2_GSEA_O")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene.NB.NX.BX, 1.00E-06, genes, file.de, file.main)
+file.main <- c("IKK2ca vs. WT", "")
+plotVolcano(de.tpm.gene, 0.01, genes, file.de, file.main, xlab.text, ylab.text, "topright", c("IKK2ca > WT", "IKK2ca < WT"), c(red, blue), c(red, blue), fold=1)
 
-###
-##
-overlaps.up3   <- intersect(overlaps.up,   rownames(de.tpm.gene.BX.down))
-overlaps.down3 <- intersect(overlaps.down, rownames(de.tpm.gene.BX.up))
 
-de.tpm.gene.NB.NX.XB <- de.tpm.gene.NB[c(overlaps.up3, overlaps.down3),]
-dim(subset(subset(de.tpm.gene.NB.NX.XB, P < 1E-6), LOG2_FC >= 0))
-dim(subset(subset(de.tpm.gene.NB.NX.XB, P < 1E-6), LOG2_FC < 0))
 
-file.name <- paste0("DE_EAC_tpm-gene-median0_N-vs-B_wilcox_q_n46_N-X-B")
-save(de.tpm.gene.NB.NX.XB, file=file.path(wd.de.data, paste0(file.name, ".RData")))
-writeTable(de.tpm.gene.NB.NX.XB, file.path(wd.de.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
 
-## Volcano plots
-plot.main <- "1,087 differentially expressed genes in EAC"
-plot.de <- file.path(wd.de.plots, "volcanoplot_DE_EAC_median0_N-vs-B_p1e-6_N-X-B_CNA")
-
-genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-rownames(genes) <- rownames(getGenes(genes$GENE))
-genes <- genes[intersect(rownames(de.tpm.gene.NB.NX.XB), rownames(getGenes(genes$GENE))), ]
-file.main <- c(plot.main, "Normal (N) vs. Tumour (B)")
-file.de <- paste0(plot.de, ".pdf")
-plotVolcano(de.tpm.gene.NB.NX.XB, 1.00E-06, genes, file.de, file.main)
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 11/12/21
-# -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
 # Replace Ensembl Gene IDs to gene name in Reactome results (Up- and Down-regulation)
 # -----------------------------------------------------------------------------
-wd.de.pathway <- file.path(wd.de, "pathway")
-#wd.de.reactome <- file.path(wd.de.pathway, "reactome_p1e-6_up")
-#wd.de.reactome <- file.path(wd.de.pathway, "reactome_p1e-6_down")
+wd.de.pathway <- file.path(wd.de, "pathway", "")
+wd.de.reactome <- file.path(wd.de.pathway, "up")
+#wd.de.reactome <- file.path(wd.de.pathway, "down")
 
 list <- ensGene[,c("ensembl_gene_id",	"external_gene_name")]
 
@@ -243,48 +187,114 @@ writeTable(reactome, file.path(wd.de.reactome, "result.tsv"), colnames=T, rownam
 
 ###
 ## Link: https://www.statmethods.net/graphs/bar.html
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_N-vs-B_p1e-6_up")
+wd.de.reactome <- file.path(wd.de.pathway, "up")
 reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
-reactome[9, 2] <- "Amp. from unattached kinetochores via MAD2"
+#reactome[9, 2] <- "Amp. from unattached kinetochores via MAD2"
 
-reactome.up <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
+reactome.up <- subset(reactome, Entities.pValue <= 1e-3)[, 2:7]
 reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
 reactome.up <- reactome.up[order(reactome.up$log10P),]
 
-main.text <- c("Up-regulated pathways in EAC", "763 genes")
-file.de <- file.path(wd.de.reactome, "genes_B-vs-N_p1e-6_n763_up.pdf")
+main.text <- c("IKK2ca > WT", "731 genes")
+file.de <- file.path(wd.de.reactome, "IKK2ca-vs-WT_p0.05_fc1.5_up_n731.pdf")
 
-pdf(file.de, height=4.5, width=7.5)
-par(mar=c(4,18,4,3.1))   # increase y-axis margin.
-barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 16), xaxt="n", names.arg=reactome.up$Pathway.name, col=red, xlab="-log10(p-value)", width=1)   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
-abline(v=6, lty=5)
+pdf(file.de, height=2.9, width=7.5)
+par(mar=c(4,27,4,2))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 7), xaxt="n", names.arg=reactome.up$Pathway.name, col=red, xlab="-log10(p-value)", width=1)   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+abline(v=4, lty=5)
 
-axis(side=1, at=seq(0, 16, by=2))
+axis(side=1, at=seq(0, 6, by=2))
 mtext(main.text[2], line=0.3)
 dev.off()
 
 ##
-wd.de.reactome <- file.path(wd.de.pathway, "reactome_N-vs-B_p1e-6_down")
+wd.de.reactome <- file.path(wd.de.pathway, "down")
 reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+reactome[2, 2] <- "RUNX1 regulates genes involved in megakaryocyte differentiation"
 
-reactome.down <- subset(reactome, Entities.pValue <= 1e-6)[, 2:7]
+reactome.down <- subset(reactome, Entities.pValue <= 1.00e-3)[, 2:7]
 reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
 reactome.down <- reactome.down[order(reactome.down$log10P),]
 reactome.down$log10P <- reactome.down$log10P * -1
 
-main.text <- c("Down-regulated pathways in EAC", "477 genes")
-file.de <- file.path(wd.de.reactome, "genes_N-vs-B_p1e-6_n477_down.pdf")
+main.text <- c("IKK2ca < WT", "423 genes")
+file.de <- file.path(wd.de.reactome, "IKK2ca-vs-WT_p0.05_fc1.5_down_n423.pdf")
 
-pdf(file.de, height=2.1, width=7.5)
-par(mar=c(4,3,4,18))   # increase y-axis margin.
-posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-16, 0), xaxt="n", names.arg="", col=blue, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+pdf(file.de, height=4.5, width=7.5)
+par(mar=c(4,2,4,27))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-7, 0), xaxt="n", names.arg="", col=blue, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
 text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
-abline(v=-6, lty=5)
+abline(v=-4, lty=5)
 
-axis(side=1, at=seq(-16, 0, by=2), labels=c(16, 14, 12, 10, 8, 6, 4, 2, 0))
+axis(side=1, at=seq(-6, 0, by=2), labels=c(6, 4, 2, 0))
 mtext(main.text[2], line=0.3)
 dev.off()
 
+###
+## Converted to Human
+
+###
+## Link: https://www.statmethods.net/graphs/bar.html
+wd.de.reactome <- file.path(wd.de.pathway, "up")
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+#reactome[9, 2] <- "Amp. from unattached kinetochores via MAD2"
+
+reactome.up <- subset(reactome, Entities.pValue <= 1e-2)[, 2:7]
+reactome.up$log10P <- -log10(reactome.up$Entities.pValue)
+reactome.up <- reactome.up[order(reactome.up$log10P),]
+
+main.text <- c("IKK2ca > WT", "731 genes")
+file.de <- file.path(wd.de.reactome, "IKK2ca-vs-WT_p0.05_fc1.5_up_n731.pdf")
+
+pdf(file.de, height=3.2, width=7.5)
+par(mar=c(4,27,4,2))   # increase y-axis margin.
+barplot(reactome.up$log10P, main=main.text[1], las=1, horiz=T, xlim=c(0, 4), xaxt="n", names.arg=reactome.up$Pathway.name, col=red, xlab="-log10(p-value)", width=1)   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+abline(v=3, lty=5)
+
+axis(side=1, at=seq(0, 4, by=2))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+##
+wd.de.reactome <- file.path(wd.de.pathway, "down")
+reactome <- readTable(file.path(wd.de.reactome, "result.tsv"), header=T, rownames=F, sep="\t")
+reactome[1, 2] <- "Respiratory electron transport, ATP synthesis by chemiosmotic coupling"
+
+reactome.down <- subset(reactome, Entities.pValue <= 1e-2)[, 2:7]
+reactome.down$log10P <- -log10(reactome.down$Entities.pValue)
+reactome.down <- reactome.down[order(reactome.down$log10P),]
+reactome.down$log10P <- reactome.down$log10P * -1
+
+main.text <- c("IKK2ca < WT", "423 genes")
+file.de <- file.path(wd.de.reactome, "IKK2ca-vs-WT_p0.05_fc1.5_down_n423.pdf")
+
+pdf(file.de, height=3, width=7.5)
+par(mar=c(4,1,4,28))   # increase y-axis margin.
+posbar <- barplot(reactome.down$log10P, main=main.text[1], las=1, horiz=T, xlim=c(-4, 0), xaxt="n", names.arg="", col=blue, xlab="-log10(p-value)")   #cex.names=0.8) cex.axis=1.1, cex.lab=1.15, cex.main=1.3
+text(y=posbar, x=0, pos=4, labels=reactome.down$Pathway.name, xpd=NA)
+abline(v=-3, lty=5)
+
+axis(side=1, at=seq(-4, 0, by=2), labels=c(4, 2, 0))
+mtext(main.text[2], line=0.3)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# GSVA
+# Last Modified: 24/06/22
+# -----------------------------------------------------------------------------
+install.packages("BiocManager")
+BiocManager::install("GSVA")
+
+library(GSVA)
+
+
+# -----------------------------------------------------------------------------
+# Gene set enrichment analysis (GSEA) on LCNEC RB1/WT ranked gene lists
+# Figure(s)    : Figure S1 (A and B)
+# Last Modified: 08/01/19
+# -----------------------------------------------------------------------------
+file.name <- paste0("GSEA_SFB_tpm-gene-median0_IKK2ca-vs-WT_wilcox_q_n12")
+writeRNKformat(de.tpm.gene, wd.de.gsea, file.name)
 
 
 

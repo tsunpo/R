@@ -38,7 +38,7 @@ for (s in 1:length(samples)) {
    sample <- samples[s]
  
    ## INPUT: *_cn.txt.gz (read counts)
-   rd <- read.peiflyne.cn.txt(file.path(wd.ngs, "coverage", sample, paste0(sample, "_ANALYSIS/", sample, "_cn.txt.gz")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+   rd <- read.peiflyne.cn.txt(file.path(wd.ngs, "peiflyne", sample, paste0(sample, "_ANALYSIS/", sample, "_cn.txt.gz")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
    nrd.T <- initNRD(rd, bed.gc, pair="T", method=METHOD)   ## See ReplicationTiming.R
    nrd.N <- initNRD(rd, bed.gc, pair="N", method=METHOD)
  

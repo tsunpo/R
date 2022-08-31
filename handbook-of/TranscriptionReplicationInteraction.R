@@ -64,38 +64,38 @@ setTRC <- function(tpm.gene.log2.m.rfd, rfd, file.name) {
    ## CTR 
    tpm.gene.log2.m.rfd.ctr <- subset(subset(tpm.gene.log2.m.rfd, TSS_RFD < rfd), TSS_RFD > -rfd)
    
-   tpm.gene.log2.m.rfd.ctr.iz <- subset(tpm.gene.log2.m.rfd.ctr, TSS_NRFD > 0)
+   tpm.gene.log2.m.rfd.ctr.iz <- subset(tpm.gene.log2.m.rfd.ctr, TSS_NRFD >= 0)
    tpm.gene.log2.m.rfd.ctr.tz <- subset(tpm.gene.log2.m.rfd.ctr, TSS_NRFD < 0)
 
-   tpm.gene.log2.m.rfd.ctr.iz.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC > 0)
+   tpm.gene.log2.m.rfd.ctr.iz.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC >= 0)
    tpm.gene.log2.m.rfd.ctr.iz.ho <- subset(tpm.gene.log2.m.rfd.ctr.iz, TRC < 0)
-   tpm.gene.log2.m.rfd.ctr.tz.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC > 0)
+   tpm.gene.log2.m.rfd.ctr.tz.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC >= 0)
    tpm.gene.log2.m.rfd.ctr.tz.ho <- subset(tpm.gene.log2.m.rfd.ctr.tz, TRC < 0)
  
    ##
-   tpm.gene.log2.m.rfd.ctr.iz.e <- subset(tpm.gene.log2.m.rfd.ctr.iz, RT > 0)
+   tpm.gene.log2.m.rfd.ctr.iz.e <- subset(tpm.gene.log2.m.rfd.ctr.iz, RT >= 0)
    tpm.gene.log2.m.rfd.ctr.iz.l <- subset(tpm.gene.log2.m.rfd.ctr.iz, RT < 0)
-   tpm.gene.log2.m.rfd.ctr.tz.e <- subset(tpm.gene.log2.m.rfd.ctr.tz, RT > 0)
+   tpm.gene.log2.m.rfd.ctr.tz.e <- subset(tpm.gene.log2.m.rfd.ctr.tz, RT >= 0)
    tpm.gene.log2.m.rfd.ctr.tz.l <- subset(tpm.gene.log2.m.rfd.ctr.tz, RT < 0)
    
-   tpm.gene.log2.m.rfd.ctr.iz.e.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz.e, TRC > 0)
+   tpm.gene.log2.m.rfd.ctr.iz.e.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz.e, TRC >= 0)
    tpm.gene.log2.m.rfd.ctr.iz.e.ho <- subset(tpm.gene.log2.m.rfd.ctr.iz.e, TRC < 0)
-   tpm.gene.log2.m.rfd.ctr.iz.l.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz.l, TRC > 0)
+   tpm.gene.log2.m.rfd.ctr.iz.l.cd <- subset(tpm.gene.log2.m.rfd.ctr.iz.l, TRC >= 0)
    tpm.gene.log2.m.rfd.ctr.iz.l.ho <- subset(tpm.gene.log2.m.rfd.ctr.iz.l, TRC < 0)
-   tpm.gene.log2.m.rfd.ctr.tz.e.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz.e, TRC > 0)
+   tpm.gene.log2.m.rfd.ctr.tz.e.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz.e, TRC >= 0)
    tpm.gene.log2.m.rfd.ctr.tz.e.ho <- subset(tpm.gene.log2.m.rfd.ctr.tz.e, TRC < 0)
-   tpm.gene.log2.m.rfd.ctr.tz.l.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz.l, TRC > 0)
+   tpm.gene.log2.m.rfd.ctr.tz.l.cd <- subset(tpm.gene.log2.m.rfd.ctr.tz.l, TRC >= 0)
    tpm.gene.log2.m.rfd.ctr.tz.l.ho <- subset(tpm.gene.log2.m.rfd.ctr.tz.l, TRC < 0)
    
    ## TTR
    tpm.gene.log2.m.rfd.ttr <- rbind(subset(tpm.gene.log2.m.rfd, TSS_RFD >= rfd), subset(tpm.gene.log2.m.rfd, TSS_RFD <= -rfd))
    
-   tpm.gene.log2.m.rfd.ttr.e <- subset(tpm.gene.log2.m.rfd.ttr, RT > 0)
+   tpm.gene.log2.m.rfd.ttr.e <- subset(tpm.gene.log2.m.rfd.ttr, RT >= 0)
    tpm.gene.log2.m.rfd.ttr.l <- subset(tpm.gene.log2.m.rfd.ttr, RT < 0)
 
-   tpm.gene.log2.m.rfd.ttr.e.cd <- subset(tpm.gene.log2.m.rfd.ttr.e, TRC > 0)
+   tpm.gene.log2.m.rfd.ttr.e.cd <- subset(tpm.gene.log2.m.rfd.ttr.e, TRC >= 0)
    tpm.gene.log2.m.rfd.ttr.e.ho <- subset(tpm.gene.log2.m.rfd.ttr.e, TRC < 0)
-   tpm.gene.log2.m.rfd.ttr.l.cd <- subset(tpm.gene.log2.m.rfd.ttr.l, TRC > 0)
+   tpm.gene.log2.m.rfd.ttr.l.cd <- subset(tpm.gene.log2.m.rfd.ttr.l, TRC >= 0)
    tpm.gene.log2.m.rfd.ttr.l.ho <- subset(tpm.gene.log2.m.rfd.ttr.l, TRC < 0)
    
    save(file=file.name, tpm.gene.log2.m.rfd, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ttr.e, tpm.gene.log2.m.rfd.ttr.l, tpm.gene.log2.m.rfd.ttr.e.cd, tpm.gene.log2.m.rfd.ttr.e.ho, tpm.gene.log2.m.rfd.ttr.l.cd, tpm.gene.log2.m.rfd.ttr.l.ho, tpm.gene.log2.m.rfd.ctr, tpm.gene.log2.m.rfd.ctr.iz, tpm.gene.log2.m.rfd.ctr.iz.cd, tpm.gene.log2.m.rfd.ctr.iz.ho, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.tz.cd, tpm.gene.log2.m.rfd.ctr.tz.ho, tpm.gene.log2.m.rfd.ctr.iz.e, tpm.gene.log2.m.rfd.ctr.iz.l, tpm.gene.log2.m.rfd.ctr.tz.e, tpm.gene.log2.m.rfd.ctr.tz.l, tpm.gene.log2.m.rfd.ctr.iz.e.cd, tpm.gene.log2.m.rfd.ctr.iz.e.ho, tpm.gene.log2.m.rfd.ctr.iz.l.cd, tpm.gene.log2.m.rfd.ctr.iz.l.ho, tpm.gene.log2.m.rfd.ctr.tz.e.cd, tpm.gene.log2.m.rfd.ctr.tz.e.ho, tpm.gene.log2.m.rfd.ctr.tz.l.cd, tpm.gene.log2.m.rfd.ctr.tz.l.ho)

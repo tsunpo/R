@@ -23,15 +23,13 @@ load(file.path(wd.src.ref, "hg19.RData"))
 #wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE <- "ICGC"
+BASE <- "ESAD2"
 base <- tolower(BASE)
 
-wd.icgc     <- file.path(wd, BASE, "consensus")
-wd.icgc.vcf <- file.path(wd.icgc, "point_mutations", "Converted_Data")
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.meta  <- file.path(wd, BASE, "metadata")
+wd.vcf   <- file.path(wd, BASE, "ngs/WES")
 
-wd.meta     <- file.path(wd, BASE, "metadata", "data_release")
-
-wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.driver <- file.path(wd.anlys, "driver", paste0(base, "-driver"))
 wd.driver.data  <- file.path(wd.driver, "data")
 wd.driver.plots <- file.path(wd.driver, "plots")
@@ -40,9 +38,317 @@ wd.driver.plots <- file.path(wd.driver, "plots")
 # Load data
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-list <- strsplit0(readTable(file.path(wd.icgc.vcf, "../point_mutations.list"), header=F, rownames=F, sep=""), "_mutcall_filtered.vcf", 1)
-length(list)
-# [1] 2703
+samples.wes <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_3.0_tyang2_LN.txt"), header=T, rownames=T, sep="\t")
+samples.wes <- subset(samples.wes, IS_WES_QC == T)
+samples.wes <- samples.wes[!is.na(samples.wes$Response),]
+writeTable(samples.wes, file.path(wd.de.data, "samples_wes.txt"), colnames=T, rownames=F, sep="\t")
+nrow(samples.wes)
+# [1] 59   ## 63-4
+
+vcfs <- c()
+for (s in 1:nrow(samples.wes)) {
+   sample <- paste0(samples.wes[s,]$Patient_ID, "-B")
+ 
+   muts <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.vcf, sample, paste0(sample, "_mutcall_filtered.vcf")), pass=T, rs=F)
+   vcfs <- c(vcfs, mapply(x = 1:nrow(muts), function(x) unlist(strsplit(muts$INFO[x], ";TG="))[2]))
+}
+length(vcfs)
+# [1] 22017
+
+refgenes <- mapply(x = 1:length(vcfs), function(x) unlist(strsplit(vcfs[x], "\\|"))[1])
+hgncs    <- mapply(x = 1:length(vcfs), function(x) unlist(strsplit(vcfs[x], "\\|"))[2])
+length(hgncs)
+# [1] 22017
+
+hgncs.unique <- unique(hgncs)
+length(hgncs.unique)
+# [1] 10152
+
+hgnc.ref.ens.vcf <- subset(hgnc.ref.ens, symbol %in% hgncs.unique)
+nrow(hgnc.ref.ens.vcf)
+# [1] 9262
+rownames(hgnc.ref.ens.vcf) <- hgnc.ref.ens.vcf$ensembl_gene_id
+
+rownames(hgnc.ref.ens) <- hgnc.ref.ens$symbol
+hgnc.ref.ens.vcf <- hgnc.ref.ens[hgncs.unique,]
+nrow(hgnc.ref.ens.vcf)
+# [1] 10152
+rownames(hgnc.ref.ens.vcf) <- hgnc.ref.ens.vcf$ensembl_gene_id
+
+subset(hgnc.ref.ens.vcf, ensembl_gene_id == "ENSG00000081803")
+
+# -----------------------------------------------------------------------------
+# PMRs
+# Last Modified: 07/05/22
+# -----------------------------------------------------------------------------
+colnames <- rownames(samples.wes)
+rownames <- hgncs.unique
+mut.gene <- toTable(0, length(colnames), length(rownames), colnames)
+rownames(mut.gene) <- rownames
+
+for (s in 1:nrow(samples.wes)) {
+   sample <- paste0(samples.wes[s,]$Patient_ID, "-B")
+ 
+   muts <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.vcf, sample, paste0(sample, "_mutcall_filtered.vcf")), pass=T, rs=F)
+   vcfs <- mapply(x = 1:nrow(muts), function(x) unlist(strsplit(muts$INFO[x], ";TG="))[2])
+   genes <- mapply(x = 1:length(vcfs), function(x) unlist(strsplit(vcfs[x], "\\|"))[2])
+ 
+   mut <- as.data.frame(sort(table(genes), decreasing=T))
+   rownames(mut) <- mut$genes
+
+   mut.gene[rownames(mut), s] <- mut$Freq
+}
+save(samples.wes, mut.gene, file=file.path(wd.driver.data, "esad2-driver-mut_LN.RData"), version=2)
+
+samples.mut <- survESAD(samples.wes)
+rownames(samples.mut) <- samples.mut$Patient_ID
+mut.gene <- mut.gene[, rownames(samples.mut)]
+
+# -----------------------------------------------------------------------------
+# PMRs (Survial: 33 Long vs. 26 Short)
+# Last Modified: 07/05/22
+# -----------------------------------------------------------------------------
+s=0
+mut=0
+
+pmr.mut.gene <- toTable(0, 12, nrow(mut.gene), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_L", "MUT_S", "WT_L", "WT_S", "P", "FDR", "LMR", "SMR", "PMR"))
+pmr.mut.gene$MUT <- rownames(mut.gene)
+rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
+ 
+pmr.mut.gene$MUT_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene[x,])))
+pmr.mut.gene$SAMPLE_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) length(which(mut.gene[x,] != 0)))
+pmr.mut.gene <- subset(pmr.mut.gene, SAMPLE_FREQ > s)
+ 
+for (g in 1:nrow(pmr.mut.gene)) {
+   gene <- pmr.mut.gene$MUT[g]
+   ids  <- colnames(mut.gene)[which(mut.gene[gene,] != 0)]
+
+   samples.mut.mut <- subset(samples.mut, Patient_ID %in% ids)
+   samples.mut.wt  <- samples.mut[setdiff(rownames(samples.mut), rownames(samples.mut.mut)),]
+  
+   mut.g1 <- rownames(subset(samples.mut.mut, Survival == "Long"))
+   mut.s  <- rownames(subset(samples.mut.mut, Survival == "Short"))
+   wt.g1  <- rownames(subset(samples.mut.wt,  Survival == "Long"))
+   wt.s   <- rownames(subset(samples.mut.wt,  Survival == "Short"))
+  
+   if ((length(mut.g1) > mut) && (length(mut.s) > mut) && (length(wt.g1) > mut) && (length(wt.s) > mut)) {
+      test <- toTable(0, 2, 2, c("L", "S"))
+      rownames(test) <- c("MUT", "WT")
+      test[1, 1] <- length(mut.g1)
+      test[1, 2] <- length(mut.s)
+      test[2, 1] <- length(wt.g1)
+      test[2, 2] <- length(wt.s)
+   
+      pmr.mut.gene$MUT_L[g] <- length(mut.g1)
+      pmr.mut.gene$MUT_S[g] <- length(mut.s)
+      pmr.mut.gene$WT_L[g]  <- length(wt.g1)
+      pmr.mut.gene$WT_S[g]  <- length(wt.s)
+      #pmr.mut.gene$P[g]    <- fisher.test(test)[[1]]
+      pmr.mut.gene$P[g]     <- chisq.test(test)[[3]]
+   
+      pmr.mut.gene$LMR[g] <- pmr.mut.gene$MUT_L[g] / pmr.mut.gene$WT_L[g]
+      pmr.mut.gene$SMR[g] <- pmr.mut.gene$MUT_S[g] / pmr.mut.gene$WT_S[g]
+      pmr.mut.gene$PMR[g] <- pmr.mut.gene$SMR[g]   / pmr.mut.gene$LMR[g]
+   }
+}
+pmr.mut.gene <- subset(pmr.mut.gene, P != 0)
+pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
+ 
+pmr <- pmr.mut.gene
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+annot.pmr <- subset(annot, external_gene_name %in% rownames(pmr))
+pmr.mut.gene <- cbind(annot.pmr, pmr.mut.gene[annot.pmr$external_gene_name, -1])
+pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "Q")
+
+file.name <- paste0("pmr_", base, "_mut.gene_n=", nrow(samples.mut), "_s>0_mut>0_g=", nrow(pmr.mut.gene), "_chisq_Survival_Long-vs-Short_LN")
+save(pmr.mut.gene,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+writeTable(pmr.mut.gene, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+##
+pmr.mut.gene.s10 <- subset(pmr.mut.gene, SAMPLE_FREQ >= 10)
+pmr.mut.gene.s10$FDR <- testFDR(pmr.mut.gene.s10$P, "Q")
+file.name <- paste0("pmr_", base, "_mut.gene_n=", nrow(samples.mut), "_s>10_mut>0_g=", nrow(pmr.mut.gene.s10), "_chisq_Survival_Long-vs-Short_LN")
+writeTable(pmr.mut.gene.s10, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR-SORTING_", base, "_mut.gene_n=", nrow(samples.mut), "_s>10_mut>0_g=", nrow(pmr.mut.gene.s10), "_chisq_FAT3"))
+plotPMR(file.name, "Mutation rate", "MR", text.Log10.P, pmr.mut.gene.s10, c("FAT3", "SMARCA4"), size=5, xmax=15, ymax=3, h=2)
+
+# -----------------------------------------------------------------------------
+# PMRs (Survial: 33 Long vs. 26 Short)
+# Last Modified: 07/05/22
+# -----------------------------------------------------------------------------
+s=0
+mut=0
+
+pmr.mut.gene <- toTable(0, 12, nrow(mut.gene), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_L", "MUT_S", "WT_L", "WT_S", "P", "FDR", "LMR", "SMR", "PMR"))
+pmr.mut.gene$MUT <- rownames(mut.gene)
+rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
+
+pmr.mut.gene$MUT_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene[x,])))
+pmr.mut.gene$SAMPLE_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) length(which(mut.gene[x,] != 0)))
+pmr.mut.gene <- subset(pmr.mut.gene, SAMPLE_FREQ > s)
+
+for (g in 1:nrow(pmr.mut.gene)) {
+   gene <- pmr.mut.gene$MUT[g]
+   ids  <- colnames(mut.gene)[which(mut.gene[gene,] != 0)]
+ 
+   samples.mut.mut <- subset(samples.mut, Patient_ID %in% ids)
+   samples.mut.wt  <- samples.mut[setdiff(rownames(samples.mut), rownames(samples.mut.mut)),]
+ 
+   mut.g1 <- rownames(subset(samples.mut.mut, lymph.node.met..Yes.1..no.0..1 == 1))
+   mut.s  <- rownames(subset(samples.mut.mut, lymph.node.met..Yes.1..no.0..1 == 0))
+   wt.g1  <- rownames(subset(samples.mut.wt,  lymph.node.met..Yes.1..no.0..1 == 1))
+   wt.s   <- rownames(subset(samples.mut.wt,  lymph.node.met..Yes.1..no.0..1 == 0))
+ 
+   if ((length(mut.g1) > mut) && (length(mut.s) > mut) && (length(wt.g1) > mut) && (length(wt.s) > mut)) {
+      test <- toTable(0, 2, 2, c("L", "S"))
+      rownames(test) <- c("MUT", "WT")
+      test[1, 1] <- length(mut.g1)
+      test[1, 2] <- length(mut.s)
+      test[2, 1] <- length(wt.g1)
+      test[2, 2] <- length(wt.s)
+  
+      pmr.mut.gene$MUT_L[g] <- length(mut.g1)
+      pmr.mut.gene$MUT_S[g] <- length(mut.s)
+      pmr.mut.gene$WT_L[g]  <- length(wt.g1)
+      pmr.mut.gene$WT_S[g]  <- length(wt.s)
+      #pmr.mut.gene$P[g]    <- fisher.test(test)[[1]]
+      pmr.mut.gene$P[g]     <- chisq.test(test)[[3]]
+  
+      pmr.mut.gene$LMR[g] <- pmr.mut.gene$MUT_L[g] / pmr.mut.gene$WT_L[g]
+      pmr.mut.gene$SMR[g] <- pmr.mut.gene$MUT_S[g] / pmr.mut.gene$WT_S[g]
+      pmr.mut.gene$PMR[g] <- pmr.mut.gene$SMR[g]   / pmr.mut.gene$LMR[g]
+   }
+}
+pmr.mut.gene <- subset(pmr.mut.gene, P != 0)
+pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
+
+pmr <- pmr.mut.gene
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+annot.pmr <- subset(annot, external_gene_name %in% rownames(pmr))
+pmr.mut.gene <- cbind(annot.pmr, pmr.mut.gene[annot.pmr$external_gene_name, -1])
+pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "Q")
+
+file.name <- paste0("pmr_", base, "_mut.gene_n=", nrow(samples.mut), "_s>0_mut>0_g=", nrow(pmr.mut.gene), "_chisq_LN_flip")
+save(pmr.mut.gene,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+writeTable(pmr.mut.gene, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+##
+pmr.mut.gene.s10 <- subset(pmr.mut.gene, SAMPLE_FREQ >= 10)
+pmr.mut.gene.s10$FDR <- testFDR(pmr.mut.gene.s10$P, "Q")
+file.name <- paste0("pmr_", base, "_mut.gene_n=", nrow(samples.mut), "_s>10_mut>0_g=", nrow(pmr.mut.gene.s10), "_chisq_LN_flip")
+writeTable(pmr.mut.gene.s10, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+file.name <- file.path(wd.driver.plots, paste0("PMR-SORTING_", base, "_mut.gene_n=", nrow(samples.mut), "_s>10_mut>0_g=", nrow(pmr.mut.gene.s10), "_chisq_flip_GAPDH"))
+plotPMR(file.name, "Mutation rate", "MR", text.Log10.P, pmr.mut.gene.s10, c("CSMD1", "GAPDH"), size=5, xmax=10, ymax=2, h=2)
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ Survival, data=samples.mut)
+file.name <- file.path(wd.driver.plots, "survfit_1+2_Survival_n=59")
+plotSurvfit(fit, file.name, "EAC 1+2 (n=59)", legend.labs=c("Long", "Short"), name="Survival", strata=c("Long", "Short"), cols=c(blue, red), size=5)
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ lymph.node.met..Yes.1..no.0..1, data=samples.mut)
+file.name <- file.path(wd.driver.plots, "survfit_1+2_LN_n=59")
+plotSurvfit(fit, file.name, "EAC 1+2 (n=59)", legend.labs=c("LN Yes", "LN No"), name="lymph.node.met..Yes.1..no.0..1", strata=c(1, 0), cols=c(red, blue), size=5)
+
+fit <- survfit(Surv(OS_month, OS_censor) ~ lymph.node.met..Yes.1..no.0..1, data=samples.mut)
+file.name <- file.path(wd.driver.plots, "survfit_1+2_LN_n=59_flip")
+plotSurvfit(fit, file.name, "EAC 1+2 (n=59)", legend.labs=c("LN No", "LN Yes"), name="lymph.node.met..Yes.1..no.0..1", strata=c(0, 1), cols=c(blue, red), size=5)
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# PMRs (Responder: 35 Complete+Major vs. 24 Minor)
+# Last Modified: 09/05/22
+# -----------------------------------------------------------------------------
+s=0
+mut=0
+
+pmr.mut.gene <- toTable(0, 12, nrow(mut.gene), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_C", "MUT_M", "WT_C", "WT_M", "P", "FDR", "CMR", "MMR", "PMR"))
+pmr.mut.gene$MUT <- rownames(mut.gene)
+rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
+
+pmr.mut.gene$MUT_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene[x,])))
+pmr.mut.gene$SAMPLE_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) length(which(mut.gene[x,] != 0)))
+pmr.mut.gene <- subset(pmr.mut.gene, SAMPLE_FREQ > s)
+
+for (g in 1:nrow(pmr.mut.gene)) {
+   gene <- pmr.mut.gene$MUT[g]
+   ids  <- colnames(mut.gene)[which(mut.gene[gene,] != 0)]
+ 
+   samples.mut.mut <- subset(samples.mut, Patient_ID %in% ids)
+   samples.mut.wt  <- samples.mut[setdiff(rownames(samples.mut), rownames(samples.mut.mut)),]
+ 
+   mut.g1 <- rownames(subset(samples.mut.mut, Response != "Minor"))
+   mut.s  <- rownames(subset(samples.mut.mut, Response == "Minor"))
+   wt.g1  <- rownames(subset(samples.mut.wt,  Response != "Minor"))
+   wt.s   <- rownames(subset(samples.mut.wt,  Response == "Minor"))
+ 
+   if ((length(mut.g1) > mut) && (length(mut.s) > mut) && (length(wt.g1) > mut) && (length(wt.s) > mut)) {
+      test <- toTable(0, 2, 2, c("L", "S"))
+      rownames(test) <- c("MUT", "WT")
+      test[1, 1] <- length(mut.g1)
+      test[1, 2] <- length(mut.s)
+      test[2, 1] <- length(wt.g1)
+      test[2, 2] <- length(wt.s)
+  
+      pmr.mut.gene$MUT_C[g] <- length(mut.g1)
+      pmr.mut.gene$MUT_M[g] <- length(mut.s)
+      pmr.mut.gene$WT_C[g]  <- length(wt.g1)
+      pmr.mut.gene$WT_M[g]  <- length(wt.s)
+      #pmr.mut.gene$P[g]    <- fisher.test(test)[[1]]
+      pmr.mut.gene$P[g]     <- chisq.test(test)[[3]]
+  
+      pmr.mut.gene$CMR[g] <- pmr.mut.gene$MUT_C[g] / pmr.mut.gene$WT_C[g]
+      pmr.mut.gene$MMR[g] <- pmr.mut.gene$MUT_M[g] / pmr.mut.gene$WT_M[g]
+      pmr.mut.gene$PMR[g] <- pmr.mut.gene$MMR[g]   / pmr.mut.gene$CMR[g]
+   }
+}
+pmr.mut.gene <- subset(pmr.mut.gene, P != 0)
+pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
+
+pmr <- pmr.mut.gene
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+annot.pmr <- subset(annot, external_gene_name %in% rownames(pmr))
+pmr.mut.gene <- cbind(annot.pmr, pmr.mut.gene[annot.pmr$external_gene_name, -1])
+pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "Q")
+
+file.name <- paste0("pmr_", base, "_mut.gene_n=", nrow(samples.mut), "_s>0_mut>0_g=", nrow(pmr.mut.gene), "_chisq_Responder_C+MA-vs-MINOR")
+save(pmr.mut.gene,  file=file.path(wd.driver.data, paste0(file.name, ".RData")))
+writeTable(pmr.mut.gene, file.path(wd.driver.data, paste0(file.name, ".txt")), colnames=T, rownames=F, sep="\t")
+
+
+
+
+# =============================================================================
+# Reference    : HGNC (hg19)
+# Last Modified: 04/05/22
+# =============================================================================
+vcfs <- c()
+for (s in 1:nrow(samples.wes)) {
+   sample <- paste0(samples.wes[s,]$Patient_ID, "-B")
+ 
+   muts <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.vcf, sample, paste0(sample, "_mutcall_filtered.vcf")), pass=T, rs=F)
+   vcfs <- c(vcfs, mapply(x = 1:nrow(muts), function(x) unlist(strsplit(muts$INFO[x], ";TG="))[2]))
+}
+
+hgnc.ref.ens
+
+ensGene.hgnc.overlaps <- subset(ensGene.hgnc, external_gene_name %in% hgncs)
+hgncs.diff <- setdiff(hgncs, ensGene.overlaps$external_gene_name)
+
+hgnc <- subset(hgnc, ensembl_gene_id %in% ensGene$ensembl_gene_id)
+
+
+
+
+
+
 
 #overlaps <- intersect(rownames(release), list)
 #length(overlaps)

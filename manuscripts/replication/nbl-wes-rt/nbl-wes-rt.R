@@ -33,7 +33,7 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WES")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wes-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
@@ -47,6 +47,8 @@ samples.22 <- readTable(file.path(wd.ngs, "WES_INFORM.list"), header=F, rownames
 overlaps2 <- intersect(samples.56, samples.22)
 length(overlaps2)
 # [1] 2
+
+samples.n3 <- readTable(file.path(wd.ngs, "nbl_wes_n3.list"), header=F, rownames=F, sep="")
 
 # -----------------------------------------------------------------------------
 # CLL T vs LCL S/G1
@@ -64,9 +66,18 @@ save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-v
 # Overall correlation with LCL S/G1
 # Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.brca.us <- setSamplesQ4(wd.rt.data, samples1)
+samples.n3 <- setSamplesQ4(wd.rt.data, samples.n3)
 writeTable(samples.brca.us, file.path(wd.ngs, "brca-us_wgs_m2_n89.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7452404 -0.7272590 -0.7091930 -0.6413474  0.6640076 
 
 writeTable(subset(samples.brca.us, Q4 %in% c(4,1)), file.path(wd.ngs, "brca-us_wgs_q4_n45.txt"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 08/06/22
+# -----------------------------------------------------------------------------
+x <- samples.n3$COR
+y <- samples.nbl[rownames(samples.n3),]$COR
+file.name <- file.path(wd.rt.plots, paste0("correlation_wes_vs_wgs_n3"))
+plotCorrelation(file.name, expression(italic("In silico") ~ "sorting of NB samples (n=3)"), "WES", "WGS", x, y)

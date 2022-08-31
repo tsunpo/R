@@ -131,7 +131,7 @@ samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
 
-pdf(file.path(wd.rt.plots, "boxplot_nbl-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_nb-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6_Spearman's rho.pdf"), height=6, width=4.2)
 par(mar=c(5.1, 4.6, 4.1, 1.5))
 ymax <- 0.5
 ymin <- -0.367
@@ -167,7 +167,7 @@ for (s in 1:nrow(samples)) {
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.7)
 #mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
-axis(side=1, at=1, labels="NBL-CL", cex.axis=1.8)
+axis(side=1, at=1, labels="NB-CL", cex.axis=1.8)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
 mtext(text=c("(n = 8)"), side=1, cex=1.8, line=2.45, at=c(1,2,3))
 dev.off()
@@ -276,7 +276,7 @@ samples <- samples[facs$SAMPLE_ID,]
 
 file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_1.6_3_100_bty=n_1.7_lwd=5_rho=_mar=4.6")
 main.text <- c(expression(bolditalic('In silico')~bold("vs.")~bolditalic('in vitro')), "")
-xlab.text <- "% Cell count"
+xlab.text <- "Fraction of cells"
 ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
 cols <- c(blue, red, "darkgray")
 flowjo.blue <- "#989aff"
@@ -296,7 +296,7 @@ plotFACS3(samples$COR, facs$G1, samples$COR, facs$S, samples$COR, facs$G2, file.
 file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic_count_1.7_pt.cex=3_pch=15_black_tilted-4_mar=4.6")
 main.text <- c(expression(bolditalic('In vitro')~bold("flow cytometry validation")), "")
 xlab.text <- ""
-ylab.text <- "% Cell count"
+ylab.text <- "Fraction of cells"
 #blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
 #red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
 #green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)

@@ -56,5 +56,5 @@ for (c in START:END) {
    
    rm(segs)
    rm(ensGene.chr.end.start)
-   writeTable(ensGene.cna, gzfile(file.path(wd.driver.data, paste0(sample$V1, "_ens.cn.seg.gz"))), colnames=T, rownames=F, sep="\t")
+   writeTable(ensGene.cna, gzfile(file.path(wd.driver.data, paste0(sample$V1, "_ens.iCN.seg.gz"))), colnames=T, rownames=F, sep="\t")
 }

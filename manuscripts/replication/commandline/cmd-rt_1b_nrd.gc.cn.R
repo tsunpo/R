@@ -45,7 +45,7 @@ wd.rt.data   <- file.path(wd.rt, "data")
    nrd <- readTable(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR, ".", method, ".txt.gz")), header=T, rownames=T, sep="")
    segs <- NA
    if (CN)
-      segs <- read.peiflyne.cn.seg(file.path(wd.ngs, "coverage", sample, paste0(sample, "_ANALYSIS/", sample, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+      segs <- read.peiflyne.cn.seg(file.path(wd.ngs, "peiflyne", sample, paste0(sample, "_ANALYSIS/", sample, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
    
    ## Correcte read counts fpr copy number
    nrd.gc.cn <- getNRDGCCN(nrd, segs, bed.gc, PAIR, CN)   ## See ReplicationTiming.R
