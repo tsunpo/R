@@ -35,7 +35,7 @@ samples  <- readTable(file.path(wd.rna, "esad2_3rna_n97.txt"), header=F, rowname
 colnames(samples) <- colnames
 #purities <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T, sep="")
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples)]
 

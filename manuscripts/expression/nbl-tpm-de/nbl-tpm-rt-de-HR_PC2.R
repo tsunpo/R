@@ -55,15 +55,15 @@ rownames(samples.nbl.tpm) <- samples.nbl.tpm$V1
 ## Testing for SORTING
 samples.nbl.tpm.HR <- subset(samples.nbl.tpm, RISK == "high")
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
 tpm.gene <- tpm.gene[, rownames(samples.nbl.tpm.HR)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 #tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 dim(tpm.gene.log2)
-# [1] 34908    37   ## HR
+# [1] 22899    37   ## HR
 
 # -----------------------------------------------------------------------------
 # Correlation bwteen TPM and in-silico sorting
@@ -95,7 +95,13 @@ src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 writeTable(src.tpm.gene, file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_PC2-vs-TPM_q_n37.txt"), colnames=T, rownames=F, sep="\t")
 save(src.tpm.gene, samples, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_PC2-vs-TPM_q_n37.RData"))
 nrow(src.tpm.gene)
-# [1] 32555
+# [1] 22899
+
+genes <- c("IVNS1ABP", "TPR", "EED", "DDX10", "H2AFX", "CHEK1", "RPUSD4", "NCAPD3")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(file.path(wd.de.plots, "2015", "CN"), genes[g], as.numeric(tpm.gene.log2[id,]), samples.nbl.tpm.HR$PC2, 1, pos="bottomright", cols=c(red, blue), size=5)
+}
 
 # -----------------------------------------------------------------------------
 # Correlation bwteen TPM and CNAs
@@ -139,20 +145,26 @@ save(src.tpm.gene, samples, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene
 nrow(src.tpm.gene)
 # [1] 32542
 
+genes <- c("IVNS1ABP", "TPR", "EED", "DDX10", "H2AFX", "CHEK1", "RPUSD4", "NCAPD3", "RAD51C", "PSMC5", "ZNF652")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotCNA(file.path(wd.de.plots, "2015", "CN"), genes[g], as.numeric(tpm.gene.log2.cna[id,]), as.numeric(cna.gene.nona.tpm.src[id,]), 1, pos="bottomright", col="black", size=5)
+}
+
 # -----------------------------------------------------------------------------
 # Cannoli plot (P < 0.001)
 # Last Modified: 04/07/22; 26/06/22; 11/10/17
 # -----------------------------------------------------------------------------
 #ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
-xlab.text <- "Expression vs. PC2"
+xlab.text <- "Expression vs. PC2 [rho]"
 ylab.text <- "Expression vs. CNA [rho]"
 pvalue <- 0.001
 
 colnames <- c("GENE", "ADJ_1", "ADJ_2")
-genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1", "ESR1")
+genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1")
 genes <- toTable(NA, length(colnames), length(genes0), colnames)
 genes$GENE <- genes0
-genes[4, 2] <- 1
+#genes[4, 2] <- 1
 
 ## Total
 #load(file=file.path(wd.de.data, "2015", "samples.nbl.tpm_HR_n37.RData"))
@@ -166,17 +178,17 @@ de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, NULL)
 #plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
 
 ## Expressed
-total <- intersect(rownames(de), rownames(tpm.gene))
-tpm.gene.cna <- tpm.gene[total, rownames(samples.nbl.tpm.HR)]
-expressed <- rownames(removeMedian0(tpm.gene.cna))
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, NULL, TEST="PC2")
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- intersect(rownames(de), rownames(tpm.gene))
 length(expressed)
-# [1] 22955
+# [1] 22886
 
-de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, expressed)
-plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL-HR_TPM-CNA-PC2_P1E03_MEDIAN0")
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, expressed, TEST="PC2")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL-HR_TPM-SCNA-PC2_P1E03_MEDIAN0")
 #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-file.main <- c(paste0("HR (n=", 37, ")"), "")
+file.main <- c(paste0("All-HR (n=", 37, ")"), "")
 plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
 
 save(samples.nbl.tpm, samples.nbl.tpm.HR, expressed, file=file.path(wd.de.data, "2015", "samples.nbl.tpm_HR_n37.RData"))
@@ -197,6 +209,72 @@ de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
 
 writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL-HR_tpm-gene-median0_PC2-CNA-TPM_q_n37_GAIN")   ## GSEA
 writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL-HR_tpm-gene-median0_PC2-CNA-TPM_q_n37_LOSS")   ## GSEA
+
+nrow(subset(de, Effect2 > 0)) / nrow(de)
+# [1] 0.760028
+nrow(subset(de, Effect2 <= 0)) / nrow(de)
+# [1] 0.239972
+
+# -----------------------------------------------------------------------------
+# CNA GAIN or LOSS
+# Last Modified: 11/09/22
+# -----------------------------------------------------------------------------
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+genes <- genes[-1,]
+
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, loss, TEST="PC2")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL_TPM-CNA-PC2_P1E03_MEDIAN0_LOSS")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("All-HR (CN < 2)", "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+###
+##
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("MYCN")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, gain, TEST="PC2")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL_TPM-CNA-PC2_P1E03_MEDIAN0_GAIN")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("All-HR (CN > 2)", "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+###
+##
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("TERT", "MKI67", "NTRK1")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, normal, TEST="PC2")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL_TPM-CNA-PC2_P1E03_MEDIAN0_NORMAL")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("All-HR (CN = 2)", "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

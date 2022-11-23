@@ -52,8 +52,8 @@ plotSurvfit <- function(fit, file.name, main.text, legend.labs, name, strata, co
  
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(fit, ylim=c(0, 1), xlab="Months", ylab="% OS", col=strata.cols, main=main.text[1], mark.time=T, lwd=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   legend("topright", legend=legends, lwd=4, col=cols, cex=1.65)
+   plot(fit, ylim=c(0, 1), xlab="Months", ylab="Probability [%]", col=strata.cols, main=main.text[1], mark.time=T, lwd=3, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   legend("topright", legend=legends, lwd=5, col=cols, cex=1.65)
 
    max <- max(fit[[2]])
    #text(max/5.5, 0.18, "                HR = 1.90 (1.61 - 2.25)", cex=1.7)
@@ -337,7 +337,7 @@ plotPMRDriver <- function(file.name, main.text, xlab.text, ylab.text, de.mut.tpm
 # Last Modified:
 # -----------------------------------------------------------------------------
 survESAD <- function(purities2) {
-   purities2 <- purities2[!is.na(purities2$os_days),]
+   #purities2 <- purities2[!is.na(purities2$os_days),]
  
    purities2$Tumor_content_pathology <- as.numeric(purities2$Tumor_content_pathology)
  

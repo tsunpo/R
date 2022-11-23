@@ -34,16 +34,16 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-q4"))
+wd.rt       <- file.path(wd.anlys, "replication_n57-1", paste0(base, "-wgs-rt-q4"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-#samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")   ## M2/M1
-samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), header=T, rownames=T, sep="")    ## Q4/Q1
-samples1 <- subset(samples1, M2 == 1)[,1]
-#samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
-samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), header=T, rownames=T, sep="")
-samples0 <- subset(samples0, M2 == 0)[,1]
+samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")   ## M2/M1
+#samples1 <- readTable(file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), header=T, rownames=T, sep="")    ## Q4/Q1
+samples1 <- subset(samples1, Q4 == 2)[,1]
+samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_n57-1.txt"), header=T, rownames=T, sep="")
+#samples0 <- readTable(file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), header=T, rownames=T, sep="")
+samples0 <- subset(samples0, Q4 == 1)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -83,9 +83,9 @@ for (c in 2:2) {
    #plotRT(file.name, main.text, chr, 39000000, 89000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
    
    ## chr2
-   main.text <- paste0(BASE, " Q4/Q1 replication timing")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRTAbstract(file.name, main.text, chr,  13000000,  17000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.1)
+   main.text <- paste0("S/G1 replication timing")  
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_example"))   
+   plotRTAbstract(file.name, main.text, chr,  13000000,  17000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.1)
    plotRTAbstract(file.name, main.text, chr,  69500000,  81000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
    plotRTAbstract(file.name, main.text, chr,  70000000,  80000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
    plotRTAbstract(file.name, main.text, chr, 160000000, 170000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("Q4", "Q1"), c(red, blue), c("Q4", "Q1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)

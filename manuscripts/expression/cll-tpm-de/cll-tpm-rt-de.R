@@ -36,7 +36,7 @@ samples.wgs <- readTable(file.path(wd.wgs, "cll_wgs_n96.txt"), header=T, rowname
 samples.rna <- readTable(file.path(wd.rna, "cll_rna_n71.txt"), header=T, rownames=T, sep="\t")
 overlaps <- intersect(samples.wgs$SAMPLE_ID, samples.rna$ID_WGS)
 
-samples  <- cbind(samples.wgs[overlaps,], samples.rna[overlaps,])
+samples.tpm.cll <- cbind(samples.wgs[overlaps,], samples.rna[overlaps,])
 #samples <- subset(samples, COR < 0)
 samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 1))
@@ -44,8 +44,8 @@ samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 0))
 # [1] 35
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.r5p47.RData")))
 tpm.gene <- tpm.gene[, samples$ID2_RNA]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
@@ -54,6 +54,193 @@ nrow(tpm.gene.log2.m)
 # [1] 34908
 # [1] 22807
 # [1] 18502
+
+# -----------------------------------------------------------------------------
+# Purities
+# Last Modified: 10/07/22
+# -----------------------------------------------------------------------------
+samples.wgs$purity <- NA
+samples.wgs$ploidy <- NA
+#samples.wgs$purity2 <- NA
+#samples.wgs$ploidy2 <- NA
+samples.wgs$purity3 <- NA
+#samples.wgs$ploidy3 <- NA
+
+for (s in 1:nrow(samples.wgs)) {
+   sample <- samples.wgs$SAMPLE_ID[s]
+   purities <- readTable(file.path(wd.wgs, "peiflyne", sample, paste0(sample, "_ANALYSIS"), paste0(sample, "_pupl.txt")), header=F, rownames=F, sep="\t")
+   #purities2 <- readTable(file.path(wd.wgs, "peiflyne/2015", sample, paste0(sample, "_ANALYSIS"), paste0(sample, "_pupl.txt")), header=F, rownames=F, sep="\t")
+ 
+   samples.wgs$purity[s]  <- purities$V2
+   samples.wgs$ploidy[s]  <- purities$V3
+   #samples.wgs$purity2[s] <- purities2$V2
+   #samples.wgs$ploidy2[s] <- purities2$V3
+   
+   samples.wgs$purity3[s] <- samples.purity[sample, "Purity"]
+}
+
+#file.name <- file.path(wd.driver.plots, "2015", paste0("Correlation_NBL_purity_n57-1"))
+#x <- samples.wgs$purity
+#y <- samples.wgs$purity2
+#plotCorrelation(file.name, "NB purity", "BWA-MEM", "Peifer 2015", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+#file.name <- file.path(wd.driver.plots, "2015", paste0("Correlation_NBL_ploidy_n57-1"))
+#x <- samples.wgs$ploidy
+#y <- samples.wgs$ploidy2
+#plotCorrelation(file.name, "NB ploidy", "BWA-MEM", "Peifer 2015", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+file.name <- file.path(wd.de.plots, paste0("Correlation_CLL_Purity3"))
+samples.wgs.nona <- samples.wgs[!is.na(samples.wgs$purity3),]
+x <- samples.wgs.nona$purity
+y <- samples.wgs.nona$purity3
+plotCorrelation(file.name, "CLL purities (n=86)", "PeifLyne", "PCAWG", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+for (q in 1:4) {
+   samples.tpm.cll.Q4 <- subset(samples.tpm.cll, Q4 == q)
+ 
+   file.name <- file.path(wd.de.plots, paste0("Correlation_CLL_Purity3_Q", q))
+   samples.tpm.cll.Q4.nona <- samples.tpm.cll.Q4[!is.na(samples.tpm.cll.Q4$purity3),]
+   x <- samples.tpm.cll.Q4.nona$purity
+   y <- samples.tpm.cll.Q4.nona$purity3
+   plotCorrelation(file.name, paste0("CLL purities (Q", q, ")"), "PeifLyne", "PCAWG", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+}
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+samples.tpm.cll$Purity <- samples.tpm.cll$purity
+samples.tpm.cll$M2 <- samples.tpm.cll$M2 + 1
+ 
+xlab.text <- "Expression vs. SCF index [rho]"
+ylab.text <- "Expression vs. Purity [rho]"
+pvalue <- 0.01
+
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("MKI67", "BCL2")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+#genes[2, 2] <- -0.15
+#genes[2, 3] <- 1.2
+
+for (q in 1:4) {
+   samples.tpm.cll.Q4 <- subset(samples.tpm.cll, Q4 == q)
+   n <- nrow(samples.tpm.cll.Q4)
+ 
+   load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+   tpm.gene <- tpm.gene[, samples.tpm.cll.Q4$ID2_RNA]   ## VERY VERY VERY IMPORTANT!!!
+   tpm.gene.log2   <- log2(tpm.gene + 1)
+ 
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.tpm.cll.Q4, "COR", n, "Q", q)
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.tpm.cll.Q4, "Purity", n, "Q", q)
+ 
+   ##
+   expressed <- rownames(tpm.gene)
+   de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2=paste0("_Q", q))
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_P1E02_MEDIAN0_Q", q))
+   genes <- getCannoliGenes(de, pvalue, genes0)
+   #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Lymph-CLL Q", q, " (n=", n, ")"), "")
+   plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+}
+
+for (m in 1:2) {
+   samples.tpm.cll.M2 <- subset(samples.tpm.cll, M2 == m)
+   n <- nrow(samples.tpm.cll.M2)
+ 
+   load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+   tpm.gene <- tpm.gene[, samples.tpm.cll.M2$ID2_RNA]   ## VERY VERY VERY IMPORTANT!!!
+   tpm.gene.log2   <- log2(tpm.gene + 1)
+ 
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.tpm.cll.M2, "COR", n, "M", m)
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.tpm.cll.M2, "Purity", n, "M", m)
+ 
+   ##
+   expressed <- rownames(tpm.gene)
+   de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2=paste0("_M", m))
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_P1E02_MEDIAN0_M", m))
+   genes <- getCannoliGenes(de, pvalue, genes0)
+   #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Lymph-CLL M", m, " (n=", n, ")"), "")
+   plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+}
+
+n <- nrow(samples.tpm.cll)
+
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+tpm.gene <- tpm.gene[, samples.tpm.cll$ID2_RNA]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2   <- log2(tpm.gene + 1)
+
+#getSRC0(wd.de.data, BASE, tpm.gene.log2, samples.tpm.cll, "COR", n)
+#getSRC0(wd.de.data, BASE, tpm.gene.log2, samples.tpm.cll, "Purity", n)
+
+##
+expressed <- rownames(tpm.gene)
+de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2="")
+plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_P1E02_MEDIAN0"))
+genes <- getCannoliGenes(de, pvalue, genes0)
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Lymph-CLL (n=", n, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 19/10/22
+# -----------------------------------------------------------------------------
+genes.G1S <- readTable(file.path(wd.meta, "Dominguez_G1-S.list"), header=F, rownames=F, sep="")
+genes.G2M <- readTable(file.path(wd.meta, "Dominguez_G2-M.list"), header=F, rownames=F, sep="")
+
+for (q in 1:4) {
+   n <- nrow(subset(samples.tpm.cll, Q4 == q))
+   expressed <- rownames(tpm.gene)
+   de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2=paste0("_Q", q))
+ 
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_MEDIAN0_G1-S_Q", q))
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Lymph-CLL Q", q, " (n=", n, ")"), "")
+   plotCannoliGenes(de, genes.G1S, file.de, file.main, xlab.text, ylab.text, col=red, pos="bottomright")
+ 
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_MEDIAN0_G2-M_Q", q))
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Lymph-CLL Q", q, " (n=", n, ")"), "")
+   plotCannoliGenes(de, genes.G2M, file.de, file.main, xlab.text, ylab.text, col=green, pos="bottomright")
+}
+
+##
+file.name <- file.path(wd.de.plots, paste0("Correlation_CLL_purity_SCF"))
+x <- samples.tpm.cll$COR
+y <- samples.tpm.cll$purity
+plotCorrelation(file.name, "Lymph-CLL", "SCF index", "Purity", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+for (q in 1:4) {
+   samples.tpm.cll.Q4 <- subset(samples.tpm.cll, Q4 == q)
+ 
+   file.name <- file.path(wd.de.plots, paste0("Correlation_CLL_purity_SCF_Q", q))
+   x <- samples.tpm.cll.Q4$COR
+   y <- samples.tpm.cll.Q4$purity
+   plotCorrelation(file.name, paste0("Lymph-CLL (Q", q, ")"), "SCF index", "Purity", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+}
+
+##
+file.name <- file.path(wd.de.plots, paste0("Correlation_CLL_ploidy_SCF"))
+x <- samples.tpm.cll$COR
+y <- samples.tpm.cll$ploidy
+plotCorrelation(file.name, "Lymph-CLL", "SCF index", "Ploidy", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+for (q in 1:4) {
+   samples.tpm.cll.Q4 <- subset(samples.tpm.cll, Q4 == q)
+ 
+   file.name <- file.path(wd.de.plots, paste0("Correlation_CLL_ploidy_SCF_Q", q))
+   x <- samples.tpm.cll.Q4$COR
+   y <- samples.tpm.cll.Q4$ploidy
+   plotCorrelation(file.name, paste0("Lymph-CLL (Q", q, ")"), "SCF index", "Ploidy", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+}
+
+
+
 
 # -----------------------------------------------------------------------------
 # Relationship between expression and in-silico sorting

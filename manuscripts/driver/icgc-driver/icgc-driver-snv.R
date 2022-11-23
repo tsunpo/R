@@ -62,6 +62,65 @@ rownames(totals) <- totals$specimen_id
 samples.mut$tumor_wgs_aliquot_id <- totals[overlaps2,]$wgs_id
 
 # -----------------------------------------------------------------------------
+# SBS1 vs. Age
+# Last Modified: 02/11/22
+# -----------------------------------------------------------------------------
+icgc$Slope <- NA
+for (h in 1:nrow(icgc)) {
+   hist <- rownames(icgc)[h]
+   samples.mut.hist <- subset(samples.mut, histology_abbreviation == hist)
+   samples.mut.hist$SBS1 <- NA
+   
+   for (s in 1:nrow(samples.mut.hist)) {
+      sample <- samples.mut.hist[s,]
+      vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(sample$tumor_wgs_aliquot_id, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
+      
+      ## Seperate SNVs
+      vcf.snv <- subset(vcf,     REF %in% c("A", "T", "C", "G"))
+      vcf.snv <- subset(vcf.snv, ALT %in% c("A", "T", "C", "G"))   
+      
+      ## 
+      muts <- toTable(0, 6, 1, c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G"))
+      vcf.snv.s6 <- getTableS6SNV(vcf.snv[, c("CHROM", "POS", "REF", "ALT", "QUAL")])
+      for (m in 1:6) {
+         muts[1, m] <- nrow(vcf.snv.s6[[m]][[1]]) + nrow(vcf.snv.s6[[m]][[2]])
+      }
+      samples.mut.hist$SBS1[s] <- muts$`C>T`
+   }
+   
+   if(!is.na(samples.mut.hist$donor_age_at_diagnosis[1])) {
+      ##   
+      #file.name <- file.path(wd.driver.plots, paste0("Correlation_", hist, "_SBS1-vs-Age"))
+      x <- samples.mut.hist$donor_age_at_diagnosis
+      y <- samples.mut.hist$SBS1
+      #plotCorrelation(file.name, hist, "Age", "C>T", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+    
+      lm.fit <- lm(y ~ x)
+      cf <- coef(lm.fit)
+      icgc$Slope[h] <- cf[2]
+      
+      ##   
+      #file.name <- file.path(wd.driver.plots, paste0("Correlation_", hist, "_SBS1-vs-COR"))
+      #x <- samples.mut.hist$COR
+      #y <- samples.mut.hist$SBS1
+      #plotCorrelation(file.name, hist, "SCF index", "C>T", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+    
+      ##   
+      #file.name <- file.path(wd.driver.plots, paste0("Correlation_", hist, "_Age-vs-COR"))
+      #x <- samples.mut.hist$donor_age_at_diagnosis
+      #y <- samples.mut.hist$COR
+      #plotCorrelation(file.name, hist, "Age", "SCF index", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+   }
+}
+
+icgc.pos <- subset(icgc, Slope > 0)
+file.name <- file.path(wd.driver.plots, paste0("Correlation_", "ICGC", "_Slope-vs-COR"))
+x <- icgc.pos$Slope
+y <- icgc.pos$MEDIAN
+plotCorrelation(file.name, "ICGC 22 cancer types", "C>T-to-Age slope", "Median SCF index", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+
+# -----------------------------------------------------------------------------
 # Assigning Ensembl genes to each SNVs
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------

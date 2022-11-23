@@ -69,8 +69,8 @@ samples.surv.nbl[rownames(subset(samples.surv.nbl, RISK == "high")),]$GROUP_ID <
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ GROUP_ID, data=samples.surv.nbl)
 pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR_red_all"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("LR", "All-HR"), name="GROUP_ID", strata=c("LR", "HR"), cols=c(blue, red), size=5)
+file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR_red_all_OS_lwd=3"))
+plotSurvfit(fit, file.name, "Overall survival", legend.labs=c("LR", "All-HR"), name="GROUP_ID", strata=c("LR", "HR"), cols=c(blue, red), size=5)
 
 ###
 ##
@@ -93,8 +93,8 @@ samples.surv.nbl[rownames(subset(samples.surv.nbl, MYCN_amp == 1)),]$GROUP_ID3 <
 
 fit <- survfit(Surv(OS_month, OS_censor) ~ GROUP_ID3, data=samples.surv.nbl)
 pval <- surv_pvalue(fit)$pval
-file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR-MYCN-TERT_black"))
-plotSurvfit(fit, file.name, text.NBL, legend.labs=c("LR", "HR", "TERT", "MYCN"), name="GROUP_ID3", strata=c("LR", "HR", "TERT", "MYCN"), cols=c(blue, "black", yellow, red), size=5)
+file.name <- file.path(paste0(wd.de.plots, "/survfit_in-silico_samples.surv.hist_", text.NBL, "_GROUP_ID_HR-LR-MYCN-TERT_black_OS_lwd=3"))
+plotSurvfit(fit, file.name, "Overall survival", legend.labs=c("LR", "HR", "TERT", "MYCN"), name="GROUP_ID3", strata=c("LR", "HR", "TERT", "MYCN"), cols=c(blue, "black", yellow, red), size=5)
 
 
 

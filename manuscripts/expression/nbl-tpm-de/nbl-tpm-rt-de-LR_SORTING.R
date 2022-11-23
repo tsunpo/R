@@ -55,15 +55,15 @@ rownames(samples.nbl.tpm) <- samples.nbl.tpm$V1
 ## Testing for SORTING
 samples.nbl.tpm.LR <- subset(samples.nbl.tpm, RISK == "low")
 
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
 tpm.gene <- tpm.gene[, rownames(samples.nbl.tpm.LR)]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 #tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
 dim(tpm.gene.log2)
-# [1] 34908    17   ## HR
+# [1] 22899    17   ## HR
 
 # -----------------------------------------------------------------------------
 # Correlation bwteen TPM and in-silico sorting
@@ -95,7 +95,7 @@ src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 writeTable(src.tpm.gene, file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_SORTING-vs-TPM_q_n17.txt"), colnames=T, rownames=F, sep="\t")
 save(src.tpm.gene, samples, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_SORTING-vs-TPM_q_n17.RData"))
 nrow(src.tpm.gene)
-# [1] 30331
+# [1] 22899
 
 # -----------------------------------------------------------------------------
 # Correlation bwteen TPM and CNAs
@@ -144,7 +144,7 @@ nrow(src.tpm.gene)
 # Last Modified: 04/07/22; 26/06/22; 11/10/17
 # -----------------------------------------------------------------------------
 #ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
-xlab.text <- "Expression vs. S-phase cell fraction"
+xlab.text <- "Expression vs. SCF index [rho]"
 ylab.text <- "Expression vs. CNA [rho]"
 pvalue <- 0.001
 
@@ -152,25 +152,14 @@ colnames <- c("GENE", "ADJ_1", "ADJ_2")
 genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1")
 genes <- toTable(NA, length(colnames), length(genes0), colnames)
 genes$GENE <- genes0
-genes[4, 2] <- 1
-
-## Total
-#load(file=file.path(wd.de.data, "2015", "samples.nbl.tpm_LR_n37.RData"))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-
-de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 17, NULL)
-#plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_NBL_TPM-CNA-SORTING_P1E03")
-#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-#file.de <- paste0(plot.de, ".pdf")
-#file.main <- c(paste0(BASE, " total genes"), "")
-#plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+genes[1, 2] <- 1
 
 ## Expressed
-total <- intersect(rownames(de), rownames(tpm.gene))
-tpm.gene.cna <- tpm.gene[total, rownames(samples.nbl.tpm.LR)]
-expressed <- rownames(removeMedian0(tpm.gene.cna))
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 17, NULL)
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- intersect(rownames(de), rownames(tpm.gene))
 length(expressed)
-# [1] 22543
+# [1] 22886
 
 de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 17, expressed)
 plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL-LR_TPM-CNA-SORTING_P1E03_MEDIAN0")
@@ -197,6 +186,90 @@ de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
 
 writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL-LR_tpm-gene-median0_SORTING-CNA-TPM_q_n17_GAIN")   ## GSEA
 writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL-LR_tpm-gene-median0_SORTING-CNA-TPM_q_n17_LOSS")   ## GSEA
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and Purities
+# Last Modified: 21/09/22
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(src) <- rownames(tpm.gene.log2)
+
+## SRC
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm.LR$purity2, method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm.LR$purity2, method="spearman", exact=F)[[3]])
+src <- src[!is.na(src$P),]
+
+## Log2 fold change
+#src$G1 <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "G1")))
+#src$S  <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "S")))
+#src$LOG2_FC <- src$S - src$G1
+
+## FDR
+library(qvalue)
+src$Q <- qvalue(src$P)$qvalue
+src <- src[order(src$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+
+writeTable(src.tpm.gene, file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_Purity-vs-TPM_q_n17.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples.nbl.tpm.LR, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_Purity-vs-TPM_q_n17.RData"))
+#writeRNKformat(src.tpm.gene, wd.de.gsea, "SRC_NBL_tpm-gene-r5p47_SORTING_q_n54")   ## GSEA
+nrow(src.tpm.gene)
+# [1] 22899
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (P < 0.001)
+# Last Modified: 21/09/22
+# -----------------------------------------------------------------------------
+xlab.text <- "Expression vs. PC2 [rho]"
+#ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+ylab.text <- "Expression vs. Purity [rho]"
+pvalue <- 0.001
+
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+#genes[4, 2] <- 1
+#genes[5, 2] <- 1
+
+## Expressed
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 17, NULL, TEST="PC2", TEST2="Purity")
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- intersect(rownames(de), rownames(tpm.gene))
+
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 17, expressed, TEST="PC2", TEST2="Purity")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL-LR_TPM-Purity-PC2_P1E03_MEDIAN0")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("LR (n=", 17, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+# -----------------------------------------------------------------------------
+# GSEA (Purity)
+# Last Modified: 21/09/22
+# -----------------------------------------------------------------------------
+de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= 0.001), P2 <= 0.001)
+de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= 0.001), P2 <= 0.001)
+
+de.neg.neg <- subset(subset(de, Effect2 < 0), Effect1 < 0)
+de.neg.neg.sig <- subset(subset(de.neg.neg, P1 <= 0.001), P2 <= 0.001)
+de.neg.pos <- subset(subset(de, Effect2 < 0), Effect1 > 0)
+de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
+
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC2-CNA-TPM_q_n54_GAIN")   ## GSEA
+writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC2-CNA-TPM_q_n54_LOSS")   ## GSEA
+
+nrow(subset(de, Effect2 > 0)) / nrow(de)
+# [1] 0.4890607
+nrow(subset(de, Effect2 <= 0)) / nrow(de)
+# [1] 0.5109393
+
 
 
 

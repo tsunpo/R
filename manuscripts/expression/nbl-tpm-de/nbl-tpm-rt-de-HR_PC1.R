@@ -144,7 +144,7 @@ nrow(src.tpm.gene)
 # Last Modified: 04/07/22; 26/06/22; 11/10/17
 # -----------------------------------------------------------------------------
 #ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
-xlab.text <- "Expression vs. PC1"
+xlab.text <- "Expression vs. PC1 [rho]"
 ylab.text <- "Expression vs. CNA [rho]"
 pvalue <- 0.001
 
@@ -152,7 +152,49 @@ colnames <- c("GENE", "ADJ_1", "ADJ_2")
 genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1")
 genes <- toTable(NA, length(colnames), length(genes0), colnames)
 genes$GENE <- genes0
-genes[4, 2] <- 1
+#genes[4, 2] <- 1
+
+## Expressed
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, NULL, TEST="PC1")
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- intersect(rownames(de), rownames(tpm.gene))
+
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 37, expressed, TEST="PC1")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL-HR_TPM-CNA-PC1_P1E03_MEDIAN0")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("All-HR (n=", 37, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+# -----------------------------------------------------------------------------
+# GSEA
+# Last Modified: 15/07/22; 26/06/22; 11/10/17
+# -----------------------------------------------------------------------------
+de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= 0.001), P2 <= 0.001)
+de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= 0.001), P2 <= 0.001)
+
+de.neg.neg <- subset(subset(de, Effect2 < 0), Effect1 < 0)
+de.neg.neg.sig <- subset(subset(de.neg.neg, P1 <= 0.001), P2 <= 0.001)
+de.neg.pos <- subset(subset(de, Effect2 < 0), Effect1 > 0)
+de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
+
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL-HR_tpm-gene-median0_PC1-CNA-TPM_q_n37_GAIN")   ## GSEA
+writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL-HR_tpm-gene-median0_PC1-CNA-TPM_q_n37_LOSS")   ## GSEA
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Total
 #load(file=file.path(wd.de.data, "2015", "samples.nbl.tpm_HR_n37.RData"))
@@ -181,22 +223,6 @@ plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottom
 
 save(samples.nbl.tpm, samples.nbl.tpm.HR, expressed, file=file.path(wd.de.data, "2015", "samples.nbl.tpm_HR_n37.RData"))
 
-# -----------------------------------------------------------------------------
-# GSEA
-# Last Modified: 15/07/22; 26/06/22; 11/10/17
-# -----------------------------------------------------------------------------
-de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
-de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= 0.001), P2 <= 0.001)
-de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
-de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= 0.001), P2 <= 0.001)
-
-de.neg.neg <- subset(subset(de, Effect2 < 0), Effect1 < 0)
-de.neg.neg.sig <- subset(subset(de.neg.neg, P1 <= 0.001), P2 <= 0.001)
-de.neg.pos <- subset(subset(de, Effect2 < 0), Effect1 > 0)
-de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
-
-writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL-HR_tpm-gene-median0_PC1-CNA-TPM_q_n37_GAIN")   ## GSEA
-writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL-HR_tpm-gene-median0_PC1-CNA-TPM_q_n37_LOSS")   ## GSEA
 
 
 

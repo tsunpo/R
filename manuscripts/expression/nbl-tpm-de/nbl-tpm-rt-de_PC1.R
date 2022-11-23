@@ -92,7 +92,7 @@ for (g in 1:length(genes)) {
 # Cannoli plot (P < 0.001)
 # Last Modified: 04/07/22; 26/06/22; 11/10/17
 # -----------------------------------------------------------------------------
-xlab.text <- "Expression vs. PC1"
+xlab.text <- "Expression vs. PC1 [rho]"
 #ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
 ylab.text <- "Expression vs. CNA [rho]"
 pvalue <- 0.001
@@ -103,14 +103,6 @@ genes <- toTable(NA, length(colnames), length(genes0), colnames)
 genes$GENE <- genes0
 #genes[4, 2] <- 1
 #genes[5, 2] <- 1
-
-## Total
-#de <- getCannoli(wd.de.data, BASE, 70, NULL)
-#plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_NBL_TPM-CNA-SORTING_P1E03")
-#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-#file.de <- paste0(plot.de, ".pdf")
-#file.main <- c(paste0(BASE, " total genes"), "")
-#plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
 
 ## Expressed
 de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, NULL, TEST="PC1")
@@ -123,14 +115,6 @@ plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL_TPM-CNA-PC1_P1E03
 file.de <- paste0(plot.de, ".pdf")
 file.main <- c(paste0("Neuroblastoma (n=", 54, ")"), "")
 plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
-
-## Not expressed
-#de <- getCannoli(wd.de.data, BASE, 70, setdiff(rownames(src.tpm.gene), expressed))
-#plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0-0")
-#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
-#file.de <- paste0(plot.de, ".pdf")
-#file.main <- c(paste0(BASE, " not expressed genes"), "")
-#plotCannoli(de, pvalue, toTable(NA, length(colnames), 0, colnames), file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
 
 # -----------------------------------------------------------------------------
 # GSEA
@@ -148,6 +132,35 @@ de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
 
 writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC1-CNA-TPM_q_n54_GAIN")   ## GSEA
 writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC1-CNA-TPM_q_n54_LOSS")   ## GSEA
+
+nrow(subset(de, Effect2 > 0)) / nrow(de)
+# [1] 0.7681552
+nrow(subset(de, Effect2 <= 0)) / nrow(de)
+# [1] 0.2318448
+
+
+
+
+
+
+
+
+
+## Total
+#de <- getCannoli(wd.de.data, BASE, 70, NULL)
+#plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_NBL_TPM-CNA-SORTING_P1E03")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+#file.de <- paste0(plot.de, ".pdf")
+#file.main <- c(paste0(BASE, " total genes"), "")
+#plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
+
+## Not expressed
+#de <- getCannoli(wd.de.data, BASE, 70, setdiff(rownames(src.tpm.gene), expressed))
+#plot.de <- file.path(wd.de.plots, "cannoliplot_SRC_SCLC_TPM-CNA-SORTING_P1E03_MEDIAN0-0")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+#file.de <- paste0(plot.de, ".pdf")
+#file.main <- c(paste0(BASE, " not expressed genes"), "")
+#plotCannoli(de, pvalue, toTable(NA, length(colnames), 0, colnames), file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (Low vs. High-risk)

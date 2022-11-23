@@ -37,13 +37,131 @@ purities1 <- readTable(file.path(wd.meta, "EAD-pupl.txt"), header=T, rownames=T,
 purities2 <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_3.0.txt"), header=T, rownames=T, sep="\t")
 purities2 <- survESAD(purities2)
 
-#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
 tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
 tpm.gene.log2 <- tpm.gene.log2[, rownames(samples2)]
 dim(tpm.gene.log2)
 # [1] 15381    97
 # [1] 13004    97
+
+# -----------------------------------------------------------------------------
+# K1N2 analysis on the tumours
+# Last Modified: 09/11/22
+# -----------------------------------------------------------------------------
+samples.wes <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_3.0_tyang2.txt"), header=T, rownames=T, sep="\t")
+#samples.wes <- subset(samples.wes, IS_WES_QC == T)
+samples.wes <- subset(samples.wes, IS_RNA_SEQ == T)
+samples.wes <- survESAD(samples.wes)
+#rownames(samples.wes) <- paste0(samples.wes$Patient_ID, "_B")
+nrow(samples.wes)
+# [1] 64
+# [1] 48
+
+overlaps <- intersect(rownames(samples.wes), colnames(tpm.gene))
+
+load(file.path(wd, BASE, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/esad1+2_kallisto_0.43.1_tpm.gene.RData")))
+#load(file.path(wd, BASE, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/esad1+2_kallisto_0.43.1_tpm.gene.median0.RData")))
+tpm.gene.log2 <- log2(tpm.gene + 1)   ## Use pseudocount=1
+tpm.gene.log2 <- tpm.gene.log2[, rownames(samples.wes)]
+dim(tpm.gene.log2)
+# [1] 34908    64
+# [1] 15911    48
+
+coefficients <- readTable(file.path(wd.meta, "K1N2_coefficients.txt"), header=F, rownames=T, sep="\t")
+genes <- intersect(coefficients$V1, ensGene$external_gene_name)
+ensGene.K1N2 <- subset(ensGene, external_gene_name %in% genes)
+
+overlaps.genes <- intersect(rownames(tpm.gene.log2), rownames(ensGene.K1N2))
+tpm.gene.log2 <- tpm.gene.log2[overlaps.genes,]
+
+ensGene.K1N2 <- ensGene.K1N2[overlaps.genes,]
+coefficients <- coefficients[ensGene.K1N2$external_gene_name,]
+coefficients$ensembl_gene_id <- ensGene.K1N2$ensembl_gene_id
+rownames(coefficients) <- coefficients$ensembl_gene_id
+coefficients$mean <- NA
+coefficients$sd   <- NA
+for (g in 1:nrow(coefficients)) {
+   id <- coefficients$ensembl_gene_id[g]
+   coefficients[id, ]$mean <- mean(as.numeric(tpm.gene.log2[id, ]))
+   coefficients[id, ]$sd   <-   sd(as.numeric(tpm.gene.log2[id, ]))
+}
+
+tpm.gene.log2.zscore <- tpm.gene.log2
+for (s in 1:nrow(samples.wes)) {
+   for (g in 1:nrow(coefficients)) {
+      tpm.gene.log2.zscore[g, s] <- (tpm.gene.log2.zscore[g, s] - coefficients$mean[g]) / coefficients$sd[g]
+   }
+}
+#tpm.gene.log2.zscore <- tpm.gene.log2.zscore[-35,]
+#coefficients <- coefficients[-35,]
+                             
+samples.wes$K1N2 <- NA
+for (s in 1:nrow(samples.wes)) {
+   samples.wes$K1N2[s] <- sum(tpm.gene.log2.zscore[,s] * coefficients$V2)
+}
+
+##
+s <- rownames(subset(samples.wes, Survival == "Short"))
+l <- rownames(subset(samples.wes, Survival == "Long"))
+
+file.name <- file.path(wd.de.plots, "boxplot_K1N2_EAC1+2_zscore_Short-vs-Long")
+ylab.txt <- "K1N2 scores"
+plotBox(file.name, samples.wes[s,]$K1N2, samples.wes[l,]$K1N2, "EAC 1+2 (n=64)", names=c("Short", "Long"), cols=c("white", "white"), ylab.txt)
+
+##
+c <- rownames(subset(samples.wes, Response != "Minor"))
+i <- rownames(subset(samples.wes, Response == "Minor"))
+
+file.name <- file.path(wd.de.plots, "boxplot_K1N2_EAC1+2_zscore_Minor-vs-Major+Complete")
+ylab.txt <- "K1N2 scores"
+plotBox(file.name, samples.wes[i,]$K1N2, samples.wes[c,]$K1N2, "EAC 1+2 (n=64)", names=c("Minor", "Maj.+Comp."), cols=c("white", "white"), ylab.txt)
+
+c <- rownames(subset(samples.wes, Response == "Complete"))
+i <- rownames(subset(samples.wes, Response != "Complete"))
+
+file.name <- file.path(wd.de.plots, "boxplot_K1N2_EAC1+2_zscore_Minor+Major-vs-Complete")
+ylab.txt <- "K1N2 scores"
+plotBox(file.name, samples.wes[i,]$K1N2, samples.wes[c,]$K1N2, "EAC 1+2 (n=64)", names=c("Min.+Maj.", "Complete"), cols=c("white", "white"), ylab.txt)
+
+##
+c <- rownames(subset(samples.wes, Response == "Complete"))
+a <- rownames(subset(samples.wes, Response == "Major"))
+i <- rownames(subset(samples.wes, Response == "Minor"))
+
+file.name <- file.path(wd.de.plots, "boxplot_K1N2_EAC1+2_zscore_Minor-vs-Major")
+ylab.txt <- "K1N2 scores"
+plotBox(file.name, samples.wes[i,]$K1N2, samples.wes[a,]$K1N2, "EAC 1+2 (n=64)", names=c("Minor", "Major"), cols=c("white", "white"), ylab.txt)
+
+file.name <- file.path(wd.de.plots, "boxplot_K1N2_EAC1+2_zscore_Minor-vs-Complete")
+ylab.txt <- "K1N2 scores"
+plotBox(file.name, samples.wes[i,]$K1N2, samples.wes[c,]$K1N2, "EAC 1+2 (n=64)", names=c("Minor", "Complete"), cols=c("white", "white"), ylab.txt)
+
+file.name <- file.path(wd.de.plots, "boxplot_K1N2_EAC1+2_zscore_Major-vs-Complete")
+ylab.txt <- "K1N2 scores"
+plotBox(file.name, samples.wes[a,]$K1N2, samples.wes[c,]$K1N2, "EAC 1+2 (n=64)", names=c("Major", "Complete"), cols=c("white", "white"), ylab.txt)
+
+# -----------------------------------------------------------------------------
+# K1N2
+# Last Modified: 10/11/22
+# -----------------------------------------------------------------------------
+samples.wes.high <- subset(samples.wes, K1N2 >= 1.0336)
+samples.wes.low  <- subset(samples.wes, K1N2 <  1.0336)
+
+mut.g1 <- rownames(subset(samples.wes.high, Survival == "Short"))
+mut.s  <- rownames(subset(samples.wes.high, Survival == "Long"))
+wt.g1  <- rownames(subset(samples.wes.low,  Survival == "Short"))
+wt.s   <- rownames(subset(samples.wes.low,  Survival == "Long"))
+
+test <- toTable(0, 2, 2, c("Short", "Long"))
+rownames(test) <- c("High", "Low")
+test[1, 1] <- length(mut.g1)
+test[1, 2] <- length(mut.s)
+test[2, 1] <- length(wt.g1)
+test[2, 2] <- length(wt.s)
+ 
+chisq.test(test)[[3]]
+
 
 # -----------------------------------------------------------------------------
 # Survival analysis
@@ -240,6 +358,8 @@ test <- tpm.gene[genes.NBX.down.pe3, rownames(samples2)]   ## BUG FIX 13/02/17: 
 pca.de <- getPCA(t(test))
 file.main <- c("EAC 2 (n=97)", "14 Basal-like genes")
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_EAC2_Purity_Estimated_purity_WES_n97_14-basal-like-gene", size=6, file.main, "bottomright", trait.v, cols, NULL, flip.x=1, flip.y=1, legend.title=NA)
+
+
 
 
 

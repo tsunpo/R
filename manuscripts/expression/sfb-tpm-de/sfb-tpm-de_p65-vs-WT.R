@@ -100,10 +100,19 @@ de.tpm.gene[1012, "FDR"]
 # -----------------------------------------------------------------------------
 load("/Users/tpyang/Work/uni-koeln/tyang2/SFB/analysis/expression/kallisto/sfb-tpm-de/data/DE_SFB_tpm-gene-median0_p65-vs-WT_wilcox_q_n11.RData")
 
+de.sig.pos <- subset(subset(de.tpm.gene, P <= 0.01), LOG2_FC >= log2(2))
+de.sig.neg <- subset(subset(de.tpm.gene, P <= 0.01), LOG2_FC <= -log2(2))
+de.sig <- rbind(de.sig.pos, de.sig.neg)
+
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- de.sig$external_gene_name
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+
 xlab.text <- expression("Fold change " * "[log" * ""[2] * "]")
 ylab.text <- expression("Significance " * "[-log" * ""[10] * "(" * italic("P") * ")]")
 
-plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_p65-vs-WT_p0.01_fc1_log2")
+plot.de <- file.path(wd.de.plots, "volcanoplot_DE_SFB_median0_p65-vs-WT_p0.01_fc1_log2_GENE")
 #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
 file.main <- c("p65 vs. WT", "")

@@ -64,7 +64,7 @@ load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m
 
 ymax <- 0.6
 ymin <- 0.15
-for (c in 1:22) {
+for (c in 22:1) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
@@ -72,19 +72,19 @@ for (c in 1:22) {
    nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
    
    ## Plot RT
-   main.text <- paste0(BASE, " M2/M1 read depth ratio between M2 (n=", n1, ") and M1 (n=", n0, ") tumour samples")  
+   main.text <- paste0(BASE, " M2/M1 read depth ratio RT")  
    file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
 
    file.name <- file.path(wd.rt.plots, "with-LCL", paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))  
-   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2 tumour", "M1 tumour"), c(red, blue), c("M2", "M1"), "png", width=13, peaks=c(), ylim=c(ymin, ymax), NULL, nrds.lcl.chr)
 
    ## chr2
-   main.text <- paste0(BASE, " M2/M1 read depth ratio RT")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Abstract"))   
-   plotRTAbstract(file.name, main.text, chr,  13000000,  17000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.1)
-   plotRTAbstract(file.name, main.text, chr,  70000000,  80000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
-   plotRTAbstract(file.name, main.text, chr, 160000000, 170000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
+   #main.text <- paste0(BASE, " M2/M1 read depth ratio RT")  
+   #file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Abstract"))   
+   #plotRTAbstract(file.name, main.text, chr,  13000000,  17000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.1)
+   #plotRTAbstract(file.name, main.text, chr,  70000000,  80000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
+   #plotRTAbstract(file.name, main.text, chr, 160000000, 170000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=5, peaks=c(), ylim=c(ymin, ymax), NULL, NULL, 0.05)
 }
 
 ##
@@ -135,7 +135,7 @@ for (c in 1:22) {
 file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_chr2")
 main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
 ylab.text <- "SCLC M2/M1"
-plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=1.2, chr2="0.00", offset="          ")
+plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2, size=6)
 
 ### Figure 4D
 ## SCLC vs. LCL
@@ -143,7 +143,7 @@ file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman")
 main.text <- c("Replication timing skew", "")
 xlab.text <- "LCL S/G1"
 ylab.text <- "SCLC M2/M1"
-plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19, 22), xlab.text, unit=5, ylab.text, cex=1.2)
+plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19), xlab.text, unit=5, ylab.text, cex=2, size=6)
 
 
 

@@ -126,10 +126,11 @@ plotDensityHistogram(tpm.gene, file.main, "Filtered")
 # Last Modified: 04/05/22
 # =============================================================================
 samples.wes <- readTable(file.path(wd.meta, "Patienten_Follow_Up_joined_final_3.0_tyang2.txt"), header=T, rownames=T, sep="\t")
-samples.wes <- subset(samples.wes, IS_WES_QC == T)
+samples.wes <- subset(samples.wes, IS_WES_QC == F)
 samples.wes <- subset(samples.wes, IS_RNA_SEQ == T)
 rownames(samples.wes) <- paste0(samples.wes$Patient_ID, "_B")
 nrow(samples.wes)
+# [1] 64
 # [1] 49
 # [1] 48
 
@@ -139,9 +140,10 @@ colnames(tpm.gene.1) <- samples.aim1$PATIENT_ID2
 overlaps.1 <- intersect(rownames(samples.wes), colnames(tpm.gene.1))
 overlaps.2 <- intersect(rownames(samples.wes), colnames(tpm.gene.2))
 
-tpm.gene <- cbind(tpm.gene.1[, overlaps.1], tpm.gene.2[, overlaps.2])
+overlaps <- intersect(rownames(tpm.gene.1), rownames(tpm.gene.2))
+tpm.gene <- cbind(tpm.gene.1[overlaps, overlaps.1], tpm.gene.2[overlaps, overlaps.2])
 save(tpm.gene, file=file.path(wd.de.data, paste0("esad1+2", "_kallisto_0.43.1_tpm.gene.RData")))
-file.main <- file.path(wd.de.data, paste0("esad1+2", "_kallisto_0.43.1_tpm.gene_34908x48"))
+file.main <- file.path(wd.de.data, paste0("esad1+2", "_kallisto_0.43.1_tpm.gene_34908x64"))
 writeTable(tpm.gene, gzfile(paste0(file.main, ".txt.gz")), colnames=T, rownames=T, sep="\t")
 
 ##

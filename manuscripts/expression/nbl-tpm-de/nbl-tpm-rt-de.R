@@ -108,6 +108,140 @@ plotCorrelation(file.name, "NB ploidy", "nature14980-s1.txt", "pupl.txt", x, y, 
 save(samples.purities, file=file.path(wd.driver.data, "2015", "NBL_purities_n57.RData"))
 
 # -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+samples.nbl.tpm$Purity <- samples.nbl.tpm$purity2
+
+xlab.text <- "Expression vs. SCF index [rho]"
+ylab.text <- "Expression vs. Purity [rho]"
+pvalue <- 0.01
+
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+#genes[2, 2] <- -0.15
+#genes[2, 3] <- 1.2
+
+for (q in 1:4) {
+   samples.tpm.nbl.Q4 <- subset(samples.tpm.nbl, Q4 == q)
+   n <- nrow(samples.tpm.nbl.Q4)
+ 
+   load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+   tpm.gene <- tpm.gene[, rownames(samples.tpm.nbl.Q4)]   ## VERY VERY VERY IMPORTANT!!!
+   tpm.gene.log2   <- log2(tpm.gene + 1)
+ 
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.nbl.tpm.Q4, "COR", n, "Q",q)
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.nbl.tpm.Q4, "Purity", n, "Q",q)
+ 
+   ##
+   expressed <- rownames(tpm.gene)
+   de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2=paste0("_Q", q))
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_P1E02_MEDIAN0_Q", q))
+   #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Neuroblastoma Q", q, " (n=", n, ")"), "")
+   plotCannoliGenes(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+}
+
+for (m in 1:2) {
+   samples.tpm.nbl.M2 <- subset(samples.tpm.nbl, M2 == m)
+   n <- nrow(samples.tpm.nbl.M2)
+ 
+   load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+   tpm.gene <- tpm.gene[, rownames(samples.tpm.nbl.M2)]   ## VERY VERY VERY IMPORTANT!!!
+   tpm.gene.log2   <- log2(tpm.gene + 1)
+ 
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.tpm.nbl.M2, "COR", n, "M", m)
+   #getSRC(wd.de.data, BASE, tpm.gene.log2, samples.tpm.nbl.M2, "Purity", n, "M", m)
+ 
+   ##
+   expressed <- rownames(tpm.gene)
+   de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2=paste0("_M", m))
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_P1E02_MEDIAN0_M", m))
+   #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Neuroblastoma M", m, " (n=", n, ")"), "")
+   plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+}
+
+n <- nrow(samples.tpm.nbl)
+
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+tpm.gene <- tpm.gene[, rownames(samples.tpm.nbl)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2   <- log2(tpm.gene + 1)
+
+#getSRC0(wd.de.data, BASE, tpm.gene.log2, samples.tpm.nbl, "COR", n)
+#getSRC0(wd.de.data, BASE, tpm.gene.log2, samples.tpm.nbl, "Purity", n)
+
+##
+expressed <- rownames(tpm.gene)
+de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2="")
+plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_P1E02_MEDIAN0"))
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Neuroblastoma (n=", n, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+###
+##
+save(samples.tpm.sclc, samples.tpm.nbl, samples.tpm.cll, file=file.path(wd.de.data, "2015", "samples.tpm_SCLC+NBL+CLL.RData"))
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 19/10/22
+# -----------------------------------------------------------------------------
+genes.G1S <- readTable(file.path(wd.meta, "Dominguez_G1-S.list"), header=F, rownames=F, sep="")
+genes.G2M <- readTable(file.path(wd.meta, "Dominguez_G2-M.list"), header=F, rownames=F, sep="")
+
+for (q in 1:4) {
+   n <- nrow(subset(samples.tpm.nbl, Q4 == q))
+   expressed <- rownames(tpm.gene)
+   de <- getCannoli(wd.de.data, BASE, n, expressed, TEST="COR", TEST2="Purity", M2=paste0("_Q", q))
+ 
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_MEDIAN0_G1-S_Q", q))
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Neuroblastoma Q", q, " (n=", n, ")"), "")
+   plotCannoliGenes(de, genes.G1S, file.de, file.main, xlab.text, ylab.text, col=red, pos="bottomright")
+   
+   plot.de <- file.path(wd.de.plots, paste0("cannoliplot_SRC_", BASE, "_TPM-COR-Purity_MEDIAN0_G2-M_Q", q))
+   file.de <- paste0(plot.de, ".pdf")
+   file.main <- c(paste0("Neuroblastoma Q", q, " (n=", n, ")"), "")
+   plotCannoliGenes(de, genes.G2M, file.de, file.main, xlab.text, ylab.text, col=green, pos="bottomright")
+}
+
+##
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL_purity_SCF"))
+x <- samples.tpm.nbl$COR
+y <- samples.tpm.nbl$purity2
+plotCorrelation(file.name, "Neuroblastoma", "SCF index", "Purity", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+for (q in 1:4) {
+   samples.tpm.nbl.Q4 <- subset(samples.tpm.nbl, Q4 == q)
+
+   file.name <- file.path(wd.de.plots, paste0("Correlation_NBL_purity_SCF_Q", q))
+   x <- samples.tpm.nbl.Q4$COR
+   y <- samples.tpm.nbl.Q4$purity2
+   plotCorrelation(file.name, paste0("Neuroblastoma (Q", q, ")"), "SCF index", "Purity", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+}
+
+##
+file.name <- file.path(wd.de.plots, paste0("Correlation_NBL_ploidy_SCF"))
+x <- samples.tpm.nbl$COR
+y <- samples.tpm.nbl$ploidy2
+plotCorrelation(file.name, "Neuroblastoma", "SCF index", "Ploidy", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+
+for (q in 1:4) {
+   samples.tpm.nbl.Q4 <- subset(samples.tpm.nbl, Q4 == q)
+ 
+   file.name <- file.path(wd.de.plots, paste0("Correlation_NBL_ploidy_SCF_Q", q))
+   x <- samples.tpm.nbl.Q4$COR
+   y <- samples.tpm.nbl.Q4$ploidy2
+   plotCorrelation(file.name, paste0("Neuroblastoma (Q", q, ")"), "SCF index", "Ploidy", x, y, pos="bottomright", cols=c("dimgray", "black"), size=5)
+}
+
+# -----------------------------------------------------------------------------
 # PCA
 # Last Modified: 17/08/22; 26/03/21; 23/08/20
 # -----------------------------------------------------------------------------
@@ -117,14 +251,14 @@ save(pca.de, file=file.path(wd.de.data, "2015", paste0("PCA_NBL_n54_median0.RDat
 
 trait <- samples.nbl.tpm$GROUP_ID
 file.main <- c("NB expression", "")
-plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_NBL_LR-HR_n54", size=6, file.main, "topright", c("HR", "LR"), c(red, blue), flip.x=-1, flip.y=-1)
+plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_NBL_LR-HR_n54", size=6, file.main, "topright", c("All-HR", "LR"), c(red, blue), flip.x=-1, flip.y=-1)
 
 trait <- samples.nbl.tpm$GROUP_ID2
 file.main <- c("NB expression", "")
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_NBL_LR-HR-MYC_n54", size=6, file.main, "topright", c("MYCN", "HR", "LR"), c(red, "lightgray", blue), flip.x=-1, flip.y=-1)
 
 trait <- samples.nbl.tpm$GROUP_ID3
-file.main <- c("NB expression", "")
+file.main <- c("NB expression (n=54)", "")
 plotPCA(1, 2, pca.de, trait, wd.de.plots, "PCA_NBL_LR-HR-MYC-TERT_n54_black", size=6, file.main, "topright", c("HR", "TERT", "MYCN", "LR"), c("black", yellow, red, blue), flip.x=-1, flip.y=-1)
 
 scores.de <- pcaScores(pca.de)
@@ -134,8 +268,8 @@ samples.nbl.tpm$PC2 <- scores.de$PC2 * -1
 ## PC1
 x <- samples.nbl.tpm$PC1
 y <- samples.nbl.tpm$COR
-file.name <- file.path(wd.de.plots, "2015", paste0("correlation_PCA-NBL-TPM-MEDIAN0_PC1-vs-SORTING"))
-plotCorrelation(file.name, "NB expression", paste0("PC", 1, " (", pcaProportionofVariance(pca.de, 1), "%)"), "S-phase cell fraction", x, y, size=5)
+file.name <- file.path(wd.de.plots, "2015", paste0("correlation_PCA-NBL-TPM-MEDIAN0_PC1-vs-SORTING_DNA"))
+plotCorrelation(file.name, "DNA vs. expression", paste0("PC", 1, " (", pcaProportionofVariance(pca.de, 1), "%)"), "SCF index", x, y, size=5)
 
 x <- samples.nbl.tpm$PC1
 y <- samples.nbl.tpm$purity2
@@ -145,8 +279,8 @@ plotCorrelation(file.name, "NB expression", paste0("PC", 1, " (", pcaProportiono
 ## PC2
 x <- samples.nbl.tpm$PC2
 y <- samples.nbl.tpm$COR
-file.name <- file.path(wd.de.plots, "2015", paste0("correlation_PCA-NBL-TPM-MEDIAN0_PC2-vs-SORTING"))
-plotCorrelation(file.name, "NB expression", paste0("PC", 2, " (", pcaProportionofVariance(pca.de, 2), "%)"), "S-phase cell fraction", x, y, size=5)
+file.name <- file.path(wd.de.plots, "2015", paste0("correlation_PCA-NBL-TPM-MEDIAN0_PC2-vs-SORTING_DNA"))
+plotCorrelation(file.name, "DNA vs. expression", paste0("PC", 2, " (", pcaProportionofVariance(pca.de, 2), "%)"), "SCF index", x, y, size=5)
 
 x <- samples.nbl.tpm$PC2
 y <- samples.nbl.tpm$purity2
@@ -247,6 +381,18 @@ for (g in 1:length(genes)) {
    plotSRC(file.path(wd.de.plots, "2015"), genes[g], as.numeric(tpm.gene.log2[id,]), samples.nbl.tpm$COR, 1, pos="bottomright", cols=c(red, blue), size=5)
 }
 
+genes <- c("RAD51C", "PSMC5", "ZNF652")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(file.path(wd.de.plots, "2015", "CN"), genes[g], as.numeric(tpm.gene.log2[id,]), samples.nbl.tpm$COR, 1, pos="bottomright", cols=c(red, blue), size=5)
+}
+
+genes <- c("IVNS1ABP", "TPR", "EED", "DDX10", "H2AFX", "CHEK1", "RPUSD4", "NCAPD3", "RAD51C", "PSMC5", "ZNF652")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(file.path(wd.de.plots, "2015", "CN"), genes[g], as.numeric(tpm.gene.log2[id,]), samples.nbl.tpm$PC2, 1, pos="bottomright", cols=c(red, blue), size=5)
+}
+
 # -----------------------------------------------------------------------------
 # Correlation bwteen TPM and CNAs
 # Last Modified: 26/06/22; 12/12/19; 08/01/19; 17/08/17
@@ -287,7 +433,7 @@ annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", 
 src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
 
 writeTable(src.tpm.gene, file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_CNA-vs-TPM_q_n54.txt"), colnames=T, rownames=F, sep="\t")
-save(src.tpm.gene, samples, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_CNA-vs-TPM_q_n54.RData"))
+save(src.tpm.gene, samples.nbl.tpm, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_CNA-vs-TPM_q_n54.RData"))
 #writeRNKformat(src.tpm.gene, wd.de.gsea, "SRC_NBL_tpm-gene_CNA-vs-TPM_q_n53")   ## GSEA
 nrow(src.tpm.gene)
 # [1] 32923
@@ -305,18 +451,23 @@ nrow(src.tpm.gene)
 
 ###
 ##
-genes <- c("TERT", "MYC", "MYCN", "MYCL", "RNASEH1P2", "CTDNEP1")
-genes <- c("PIN4", "ZNF652", "PSMC5", "RAD51C", "CLASP1")
+genes <- c("TERT", "MKI67", "MYCN", "NTRK1")
 for (g in 1:length(genes)) {
    id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
    plotCNA(file.path(wd.de.plots, "2015"), genes[g], as.numeric(tpm.gene.log2.cna[id,]), as.numeric(cna.gene.nona.tpm.src[id,]), 1, pos="bottomright", col="black", size=5)
+}
+
+genes <- c("IVNS1ABP", "TPR", "EED", "DDX10", "H2AFX", "CHEK1", "RPUSD4", "NCAPD3", "RAD51C", "PSMC5", "ZNF652")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotCNA(file.path(wd.de.plots, "2015", "CN"), genes[g], as.numeric(tpm.gene.log2.cna[id,]), as.numeric(cna.gene.nona.tpm.src[id,]), 1, pos="bottomright", col="black", size=5)
 }
 
 # -----------------------------------------------------------------------------
 # Cannoli plot (P < 0.001)
 # Last Modified: 04/07/22; 26/06/22; 11/10/17
 # -----------------------------------------------------------------------------
-xlab.text <- "Expression vs. PC2"
+xlab.text <- "Expression vs. PC2 [rho]"
 #ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
 ylab.text <- "Expression vs. CNA [rho]"
 pvalue <- 0.001
@@ -337,11 +488,11 @@ genes$GENE <- genes0
 #plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
 
 ## Expressed
-de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, NULL)
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, NULL, TEST="PC2")
 load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 expressed <- intersect(rownames(de), rownames(tpm.gene))
 
-de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, expressed)
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, expressed, TEST="PC2")
 plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL_TPM-CNA-PC2_P1E03_MEDIAN0")
 #genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
@@ -357,7 +508,7 @@ plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottom
 #plotCannoli(de, pvalue, toTable(NA, length(colnames), 0, colnames), file.de, file.main, xlab.text, ylab.text, "topleft", c("", ""), c(red, blue), c(red, blue), fold=0)
 
 # -----------------------------------------------------------------------------
-# GSEA
+# GSEA (CN > 2)
 # Last Modified: 15/07/22; 26/06/22; 11/10/17
 # -----------------------------------------------------------------------------
 de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
@@ -372,6 +523,11 @@ de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
 
 writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC2-CNA-TPM_q_n54_GAIN")   ## GSEA
 writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC2-CNA-TPM_q_n54_LOSS")   ## GSEA
+
+nrow(subset(de, Effect2 > 0)) / nrow(de)
+# [1] 0.7681552
+nrow(subset(de, Effect2 <= 0)) / nrow(de)
+# [1] 0.2317574
 
 # -----------------------------------------------------------------------------
 # Wilcoxon rank sum test (Low vs. High-risk)
@@ -421,7 +577,102 @@ for (g in 1:length(genes)) {
    plotBox(file.name, tpm.1, tpm.2, genes[g], names=c("LR", "HR"), cols=c("skyblue", yellow), h=5, w=5)
 }
 
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and Purities
+# Last Modified: 21/09/22
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(src) <- rownames(tpm.gene.log2)
 
+## SRC
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm$purity2, method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.nbl.tpm$purity2, method="spearman", exact=F)[[3]])
+src <- src[!is.na(src$P),]
+
+## Log2 fold change
+#src$G1 <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "G1")))
+#src$S  <- median00(tpm.gene.log2, rownames(subset(samples.nbl.tpm, SORTING == "S")))
+#src$LOG2_FC <- src$S - src$G1
+
+## FDR
+library(qvalue)
+src$Q <- qvalue(src$P)$qvalue
+src <- src[order(src$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+
+writeTable(src.tpm.gene, file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_Purity-vs-TPM_q_n54.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples.nbl.tpm, file=file.path(wd.de.data, "2015", "SRC_NBL_tpm-gene_Purity-vs-TPM_q_n54.RData"))
+#writeRNKformat(src.tpm.gene, wd.de.gsea, "SRC_NBL_tpm-gene-r5p47_SORTING_q_n54")   ## GSEA
+nrow(src.tpm.gene)
+# [1] 22899
+
+###
+##
+genes <- c("CARD16", "CCL5", "CD8B", "CD247", "APOBEC3G", "S100A6", "UBR7")
+genes <- c("CDT1", "SAPCD2", "ZNF45", "CINP", "BCL2")
+for (g in 1:length(genes)) {
+   id <- subset(ensGene, external_gene_name == genes[g])$ensembl_gene_id
+   plotSRC(file.path(wd.de.plots, "2015"), genes[g], as.numeric(tpm.gene.log2[id,]), samples.nbl.tpm$purity2, 1, pos="bottomright", cols=c(red, blue), size=5, xlab.text="Purity")
+}
+
+# -----------------------------------------------------------------------------
+# Cannoli plot (P < 0.001)
+# Last Modified: 21/09/22
+# -----------------------------------------------------------------------------
+xlab.text <- "Expression vs. PC2 [rho]"
+#ylab.text <- expression("Expression vs."~italic('in silico')~"sorting")
+ylab.text <- "Expression vs. Purity [rho]"
+pvalue <- 0.001
+
+colnames <- c("GENE", "ADJ_1", "ADJ_2")
+genes0 <- c("MKI67", "MYCN", "TERT", "NTRK1")
+genes <- toTable(NA, length(colnames), length(genes0), colnames)
+genes$GENE <- genes0
+#genes[4, 2] <- 1
+#genes[5, 2] <- 1
+
+## Expressed
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, NULL, TEST="PC1", TEST2="Purity")
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+expressed <- intersect(rownames(de), rownames(tpm.gene))
+
+de <- getCannoli(file.path(wd.de.data, "2015"), BASE, 54, expressed, TEST="PC1", TEST2="Purity")
+plot.de <- file.path(wd.de.plots, "2015", "cannoliplot_SRC_NBL_TPM-Purity-PC2_P1E03_MEDIAN0")
+#genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c(paste0("Neuroblastoma (n=", 54, ")"), "")
+plotCannoli(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, "bottomleft", c("", ""), c(red.lighter, blue.lighter), c(red, blue), fold=0, pos="bottomright")
+
+# -----------------------------------------------------------------------------
+# GSEA (Purity)
+# Last Modified: 21/09/22
+# -----------------------------------------------------------------------------
+de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= 0.001), P2 <= 0.001)
+de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= 0.001), P2 <= 0.001)
+
+de.neg.neg <- subset(subset(de, Effect2 < 0), Effect1 < 0)
+de.neg.neg.sig <- subset(subset(de.neg.neg, P1 <= 0.001), P2 <= 0.001)
+de.neg.pos <- subset(subset(de, Effect2 < 0), Effect1 > 0)
+de.neg.pos.sig <- subset(subset(de.neg.pos, P1 <= 0.001), P2 <= 0.001)
+
+writeRNKformatCNA(rbind(de.pos.pos, de.pos.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC2-CNA-TPM_q_n54_GAIN")   ## GSEA
+writeRNKformatCNA(rbind(de.neg.pos, de.neg.neg), wd.de.gsea, "SRC_NBL_tpm-gene-median0_PC2-CNA-TPM_q_n54_LOSS")   ## GSEA
+
+nrow(subset(de, Effect2 > 0)) / nrow(de)
+# [1] 0.5527752
+nrow(subset(de, Effect2 <= 0)) / nrow(de)
+# [1] 0.4472248
+
+# -----------------------------------------------------------------------------
+# Pipeline
+# Last Modified: 22/09/22
+# -----------------------------------------------------------------------------
 
 
 

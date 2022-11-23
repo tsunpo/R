@@ -464,13 +464,15 @@ getVolcanoGenes <- function(file.tab, de) {
    return(genes[intersect(genes$GENE, de$external_gene_name),])
 }
 
-adjustcolor.red   <- adjustcolor(red, alpha.f=0.25)
-adjustcolor.blue  <- adjustcolor(blue, alpha.f=0.25)
+adjustcolor.red   <- adjustcolor(red, alpha.f=0.15)
+adjustcolor.blue  <- adjustcolor(blue, alpha.f=0.15)
 adjustcolor.green <- adjustcolor(green, alpha.f=0.25)
 adjustcolor.yellow <- adjustcolor(yellow, alpha.f=0.25)
 adjustcolor.skyblue <- adjustcolor("skyblue", alpha.f=0.25)
-adjustcolor.gray  <- adjustcolor("black", alpha.f=0.25)
-adjustcolor.lightgray  <- adjustcolor("darkgray", alpha.f=0.25)
+adjustcolor.black  <- adjustcolor("black", alpha.f=0.15)
+adjustcolor.dimgray  <- adjustcolor("dimgray", alpha.f=0.25)
+adjustcolor.darkgray  <- adjustcolor("darkgray", alpha.f=0.25)
+adjustcolor.lightgray  <- adjustcolor("lightgray", alpha.f=0.25)
 adjustcolor.white   <- adjustcolor("white", alpha.f=0)
 
 ## Bottom-right	-0.12	1.25
@@ -486,17 +488,18 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
    #ymax <- 7
  
    pdf(file.de, height=6, width=6)
-   par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab=ylab.text, col="white", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
-   #abline(h=c(-log10(pvalue)), lty=5, lwd=2)
+   par(mar=c(5.1, 4.7, 4.1, 1.4), xpd=F)
+   plot(de$LOG2_FC, de$log10P, pch=16, xlim=c(xmin, xmax), ylim=c(0, ymax), xlab=xlab.text, ylab=ylab.text, col="lightgray", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   abline(h=c(-log10(pvalue)), lty=5, lwd=2)
  
    de.up   <- subset(de.sig, LOG2_FC > fold)
    points(de.up$LOG2_FC, de.up$log10P, pch=16, col=cols[1], cex=1.7)
    de.down <- subset(de.sig, LOG2_FC < -fold)
    points(de.down$LOG2_FC, de.down$log10P, pch=16, col=cols[2], cex=1.7)
-   #abline(v=fold, lty=5, col=red, lwd=2)
-   #abline(v=-fold, lty=5, col=blue, lwd=2)
+   abline(v=fold, lty=5, col=red, lwd=2)
+   abline(v=-fold, lty=5, col=blue, lwd=2)
  
+   par(xpd=T)
    if (nrow(genes) != 0) {
       for (g in 1:nrow(genes)) {
          gene <- subset(de, external_gene_name == genes[g,]$GENE)
@@ -505,16 +508,16 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
          if (nrow(gene) > 0) {
             points(gene$LOG2_FC, gene$log10P, pch=1, col="black", cex=1.7)
     
-            if (!is.na(gene$ADJ_1))
-               if (is.na(gene$ADJ_2))
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.7)
-               else
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.7)
-            else
-               if (gene$LOG2_FC > 0)
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.7)
-               else
-                  text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.3), cex=1.7)
+            #if (!is.na(gene$ADJ_1))
+               #if (is.na(gene$ADJ_2))
+                  #text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=gene$ADJ_1, cex=1.7)
+               #else
+                  #text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(gene$ADJ_1, gene$ADJ_2), cex=1.7)
+            #else
+               #if (gene$LOG2_FC > 0)
+                  #text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(0, -0.5), cex=1.7)
+               #else
+                  #text(gene$LOG2_FC, gene$log10P, paste(genes[g,]$GENE, genes[g,]$ADJ_3), col="black", adj=c(1, -0.3), cex=1.7)
          } else
             print(genes[g,])
       }
@@ -523,7 +526,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
    #legends[1] <- paste0(nrow(de.up), " ", legends[1])
    #legends[2] <- paste0(nrow(de.down), " ", legends[2])
    #axis(side=1, at=seq(-8, 8, by=1), labels=c(-3, -2, -1, 0, 1, 2, 3), cex.axis=1.2)
-   legend(legend, legend=legends, col=cols2, pch=19, pt.cex=2, cex=1.6)
+   #legend(legend, legend=legends, col=cols2, pch=19, pt.cex=2, cex=1.6)
    dev.off()
 }
 
@@ -531,17 +534,65 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
 # Method: Cannoli plot
 # Last Modified: 01/07/22
 # -----------------------------------------------------------------------------
-getCannoli <- function(de.data, BASE, n, gene.list=NULL, TEST="SORTING") {
-   load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_", TEST, "-vs-TPM_q_n", n, ".RData")))
+getSRC0 <- function(wd.de.data, BASE, tpm.gene.log2, samples.tpm, COR, n) {
+   colnames <- c("RHO", "P", "Q")
+   src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+   rownames(src) <- rownames(tpm.gene.log2)
+ 
+   ## SRC
+   src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.tpm[, COR], method="spearman", exact=F)[[4]])
+   src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.tpm[, COR], method="spearman", exact=F)[[3]])
+   src <- src[!is.na(src$P),]
+ 
+   ## FDR
+   library(qvalue)
+   src$Q <- qvalue(src$P)$qvalue
+   src <- src[order(src$P),]
+ 
+   ## Ensembl gene annotations
+   annot <- ensGene[,c("ensembl_gene_id", "external_gene_name")]
+   src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+ 
+   #writeTable(src.tpm.gene, file.path(wd.de.data, paste0("SRC_", BASE, "_tpm-gene_TPM-vs-", COR, "_n", n, ".txt")), colnames=T, rownames=F, sep="\t")
+   save(src.tpm.gene, file=file.path(wd.de.data, paste0("SRC_", BASE, "_tpm-gene_TPM-vs-", COR, "_n", n, ".RData")))
+}
+
+getSRC <- function(wd.de.data, BASE, tpm.gene.log2, samples.tpm, COR, n, Q, q) {
+   colnames <- c("RHO", "P", "Q")
+   src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+   rownames(src) <- rownames(tpm.gene.log2)
+ 
+   ## SRC
+   src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.tpm[, COR], method="spearman", exact=F)[[4]])
+   src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.tpm[, COR], method="spearman", exact=F)[[3]])
+   src <- src[!is.na(src$P),]
+   
+   ## FDR
+   library(qvalue)
+   src$Q <- qvalue(src$P)$qvalue
+   src <- src[order(src$P),]
+   
+   ## Ensembl gene annotations
+   annot <- ensGene[,c("ensembl_gene_id", "external_gene_name")]
+   src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+   
+   #writeTable(src.tpm.gene, file.path(wd.de.data, paste0("SRC_", BASE, "_tpm-gene_TPM-vs-", COR, "_n", n, "_", Q, q, ".txt")), colnames=T, rownames=F, sep="\t")
+   save(src.tpm.gene, file=file.path(wd.de.data, paste0("SRC_", BASE, "_tpm-gene_TPM-vs-", COR, "_n", n, "_", Q, q, ".RData")))
+}
+
+getCannoli <- function(de.data, BASE, n, gene.list=NULL, TEST="COR", TEST2="Purity", M2="_M2") {
+   load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_TPM-vs-", TEST, "_n", n, M2, ".RData")))
+   #load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_", TEST, "-vs-TPM_q_n", n, M2, ".RData")))
    de1 <- src.tpm.gene
-   load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_CNA-vs-TPM_q_n", n, ".RData")))
+   load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_TPM-vs-", TEST2, "_n", n, M2, ".RData")))
+   #load(file=file.path(de.data, paste0("SRC_", BASE, "_tpm-gene_", TEST2, "-vs-TPM_q_n", n, M2, ".RData")))
    de2 <- src.tpm.gene
  
    overlaps <- intersect(rownames(de1), rownames(de2))
    de <- cbind(de1[overlaps, c("P", "Q", "RHO")], de2[overlaps, c("P", "Q", "RHO")])
    rownames(de) <- overlaps
-   de <- cbind(de1[overlaps,]$external_gene_name, de)
-   colnames(de) <- c("external_gene_name", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
+   de <- cbind(ensGene[overlaps, c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")], de)
+   colnames(de) <- c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype", "P1", "Q1", "Effect1", "P2", "Q2", "Effect2")
  
    if (!is.null(gene.list))
       de <- de[intersect(rownames(de), gene.list),]
@@ -554,24 +605,51 @@ getCannoli <- function(de.data, BASE, n, gene.list=NULL, TEST="SORTING") {
    return(de)
 }
 
+getCannoliGenes <- function(de, pvalue, genes0) {
+   de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
+   de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= pvalue), P2 <= pvalue)
+   de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
+   de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= pvalue), P2 <= pvalue)
+ 
+   if (nrow(de.pos.pos.sig) > 0 && nrow(de.pos.pos.sig) < 5)
+      genes0 <- c(genes0, as.vector(de.pos.pos.sig$external_gene_name))
+   if (nrow(de.pos.neg.sig) > 0 && nrow(de.pos.neg.sig) < 5)
+      genes0 <- c(genes0, as.vector(de.pos.neg.sig$external_gene_name))
+ 
+   colnames <- c("GENE", "ADJ_1", "ADJ_2")
+   genes <- toTable(NA, length(colnames), length(genes0), colnames)
+   genes$GENE <- genes0
+ 
+   return(genes)
+}
+
 plotCannoli<- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.text, legend, legends, cols, cols2, fold=1, ymax=0, col="black", pos="bottomright") {
+   plot.de <- as.vector(unlist(strsplit0(file.de, ".pdf"))[1])
+ 
    pdf(file.de, height=6, width=6)
    par(mar=c(5.1, 4.7, 4.1, 1.4), xpd=F)
-   plot(de$Effect1, de$Effect2, pch=16, xlab=xlab.text, ylab=ylab.text, xaxt="n", yaxt="n", col="lightgray", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   plot(de$Effect1, de$Effect2, pch=16, xlab=xlab.text, ylab=ylab.text, xaxt="n", yaxt="n", col="white", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
    #abline(h=c(-log10(pvalue)), lty=5, lwd=2)
    
+   de.neg <- subset(de, Effect2 < 0)
+   points(de.neg$Effect1, de.neg$Effect2, pch=16, col="lightgray", cex=1.7)
+
    de.pos.pos <- subset(subset(de, Effect2 > 0), Effect1 > 0)
    de.pos.pos.sig <- subset(subset(de.pos.pos, P1 <= pvalue), P2 <= pvalue)
    points(de.pos.pos$Effect1,     de.pos.pos$Effect2,     pch=16, col=cols[1], cex=1.7)
    points(de.pos.pos.sig$Effect1, de.pos.pos.sig$Effect2, pch=16, col=cols2[1], cex=1.7)
+   if (nrow(de.pos.pos.sig) > 0)
+      writeTable(de.pos.pos.sig, file.path(paste0(plot.de, "_pos.pos.txt")), colnames=T, rownames=F, sep="\t")
    
    de.pos.neg <- subset(subset(de, Effect2 > 0), Effect1 < 0)
    de.pos.neg.sig <- subset(subset(de.pos.neg, P1 <= pvalue), P2 <= pvalue)
    points(de.pos.neg$Effect1,     de.pos.neg$Effect2,     pch=16, col=cols[2], cex=1.7)
    points(de.pos.neg.sig$Effect1, de.pos.neg.sig$Effect2, pch=16, col=cols2[2], cex=1.7)
+   if (nrow(de.pos.neg.sig) > 0)
+      writeTable(de.pos.neg.sig, file.path(paste0(plot.de, "_pos.neg.txt")), colnames=T, rownames=F, sep="\t")
    
-   text(max(de.pos.pos$Effect1)/2, max(de.pos.pos$Effect2)/2, paste0(round0(nrow(de.pos.pos)/nrow(de)*100, 1), " %"), col="white", font=2, cex=1.8)
-   text(min(de.pos.neg$Effect1)/2, max(de.pos.pos$Effect2)/2, paste0(round0(nrow(de.pos.neg)/nrow(de)*100, 1), " %"), col="white", font=2, cex=1.8)
+   #text(max(de.pos.pos$Effect1)/2, max(de.pos.pos$Effect2)/2, paste0(round0(nrow(de.pos.pos)/nrow(de)*100, 1), " %"), col="white", font=2, cex=1.8)
+   #text(min(de.pos.neg$Effect1)/2, max(de.pos.pos$Effect2)/2, paste0(round0(nrow(de.pos.neg)/nrow(de)*100, 1), " %"), col="white", font=2, cex=1.8)
    
    abline(v=0, lty=5, col="black", lwd=2)
    abline(h=0, lty=5, col="black", lwd=2)
@@ -580,7 +658,8 @@ plotCannoli<- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.te
    abline(lm.fit, col=col, lwd=7)
    
    cor <- cor.test(de$Effect1, de$Effect2, method="spearman", exact=F)
-   legend(pos, c(paste0("N = ", separator(nrow(de))), paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, col, adjustcolor.white), text.font=2, bty="n", cex=1.8)
+   #legend(pos, c(paste0("N = ", separator(nrow(de))), paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, col, adjustcolor.white), text.font=2, bty="n", cex=1.8)
+   legend(pos, c("", paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, col, adjustcolor.white), text.font=2, bty="n", cex=1.8)
    legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
    legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
    
@@ -613,6 +692,54 @@ plotCannoli<- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.te
    axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
    axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
    legend(legend, legend=legends, col=cols2, pch=19, pt.cex=2, cex=1.6)
+   dev.off()
+}
+
+plotCannoliGenes<- function(de, genes, file.de, file.main, xlab.text, ylab.text, col="black", pos="bottomright") {
+   plot.de <- as.vector(unlist(strsplit0(file.de, ".pdf"))[1])
+ 
+   pdf(file.de, height=6, width=6)
+   par(mar=c(5.1, 4.7, 4.1, 1.4), xpd=F)
+   plot(de$Effect1, de$Effect2, pch=16, xlab=xlab.text, ylab=ylab.text, xaxt="n", yaxt="n", col="lightgray", main=file.main[1], cex=1.7, cex.axis=1.6, cex.lab=1.7, cex.main=1.8)
+   #abline(h=c(-log10(pvalue)), lty=5, lwd=2)
+
+   overlaps <- intersect(rownames(de), genes)
+   de.genes <- de[overlaps, ]
+   
+   de.pos.pos <- subset(subset(de.genes, Effect2 > 0), Effect1 > 0)
+   de.pos.neg <- subset(subset(de.genes, Effect2 > 0), Effect1 < 0)
+   text( 0.5, 0.5, paste0(round0(nrow(de.pos.pos)/nrow(de.genes)*100, 1), " %"), col=col, font=2, cex=1.8)
+   text(-0.5, 0.5, paste0(round0(nrow(de.pos.neg)/nrow(de.genes)*100, 1), " %"), col=col, font=2, cex=1.8)
+
+   de.neg.pos <- subset(subset(de.genes, Effect2 < 0), Effect1 > 0)
+   de.neg.neg <- subset(subset(de.genes, Effect2 < 0), Effect1 < 0)
+   text( 0.5, -0.5, paste0(round0(nrow(de.neg.pos)/nrow(de.genes)*100, 1), " %"), col=col, font=2, cex=1.8)
+   text(-0.5, -0.5, paste0(round0(nrow(de.neg.neg)/nrow(de.genes)*100, 1), " %"), col=col, font=2, cex=1.8)
+     
+   abline(v=0, lty=5, col="black", lwd=2)
+   abline(h=0, lty=5, col="black", lwd=2)
+ 
+   lm.fit <- lm(de$Effect1 ~ de$Effect2)
+   abline(lm.fit, col="black", lwd=7)
+ 
+   cor <- cor.test(de$Effect1, de$Effect2, method="spearman", exact=F)
+   #legend(pos, c(paste0("N = ", separator(nrow(de))), paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, col, adjustcolor.white), text.font=2, bty="n", cex=1.8)
+   legend(pos, c("", paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c("black", "black", adjustcolor.white), text.font=2, bty="n", cex=1.8)
+   legend(pos, expression(bolditalic('P')~"                   "), text.col="black", text.font=2, bty="n", cex=1.8)
+   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col="black", text.font=2, bty="n", cex=1.8)
+ 
+   if (length(genes) != 0) {
+      for (g in 1:length(genes)) {
+         gene <- subset(de, ensembl_gene_id == genes[g])
+         
+         if (nrow(gene) > 0) {
+            points(gene$Effect1, gene$Effect2, pch=1, col=col, cex=1.7)
+         }
+      }
+   }
+
+   axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
+   axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.6)
    dev.off()
 }
 

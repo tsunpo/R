@@ -129,6 +129,16 @@ writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DAT
 save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
 
 # -----------------------------------------------------------------------------
+# Purity
+# Last Modified: 23/10/22
+# -----------------------------------------------------------------------------
+purities <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/", "Purity.txt"), header=T, rownames=3, sep="\t")
+nrow(purities)
+
+overlaps <- intersect(rownames(samples), rownames(purities))
+samples.p <- cbind(samples[overlaps,], purities[overlaps, c(2,4)])
+
+# -----------------------------------------------------------------------------
 # samples
 # Last Modified: 21/04/19
 # -----------------------------------------------------------------------------

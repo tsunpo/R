@@ -272,7 +272,7 @@ dev.off()
 
 # -----------------------------------------------------------------------------
 # Stripchart (black; Resting to proliferating)
-# Last Modified: 22/08/22; 18/08/22; 27/07/22; 21/04/19
+# Last Modified: 22/11/22; 22/08/22; 18/08/22; 27/07/22; 21/04/19
 # -----------------------------------------------------------------------------
 samples.h1 <- toTable(0, 3, 0, c("CANCER", "COR"))
 labels1 <- c()
@@ -326,30 +326,108 @@ for (h in 8:1) {
 
 ###
 ##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_n56_legend_NEW"
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1"
 main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
 
 pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
 #par(mar = c(11.2, 5, 4, 2))
 par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h$CANCER) + c(1.1, 2.8))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
+text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+#stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
+stripchart(COR ~ CANCER, data=samples.h1[1:1889,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:19))
+stripchart(COR ~ CANCER, data=samples.h1[1991:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(21:28))
+stripchart(subset(samples.sclc, M2 == 2)$COR ~ rep(20, time=50), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=20)
+stripchart(subset(samples.sclc, M2 == 1)$COR ~ rep(20, time=51), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=20)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
+legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
+dev.off()
+
+
+
+
+###
+##
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_n56_legend_NEW_black"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 56 neuroblastoma (NB) primary tumour samples"))
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6))
 text(labels=labels1[1:8],   x=1:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
 text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
 text(labels=labels1[10:28], x=10:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
 
-stripchart(COR ~ CANCER, data=samples.h1[1:881,], method="jitter", cex=1.5, pch=1, col=adjustcolor.lightgray, vertical=T, add=T, at=c(1:8))
-stripchart(COR ~ CANCER, data=samples.h1[938:2769,], method="jitter", cex=1.5, pch=1, col=adjustcolor.lightgray, vertical=T, add=T, at=c(10:28))
+stripchart(COR ~ CANCER, data=samples.h1[1:881,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(1:8))
+stripchart(COR ~ CANCER, data=samples.h1[938:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(10:28))
 stripchart(subset(samples.nbl, GROUP_ID3 == "LR")$COR ~ rep(8.7, time=17), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=8.7)
 stripchart(subset(samples.nbl, GROUP_ID3 == "HR")$COR ~ rep(9.3, time=18), method="jitter", cex=1.5, pch=19, col="black", vertical=T, add=T, at=9.3)
 stripchart(subset(samples.nbl, GROUP_ID3 == "TERT")$COR ~ rep(9.1, time=11), method="jitter", cex=1.5, pch=19, col=yellow, vertical=T, add=T, at=9.1)
 stripchart(subset(samples.nbl, GROUP_ID3 == "MYCN")$COR ~ rep(8.9, time=10), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=8.9)
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("S-phase cell fraction", side=2, line=3.5, cex=1.9)
+mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
 legend("topleft", legend=c("HR (n=18)", "TERT (n=11)", "MYCN (n=10)", "LR (n=17)"), pch=19, pt.cex=2.5, col=c("black", yellow, red, blue), cex=1.7)
 dev.off()
 
+###
+##
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_black_NB"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 56 neuroblastoma (NB) primary tumour samples"))
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6))
+text(labels=labels1[1:8],   x=1:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[10:28], x=10:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+stripchart(COR ~ CANCER, data=samples.h1[1:881,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(1:8))
+stripchart(COR ~ CANCER, data=samples.h1[938:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(10:28))
+stripchart(subset(samples.nbl, RISK == "high")$COR ~ rep(9.1, time=39), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=9.1)
+stripchart(subset(samples.nbl, RISK == "low")$COR ~ rep(8.9, time=17), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=8.9)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
+legend("topleft", legend=c("All high-risk (All-HR; n=39)", "Low-risk (LR; n=17)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.7)
+dev.off()
+
+###
+##
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_black"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6))
+text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
+#legend("topleft", legend=c("HR (n=18)", "TERT (n=11)", "MYCN (n=10)", "LR (n=17)"), pch=19, pt.cex=2.5, col=c("black", yellow, red, blue), cex=1.7)
+dev.off()
 
 
 

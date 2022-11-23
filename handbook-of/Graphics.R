@@ -25,7 +25,7 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
    dev.off()
 }
 
-plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, h=6, w=4.5, ylab.txt="") {
+plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, ylab.txt="", h=6, w=4.5) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
    trait <- as.factor(trait)
@@ -44,7 +44,9 @@ plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, h=6, w=4.5, ylab
    text(1.5, ylim[2] - offset, expression(italic('P')~"                   "), col="black", cex=1.8)
    text(1.5, ylim[2] - offset, paste0("   = ", scientific(p)), col="black", cex=1.8)
    
-   axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.8)
+   #axis(side=1, at=seq(1, 2, by=1), labels=names, font=2, cex.axis=1.8)
+   axis(side=1, at=1, labels=names[1], font=2, cex.axis=1.8)
+   axis(side=1, at=2, labels=names[2], font=2, cex.axis=1.8)
    axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, col=NA, cex.axis=1.8)
    axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, col=NA, cex.axis=1.8)
 
@@ -80,87 +82,26 @@ plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, c
    dev.off()
 }
 
-plotPC1 <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=6) {
+plotSRC <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=6, xlab.text="SCF index") {
    unit <- (max(snr) - min(snr))/10
    xlim <- c(min(snr) - unit, max(snr) + unit)
    unit <- (max(cn) - min(cn))/10
    ylim <- c(min(cn) - unit, max(cn) + unit)
  
    #xlab.text <- expression(italic('In silico')~'sorting')
-   xlab.text <- "PC1"
+   #xlab.text <- 
    ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
    #ylab.text <- "Expression"
    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
-   file.name <- file.path(wd.plots, paste0("TPM-vs-PC1_", genes[g], ""))
+   file.name <- file.path(wd.plots, paste0("TPM-vs-", xlab.text, "_", genes[g], ""))
  
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
- 
-   cor <- cor.test(cn, snr, method="spearman", exact=F)
-   col <- cols[1]
-   if (cor[[4]] < 0)
-      col <- cols[2]
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
-   legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
-   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
- 
-   lm.fit <- lm(cn ~ snr)
-   abline(lm.fit, col=col, lwd=7)
- 
-   #axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
-   dev.off()
-}
-
-plotPC2 <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=6) {
-   unit <- (max(snr) - min(snr))/10
-   xlim <- c(min(snr) - unit, max(snr) + unit)
-   unit <- (max(cn) - min(cn))/10
-   ylim <- c(min(cn) - unit, max(cn) + unit)
- 
-   #xlab.text <- expression(italic('In silico')~'sorting')
-   xlab.text <- "PC2"
-   ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
-   #ylab.text <- "Expression"
-   id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
-   file.name <- file.path(wd.plots, paste0("TPM-vs-PC2_", genes[g], ""))
- 
-   pdf(paste0(file.name, ".pdf"), height=size, width=size)
-   par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
- 
-   cor <- cor.test(cn, snr, method="spearman", exact=F)
-   col <- cols[1]
-   if (cor[[4]] < 0)
-      col <- cols[2]
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
-   legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
-   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
- 
-   lm.fit <- lm(cn ~ snr)
-   abline(lm.fit, col=col, lwd=7)
- 
-   #axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
-   dev.off()
-}
-
-plotSRC <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=6) {
-   unit <- (max(snr) - min(snr))/10
-   xlim <- c(min(snr) - unit, max(snr) + unit)
-   unit <- (max(cn) - min(cn))/10
-   ylim <- c(min(cn) - unit, max(cn) + unit)
- 
-   #xlab.text <- expression(italic('In silico')~'sorting')
-   xlab.text <- "S-phase cell fraction"
-   ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
-   #ylab.text <- "Expression"
-   id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
-   file.name <- file.path(wd.plots, paste0("TPM-vs-SORTING_", genes[g], ""))
- 
-   pdf(paste0(file.name, ".pdf"), height=size, width=size)
-   par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, xaxt="n", main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
- 
+   if (xlab.text == "SCF index")
+      plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, xaxt="n", main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   else
+      plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text,           main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   
    cor <- cor.test(cn, snr, method="spearman", exact=F)
    col <- cols[1]
    if (cor[[4]] < 0)
@@ -172,7 +113,8 @@ plotSRC <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=
    lm.fit <- lm(cn ~ snr)
    abline(lm.fit, col=col, lwd=7)
    
-   axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
+   if (xlab.text == "SCF index")
+      axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
    dev.off()
 }
 
@@ -182,7 +124,7 @@ plotCNA <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", col, size=6
    unit <- (max(cn) - min(cn))/10
    ylim <- c(min(cn) - unit, max(cn) + unit)
  
-   xlab.text <- "SCNA"
+   xlab.text <- "CNA"
    ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
    #ylab.text <- "Expression"
    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id

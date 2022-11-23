@@ -47,7 +47,7 @@ n1 <- length(samples1)
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
 # Last Modified: 15/11/19; 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
-cors.samples <- cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.7915794
@@ -131,7 +131,7 @@ samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
 
-pdf(file.path(wd.rt.plots, "boxplot_nb-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6_Spearman's rho.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_nb-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6_Spearman's rho_NBL.pdf"), height=6, width=4.2)
 par(mar=c(5.1, 4.6, 4.1, 1.5))
 ymax <- 0.5
 ymin <- -0.367
@@ -167,7 +167,7 @@ for (s in 1:nrow(samples)) {
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.7)
 #mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
-axis(side=1, at=1, labels="NB-CL", cex.axis=1.8)
+axis(side=1, at=1, labels="NBL-CL", cex.axis=1.8)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
 mtext(text=c("(n = 8)"), side=1, cex=1.8, line=2.45, at=c(1,2,3))
 dev.off()
@@ -203,11 +203,11 @@ plotFACS <- function(n1, snr1, n2, snr2, file.name, main.text, xlab.text, ylab.t
  
    cor <- cor.test(n1, snr1, method="spearman", exact=F)
    #legend(pos[1], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[1], bty="n", cex=1.75)
-   legend(pos[1], paste0("G1 (rho = ", round0(cor[[4]], digits=1), ")      "), text.col=col[1], pch=c(NA), col=col[1], bty="n", cex=1.5)
+   legend(pos[1], paste0("G1 (rho = ", round0(cor[[4]], digits=2), ")      "), text.col=col[1], pch=c(NA), col=col[1], bty="n", cex=1.5)
  
    cor <- cor.test(n2, snr2, method="spearman", exact=F)
    #legend(pos[2], c(paste0("rho = ", round0(cor[[4]], digits=1)), paste0("p-value = ", scientific(cor[[3]], digits=1))), text.col=col[2], bty="n", cex=1.75)
-   legend(pos[2], paste0("S (rho = ", round0(cor[[4]], digits=1), ")"), text.col=col[2], pch=c(NA), col=col[2], bty="n", cex=1.5)
+   legend(pos[2], paste0("S (rho = ", round0(cor[[4]], digits=2), ")"), text.col=col[2], pch=c(NA), col=col[2], bty="n", cex=1.5)
  
    #mtext(ylab.text, side=2, line=2.75, cex=1.7)
    #mtext(main.text[2], cex=1.2, line=0.3)
@@ -243,15 +243,15 @@ plotFACS3 <- function(n1, snr1, n2, snr2, n3, snr3, file.name, main.text, xlab.t
    abline(lm.fit, col=col[2], lwd=5)
 
    cor3 <- cor.test(n3, snr3, method="spearman", exact=F)
-   cor3 <- round0(cor3[[4]], digits=1)
+   cor3 <- round0(cor3[[4]], digits=2)
    text(mean(snr3)-3, mean(n3)-0.025, label=paste("rho = ", cor3), col=col[3], cex=1.7, font=2)
    
    cor2 <- cor.test(n2, snr2, method="spearman", exact=F)
-   cor2 <- round0(cor2[[4]], digits=1)
+   cor2 <- round0(cor2[[4]], digits=2)
    text(mean(snr2), mean(n2)+0.05, label=paste("rho = ", cor2), col=col[2], cex=1.7, font=2)
    
    cor1 <- cor.test(n1, snr1, method="spearman", exact=F)
-   cor1 <- round0(cor1[[4]], digits=1)
+   cor1 <- round0(cor1[[4]], digits=2)
    text(mean(snr1), mean(n1)-0.05, label=paste("rho = ", cor1), col=col[1], cex=1.7, font=2)
    
    axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.7)
@@ -274,7 +274,7 @@ samples <- samples[facs$SAMPLE_ID,]
 #ylab.text <- "Spearmans's rho"
 #plotFACS(samples$COR, facs$G1, samples$COR, facs$S, file.name, main.text, xlab.text, ylab.text, c("blue", "red"), c("right", "left"))
 
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_1.6_3_100_bty=n_1.7_lwd=5_rho=_mar=4.6")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL")
 main.text <- c(expression(bolditalic('In silico')~bold("vs.")~bolditalic('in vitro')), "")
 xlab.text <- "Fraction of cells"
 ylab.text <- "Spearman's rho"                                                                         ## "#619CFF", "#F8766D", "#00BA38"      "skyblue3", "lightcoral", "#59a523"
