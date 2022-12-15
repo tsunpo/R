@@ -108,14 +108,14 @@ for (c in 2:2) {
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
    ## Figure 1
-   xlab.text <- "RT [log2]"
+   xlab.text <- expression("RT [Log" * ""[2] * "]")
    ylab.text <- "Read depth [RPKM]"
    main.text <- c(paste0("Spearman's correlation (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, ""))
    plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
    
    ## SFigure 1
-   xlab.text <- "RT [log2]"
+   xlab.text <- expression("RT [Log" * ""[2] * "]")
    ylab.text <- "Read depth [RPKM]"
    #main.text <- c(paste0("Chr", c))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
    #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))

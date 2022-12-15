@@ -164,6 +164,7 @@ text.In.silico  <- expression(italic("In silico") ~ "sorting")
 
 text.Log10.P    <- expression("-Log" * ""[10] * "(" * italic("P") * ")")
 text.Log2.TPM.1 <- expression("Log" * ""[2] * "(TPM + 1)")
+text.Log2       <- expression("Log" * ""[2])
 
 text.SCLC <- "Lung-SCLC"
 text.NBL  <- "CNS-NB"

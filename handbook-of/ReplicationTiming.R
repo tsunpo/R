@@ -368,8 +368,8 @@ getRT <- function(nrds, bed.gc) {
 plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="topright") {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.01)
-   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.01)
+   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.1)
+   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.1)
 
    ## Read in replicaiton time
    overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds.chr))   ## 29/11/19: Changed from intersect(rownames(nrds), rownames(bed.gc.chr))
@@ -472,8 +472,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    ## Plot legend and peaks
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=1.5, pt.lwd=2, pch=1, col=adjustcolor(colours2[1], alpha.f=0.7), cex=1.8)   
    legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=1.5, pt.lwd=2, pch=1, col=adjustcolor(colours2[2], alpha.f=0.7), cex=1.8)
-   if (width != 5)
-      legend("topright", paste0(BASE, " ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.8)
+   if (width != 6)
+      legend("topright", paste0(BASE, "", " ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.8)
    else
       legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.8)
    if (!is.null(lcl.rt.chr))
@@ -954,6 +954,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    lm.fit <- lm(sprs ~ means)
    abline(lm.fit, col=cols[4], lwd=4)
    
+   par(xpd=T)
    text(means[2], sprs[2], paste0("Chr", 2), col=cols[3], pos=3, cex=1.8)
    if (!is.null(cs))
       for (c in 1:length(cs)) {
@@ -966,7 +967,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
          else
             text(means[c], sprs[c], paste0("Chr", c), col=cols[2], pos=1, cex=1.8)
       }
-   
+   par(xpd=F)   
    cor <- cor.test(sprs, means, method="spearman", exact=F)
    #legends <- c("topright", "bottomleft")
    #if (cor[[4]] > 0) legends[1] <- "topleft"
