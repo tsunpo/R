@@ -25,6 +25,22 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
    dev.off()
 }
 
+plotCorrelation5 <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5) {
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))  
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	
+	  lm.fit <- lm(y ~ x)
+	  abline(lm.fit, lwd=5, col=cols[2])
+	
+	  cor <- cor.test(y, x, method="spearman", exact=F)
+	  legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=1, bty="n", cex=2)
+	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2)
+	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2)
+	
+  	dev.off()
+}
+
 plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, ylab.txt="", h=6, w=4.5) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
@@ -53,70 +69,71 @@ plotBox <- function(file.name, tpm.1, tpm.2, main, names, cols, ylab.txt="", h=6
    dev.off()
 }
 
-plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=5, width=3.5, text="") {
-   trait <- rep(0, nrow(tpm.1))
-   trait <- c(trait, rep(1, nrow(tpm.2)))
-   trait <- c(trait, rep(2, nrow(tpm.3)))
-   trait <- as.factor(trait)
-   expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN))
- 
-   pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-   boxplot(expr ~ trait, outline=F, xaxt="n", ylab=paste0("log2(TPM + 1)"), main=main, boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, yaxt="n", cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
- 
-   p <- testU(tpm.1$MEDIAN, tpm.3$MEDIAN)
-   text(2, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
-   lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
- 
-   p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
-   text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
-   lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
- 
-   p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
-   text(2.5, ylim[2]-2.6, getPvalueSignificanceLevel(p), cex=2.5)
-   lines(c(2, 3), y=c(ylim[2]-3.2, ylim[2]-3.2), type="l", lwd=2)
- 
-   axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.25)
-   axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.3)
+# plotBox3 <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=6, width=3.5, text="") {
+#    trait <- rep(0, nrow(tpm.1))
+#    trait <- c(trait, rep(1, nrow(tpm.2)))
+#    trait <- c(trait, rep(2, nrow(tpm.3)))
+#    trait <- as.factor(trait)
+#    expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN))
+#  
+#    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+#    par(mar=c(4.5, 4.7, 4.1, 1.4)) 
+#    boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", ylab=text.Log2.TPM.1, main=main, col="white", boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+# 
+#    p <- testU(tpm.1$MEDIAN, tpm.3$MEDIAN)
+#    text(2, ylim[2]-0.2, getPvalueSignificanceLevel(p), cex=2.5)
+#    lines(c(1, 3), y=c(ylim[2]-0.8, ylim[2]-0.8), type="l", lwd=2)
+#  
+#    p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
+#    text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
+#    lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
+#  
+#    p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
+#    text(2.5, ylim[2]-2.6, getPvalueSignificanceLevel(p), cex=2.5)
+#    lines(c(2, 3), y=c(ylim[2]-3.2, ylim[2]-3.2), type="l", lwd=2)
+#  
+#    #axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.7)
+#    axis(side=1, at=seq(1, 3, by=1), labels=names, font=2, cex.axis=1.7)
+# 
+#    #mtext(paste0(text), cex=1.8, line=0.3)
+#    dev.off()
+# }
 
-   mtext(paste0(text), cex=1.3, line=0.3)
-   dev.off()
-}
-
-plotSRC <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=6, xlab.text="SCF index") {
-   unit <- (max(snr) - min(snr))/10
-   xlim <- c(min(snr) - unit, max(snr) + unit)
-   unit <- (max(cn) - min(cn))/10
-   ylim <- c(min(cn) - unit, max(cn) + unit)
- 
-   #xlab.text <- expression(italic('In silico')~'sorting')
-   #xlab.text <- 
-   ylab.text <- expression("Log" * ""[2] * "(TPM + 1)")
-   #ylab.text <- "Expression"
-   id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
-   file.name <- file.path(wd.plots, paste0("TPM-vs-", xlab.text, "_", genes[g], ""))
- 
-   pdf(paste0(file.name, ".pdf"), height=size, width=size)
-   par(mar=c(5.1, 4.7, 4.1, 1.4))
-   if (xlab.text == "SCF index")
-      plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, xaxt="n", main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   else
-      plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text,           main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   
-   cor <- cor.test(cn, snr, method="spearman", exact=F)
-   col <- cols[1]
-   if (cor[[4]] < 0)
-      col <- cols[2]
-   legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
-   legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
-   legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
- 
-   lm.fit <- lm(cn ~ snr)
-   abline(lm.fit, col=col, lwd=7)
-   
-   if (xlab.text == "SCF index")
-      axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
-   dev.off()
-}
+# plotSRC <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", cols, size=6, xlab.text="SCF index") {
+#    unit <- (max(snr) - min(snr))/10
+#    xlim <- c(min(snr) - unit, max(snr) + unit)
+#    unit <- (max(cn) - min(cn))/10
+#    ylim <- c(min(cn) - unit, max(cn) + unit)
+#  
+#    xlab.text2 <- expression(italic('In silico')~'SCF index')
+#    #xlab.text <- 
+#    ylab.text <- expression("log" * ""[2] * "(TPM + 1)")
+#    #ylab.text <- "Expression"
+#    id <- subset(ensGene, external_gene_name == gene)$ensembl_gene_id
+#    file.name <- file.path(wd.plots, paste0("TPM-vs-", xlab.text, "_", genes[g], ""))
+#  
+#    pdf(paste0(file.name, ".pdf"), height=size, width=size)
+#    par(mar=c(5.1, 4.7, 4.1, 1.4))
+#    if (xlab.text == "SCF index")
+#       plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text2, xaxt="n", main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+#    else
+#       plot(cn ~ snr, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text,           main=paste0(gene, ""), col="black", pch=pch, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+#    
+#    cor <- cor.test(cn, snr, method="spearman", exact=F)
+#    col <- cols[1]
+#    if (cor[[4]] < 0)
+#       col <- cols[2]
+#    legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(col, "white"), text.font=2, bty="n", cex=1.8)
+#    legend(pos, expression(bolditalic('P')~"                   "), text.col=col, text.font=2, bty="n", cex=1.8)
+#    legend(pos, paste0("   = ", scientific(cor[[3]])), text.col=col, text.font=2, bty="n", cex=1.8)
+#  
+#    lm.fit <- lm(cn ~ snr)
+#    abline(lm.fit, col=col, lwd=7)
+#    
+#    if (xlab.text == "SCF index")
+#       axis(side=1, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.7)
+#    dev.off()
+# }
 
 plotCNA <- function(wd.plots, gene, cn, snr, pch, pos="bottomright", col, size=6) {
    unit <- (max(snr) - min(snr))/10

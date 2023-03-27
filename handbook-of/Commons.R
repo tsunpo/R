@@ -15,7 +15,7 @@
 # Last Modified: 22/10/16
 # -----------------------------------------------------------------------------
 readTable <- function(file, header, rownames, sep) {
-   table <- read.table(file, header=header, sep=sep, fill=T, as.is=T, comment.char="#", na.strings="NA") 
+   table <- read.table(file, header=header, sep=sep, fill=T, as.is=T, comment.char="#", na.strings="NA", quote="") 
 
    if (rownames == T)
    	  rownames(table) <- table[,1]
@@ -162,12 +162,11 @@ getGenes <- function(genes) {
 # -----------------------------------------------------------------------------
 text.In.silico  <- expression(italic("In silico") ~ "sorting")
 
-text.Log10.P    <- expression("-Log" * ""[10] * "(" * italic("P") * ")")
-text.Log2.TPM.1 <- expression("Log" * ""[2] * "(TPM + 1)")
-text.Log2       <- expression("Log" * ""[2])
+text.Log10.P    <- expression("-log" * ""[10] * "(" * italic("P") * ")")
+text.Log2.TPM.1 <- expression("log" * ""[2] * "(TPM + 1)")
+text.Log2       <- expression("log" * ""[2])
 
 text.SCLC <- "Lung-SCLC"
-text.NBL  <- "CNS-NB"
 
 firstup <- function(x) {
    x <- tolower(x)
@@ -270,8 +269,8 @@ google.red.lighter50 <- "#FFC2B4"
 #google.red.lighter40 <- "#FFA99B"
 #google.red.lighter35 <- "#FF9C8E"
 #google.red.lighter30 <- "#FF9082"
-#google.red.lighter25 <- "#FF8375"
-#nasa.blue.lighter25  <- "#509BFF"
+google.red.lighter25 <- "#FF8375"
+nasa.blue.lighter25  <- "#509BFF"
 nasa.blue.lighter50  <- "#8FDAFF"
 #nasa.blue.lighter60  <- "#A9F4FF"
 
@@ -280,8 +279,8 @@ green.lighter  <- basf.lightgreen.lighter10
 
 #red.lightest <- google.red.lighter60
 red.lighter  <- google.red.lighter50
-#red.light    <- google.red.lighter25
-#blue.light   <- nasa.blue.lighter25
+red.light    <- google.red.lighter25
+blue.light   <- nasa.blue.lighter25
 blue.lighter <- nasa.blue.lighter50
 #blue.lightest <- nasa.blue.lighter60
 

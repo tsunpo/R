@@ -22,9 +22,9 @@ load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"      ## tpyang@localhost
 BASE  <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "T"
@@ -90,6 +90,22 @@ for (c in 22:1) {
 ##
 ymax <- 0.65
 ymin <- 0.2
+
+c <- 2
+chr <- chrs[c]
+bed.gc.chr <- subset(bed.gc, CHR == chr)
+nrds.chr <- nrds[intersect(rownames(bed.gc.chr), nrds$BED),]   ## Changed 01/12/19
+lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+nrds.lcl.chr <- nrds.lcl[intersect(nrds.lcl$BED, rownames(bed.gc.chr)),]
+
+## Plot RT
+main.text <- paste0(BASE, " M2/M1 ratio RT")  
+file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+plotRT(file.name, main.text, chr, 69500000, 81000000, nrds.chr, bed.gc.chr, c(red, blue, green), c("M2", "M1"), c(red, blue), c("M2", "M1"), "png", width=6, peaks=c(), ylim=c(ymin, ymax), NULL, NULL)
+
+
+
+
 c <- 13
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chr)

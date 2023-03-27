@@ -108,7 +108,7 @@ for (c in 2:2) {
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
 
    ## Figure 1
-   xlab.text <- expression("RT [Log" * ""[2] * "]")
+   xlab.text <- expression("RT [log" * ""[2] * "]")
    ylab.text <- "Read depth [RPKM]"
    main.text <- c(paste0("Spearman's correlation (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, ""))

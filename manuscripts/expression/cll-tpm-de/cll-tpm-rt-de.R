@@ -20,7 +20,7 @@ load(file.path(wd.src.ref, "hg19.ensGene.bed.1kb.RData"))
 # Set working directory
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
 base <- tolower(BASE)
 
@@ -36,7 +36,7 @@ samples.wgs <- readTable(file.path(wd.wgs, "cll_wgs_n96.txt"), header=T, rowname
 samples.rna <- readTable(file.path(wd.rna, "cll_rna_n71.txt"), header=T, rownames=T, sep="\t")
 overlaps <- intersect(samples.wgs$SAMPLE_ID, samples.rna$ID_WGS)
 
-samples.tpm.cll <- cbind(samples.wgs[overlaps,], samples.rna[overlaps,])
+samples <- cbind(samples.wgs[overlaps,], samples.rna[overlaps,])
 #samples <- subset(samples, COR < 0)
 samples$M2 <- as.factor(samples$M2)
 # > length(which(samples$M2 == 1))
@@ -45,8 +45,9 @@ samples$M2 <- as.factor(samples$M2)
 # [1] 35
 
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
-load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
 #load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
 tpm.gene <- tpm.gene[, samples$ID2_RNA]   ## VERY VERY VERY IMPORTANT!!!
 tpm.gene.log2   <- log2(tpm.gene + 1)
 tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
@@ -54,6 +55,307 @@ nrow(tpm.gene.log2.m)
 # [1] 34908
 # [1] 22807
 # [1] 18502
+# [1] 14334
+
+# -----------------------------------------------------------------------------
+# RFD vs. TPM
+# Last Modified: 29/05/20
+# -----------------------------------------------------------------------------
+nrds.RT.NRFD <- nrds.RT.NRFD.cll   ## 17/05/20 WHY nrds.RT.NRFD.sclc.nl? ## MUY MUY IMPORTANTE!!
+load(file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+nrow(nrds.RT.NRFD)
+# [1] 2644419
+nrow(tpm.gene.log2.m)
+# [1] 14334
+
+tpm.gene.log2.m.rfd <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
+tpm.gene.log2.m.rfd$length <- abs(tpm.gene.log2.m.rfd$end_position - tpm.gene.log2.m.rfd$start_position)
+nrow(tpm.gene.log2.m.rfd)
+# [1] 30347
+# [1] 20281
+# [1] 12815
+nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
+# [1] 9
+# [1] 6
+# [1] 3
+
+###
+## TTR and CTR (IZ +TZ)
+save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_median1_log2+1_m_rfd0.RData"))
+
+load(file=file.path(wd.de.data, "tpm_gene_median1_log2+1_m_rfd0.RData"))
+file.name <- file.path(wd.de.data, "tpm_gene_median1_log2+1_m_rfd.RData")
+setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
+load(file.name)
+
+length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
+# [1] 110
+# [1] 88
+# [1] 63
+length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
+# [1] 92
+# [1] 77
+# [1] 56
+
+# -----------------------------------------------------------------------------
+# Shared genes
+# Last Modified: 24/02/23; 10/09/20
+# -----------------------------------------------------------------------------
+load("/Users/ty2/Work/uni-koeln/tyang2/CLL/analysis/expression/kallisto/cll-tpm-de/data/tpm_gene_median1_log2+1_m_rfd.RData")
+
+cll.ttr    <- intersect(rownames(depends.sclc.t.m), tpm.gene.log2.m.rfd.ttr$external_gene_name)
+cll.ctr.tz <- intersect(rownames(depends.sclc.t.m), tpm.gene.log2.m.rfd.ctr.tz$external_gene_name)
+cll.ctr.iz <- intersect(rownames(depends.sclc.t.m), tpm.gene.log2.m.rfd.ctr.iz$external_gene_name)
+length(cll.ctr.iz)
+# [1] 1517
+# [1] 1801
+
+#cll.ttr <- intersect(overlaps, cll.ttr)
+#cll.ctr.iz <- intersect(overlaps, cll.ctr.iz)
+#cll.ctr.tz <- intersect(overlaps, cll.ctr.tz)
+# > length(cll.ctr.tz)
+# [1] 1515
+
+ylim <- c(-0.67, 0.4)
+file.name <- paste0("DepMap_effects_median1_SCLC-CL_RFD-vs-CLL")
+plotBoxDepMap(wd.de.plots, file.name, effects.sclc.t.m[cll.ttr,], effects.sclc.t.m[cll.ctr.tz,], effects.sclc.t.m[cll.ctr.iz,], main="DepMap SCLC-CL", names=c("TTR", "TZ", "IZ"), cols=c("white", blue.lighter, red.lighter), ylim, ylab="Gene effect")
+
+#ylim <- c(0, 0.23)
+#file.name <- paste0("DepMap_depends_boxplot3_SCLC-CL_RFD-vs-CLL")
+#plotBoxDepMap(wd.de.plots, file.name, depends.sclc.t.m[cll.ttr,], depends.sclc.t.m[cll.ctr.tz,], depends.sclc.t.m[cll.ctr.iz,], main="DepMap SCLC-CL", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim, ylab="Gene dependency")
+
+# -----------------------------------------------------------------------------
+# DeepMap SCLC-CL
+# Last Modified: 23/02/23; 17/02/23
+# -----------------------------------------------------------------------------
+subtypes <- read.csv("/Users/ty2/Work/sanger/ty2/Pan-Pody/metadata/DepMap/22Q2/sample_info.csv", header=T)
+rownames(subtypes) <- subtypes$DepMap_ID
+subtypes <- subset(subtypes, Subtype == "Chronic Lymphoblastic Leukemia (CLL), B-cell")
+clls <- sort(rownames(subtypes))
+writeTable(sclcs, "/Users/ty2/Work/sanger/ty2/Pan-Pody/metadata/DepMap/22Q2/sample_info_CLL.txt", colnames=F, rownames=F, sep="\t")
+#commons <- readTable("/Users/ty2/Work/sanger/ty2/Pan-Pody/metadata/DepMap/22Q2/common_essentials.txt", header=F, rownames=F, sep="")[, 1]
+#nons    <- readTable("/Users/ty2/Work/sanger/ty2/Pan-Pody/metadata/DepMap/22Q2/nonessentials.txt", header=F, rownames=F, sep="")[, 1]
+
+effects <- read.csv("/Users/ty2/Work/sanger/ty2/Pan-Pody/metadata/DepMap/22Q4/CRISPRGeneEffect.csv", header=T)
+rownames(effects) <- effects$X
+#effects <- read.csv("/Users/ty2/Work/sanger/ty2/Pan-Pody/metadata/DepMap/22Q2/CRISPR_gene_effect.csv", header=T)
+#rownames(effects) <- effects$DepMap_ID
+effects <- effects[,-1]
+# > dim(effects)
+# [1]  1078 17453
+colnames(effects) <- mapply(x = 1:length(colnames(effects)), function(x) strsplit0(toString(colnames(effects)[x]), "\\.\\.")[1])
+effects.cll <- effects[intersect(clls, rownames(effects)), ]
+# > dim(effects.cll)
+# [1]     4 17453
+effects.cll.t <- as.data.frame(t(effects.cll))
+effects.cll.t.m <- effects.cll.t
+effects.cll.t.m$MEDIAN <- mapply(x = 1:nrow(effects.cll.t), function(x) median(as.numeric(effects.cll.t[x,])))
+
+##
+ylim <- c(-0.67, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_RFD-vs-SCLC")
+plotBoxDepMap(wd.de.plots, file.name, effects.cll.t.m[sclc.ttr,], effects.cll.t.m[sclc.ctr.tz,], effects.cll.t.m[sclc.ctr.iz,], main="DepMap CLL-CL", names=c("TTR", "TZ", "IZ"), cols=c("white", blue.lighter, red.lighter), ylim, ylab="Gene effect")
+
+ylim <- c(-0.67, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_RFD-vs-NB")
+plotBoxDepMap(wd.de.plots, file.name, effects.cll.t.m[nbl.ttr,], effects.cll.t.m[nbl.ctr.tz,], effects.cll.t.m[nbl.ctr.iz,], main="DepMap CLL-CL", names=c("TTR", "TZ", "IZ"), cols=c("white", blue.lighter, red.lighter), ylim, ylab="Gene effect")
+
+ylim <- c(-0.67, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_RFD-vs-CLL")
+plotBoxDepMap(wd.de.plots, file.name, effects.cll.t.m[cll.ttr,], effects.cll.t.m[cll.ctr.tz,], effects.cll.t.m[cll.ctr.iz,], main="DepMap CLL-CL", names=c("TTR", "TZ", "IZ"), cols=c("white", blue.lighter, red.lighter), ylim, ylab="Gene effect")
+
+ylim <- c(-0.67, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_RFD-vs-SCLC-NL")
+plotBoxDepMap(wd.de.plots, file.name, effects.cll.t.m[sclc.nl.ttr,], effects.cll.t.m[sclc.nl.ctr.tz,], effects.cll.t.m[sclc.nl.ctr.iz,], main="DepMap CLL-CL", names=c("TTR", "TZ", "IZ"), cols=c("white", blue.lighter, red.lighter), ylim, ylab="Gene effect")
+
+testU(effects.cll.t.m[sclc.ttr,]$MEDIAN, effects.cll.t.m[sclc.ctr.iz,]$MEDIAN)
+testU(effects.cll.t.m[sclc.nl.ttr,]$MEDIAN, effects.cll.t.m[sclc.nl.ctr.iz,]$MEDIAN)
+testU(effects.cll.t.m[cll.ttr,]$MEDIAN,  effects.cll.t.m[cll.ctr.iz,]$MEDIAN)
+testU(effects.cll.t.m[nbl.ttr,]$MEDIAN,  effects.cll.t.m[nbl.ctr.iz,]$MEDIAN)
+
+testU(effects.cll.t.m[sclc.ctr.tz,]$MEDIAN, effects.cll.t.m[sclc.ctr.iz,]$MEDIAN)
+testU(effects.cll.t.m[sclc.nl.ctr.tz,]$MEDIAN, effects.cll.t.m[sclc.nl.ctr.iz,]$MEDIAN)
+testU(effects.cll.t.m[cll.ctr.tz,]$MEDIAN,  effects.cll.t.m[cll.ctr.iz,]$MEDIAN)
+testU(effects.cll.t.m[nbl.ctr.tz,]$MEDIAN,  effects.cll.t.m[nbl.ctr.iz,]$MEDIAN)
+
+# -----------------------------------------------------------------------------
+# Shared genes
+# Last Modified: 205/03/23; 4/02/23
+# -----------------------------------------------------------------------------
+shared.3 <- intersect(intersect(cll.ctr.iz, nbl.ctr.iz), sclc.ctr.iz)
+length(shared.3)
+# [1] 299
+
+shared.2 <- intersect(cll.ctr.iz, sclc.nl.ctr.iz)
+length(shared.2)
+# [1] 479
+
+cll.specific <- setdiff(cll.ctr.iz, unique(c(shared.2, shared.3)))
+length(cll.specific)
+# [1] 1195
+
+ylim <- c(-0.8, 0.4)
+file.name <- paste0("DepMap_effects_median1_specific_SCLC-CL_RFD_CLL-specific_NL")
+plotBoxDepMapSolid(wd.de.plots, file.name, effects.sclc.t.m[shared.3,], effects.sclc.t.m[shared.2,], effects.sclc.t.m[cll.specific,], main="DepMap SCLC-CL", names=c("CLL & SCLC & NB", "CLL & SCLC-NL", "CLL-specific IZ"), cols=c(red.lighter, red.light, red), ylim, ylab="Gene effect")
+testU(effects.sclc.t.m[shared.3,]$MEDIAN, effects.sclc.t.m[cll.specific,]$MEDIAN)
+# [1] 0.5634016
+testU(effects.sclc.t.m[shared.2,]$MEDIAN, effects.sclc.t.m[cll.specific,]$MEDIAN)
+# [1] 0.06102142
+
+ylim <- c(-0.8, 0.4)
+file.name <- paste0("DepMap_effects_median1_specific_NBL-CL_RFD_CLL-specific_NL")
+plotBoxDepMapSolid(wd.de.plots, file.name, effects.nbl.t.m[shared.3,], effects.nbl.t.m[shared.2,], effects.nbl.t.m[cll.specific,], main="DepMap NB-CL", names=c("CLL & SCLC & NB", "CLL & SCLC-NL", "CLL-specific IZ"), cols=c(red.lighter, red.light, red), ylim, ylab="Gene effect")
+testU(effects.nbl.t.m[shared.3,]$MEDIAN, effects.nbl.t.m[cll.specific,]$MEDIAN)
+# [1] 0.0222364
+testU(effects.nbl.t.m[shared.2,]$MEDIAN, effects.nbl.t.m[cll.specific,]$MEDIAN)
+# [1] 0.003355651
+
+ylim <- c(-0.8, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_CLL-specific-IZ_0.8")
+plotBoxDepMapSolid(wd.de.plots, file.name, effects.cll.t.m[shared.3,], effects.cll.t.m[shared.2,], effects.cll.t.m[cll.specific,], main="DepMap CLL-CL", names=c("CLL & SCLC & NB", "CLL & SCLC-NL", "CLL-specific IZ"), cols=c(red.lighter, red.light, red), ylim, ylab="Gene effect")
+testU(effects.cll.t.m[shared.3,]$MEDIAN, effects.cll.t.m[cll.specific,]$MEDIAN)
+# [1] 0.03021208
+testU(effects.cll.t.m[shared.2,]$MEDIAN, effects.cll.t.m[cll.specific,]$MEDIAN)
+# [1] 0.01249581
+
+# -----------------------------------------------------------------------------
+# Shared genes (TZ)
+# Last Modified: 16/03/23; 4/02/23
+# -----------------------------------------------------------------------------
+shared.3 <- intersect(intersect(sclc.ctr.tz, nbl.ctr.tz), cll.ctr.tz)
+length(shared.3)
+# [1] 129
+
+shared.2 <- intersect(cll.ctr.tz, sclc.nl.ctr.tz)
+length(shared.2)
+# [1] 252
+
+cll.specific.tz <- setdiff(cll.ctr.tz, unique(c(shared.2, shared.3)))
+length(cll.specific.tz)
+# [1] 634
+
+ylim <- c(-0.8, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_CLL-specific-TZ")
+plotBoxDepMapSolid(wd.de.plots, file.name, effects.cll.t.m[shared.3,], effects.cll.t.m[shared.2,], effects.cll.t.m[cll.specific.tz,], main="", names=c("CLL & SCLC & NB", "CLL & SCLC-NL", "CLL-specific TZ"), cols=c(blue.lighter, blue.light, blue), ylim, ylab="Gene effect")
+testU(effects.cll.t.m[shared.3,]$MEDIAN, effects.cll.t.m[cll.specific.tz,]$MEDIAN)
+# [1] 0.1845919
+testU(effects.cll.t.m[shared.2,]$MEDIAN, effects.cll.t.m[cll.specific.tz,]$MEDIAN)
+# [1] 0.03756333
+
+# -----------------------------------------------------------------------------
+# Shared genes (TTR)
+# Last Modified: 14/03/23; 4/02/23
+# -----------------------------------------------------------------------------
+shared.3 <- intersect(intersect(sclc.ttr, nbl.ttr), cll.ttr)
+length(shared.3)
+# [1] 4717
+
+shared.2 <- intersect(cll.ttr, sclc.nl.ttr)
+length(shared.2)
+# [1] 6103
+
+cll.specific.ttr <- setdiff(cll.ttr, unique(c(shared.2, shared.3)))
+length(cll.specific.ttr)
+# [1] 813
+
+ylim <- c(-0.8, 0.4)
+file.name <- paste0("DepMap_effects_median1_CLL-CL_CLL-specific-TTR")
+plotBoxDepMapSolid(wd.de.plots, file.name, effects.cll.t.m[shared.3,], effects.cll.t.m[shared.2,], effects.cll.t.m[cll.specific.ttr,], main="", names=c("CLL & SCLC & NB", "CLL & SCLC-NL", "CLL-specific TTR"), cols=c("white", "lightgray", "dimgray"), ylim, ylab="Gene effect")
+testU(effects.cll.t.m[shared.3,]$MEDIAN, effects.cll.t.m[cll.specific.ttr,]$MEDIAN)
+# [1] 0.004880568
+testU(effects.cll.t.m[shared.2,]$MEDIAN, effects.cll.t.m[cll.specific.ttr,]$MEDIAN)
+# [1] 0.002019132 
+testU(effects.cll.t.m[shared.3,]$MEDIAN, effects.cll.t.m[shared.2,]$MEDIAN)
+# [1] 0.7102066
+
+median(effects.cll.t.m[shared.3,]$MEDIAN)
+# [1] -0.06261351
+median(effects.cll.t.m[shared.2,]$MEDIAN)
+# [1] -0.06490517
+median(effects.cll.t.m[cll.specific.ttr,]$MEDIAN)
+# [1] -0.05152831
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 05/03/22
+# -----------------------------------------------------------------------------
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median0.RData")))
+#load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
+
+ids <- subset(ensGene, external_gene_name %in% cll.specific)$ensembl_gene_id
+length(ids)
+# [1] 1201
+ids <- intersect(rownames(tpm.gene), ids)
+length(ids)
+# [1] 1197
+
+tpm.gene <- tpm.gene[ids, samples$ID2_RNA]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2   <- log2(tpm.gene + 1)
+tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
+nrow(tpm.gene.log2.m)
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 23/08/22; 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+src <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(src) <- rownames(tpm.gene.log2)
+
+## SRC
+src$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[4]])
+src$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples$COR, method="spearman", exact=F)[[3]])
+src <- src[!is.na(src$P),]
+
+## Log2 fold change
+src$G1 <- median00(tpm.gene.log2, subset(samples, M2 == 0)$ID2_RNA)
+src$S  <- median00(tpm.gene.log2, subset(samples, M2 == 1)$ID2_RNA)
+src$LOG2_FC <- src$S - src$G1
+
+## FDR
+library(qvalue)
+src$Q <- qvalue(src$P)$qvalue
+src <- src[order(src$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+src.tpm.gene <- cbind(annot[rownames(src),], src)   ## BE EXTRA CAREFUL!!
+
+writeTable(src.tpm.gene, file.path(wd.de.data,  "SRC_CLL_tpm-gene-median1_SORTING-vs-TPM_q_n71_specific1197.txt"), colnames=T, rownames=F, sep="\t")
+save(src.tpm.gene, samples, file=file.path(wd.de.data, "SRC_CLL_tpm-gene-median1_SORTING-vs-TPM_q_n71_specific1197.RData"))
+#writeRNKformat(src.tpm.gene, wd.de.gsea, "SRC_NBL_tpm-gene-r5p47_SORTING_q_n54")   ## GSEA
+nrow(src.tpm.gene)
+# [1] 1197
+
+###
+## Volcano plots
+xlab.text <- expression("log" * ""[2] * " fold change")
+ylab.text <- expression("-log" * ""[10] * "(" * italic("P") * ") significance")
+
+plot.de <- file.path(wd.de.plots, "volcanoplot_cll_median1_fdr0.1-fc1.5.iz.specific")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("1,197 CLL-specific IZ genes", "")
+plotVolcano(src.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ylab.text, fold=1.5)
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Purities
@@ -274,50 +576,11 @@ save(de.tpm.gene, samples, file=file.path(wd.de.data, "de_cll_tpm-gene-median0_s
 nrow(de.tpm.gene)
 # [1] 22807
 
-# -----------------------------------------------------------------------------
-# RFD vs. TPM
-# Last Modified: 29/05/20
-# -----------------------------------------------------------------------------
-nrds.RT.NRFD <- nrds.RT.NRFD.cll   ## 17/05/20 WHY nrds.RT.NRFD.sclc.nl? ## MUY MUY IMPORTANTE!!
-tpm.gene.log2.m <- tpm.gene.log2.m
-nrow(tpm.gene.log2.m)
-# [1] 34908
 
-nrds.RT.NRFD <- nrds.RT.NRFD.cll   ## MUY MUY IMPORTANTE!!
-tpm.gene.log2.m <- tpm.gene.log2.m[rownames(de.tpm.gene),]
-nrow(tpm.gene.log2.m)
-# [1] 22807
-# [1] 
 
-tpm.gene.log2.m.rfd <- getTRC(tpm.gene.log2.m, nrds.RT.NRFD)
-tpm.gene.log2.m.rfd$length <- abs(tpm.gene.log2.m.rfd$end_position - tpm.gene.log2.m.rfd$start_position)
-nrow(tpm.gene.log2.m.rfd)
-# [1] 30347
-# [1] 20281
-# [1] 
-nrow(subset(tpm.gene.log2.m.rfd, TRC == 0))
-# [1] 9
-# [1] 6
-# [1] 
 
-###
-## TTR and CTR (IZ +TZ)
-save(tpm.gene.log2.m.rfd, file=file.path(wd.de.data, "tpm_gene_log2+1_m_rfd0.RData"))
 
-load(file=file.path(wd.de.data, "tpm_gene_log2+1_m_rfd0.RData"))
-file.name <- file.path(wd.de.data, "tpm_gene_log2+1_m_rfd.RData")
-#file.name <- file.path(wd.de.data, "tpm-gene-median0_log2_m_de_rfd.RData")
-setTRC(tpm.gene.log2.m.rfd, rfd=0.9, file.name)
-load(file.name)
 
-length(which(tpm.gene.log2.m.rfd.ctr.iz$GENE_NRFD < 0))
-# [1] 106
-# [1] 88
-# [1] 
-length(which(tpm.gene.log2.m.rfd.ctr.tz$GENE_NRFD > 0))
-# [1] 92
-# [1] 77
-# [1] 
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (Tables)
@@ -430,6 +693,31 @@ nrow(tpm.gene.log2.m.rfd.ctr.tz.e)/20281
 # [1] 
 nrow(tpm.gene.log2.m.rfd.ctr.tz.l)/20281
 # [1] 
+
+# -----------------------------------------------------------------------------
+# RFD vs. TPM (median0)
+# Last Modified: 10/02/23; 11/02/21; 27/11/20; 01/09/20; 29/05/20
+# -----------------------------------------------------------------------------
+file.name <- file.path(wd.de.data, "tpm_gene_log2+1_m_rfd.RData")
+load(file.name)
+
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 11)
+file.name <- paste0("boxplot3_cll_tpm.gene.log2+1_RFD_11")
+plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="CLL expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
+
+
+
+##
+file.name <- file.path(wd.de.data, "tpm_gene_median0_log2_m_rfd+1.RData")
+load(file.name)
+
+ylim <- c(min(tpm.gene.log2.m.rfd$MEDIAN), 12)
+file.name <- paste0("boxplot3_sclc_tpm.gene.median0_RFD")
+plotBox3(wd.de.plots, file.name, tpm.gene.log2.m.rfd.ttr, tpm.gene.log2.m.rfd.ctr.tz, tpm.gene.log2.m.rfd.ctr.iz, main="SCLC expression", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim)
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # RFD vs. TPM (All)

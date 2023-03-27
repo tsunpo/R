@@ -22,7 +22,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "ICGC"
 base  <- tolower(BASE)
 
@@ -65,6 +65,16 @@ idx <- which(totals$wgs_id %in% mappings$pcawg_wgs_id)
 totals <- totals[idx,]
 nrow(totals)
 # [1] 2744
+
+idx <- which(mappings$pcawg_wgs_id %in% totals$wgs_id)
+mappings <- mappings[idx,]
+nrow(mappings)
+# [1] 3744
+mappings <- subset(mappings, specimen_library_strategy != "RNA-Seq")
+nrow(mappings)
+# [1] 2744
+rownames(mappings) <- mappings$pcawg_wgs_id
+mappings <- mappings[rownames(totals),]
 
 dim(subset(as.data.frame(table(samples$icgc_donor_id)), Freq > 1))
 # [1] 53  2
@@ -128,6 +138,104 @@ writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DAT
 
 save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
 
+###
+## 16/03/23 PanImmune
+immunes <- readTable(file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/Thorsson 2018", "PanImmune.txt"), header=T, rownames=T, sep="\t")
+nrow(immunes)
+# [1] 11080
+
+tcgas <- intersect(rownames(immunes), mappings$submitted_donor_id)
+length(tcgas)
+# [1] 814
+
+mappings.tcga <- subset(mappings, submitted_donor_id %in% tcgas)
+rownames(mappings.tcga) <- mappings.tcga$submitted_donor_id
+immunes.tcga <- immunes[mappings.tcga$submitted_donor_id,]
+for (h in 1:length(hists)) {
+	  mappings.tcga.hist <- subset(mappings.tcga, histology_abbreviation == hists[h])
+	  immunes.tcga.hist  <- immunes[rownames(mappings.tcga.hist),]
+	  
+	  ##
+	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Leukocyte.Fraction),]
+	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
+	  if (nrow(samples.tcga) > 1) {
+	     file.names <- file.path(wd.rt.plots, paste0("Leukocyte.Fraction_", hists[h], ".pdf"))
+	     plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Leukocyte fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Leukocyte.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+	  }
+	  
+	  ##
+	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Stromal.Fraction),]
+	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
+	  if (nrow(samples.tcga) > 1) {
+	  	  file.names <- file.path(wd.rt.plots, paste0("Stromal.Fraction_", hists[h], ".pdf"))
+	  	  plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Stromal fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Stromal.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+	  }
+	  
+	  ##
+	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Proliferation),]
+	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
+	  if (nrow(samples.tcga) > 1) {
+	  	  file.names <- file.path(wd.rt.plots, paste0("Proliferation_", hists[h], ".pdf"))
+	  	  plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Proliferation", "S-phase cell fraction index", immunes.tcga.hist.nona$Proliferation, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+	  }
+}
+
+##
+for (c in 5:22) {
+ 	 col <- colnames(immunes.tcga)[c]
+ 	 col.name <- unlist(strsplit(col, "\\."))
+ 	 col.name <- "HR defects"
+ 	 if (length(col.name) != 1) {
+ 	    for (n in 2:length(col.name))
+ 	  	    col.name[n] <- tolower(col.name[n])
+ 	    col.name <- paste(col.name, collapse=" ")
+ 	 }
+ 	 
+ 	 immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga[, col]),]
+ 	 samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+ 	 
+ 	 file.names <- file.path(wd.rt.plots, paste0("PanImmune_", col, ".pdf"))
+ 	 plotCorrelation5(file.names, "", paste0(col.name, " (n=", nrow(samples.tcga), ")"), "SCF index", immunes.tcga.nona[, col], samples.tcga$COR, pos="topright", cols=c("gray", "black"), size=5)
+}
+
+##
+immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Leukocyte.Fraction),]
+samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+file.names <- file.path(wd.rt.plots, paste0("Leukocyte.Fraction.pdf"))
+plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Leukocyte fraction", "S-phase cell fraction index", immunes.tcga.nona$Leukocyte.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+##
+immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Stromal.Fraction),]
+samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+file.names <- file.path(wd.rt.plots, paste0("Stromal.Fraction.pdf"))
+plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Stromal fraction", "S-phase cell fraction index", immunes.tcga.nona$Stromal.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+##
+immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Proliferation),]
+samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+file.names <- file.path(wd.rt.plots, paste0("Proliferation.pdf"))
+plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Proliferation", "S-phase cell fraction index", immunes.tcga.nona$Proliferation, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+##
+immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Wound.Healing),]
+samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+file.names <- file.path(wd.rt.plots, paste0("Wound.Healing.pdf"))
+plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Wound healing", "S-phase cell fraction index", immunes.tcga.nona$Wound.Healing, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+##
+immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$IFN.gamma.Response),]
+samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+file.names <- file.path(wd.rt.plots, paste0("IFN.gamma.Response.pdf"))
+plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "IFN gamma response", "S-phase cell fraction index", immunes.tcga.nona$IFN.gamma.Response, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+##
+immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Lymphocyte.Infiltration.Signature.Score),]
+samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+file.names <- file.path(wd.rt.plots, paste0("Lymphocyte.Infiltration.Signature.Score.pdf"))
+plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Lymphocyte infiltration", "S-phase cell fraction index", immunes.tcga.nona$Lymphocyte.Infiltration.Signature.Score, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+
+
+
 # -----------------------------------------------------------------------------
 # samples
 # Last Modified: 21/04/19
@@ -144,7 +252,7 @@ for (h in 1:length(hists)) {
    sum <- c()
    for (s in 1:nrow(samples.hist)) {
       sample <- samples.hist$specimen_id[s]
-      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
       
       sum <- c(sum, as.numeric(cor))
    }
@@ -326,7 +434,7 @@ for (h in 8:1) {
 
 ###
 ##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1"
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1_test"
 main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
 
@@ -351,6 +459,35 @@ axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.a
 mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
 legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
 dev.off()
+
+##
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1_plain_bold"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
+text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+#stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
+#stripchart(COR ~ CANCER, data=samples.h1[1:1889,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:19))
+#stripchart(COR ~ CANCER, data=samples.h1[1991:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(21:28))
+stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
+#stripchart(subset(samples.sclc, M2 == 2)$COR ~ rep(20, time=50), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=20)
+#stripchart(subset(samples.sclc, M2 == 1)$COR ~ rep(20, time=51), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=20)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
+#legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
+dev.off()
+
 
 
 

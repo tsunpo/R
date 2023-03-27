@@ -351,7 +351,7 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    rfds$NAME <- names
    rfds$X    <- c(1, 3, 5, 7)
    rfds$pch  <- c(19, 17, 17, 17)
-   rfds$cex  <- c(1.8, 1.6, 1.6, 1.6)
+   rfds$cex  <- c(2.4, 2.2, 2.2, 2.2)
    rfds$pos1 <- c(3, 3, 3, 3)
    rfds$pos2 <- c(3, 1, 3, 1)
    rfds$pos3 <- c(1, 3, 1, 3)
@@ -362,31 +362,31 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    }
    
    ##
-   pdf(file.name, height=5, width=5.2)
+   pdf(file.name, height=6, width=6)
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
-   par(mar=c(1,3.6,3.6,0))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(55, 115), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
+   par(mar=c(1, 4.6, 3.5, 0))
+   plot(NULL, xlim=c(0.5, 8.4), ylim=c(55, 105), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=rfds$cex)
    lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
    #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
    
-   text(8, rfds$TTR[n], "   TTR ", cex=1.3, col="black", font=2)
+   text(8, rfds$TTR[n], "   TTR ", cex=1.8, col="black")
    #abline(v=4, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names))
-      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.3)
+      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.8)
  
    ##
-   axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.25)
-   legend("top", "Normal                              ", col="black", bty="n", pch=1, pt.cex=2, horiz=T, cex=1.3)
-   legend("topright", "Tumor                    ", col="black", bty="n", pch=2, pt.cex=1.6, horiz=T, cex=1.3)
+   axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.7)
+   #legend("top", "Normal                         ", col="black", bty="n", pch=1, pt.cex=2.8, horiz=T, cex=1.8)
+   #legend("topright", "Tumor              ", col="black", bty="n", pch=2, pt.cex=2.2, horiz=T, cex=1.8)
    #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
    #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
-   mtext("[%]          ", side=2, line=2.6, cex=1.3)
+   mtext("[%]         ", side=2, line=3.2, cex=1.8)
    
    ##
-   par(mar=c(5,3.6,0,0))
-   plot(NULL, xlim=c(0.5, 9.1), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.25, cex.lab=1.3, cex.main=1.35)
+   par(mar=c(6, 4.6, 0, 0))
+   plot(NULL, xlim=c(0.5, 8.4), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=rfds$cex)
    lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
    lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
@@ -395,29 +395,38 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
    lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
    
-   text(8, rfds$CTR_E[n], "      IZ ", cex=1.3, col=red, pos=1, font=2) 
-   text(8, rfds$CTR_L[n], "     TZ ", cex=1.3, col=blue, pos=3, font=2)
+   text(8, rfds$CTR_E[n], "      IZ ", cex=1.8, col=red, pos=1) 
+   text(8, rfds$CTR_L[n], "     TZ ", cex=1.8, col=blue, pos=3)
    #abline(v=4, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
-      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=red, pos=rfds$pos2[n], cex=1.3)
-      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=blue, pos=rfds$pos3[n], cex=1.3)
+      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=red, pos=rfds$pos2[n], cex=1.8)
+      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=blue, pos=rfds$pos3[n], cex=1.8)
    }
    #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
 
    ##
    #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
    #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
-   axis(side=1, at=seq(1, 7, by=4), labels=c(names[1], names[3]), cex.axis=1.3)
-   axis(side=1, at=seq(3, 7, by=4), labels=c(names[2], names[4]), cex.axis=1.3)
-   axis(side=1, at=seq(1, 7, by=2), labels=c("n=92", "n=101", "n=56", "n=96"), line=1.2, col=NA, cex.axis=1.3)
+   axis(side=1, at=seq(1, 7, by=2), labels=c("", "", "", ""), cex.axis=1.8)
+   #axis(side=1, at=seq(1, 7, by=4), labels=c(names[1], names[3]), line=0.5, col=NA, cex.axis=1.8)
+   #axis(side=1, at=seq(3, 7, by=4), labels=c(names[2], names[4]), line=0.5, col=NA, cex.axis=1.8)
+   text(labels=names, x=c(1,3,5,7), y=par("usr")[3] - 1.8, srt=45, adj=0.965, xpd=NA, cex=1.8)
+   
    #axis(side=1, at=seq(1, 7, by=2), labels=c("n=46", "n=51", "n=28", "n=48"), line=1.2, col=NA, cex.axis=1.25)
    #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
    #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
+   legend("bottom", "Normal                          ", col="black", bty="n", pch=1, pt.cex=2.8, horiz=T, cex=1.8)
+   legend("bottomright", "Tumour              ", col="black", bty="n", pch=2, pt.cex=2.2, horiz=T, cex=1.8)
    
-   mtext("                      Frequency", side=2, line=2.6, cex=1.3)
+   mtext("                  Frequency", side=2, line=3.2, cex=1.8)
    dev.off()
 }
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_NEW_6x6_-1.8_.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains   ")
+
+
 
 plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    titles <- c("TTR", "CTR_E", "CTR_L")
@@ -429,7 +438,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    rfds$NAME <- names
    rfds$X    <- c(1, 3, 5, 7)
    rfds$pch  <- c(19, 17, 17, 17)
-   rfds$cex  <- c(1.8, 1.6, 1.6, 1.6)
+   rfds$cex  <- c(1., 1.6, 1.6, 1.6)
    rfds$pos1 <- c(3, 3, 3, 3)
    rfds$pos2 <- c(3, 1, 3, 1)
    rfds$pos3 <- c(1, 3, 1, 3)
@@ -468,7 +477,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.2)
    legend("top", "Normal                              ", col="black", bty="n", pch=1, pt.cex=2, horiz=T, cex=1.3)
    legend("topright", "Tumour                    ", col="black", bty="n", pch=2, pt.cex=1.6, horiz=T, cex=1.3)
-   mtext("[%]            ", side=2, line=2.6, cex=1.25)
+   mtext("[%]            ", side=2, line=3.1, cex=1.25)
    
    ##
    par(mar=c(5,3.6,0,0))
@@ -493,7 +502,7 @@ plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    axis(side=1, at=seq(1, 7, by=2), labels=names[1:4], cex.axis=1.25)
    axis(side=1, at=seq(1, 7, by=2), labels=c("n=46,46", "n=50,51", "n=28,28", "n=48,48"), line=1.2, col=NA, cex.axis=1.25)
 
-   mtext("                        Frequency", side=2, line=2.6, cex=1.25)
+   mtext("                        Frequency", side=2, line=3.1, cex=1.25)
    dev.off()
 }
 
@@ -767,7 +776,7 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
    ymax <- max(c(h$counts[2:4], h$counts[(breaks-3):(breaks-1)]))   ## Calculatte max frequency in row 2 before next line
    h$counts <- h$counts/1000                                        ## Change frequency scale to x1000 in row 1
    
-   pdf(file.name, height=5, width=5)
+   pdf(file.name, height=6, width=6)
    #par(mfrow=c(2,1))
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,2))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
    ylim <- sort(c(h$counts[1], h$counts[breaks]), decreasing=F)     ## Min and max frequencies in row 1 (in x1000 scale)
@@ -777,31 +786,33 @@ plotBootstrapHist <- function(nrds.RT.BSTRPS, file.name, main.text, xlab.text, b
       ylim[1] <- floor(ylim[1]/10)*10
    } else
       ylim[1] <- floor(ylim[1])
-   par(mar=c(1,4,3.6,1))
-   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, border="darkgray", col=cols, xaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.35)
+   #par(mar=c(1,4,3.6,1))
+   par(mar=c(1.5, 4.7, 4.1, 1.4)) 
+   plot(h, main=main.text[1], ylab="Fr. [x1000]", xlab="", ylim=ylim, col=cols, xaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    #abline(v=500, lty=5, lwd=1, col="black")
-   abline(v=950, lty=5, lwd=1.5, col="black")
-   abline(v=50,  lty=5, lwd=1.5, col="black")
+   abline(v=950, lty=5, lwd=2, col="black")
+   abline(v=50,  lty=5, lwd=2, col="black")
 
    ##
-   par(mar=c(5,4,0,1))
-   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, border="darkgray", col=cols, las=1, axes=F, cex.axis=1.2, cex.lab=1.3, cex.main=1.4)
+   #par(mar=c(5,4,0,1))
+   par(mar=c(5.1, 4.7, 1, 1.4)) 
+   hist(nrds.RT.BSTRPS$NEG, main="", ylab="Frequency", xlab=xlab.text, ylim=c(0, ymax), breaks=breaks, col=cols, las=1, axes=F, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    if (ymax < 1000) {
-      axis(side=2, at=seq(0, ymax, by=250), cex.axis=1.2)
+      axis(side=2, at=seq(0, ymax, by=250), cex.axis=1.7)
    } else if (ymax < 3000) {
-      axis(side=2, at=seq(0, ymax, by=500), cex.axis=1.2)
+      axis(side=2, at=seq(0, ymax, by=500), cex.axis=1.7)
    } else if (ymax > 20000) {
-      axis(side=2, at=seq(0, ymax, by=10000), cex.axis=1.2)
+      axis(side=2, at=seq(0, ymax, by=10000), cex.axis=1.7)
    } else
-      axis(side=2, at=seq(0, ymax, by=1000), cex.axis=1.2)
-   axis(side=1, at=seq(0, 1000, by=250), cex.axis=1.2)
+      axis(side=2, at=seq(0, ymax, by=1000), cex.axis=1.7)
+   axis(side=1, at=seq(0, 1000, by=250), cex.axis=1.7)
    #abline(v=500, lty=5, lwd=1, col="black")
-   abline(v=950, lty=5, lwd=1.5, col="black")
-   abline(v=50,  lty=5, lwd=1.5, col="black")
+   abline(v=950, lty=5, lwd=2, col="black")
+   abline(v=50,  lty=5, lwd=2, col="black")
    ctr <- (nrow(subset(nrds.RT.BSTRPS, RFD >= 0.9)) + nrow(subset(nrds.RT.BSTRPS, RFD <= -0.9))) / nrow(nrds.RT.BSTRPS)
-   text(500, ymax*4/5, paste0("|RFD| > 0.9 (", round0(ctr*100, digits=1), "%)"), cex=1.3, col="black", font=2) 
+   text(500, ymax*4/5, paste0("|RFD| > 0.9 (", round0(ctr*100, digits=1), "%)"), cex=1.8, col="black", font=2) 
    
-   mtext(main.text[2], line=4.7, cex=1.3)   ## separator(nrow(nrds.RT.BSTRPS)),
+   mtext(main.text[2], line=4.7, cex=1.7)   ## separator(nrow(nrds.RT.BSTRPS)),
    dev.off()
 }
 
@@ -836,7 +847,7 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    unclassified <- c(unclassified, rownames(nrds.RT.NRFD.chr[boundaries,])[which(is.na(nrds.RT.NRFD.chr[boundaries,]$NRFD) == T)])
       
    if (width == 10) main.text <- paste0(BASE, " bootstrap-based replication fork directionality (RFD)")
-   else main.text <- paste0(BASE, " bootstrap-based RFD")
+   else main.text <- paste0(BASE)#, " bootstrap-based RFD")
    if (withUnclassified)
       main.text <- paste0(main.text, " (", kb, " kb)")
    
@@ -851,28 +862,28 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    
    ## Initiation plot
    if (ext == "pdf") {
-      pdf(paste0(file.name, ".pdf"), height=5, width=width)
+      pdf(paste0(file.name, ".pdf"), height=6, width=width)
    } else if (ext == "png")
-      png(paste0(file.name, ".png"), height=5, width=width, units="in", res=300)   ## ADD 16/05/17: res=300
+      png(paste0(file.name, ".png"), height=6, width=width, units="in", res=300)   ## ADD 16/05/17: res=300
    
    ###
    ## Initiate RT plot
    layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))   ## One figure each in row 1 and row 2   ## See plotBootstrapsHist()
-   par(mar=c(1,4,4,1))
-   ylab.text <- "RT [log2]"
+   par(mar=c(1,4.4,4,1))
+   ylab.text <- "RT"
 
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.2, cex.lab=1.3, cex.main=1.35)
-   points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.3)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-2, 2), xlab="", ylab=ylab.text, main=main.text, xaxt="n", yaxt="n", cex.axis=1.7, cex.lab=1.8, cex.main=2)
+   points(bed.gc.chr$START/1E6, nrds.RT.NRFD.chr$RT, col=adjustcolor.gray, pch=16, cex=0.5)
    
-   axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.2)
-   axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.2)
-   abline(h=0, lty=5, lwd=1.5, col="black")
+   axis(side=2, at=seq(-2, 2, by=2), labels=c("\u22122", 0, 2), cex.axis=1.7)
+   axis(side=2, at=seq(-1, 1, by=2), labels=c("\u22121", 1), cex.axis=1.7)
+   abline(h=0, lty=5, lwd=2, col="black")
 
    ##
    if (gene != "") {
       g <- getGene(gene)
-      abline(v=g$start_position/1E6, lty=5, lwd=1.5, col="#01DF01")
-      abline(v=g$end_position/1E6, lty=5, lwd=1.5, col="#01DF01")
+      abline(v=g$start_position/1E6, lty=5, lwd=1.5, col=green)
+      abline(v=g$end_position/1E6, lty=5, lwd=1.5, col=green)
    }
    #abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
    #abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
@@ -883,41 +894,41 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey") 
    
    ## Plot smoothing spline with right-/left-leading positions
-   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$SPLINE, col=lightblue, pch=19, cex=0.5)
-   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col=orange, pch=19, cex=0.5)
-   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col=blue, pch=19, cex=0.5)
-   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col=red, pch=19, cex=0.5)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$SPLINE, col=lightblue, pch=19, cex=0.7)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$SPLINE, col=orange, pch=19, cex=0.7)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$SPLINE, col=blue, pch=19, cex=0.7)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$SPLINE,  col=red, pch=19, cex=0.7)
    if (withUnclassified && length(unclassified) != 0)
-      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="#01DF01", pch=19, cex=0.5)
+      points(bed.gc.chr[unclassified,]$START/1E6,  nrds.RT.NRFD.chr[unclassified,]$SPLINE, col="#01DF01", pch=19, cex=0.8)
    
    ## Plot legend
-   legend("topright", "IZ", col=red, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
-   legend("bottomright", "TZ", col=blue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
-   if (withUnclassified) legend("bottomleft", "UN", col="#01DF01", bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
-   mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
+   legend("topright", "IZ", col=red, bty="n", pt.cex=1.5, lty=1, lwd=5, pch=NA, horiz=T, cex=1.8)
+   legend("bottomright", "TZ", col=blue, bty="n", pt.cex=1.5, lty=1, lwd=5, pch=NA, horiz=T, cex=1.8)
+   if (withUnclassified) legend("bottomleft", "UN", col="#01DF01", bty="n", pt.cex=1.5, lty=1, lwd=4, pch=NA, horiz=T, cex=1.8)
+      mtext("", line=0.25, cex=1.2)   ## separator(nrow(nrds.RT.BSTRPS)),
    
    #if (width == 10) {
-      legend("topleft", "Early", bty="n", text.col="black", cex=1.3, x.intersp=0)   
-      legend("bottomleft", "Late", bty="n", text.col="black", cex=1.3, x.intersp=0)
+      legend("topleft", "Early", bty="n", text.col="black", cex=1.8, x.intersp=0)   
+      legend("bottomleft", "Late", bty="n", text.col="black", cex=1.8, x.intersp=0)
    #}
    
    ###
    ## Initiate RFD plot
-   par(mar=c(5.5,4,0,1))
+   par(mar=c(5.5,4.4,0,1))
    xlab.text <- paste0("Chromosome ", gsub("chr", "", chr), " position [Mb]")
    ylab.text <- "RFD"
    
-   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.2, cex.lab=1.3)
-   axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.2)
+   plot(NULL, xlim=c(xmin/1E6, xmax/1E6), ylim=c(-1.8, 1.8), xlab=xlab.text, ylab=ylab.text, main="", yaxt="n", cex.axis=1.7, cex.lab=1.8)
+   axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.7)
    #abline(h=0, lty=5, lwd=1, col="black")
-   abline(h=0.9, lty=5, lwd=1.5, col="black")
-   abline(h=-0.9, lty=5, lwd=1.5, col="black")
+   abline(h= 0.9, lty=5, lwd=2, col="black")
+   abline(h=-0.9, lty=5, lwd=2, col="black")
    
    ##
    if (gene != "") {
       g <- getGene(gene)
-      abline(v=g$start_position/1E6, lty=5, lwd=1.5, col="#01DF01")
-      abline(v=g$end_position/1E6, lty=5, lwd=1.5, col="#01DF01")
+      abline(v=g$start_position/1E6, lty=5, lwd=1.5, col=green)
+      abline(v=g$end_position/1E6, lty=5, lwd=1.5, col=green)
    }
    #abline(v=27548716/1E6, lty=2, lwd=1, col="#01DF01")
    #abline(v=27579868/1E6, lty=2, lwd=1, col="#01DF01")
@@ -928,16 +939,16 @@ plotBootstrapRFD <- function(file.name, BASE, chr, xmin, xmax, nrds.RT.NRFD, bed
    for (c in 1:nrow(cytoBand.chr))
       abline(v=cytoBand.chr$chromEnd[c]/1E6, lty=5, lwd=0.5, col="lightgrey")
 
-   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col=lightblue, pch=19, cex=0.5)
-   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col=orange, pch=19, cex=0.5)
-   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col=blue, pch=19, cex=0.5)
-   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col=red,  pch=19, cex=0.5)
+   points(bed.gc.chr[lefts,]$START/1E6,  nrds.RT.NRFD.chr[lefts,]$RFD,  col=lightblue, pch=19, cex=0.7)
+   points(bed.gc.chr[rights,]$START/1E6, nrds.RT.NRFD.chr[rights,]$RFD, col=orange, pch=19, cex=0.7)
+   points(bed.gc.chr[terminations,]$START/1E6, nrds.RT.NRFD.chr[terminations,]$RFD, col=blue, pch=19, cex=0.7)
+   points(bed.gc.chr[initiations,]$START/1E6,  nrds.RT.NRFD.chr[initiations,]$RFD,  col=red,  pch=19, cex=0.7)
    if (withUnclassified && length(unclassified) != 0)
       points(bed.gc.chr[unclassified,]$START/1E6, nrds.RT.NRFD.chr[unclassified,]$RFD, col="#01DF01", pch=19, cex=0.5)
   
    ## Plot legend
-   legend("topright", "Rightward", col=orange, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
-   legend("bottomright", "Leftward", col=lightblue, bty="n", pt.cex=1, lty=1, lwd=3, pch=NA, horiz=T, cex=1.3)
+   legend("topright", "TTR (R)", col=orange, bty="n", pt.cex=1.5, lty=1, lwd=5, pch=NA, horiz=T, cex=1.8)
+   legend("bottomright", "TTR (L)", col=lightblue, bty="n", pt.cex=1.5, lty=1, lwd=5, pch=NA, horiz=T, cex=1.8)
    dev.off()
 }
 
@@ -967,56 +978,192 @@ getBootstrapSummary <- function(report.sclc.nl.vs.sclc) {
    return(summary)
 }
 
+# ## https://stackoverflow.com/questions/40919759/stacked-barplot-using-r-base-how-to-add-values-inside-each-stacked-bar
 ## https://stackoverflow.com/questions/40919759/stacked-barplot-using-r-base-how-to-add-values-inside-each-stacked-bar
 plotBootstrapSummary <- function(summary, file.name, main.text) {
-   xlab.text <- "Percentage [%]"
-   #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
-   cols <- c(green, yellow)
-   summary$Conserved <- summary$Conserved*100
-   summary$Preserved <- summary$Preserved*100
-   summary <- t(as.matrix(summary[,-3]))
-   summary <- summary[,3:1]
- 
-   pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
-   par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
-   #bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
-   bp <- barplot(summary, col=cols, xlim=c(0, 85), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
- 
-   h <- summary
-   h[1,] <- as.numeric(round0(summary[1,], digits=1))
-   h[2,] <- as.numeric(round0(summary[2,], digits=1))
-   H <- apply(summary, 2L, cumsum) - summary/2
-   text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
- 
-   legend("bottomright", c("Shared", "Specific"), pt.cex=2.5, cex=1.6, fill=cols, horiz=T, bty="n")
-   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
-   dev.off()
+	  xlab.text <- "Percentage [%]"
+	  #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
+	  cols <- c("white", "darkgray")
+	  summary$Conserved <- summary$Conserved*100
+	  summary$Preserved <- summary$Preserved*100
+	  summary <- t(as.matrix(summary[,-3]))
+	  summary <- summary[,3:1]
+	
+	  pdf(paste0(file.name, ".pdf"), height=3.5, width=10)
+	  par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
+	  bp <- barplot(summary, col=cols, xlim=c(0, 90), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  #bp <- barplot(summary, col=cols, xlim=c(0, 63), xlab=xlab.text, names.arg=c("","",""), main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
+	
+  	h <- summary
+	  h[1,] <- as.numeric(round0(summary[1,], digits=1))
+	  h[2,] <- as.numeric(round0(summary[2,], digits=1))
+	  H <- apply(summary, 2L, cumsum) - summary/2
+	  H[2,1] <- H[2,1] + 1.6
+	  H[2,2] <- H[2,2] + 1.6
+	  text(H, rep(bp, each = nrow(H)), labels=h, cex=1.8, col="black")
+	
+	  legend("bottomright", c("Shared", "Specific"), pt.cex=2.5, cex=1.8, fill=cols, horiz=T, bty="n")
+	  #mtext(ylab.text, side=2, line=2.75, cex=1.6)
+	  dev.off()
 }
 
 plotBootstrapSummaryTotal <- function(summary, file.name, main.text) {
-   xlab.text <- "Percentage [%]"
-   #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
-   cols <- c(green, yellow)
-   summary$Conserved <- summary$Conserved*100
-   summary$Preserved <- summary$Preserved*100
-   summary <- as.data.frame(t(summary[,-3]))
-   summary <- summary[,3:1]
-   summary$Total <- 0
-   summary$Total[1] <- sum(summary[1,])
-   summary$Total[2] <- sum(summary[2,])
-   summary <- as.matrix(summary[,4])
- 
-   pdf(paste0(file.name, "_total.pdf"), height=3.5, width=4)
-   par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
-   bp <- barplot(summary, col=cols, xlim=c(0, 100), xlab=xlab.text, names.arg="", main=main.text[1], horiz=T, cex.axis=1.5, cex.lab=1.6, cex.main=1.7)
- 
-   h <- summary
-   h[1,] <- as.numeric(round0(summary[1,], digits=1))
-   h[2,] <- as.numeric(round0(summary[2,], digits=1))
-   H <- apply(summary, 2L, cumsum) - summary/2
-   text(H, rep(bp, each = nrow(H)), labels=h, cex=1.5, col="black")
- 
-   #legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
-   #mtext(ylab.text, side=2, line=2.75, cex=1.6)
-   dev.off()
+	  xlab.text <- "Percentage [%]"
+	  #cols <- c(adjustcolor(green, alpha.f=0.7), adjustcolor(yellow, alpha.f=0.7))
+	  cols <- c("white", "darkgray")
+	  summary$Conserved <- summary$Conserved*100
+	  summary$Preserved <- summary$Preserved*100
+	  summary <- as.data.frame(t(summary[,-3]))
+	  summary <- summary[,3:1]
+	  summary$Total <- 0
+	  summary$Total[1] <- sum(summary[1,])
+	  summary$Total[2] <- sum(summary[2,])
+	  summary <- as.matrix(summary[,4])
+	
+	  pdf(paste0(file.name, "_total.pdf"), height=3.5, width=4)
+	  par(mar=c(5.1, 1.1, 4.1, 1.1), xpd=TRUE)
+	  bp <- barplot(summary, col=cols, xlim=c(0, 100), xlab=xlab.text, names.arg="", main=main.text[2], horiz=T, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  h <- summary
+	  h[1,] <- as.numeric(round0(summary[1,], digits=1))
+	  h[2,] <- as.numeric(round0(summary[2,], digits=1))
+	  H <- apply(summary, 2L, cumsum) - summary/2
+	  text(H, rep(bp, each = nrow(H)), labels=h, cex=1.8, col="black")
+	
+  	#legend("bottomright", rownames(summary), cex=1.6, fill=cols, horiz=T, bty="n")
+	  #mtext(ylab.text, side=2, line=2.75, cex=1.6)
+	  dev.off()
+}
+
+plotBoxDepMap <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=6, width=4, text="", ylab=text.Log2.TPM.1) {
+	  trait <- rep(0, nrow(tpm.1))
+	  trait <- c(trait, rep(1, nrow(tpm.2)))
+	  trait <- c(trait, rep(2, nrow(tpm.3)))
+	  trait <- as.factor(trait)
+	  expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN))
+	
+	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	  par(mar=c(4.5, 4.7, 4.1, 1.4))
+	  #boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", ylab=ylab, main="", col="white", boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylim=ylim, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", ylab=ylab, main="", col=cols, ylim=ylim, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  
+	  abline(h=0, lty=5, lwd=2)
+	  #abline(h=-1, lty=5, col=red, lwd=2)
+	  
+	  unit <- (ylim[2] - ylim[1])/10
+	  p <- testU(tpm.1$MEDIAN, tpm.3$MEDIAN)
+	  text(2, ylim[2]-unit+unit/2, getPvalueSignificanceLevel(p), cex=3)
+  	lines(c(1, 3), y=c(ylim[2]-unit, ylim[2]-unit), type="l", lwd=2)
+	
+	  p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
+	  text(1.5, ylim[2]-unit*2+unit/2, getPvalueSignificanceLevel(p), cex=3)
+	  lines(c(1, 2), y=c(ylim[2]-unit*2, ylim[2]-unit*2), type="l", lwd=2)
+	
+	  p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
+	  text(2.5, ylim[2]-unit*3+unit/2, getPvalueSignificanceLevel(p), cex=3)
+	  lines(c(2, 3), y=c(ylim[2]-unit*3, ylim[2]-unit*3), type="l", lwd=2)
+	
+	  #axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.7)
+	  axis(side=1, at=seq(1, 3, by=1), labels=c("", "", ""), cex.axis=1.8)
+	  axis(side=1, at=seq(1, 3, by=1), labels=names[1:3], line=0.5, col=NA, cex.axis=1.8)
+	  mtext(names[4], cex=1.8, line=5.5)
+	  #text(labels=names, x=1:3, y=par("usr")[3] - 0.07, srt=45, adj=0.965, xpd=NA, cex=1.8)
+	  
+	  dev.off()
+}
+
+plotBoxDepMapSolid <- function(wd.de.plots, file.name, tpm.1, tpm.2, tpm.3, main, names, cols, ylim, height=7, width=4.2, text="", ylab=text.Log2.TPM.1) {
+	  trait <- rep(0, nrow(tpm.1))
+	  trait <- c(trait, rep(1, nrow(tpm.2)))
+	  trait <- c(trait, rep(2, nrow(tpm.3)))
+	  trait <- as.factor(trait)
+	  expr <- as.numeric(c(tpm.1$MEDIAN, tpm.2$MEDIAN, tpm.3$MEDIAN))
+	
+	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	  par(mar=c(10.4, 6.5, 4.1, 1.4))
+	  boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", ylab=ylab, main=main, col=cols, ylim=ylim, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  abline(h=0, lty=5, lwd=2)
+	  #abline(h=-1, lty=5, col=red, lwd=2)
+	
+  	unit <- (ylim[2] - ylim[1])/10
+  	p <- testU(tpm.1$MEDIAN, tpm.3$MEDIAN)
+  	text(2, ylim[2]-unit+unit/2, getPvalueSignificanceLevel(p), cex=3)
+  	lines(c(1, 3), y=c(ylim[2]-unit, ylim[2]-unit), type="l", lwd=2)
+	
+	  p <- testU(tpm.1$MEDIAN, tpm.2$MEDIAN)
+	  text(1.5, ylim[2]-unit*2+unit/2, getPvalueSignificanceLevel(p), cex=3)
+	  lines(c(1, 2), y=c(ylim[2]-unit*2, ylim[2]-unit*2), type="l", lwd=2)
+	
+	  p <- testU(tpm.2$MEDIAN, tpm.3$MEDIAN)
+	  text(2.5, ylim[2]-unit*3+unit/2, getPvalueSignificanceLevel(p), cex=3)
+	  lines(c(2, 3), y=c(ylim[2]-unit*3, ylim[2]-unit*3), type="l", lwd=2)
+	
+	  #axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.7)
+  	axis(side=1, at=seq(1, 3, by=1), labels=c("", "", ""), cex.axis=1.8)
+  	#axis(side=1, at=seq(1, 3, by=1), labels=names[1:3], line=0.5, col=NA, cex.axis=1.8)
+  	mtext(names[4], cex=1.8, line=5.5)
+  	text(labels=names, x=1:3, y=par("usr")[3] - 0.07, srt=45, adj=0.965, xpd=NA, cex=1.8)
+	
+	  dev.off()
+}
+
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.5, text="", ylab=text.Log2.TPM.1) {
+	  trait <- rep(0, length(tpm.1))
+	  trait <- c(trait, rep(1, length(tpm.2)))
+	  trait <- as.factor(trait)
+	  expr <- c(tpm.1, tpm.2)
+	
+	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	  par(mar=c(16, 4.5, 2.1, 1.4))
+	  boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", col="white", boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylab=ylab, main=main, ylim=ylim, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+	
+	  #abline(h=0, lty=5, lwd=2)
+  	#abline(h=-1, lty=5, col=red, lwd=2)
+
+	  unit <- (ylim[2] - ylim[1])/10
+	  p <- testU(tpm.1, tpm.2)
+	  text(1.5, ylim[2]-unit*2+unit, getPvalueSignificanceLevel(p), cex=2.5)
+	  lines(c(1, 2), y=c(ylim[2]-unit*2, ylim[2]-unit*2), type="l", lwd=2)
+	
+	  abline(h=q4[3], lty=5, lwd=2, col=red)
+	  
+  	#axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.7)
+	  axis(side=1, at=seq(1, 2, by=1), labels=c("", ""), cex.axis=1.8)
+	  #axis(side=1, at=seq(1, 2, by=1), labels=names[1:2], line=0.5, col=NA, cex.axis=1.8)
+	  #mtext(names[4], cex=1.8, line=5.5)
+  	#text(labels=names, x=1:3, y=par("usr")[3] - 0.07, srt=45, adj=0.965, xpd=NA, cex=1.8)
+  	text(labels=names, x=1:2, y=par("usr")[3] - 1, srt=45, adj=0.965, xpd=NA, cex=1.4)
+  	
+	  dev.off()
+}
+
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.5, text="", ylab=text.Log2.TPM.1) {
+	trait <- rep(0, length(tpm.1))
+	trait <- c(trait, rep(1, length(tpm.2)))
+	trait <- as.factor(trait)
+	expr <- c(tpm.1, tpm.2)
+	
+	pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	par(mar=c(16, 4.5, 2.1, 1.4))
+	boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", col="white", boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylab=ylab, main=main, ylim=ylim, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+	
+	#abline(h=0, lty=5, lwd=2)
+	#abline(h=-1, lty=5, col=red, lwd=2)
+	
+	unit <- (ylim[2] - ylim[1])/10
+	p <- testU(tpm.1, tpm.2)
+	text(1.5, ylim[2]-unit*2+unit, getPvalueSignificanceLevel(p), cex=2.5)
+	lines(c(1, 2), y=c(ylim[2]-unit*2, ylim[2]-unit*2), type="l", lwd=2)
+	
+	abline(h=q4[3], lty=5, lwd=2, col=red)
+	
+	#axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.7)
+	axis(side=1, at=seq(1, 2, by=1), labels=c("", ""), cex.axis=1.8)
+	#axis(side=1, at=seq(1, 2, by=1), labels=names[1:2], line=0.5, col=NA, cex.axis=1.8)
+	#mtext(names[4], cex=1.8, line=5.5)
+	#text(labels=names, x=1:3, y=par("usr")[3] - 0.07, srt=45, adj=0.965, xpd=NA, cex=1.8)
+	text(labels=names, x=1:2, y=par("usr")[3] - 1, srt=45, adj=0.965, xpd=NA, cex=1.4)
+	
+	dev.off()
 }

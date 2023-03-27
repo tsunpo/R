@@ -24,7 +24,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "NBL-CL"
 PAIR1 <- "T"
 base  <- tolower(BASE)
@@ -131,7 +131,7 @@ samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
 
-pdf(file.path(wd.rt.plots, "boxplot_nb-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6_Spearman's rho_NBL_cex=1.8.pdf"), height=6, width=4.2)
+pdf(file.path(wd.rt.plots, "boxplot_nb-cl_black_1.7_cex=2.5_colour_n=8_mar=4.6_Spearman's rho_NB_cex=1.7.pdf"), height=6, width=4.2)
 par(mar=c(5.1, 4.6, 4.1, 1.5))
 ymax <- 0.5
 ymin <- -0.367
@@ -151,17 +151,17 @@ for (s in 1:nrow(samples)) {
    sample <- samples[s,]
 
    if ( sample$SAMPLE_ID == "SKNFI")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.55), cex=1.8) 
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.55), cex=1.7) 
    else if (sample$SAMPLE_ID == "CLBGA")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, -0.55), cex=1.8)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, -0.55), cex=1.7)
    else if (sample$SAMPLE_ID == "NGP" || sample$SAMPLE_ID == "TR14")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.22, 0.5), cex=1.8)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.22, 0.5), cex=1.7)
    else if (sample$SAMPLE_ID == "LS")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.5, 0.5), cex=1.8)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.5, 0.5), cex=1.7)
    else if (sample$SAMPLE_ID == "LAN6")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, 1.17), cex=1.8)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, 1.17), cex=1.7)
    else
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.8)
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.7)
 }
 
 #legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.5)
@@ -169,7 +169,7 @@ for (s in 1:nrow(samples)) {
 axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.7)
 #mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
-axis(side=1, at=1, labels="NBL-CL", cex.axis=1.8)
+axis(side=1, at=1, labels="NB-CL", cex.axis=1.8)
 #mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
 mtext(text=c("(n = 8)"), side=1, cex=1.8, line=2.45, at=c(1,2,3))
 dev.off()

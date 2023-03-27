@@ -19,7 +19,7 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Set working directory
 # -----------------------------------------------------------------------------
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE <- "CLL"
 base <- tolower(BASE)
 
@@ -78,6 +78,12 @@ save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gen
 nrow(tpm.gene)
 # [1] 22807
 
+load(file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.RData")))
+tpm.gene <- removeMedian0(tpm.gene, 1)
+save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
+nrow(tpm.gene)
+# [1] 
+
 ## Gene-level TPMs with default filters
 tpm.gene <- getGeneTPM(list2Matrix(tpm.norm.filt$tpm, tpm.norm.filt), ensGene)   ## Gene-level TPMs (with default filters)
 save(tpm.gene, file=file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47.RData")))
@@ -99,19 +105,24 @@ nrow(tpm.gene)
 # =============================================================================
 # Density plot and histograms (See DifferentialExpression.R)
 # Figure(s)    : Figure S2 (A and B)
-# Last Modified: 12/09/20; 29/05/20
+# Last Modified: 06/09/20; 29/05/20
 # =============================================================================
 ## All genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Total Ensembl")
+plotDensityHistogram(tpm.gene, file.main, "Ensembl", tpm=NA)
 
 ## Expressed genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median0"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Expressed")
+plotDensityHistogram(tpm.gene, file.main, "expressed", tpm=0)
+
+## Expressed genes
+file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.median1"))
+load(paste0(file.main, ".RData"))
+plotDensityHistogram(tpm.gene, file.main, "expressed", tpm=1)
 
 ## Consistently expressed genes
 file.main <- file.path(wd.de.data, paste0(base, "_kallisto_0.43.1_tpm.gene.r5p47"))
 load(paste0(file.main, ".RData"))
-plotDensityHistogram(tpm.gene, file.main, "Consistently expressed")
+plotDensityHistogram(tpm.gene, file.main, "expressed", tpm="r5p47")

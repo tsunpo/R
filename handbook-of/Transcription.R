@@ -77,7 +77,7 @@ getEnsGeneFiltered <- function(tpm.gene, ensGene, autosomeOnly, proteinCodingOnl
 # =============================================================================
 ## http://www.sthda.com/english/wiki/abline-r-function-an-easy-way-to-add-straight-lines-to-a-plot-using-r-software
 ## http://www.sthda.com/english/wiki/line-types-in-r-lty
-plotDensity <- function(medians, BASE, file.name, title, pseudocount, ymax) {
+plotDensity <- function(medians, BASE, file.name, title, pseudocount=1, ymax) {
    xlab.text <- paste0("log2(TPM+", pseudocount, ")")
    ylab.text <- "Density"
    d <- density(medians)
@@ -101,8 +101,8 @@ plotDensity <- function(medians, BASE, file.name, title, pseudocount, ymax) {
    dev.off()
 }
 
-plotDensity0 <- function(medians, BASE, file.name, title, pseudocount, ymax, tpm=0) {
-   xlab.text <- paste0("log2(TPM + ", pseudocount, ")")
+plotDensity0 <- function(medians, BASE, file.name, title, pseudocount=1, ymax, tpm=NA) {
+   xlab.text <- expression("log" * ""[2] * "(TPM + 1)")
    ylab.text <- "Density"
    d <- density(medians)
    #d$y <- d$n/sum(d$y) * d$y   ## Convert to counts
@@ -112,15 +112,21 @@ plotDensity0 <- function(medians, BASE, file.name, title, pseudocount, ymax, tpm
    numbers <- formatC(length(medians), format="f", big.mark=",", digits=0)
  
    pdf(file.name, height=6, width=6)
-   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(title, " genes in ", BASE), ylim=c(0, ymax), cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+   par(mar=c(5.1, 4.7, 4.1, 1.4))
+   plot(d, xlab=xlab.text, ylab=ylab.text, main=paste0(numbers, " ", title, " genes in ", BASE), ylim=c(0, ymax), cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    abline(v=q, col=c("black", "black", "black", "black", "black"), lty=c(1, 5, 1, 5, 1), lwd=c(1, 1, 1, 1, 1))
    #for (x in 2:5)
    #   text((q[x] + q[x-1])/2, (ymax + min(d$y))/2, paste0("Q", (x-1)), cex=0.85, col="blue")
-   text(q[1], ymax, paste0("TPM = ", tpm), cex=1.3, col="black") 
+   if (!is.na(tpm)) {
+      if (tpm == "r5p47")
+   	     text(q[4] + 0.5, ymax, ">5 reads in >47% samples", cex=1.8, col="black")
+      else
+      	  text(q[3], ymax, paste0("Median TPM > ", tpm), cex=1.8, col="black")
+   }
    #text(q[3], ymax, "Median", cex=1, col="black") 
    #text(q[5], ymax, "Maximum", cex=0.85, col="blue") 
  
-   mtext(paste0("n=", numbers), cex=1.4, line=0.25)
+   #mtext(paste0("n=", numbers), cex=1.4, line=0.25)
    rug(jitter(medians))
    dev.off()
 }

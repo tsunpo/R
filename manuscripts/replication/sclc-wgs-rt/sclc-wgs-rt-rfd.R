@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 02/12/19; 11/09/19; 12/11/18
 # =============================================================================
-wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/Users/ty2/Work/dev/R"                 ## ty2@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
@@ -21,9 +21,9 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # 
 # Last Modified: 31/10/18
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"      ## ty2@localhost
 BASE <- "SCLC"
 base <- tolower(BASE)
 method <- "rpkm"
@@ -49,10 +49,19 @@ save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.R
 nrds.RT.BSTRPS$RFD <- NA
 nrds.RT.BSTRPS$RFD <- getRFD(nrds.RT.BSTRPS)
 
+boundary.upper <- 500   ## 500-520 breaks
+boundary.lower <- 500   ## 480-500 breaks
+boundary.break <- 0   ## 1 breaks each centering 500
+
 file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD>0.9.pdf"))
 main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
-xlab.text <- "Number of rightward forks per kb window"
-plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break)
+xlab.text <- "N of rightward forks per kb window"
+plotBootstrapHist(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break=45)
+
+file.name <- file.path(wd.rt.plots, paste0("hist_", base, "_rpkm_SLOPE_RFD=0.pdf"))
+main.text <- c(paste0(BASE, " bootstrap distribution"), paste0(""))
+xlab.text <- "N of rightward forks per kb window"
+plotBootstrapHist0(nrds.RT.BSTRPS, file.name, main.text, xlab.text, 100, boundary.break=0)
 
 # -----------------------------------------------------------------------------
 # Create RT + RFD data
@@ -63,7 +72,7 @@ load(file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-m2"), "data", past
 nrow(nrds)
 # [1] 2657164
 
-#install.packages("zoo", method="wget")
+#install.packages("zoo")
 library("zoo")
 kb <- 20
 nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
@@ -200,16 +209,24 @@ c <- 2
 chr <- chrs[c]
 bed.gc.chr <- subset(bed.gc, CHR == chrs[c])
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))
-plotBootstrapRFD(file.name, BASE, chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
-plotBootstrapRFD(file.name, BASE, chr,  69500000,  81000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
-
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_6x6"))
+plotBootstrapRFD(file.name, paste0(BASE, " bootstrap-based RFD"), chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb)
+plotBootstrapRFD(file.name, BASE, chr,  69500000,  81000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb)
 file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_Graphical_Rightward"))
 plotBootstrapRFD(file.name, BASE, chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_TTR_RFD=0"))
-plotBootstrapRFD0(file.name, BASE, chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb)
+nrds.RT.NRFD <- nrds.RT.NRFD.sclc
+boundary.upper <- 500   ## 500-520 breaks
+boundary.lower <- 500   ## 480-500 breaks
+boundary.break <- 0   ## 1 breaks each centering 500
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_6x6_TTR_RFD=0"))
+plotBootstrapRFD0(file.name, BASE, chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb)
+plotBootstrapRFD0(file.name, BASE, chr,  69500000,  81000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb)
 
+nrds.RT.NRFD <- nrds.RT.NRFD.sclc.nl
+file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "-NL_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_6x6_TTR"))
+plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr,  13000000,  17000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb)
+plotBootstrapRFD(file.name, paste0(BASE, "-NL"), chr,  69500000,  81000000, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb)
 
 
 
@@ -325,8 +342,9 @@ genes <- c("RP3-407E4.3")
 genes <- c("AL807752.1", "TOR1AIP1", "ECH1", "NMRK1", "PHPT1")
 genes <- c("RP11-730B22.1")
 genes <- c("FBXL5", "FAM92B", "BSDC1", "MORF4L1", "IRF2", "B2M")
-genes <- c("BLM")
-genes <- c("PIF1", "KIF18B", "GTPBP3")
+genes <- c("B2M", "RECQL4")
+genes <- c("GTF3C2", "TTLL4", "POLE", "MIS18BP1", "PASK", "HMGCS1")
+genes <- c("PIF1", "KIF18B", "GTPBP3", "BRCA2", "BLM", "RAD9A", "GTF3C2")
 for (g in 1:length(genes)) {
    chr <- subset(ensGene, external_gene_name == genes[g])$chromosome_name
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -343,7 +361,7 @@ for (g in 1:length(genes)) {
    }
     
    file.name <- file.path(wd.rt.plots, paste0("NRFD_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, "_", genes[g]))
-   plotBootstrapRFD(file.name, BASE, chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=5, kb, F, genes[g])
+   plotBootstrapRFD(file.name, BASE, chr, end, start, nrds.RT.NRFD, bed.gc.chr, boundary.upper, boundary.lower, "png", width=6, kb, F, genes[g])
 }
 
 ## Chr12
@@ -408,12 +426,30 @@ save(report.sclc.vs.sclc.nl, report.sclc.vs.nbl, report.sclc.vs.cll, report.nbl.
 
 # -----------------------------------------------------------------------------
 # Report (between LUAD and Ts)
-# Last Modified: 28/11/20; 23/03/20
+# Last Modified: 18/02/23; 28/11/20; 23/03/20
 # -----------------------------------------------------------------------------
 summary.sclc.vs.sclc.nl <- getBootstrapSummary(report.sclc.vs.sclc.nl)
 summary.sclc.vs.nbl     <- getBootstrapSummary(report.sclc.vs.nbl)
 summary.sclc.vs.cll     <- getBootstrapSummary(report.sclc.vs.cll)
 summary.nbl.vs.cll      <- getBootstrapSummary(report.nbl.vs.cll)
+
+file.name <- file.path(wd.rt.plots, "barchart_SCLC-vs-SCLC-NL")
+main.text <- c("SCLC vs. SCLC-NL", "Total")
+plotBootstrapSummary(summary.sclc.vs.sclc.nl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.sclc.nl, file.name, main.text)
+
+file.name <- file.path(wd.rt.plots, "barchart_SCLC-vs-NB")
+main.text <- c("SCLC vs. NB", "Total")
+plotBootstrapSummary(summary.sclc.vs.nbl, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.nbl, file.name, main.text)
+
+file.name <- file.path(wd.rt.plots, "barchart_SCLC-vs-CLL")
+main.text <- c("SCLC vs. CLL", "Total")
+plotBootstrapSummary(summary.sclc.vs.cll, file.name, main.text)
+plotBootstrapSummaryTotal(summary.sclc.vs.cll, file.name, main.text)
+
+
+
 
 ##
 file.name <- file.path(wd.rt.plots, "F7_SCLC-vs-SCLC-NL_barchart_dhl.yellow_basf.green_pt.cex=2.5")
