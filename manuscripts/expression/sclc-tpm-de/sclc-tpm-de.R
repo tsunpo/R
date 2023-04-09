@@ -162,7 +162,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
    xmax <- max(de$LOG2_FC)
    xmin <- min(de$LOG2_FC)
    if (ymax == 0) ymax <- max(de$log10P)
-   #ymax <- 8
+   #ymax <- 7
 
    pdf(file.de, height=7, width=6.5)
    par(mar=c(5.1, 4.7, 4.1, 1.5))
@@ -171,7 +171,7 @@ plotVolcano <- function(de, pvalue, genes, file.de, file.main, xlab.text, ylab.t
    abline(h=c(-log10(pvalue)), lty=5, lwd=2)
  
    de.up   <- subset(de.sig, LOG2_FC > log2(fold))
-   points(de.up$LOG2_FC, de.up$log10P, pch=16, col=red, cex=1.8)
+   points(de.up$LOG2_FC, de.up$log10P, pch=16, col="dimgray", cex=1.8)
    #de.down <- subset(de.sig, LOG2_FC < -log2(fold))
    #points(de.down$LOG2_FC, de.down$log10P, pch=16, col=adjustcolor.blue, cex=1.8)
  
@@ -220,11 +220,18 @@ file.de <- paste0(plot.de, ".pdf")
 file.main <- c("786 SCLC-specific IZ genes", "")
 plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ylab.text, fold=1.5)
 
-plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median1_p0.001-fc0.5.ttr.shared")
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median1_p0.001-fc1.5.ttr.shared")
 genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
 file.de <- paste0(plot.de, ".pdf")
-file.main <- c("9057 SCLC + SCLC-NL TTR genes", "")
-plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ylab.text, fold=0.5)
+file.main <- c("9,057 SCLC & NL shared TTR genes", "")
+plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ylab.text, fold=1.5)
+
+plot.de <- file.path(wd.de.plots, "volcanoplot_sclc_median1_p0.001-fc1.5.ttr.specific")
+genes <- readTable(paste0(plot.de, ".tab"), header=T, rownames=F, sep="\t")
+file.de <- paste0(plot.de, ".pdf")
+file.main <- c("425 SCLC-specific TTR genes", "")
+plotVolcano(de.tpm.gene, 0.001, genes, file.de, file.main, xlab.text, ylab.text, fold=1.5)
+
 
 # -----------------------------------------------------------------------------
 # 

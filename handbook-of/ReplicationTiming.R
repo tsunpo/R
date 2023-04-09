@@ -368,8 +368,8 @@ getRT <- function(nrds, bed.gc) {
 plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, colours, legends, colours2, legends2, ext, width, peaks, ylim=NULL, lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="topright") {
    ## Colours (was "lightcoral", "skyblue3")
    ## http://r.789695.n4.nabble.com/plot-function-color-transparency-td4682424.html
-   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.1)
-   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.1)
+   adjustcolor.red  <- adjustcolor(colours2[1], alpha.f=0.05)
+   adjustcolor.blue <- adjustcolor(colours2[2], alpha.f=0.05)
 
    ## Read in replicaiton time
    overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds.chr))   ## 29/11/19: Changed from intersect(rownames(nrds), rownames(bed.gc.chr))

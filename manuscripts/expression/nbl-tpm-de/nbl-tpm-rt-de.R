@@ -145,6 +145,8 @@ plotBoxDepMap(wd.de.plots, file.name, effects.sclc.t.m[nbl.ttr,], effects.sclc.t
 #file.name <- paste0("DepMap_depends_boxplot3_SCLC-CL_RFD-vs-NB")
 #plotBoxDepMap(wd.de.plots, file.name, depends.sclc.t.m[nbl.ttr,], depends.sclc.t.m[nbl.ctr.tz,], depends.sclc.t.m[nbl.ctr.iz,], main="DepMap SCLC-CL", names=c("TTR", "TZ", "IZ"), cols=c("black", blue, red), ylim, ylab="Gene dependency")
 
+testU(effects.nbl.t.m[nbl.ttr,]$MEDIAN,  effects.nbl.t.m[nbl.ctr.iz,]$MEDIAN)
+
 # -----------------------------------------------------------------------------
 # DeepMap SCLC-CL
 # Last Modified: 23/02/23; 17/02/23

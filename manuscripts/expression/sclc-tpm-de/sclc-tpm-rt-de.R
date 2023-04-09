@@ -67,6 +67,8 @@ ylim <- c(0, 6.5)
 file.name <- paste0("tpm.gene.log2_TCGA_SCLC_PIF1_0.5_1.3.4.5_3.5")
 plotBox2(wd.de.plots, file.name, as.numeric(tpm.gene.lung.log2["ENSG00000140451",]), as.numeric(tpm.gene.log2["ENSG00000140451",]), main="PIF1 expression", names=c("TCGA normal lung", "Lung-SCLC"), cols=c("black", red), ylim, ylab=text.Log2.TPM.1)
 
+testU(as.numeric(tpm.gene.lung.log2["ENSG00000140451",]), as.numeric(tpm.gene.log2["ENSG00000140451",]))
+
 # -----------------------------------------------------------------------------
 # GTEx
 # Last Modified: 22/03/23
@@ -300,6 +302,8 @@ testU(effects.sclc.t.m[nbl.ctr.tz,]$MEDIAN, effects.sclc.t.m[nbl.ctr.iz,]$MEDIAN
 save(effects.sclc.t.m, effects.nbl.t.m, effects.cll.t.m, sclc.ttr, sclc.ctr.iz, sclc.ctr.tz, sclc.nl.ttr, sclc.nl.ctr.iz, sclc.nl.ctr.tz, nbl.ttr, nbl.ctr.iz, nbl.ctr.tz, cll.ttr, cll.ctr.iz, cll.ctr.tz, file=file.path(wd.de.data, "DepMap_tpm_gene_median1_log2+1_m_rfd.RData"))
 
 ## Gene effect and gene expression (IZ)
+ylim <- c(-3.830851, 0.3436195)
+
 duplicates <- as.data.frame(table(subset(tpm.gene.log2.m.rfd.ctr.iz, external_gene_name %in% sclc.ctr.iz)$external_gene_name))
 duplicates <- as.vector(subset(duplicates, Freq > 1)$Var1)
 genes <- setdiff(sclc.ctr.iz, duplicates)
@@ -313,7 +317,7 @@ xlab.text <- expression("log" * ""[2] * "(TPM + 1)")
 ylab.text <- "Gene effect"
 x <- as.numeric(tpm.gene.log2.m[ens,]$MEDIAN)
 y <- effects.sclc.t.m[genes,]$MEDIAN
-plotCorrelation(file.name, "SCLC IZ", xlab.text, ylab.text, x, y, pos="bottomright", cols=c(red.lighter, red), 6)
+plotCorrelation(file.name, "SCLC IZ", xlab.text, ylab.text, x, y, pos="bottomright", cols=c(red.lighter, red), 6, ylim)
 
 ## Gene effect and gene expression (TZ)
 duplicates <- as.data.frame(table(subset(tpm.gene.log2.m.rfd.ctr.tz, external_gene_name %in% sclc.ctr.tz)$external_gene_name))
@@ -329,7 +333,7 @@ xlab.text <- expression("log" * ""[2] * "(TPM + 1)")
 ylab.text <- "Gene effect"
 x <- as.numeric(tpm.gene.log2.m[ens,]$MEDIAN)
 y <- effects.sclc.t.m[genes,]$MEDIAN
-plotCorrelation(file.name, "SCLC TZ", xlab.text, ylab.text, x, y, pos="bottomright", cols=c(blue.lighter, blue), 6)
+plotCorrelation(file.name, "SCLC TZ", xlab.text, ylab.text, x, y, pos="bottomright", cols=c(blue.lighter, blue), 6, ylim)
 
 ## Gene effect and gene expression (TTR)
 duplicates <- as.data.frame(table(subset(tpm.gene.log2.m.rfd.ttr, external_gene_name %in% sclc.ttr)$external_gene_name))
@@ -345,7 +349,7 @@ xlab.text <- expression("log" * ""[2] * "(TPM + 1)")
 ylab.text <- "Gene effect"
 x <- as.numeric(tpm.gene.log2.m[ens,]$MEDIAN)
 y <- effects.sclc.t.m[genes,]$MEDIAN
-plotCorrelation(file.name, "SCLC TTR", xlab.text, ylab.text, x, y, pos="bottomright", cols=c("lightgray", "black"), 6)
+plotCorrelation(file.name, "SCLC TTR", xlab.text, ylab.text, x, y, pos="bottomright", cols=c("lightgray", "black"), 6, ylim)
 
 
 # -----------------------------------------------------------------------------
@@ -504,6 +508,57 @@ median(effects.sclc.t.m[shared.2,]$MEDIAN)
 # [1] -0.04275472
 median(effects.sclc.t.m[sclc.specific.ttr,]$MEDIAN)
 # [1] -0.05887152
+
+# -----------------------------------------------------------------------------
+# Specific TTR genes
+# Last Modified: 14/03/23; 4/02/23
+# -----------------------------------------------------------------------------
+load(file.path(wd, base, "analysis/expression/kallisto", paste0(base, "-tpm-de/data/", base, "_kallisto_0.43.1_tpm.gene.median1.RData")))
+
+ids <- subset(ensGene, external_gene_name %in% sclc.specific.ttr)$ensembl_gene_id
+length(ids)
+# [1] 429
+ids <- intersect(rownames(tpm.gene), ids)
+length(ids)
+# [1] 425
+
+tpm.gene <- tpm.gene[ids, rownames(samples.sclc.tpm)]   ## VERY VERY VERY IMPORTANT!!!
+tpm.gene.log2   <- log2(tpm.gene + 1)
+tpm.gene.log2.m <- getLog2andMedian(tpm.gene, 1)
+nrow(tpm.gene.log2.m)
+# [1] 425
+
+# -----------------------------------------------------------------------------
+# Correlation bwteen TPM and in-silico sorting
+# Last Modified: 19/02/23; 24/04/22; 12/12/19; 08/01/19; 17/08/17
+# -----------------------------------------------------------------------------
+colnames <- c("RHO", "P", "Q", "G1", "S", "LOG2_FC")   ##"ANOVA_P", "ANOVA_Q", 
+de <- toTable(0, length(colnames), nrow(tpm.gene.log2), colnames)
+rownames(de) <- rownames(tpm.gene.log2)
+
+## SRC
+de$RHO <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.sclc.tpm$COR, method="spearman", exact=F)[[4]])
+de$P   <- mapply(x = 1:nrow(tpm.gene.log2), function(x) cor.test(as.numeric(tpm.gene.log2[x,]), samples.sclc.tpm$COR, method="spearman", exact=F)[[3]])
+de <- de[!is.na(de$P),]
+
+## Log2 fold change
+de$G1 <- median00(tpm.gene.log2, rownames(subset(samples.sclc.tpm, M2 == 0)))
+de$S  <- median00(tpm.gene.log2, rownames(subset(samples.sclc.tpm, M2 == 1)))
+de$LOG2_FC <- de$S - de$G1
+
+## FDR
+library(qvalue)
+de$Q <- qvalue(de$P)$qvalue
+de <- de[order(de$P),]
+
+## Ensembl gene annotations
+annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
+de.tpm.gene <- cbind(annot[rownames(de),], de)   ## BE EXTRA CAREFUL!!
+
+writeTable(de.tpm.gene, file.path(wd.de.data, "src_sclc_tpm-gene-median1_SORTING_q_n70_specific-425TTR.txt"), colnames=T, rownames=F, sep="\t")
+save(de.tpm.gene, samples, file=file.path(wd.de.data, "src_sclc_tpm-gene-median1_SORTING_q_n70_specific-425TTR.RData"))
+nrow(de.tpm.gene)
+# [1] 425
 
 # -----------------------------------------------------------------------------
 # Shared TTR genes

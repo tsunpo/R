@@ -9,10 +9,10 @@
 # 
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomright", cols=c("dimgray", "black"), size) {
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomright", cols=c("dimgray", "black"), size, ylim=ylim) {
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))  
-   plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=cols[1], cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   plot(y ~ x, ylab=ylab.text, ylim=ylim, xlab=xlab.text, main=main.text, pch=1, cex=2, col=cols[1], cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
  
    lm.fit <- lm(y ~ x)
    abline(lm.fit, lwd=5, col=cols[2])
