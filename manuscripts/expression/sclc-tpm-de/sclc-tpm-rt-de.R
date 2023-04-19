@@ -66,8 +66,7 @@ ylim <- c(0, quantile(as.numeric(tpm.gene.log2["ENSG00000140451",]))[5])
 ylim <- c(0, 6.5)
 file.name <- paste0("tpm.gene.log2_TCGA_SCLC_PIF1_0.5_1.3.4.5_3.5")
 plotBox2(wd.de.plots, file.name, as.numeric(tpm.gene.lung.log2["ENSG00000140451",]), as.numeric(tpm.gene.log2["ENSG00000140451",]), main="PIF1 expression", names=c("TCGA normal lung", "Lung-SCLC"), cols=c("black", red), ylim, ylab=text.Log2.TPM.1)
-
-testU(as.numeric(tpm.gene.lung.log2["ENSG00000140451",]), as.numeric(tpm.gene.log2["ENSG00000140451",]))
+# [1] 1.871352e-18
 
 # -----------------------------------------------------------------------------
 # GTEx

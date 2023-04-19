@@ -293,6 +293,54 @@ rownames(samples) <- samples$icgc_specimen_id
 #samples.h <- samples
 samples.v <- samples
 
+# -----------------------------------------------------------------------------
+# Supplementary Table 1
+# Last Modified: 14/04/23; 18/08/22; 27/07/22; 21/04/19
+# -----------------------------------------------------------------------------
+samples.h2 <- toTable(0, 3, 0, c("histology_abbreviation", "specimen_id", "SCF"))
+for (h in 1:8) {
+	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
+	
+	  q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
+	  colnames(q4) <- c("specimen_id", "SCF")
+	  q4$histology_abbreviation <- samples.hist$histology_abbreviation[1]
+	  q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
+	  samples.h2 <- rbind(samples.h2, q4)
+}
+
+q4 <- samples.sclc[,1:2]
+colnames(q4) <- c("specimen_id", "SCF")
+q4$histology_abbreviation <- "Lung-SCLC"
+q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
+samples.h2 <- rbind(samples.h2, q4)
+
+for (h in 9:18) {
+	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
+	
+	  q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
+	  colnames(q4) <- c("specimen_id", "SCF")
+	  q4$histology_abbreviation <- samples.hist$histology_abbreviation[1]
+	  q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
+  	samples.h2 <- rbind(samples.h2, q4)
+}
+
+q4 <- samples.nbl[,1:2]
+colnames(q4) <- c("specimen_id", "SCF")
+q4$histology_abbreviation <- "Neuroblastoma"
+q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
+samples.h2 <- rbind(samples.h2, q4)
+
+for (h in 19:26) {
+	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
+	
+	  q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
+	  colnames(q4) <- c("specimen_id", "SCF")
+	  q4$histology_abbreviation <- samples.hist$histology_abbreviation[1]
+	  q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
+	  samples.h2 <- rbind(samples.h2, q4)
+}
+
+writeTable(samples.h2, file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/", "Supplementary Table 1.txt"), colnames=T, rownames=F, sep="\t")
 
 
 
