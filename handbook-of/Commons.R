@@ -100,6 +100,17 @@ which0 <- function(df, value) {
    return(which(rownames(df) == value))
 }
 
+firstup <- function(x) {
+	  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+	  return(x)
+}
+
+toString0 <- function(x, sep) {
+	  a <- unlist(strsplit(x, sep))
+	  n <- length(a)
+	  return(paste0(c(firstup(a[1]), a[2:n]), collapse=" "))
+}
+
 # -----------------------------------------------------------------------------
 # Method: Shortcuts for fetching an Ensembl gene
 # Usages: getGene("ENSG00000157168")
