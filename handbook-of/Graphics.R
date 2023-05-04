@@ -407,7 +407,7 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
    ylim <- c(min(expr), max(expr))
  
    pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=6, width=3)
-   boxplot(expr ~ trait, outline=T, names=names, ylab=paste0("log2(TPM + 1)"), main=main, xaxt="n", ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
+   boxplot(expr ~ trait, outline=T, names=names, ylab=ylab, main=main, xaxt="n", ylim=ylim, cex.axis=1.1, cex.lab=1.2, cex.main=1.25)
  
    p <- wilcox.test(expr ~ trait, exact=F)$p.value
    text(1.5, ylim[2], getPvalueSignificanceLevel(p), col="black", cex=2.5)

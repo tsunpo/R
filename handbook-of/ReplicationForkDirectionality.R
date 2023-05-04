@@ -423,10 +423,8 @@ plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
    dev.off()
 }
 
-file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_NEW_6x6_-1.8_.pdf"))
-plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains   ")
-
-
+#file.name <- file.path(wd.rt.plots, paste0("NRFD_ALL_TTR-IZ-TZ_20kb_NEW_6x6_-1.8_.pdf"))
+#plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NBL", "CLL"), file.name, "Distribution of RFD domains   ")
 
 plotReportNRFD12 <- function(report.rfds, names, file.name, main.text) {
    titles <- c("TTR", "CTR_E", "CTR_L")
@@ -1138,32 +1136,56 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  dev.off()
 }
 
-plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.5, text="", ylab=text.Log2.TPM.1) {
-	trait <- rep(0, length(tpm.1))
-	trait <- c(trait, rep(1, length(tpm.2)))
-	trait <- as.factor(trait)
-	expr <- c(tpm.1, tpm.2)
+plotBox20 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=5, width=3.5, text="", ylab="") {
+	  trait <- rep(0, length(tpm.1))
+	  trait <- c(trait, rep(1, length(tpm.2)))
+	  trait <- as.factor(trait)
+	  expr <- c(tpm.1, tpm.2)
 	
-	pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
-	par(mar=c(16, 4.5, 2.1, 1.4))
-	boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", col="white", boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylab=ylab, main=main, ylim=ylim, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
+	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	  par(mar=c(5.5, 4.5, 2.1, 1.4))
+	  boxplot(expr ~ trait, outline=F, xlab="", xaxt="n", col="white", boxcol=cols, whiskcol=cols, outcol=cols, medcol=cols, staplecol=cols, ylab=ylab, main=main, ylim=ylim, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
 	
-	#abline(h=0, lty=5, lwd=2)
-	#abline(h=-1, lty=5, col=red, lwd=2)
+	  unit <- (ylim[2] - ylim[1])/80
+	  p <- testU(tpm.1, tpm.2)
+	  text(1.5, ylim[2]-unit/8, getPvalueSignificanceLevel(p), cex=2.5)
+	  lines(c(1, 2), y=c(ylim[2]-unit*2.5, ylim[2]-unit*2.5), type="l", lwd=2)
+	  
+	  abline(h=0, lty=5, lwd=2, col="black")
+	  
+	  axis(side=1, at=seq(1, 2, by=1), labels=c("", ""), cex.axis=1.8)
+	  text(labels=names, x=1:2, y=par("usr")[3] - 0.15, srt=45, adj=0.965, xpd=NA, cex=1.4)
 	
-	unit <- (ylim[2] - ylim[1])/10
-	p <- testU(tpm.1, tpm.2)
-	text(1.5, ylim[2]-unit*2+unit, getPvalueSignificanceLevel(p), cex=2.5)
-	lines(c(1, 2), y=c(ylim[2]-unit*2, ylim[2]-unit*2), type="l", lwd=2)
+	  dev.off()
+}
+
+plotVio20 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, cols2, ylim, height=4.5, width=3.5, text="", ylab="") {
+	  trait <- rep(0, length(tpm.1))
+	  trait <- c(trait, rep(1, length(tpm.2)))
+	  trait <- as.factor(trait)
+	  expr <- c(tpm.1, tpm.2)
 	
-	abline(h=q4[3], lty=5, lwd=2, col=red)
+	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	  par(mar=c(6, 4.5, 2.1, 1.4))
+	  
+	  colMeds <- c(cols2[1], cols2[1])
+	  if (median(as.numeric(tpm.1)) < 0)
+	  	  colMeds[1] <- cols2[2]
+	  if (median(as.numeric(tpm.2)) < 0)
+	  	  colMeds[2] <- cols2[2]
+	  
+	  vioplot(expr ~ trait, outline=F, xlab="", xaxt="n", col="white", border=cols, rectCol=colMeds, lineCol=colMeds, ylab="", main=main, ylim=ylim, cex.axis=1.3, cex.lab=1.4, cex.main=1.5)
 	
-	#axis(side=2, at=seq(0, 12, by=2), labels=c(0, "", 4, "", 8, "", 12), cex.axis=1.7)
-	axis(side=1, at=seq(1, 2, by=1), labels=c("", ""), cex.axis=1.8)
-	#axis(side=1, at=seq(1, 2, by=1), labels=names[1:2], line=0.5, col=NA, cex.axis=1.8)
-	#mtext(names[4], cex=1.8, line=5.5)
-	#text(labels=names, x=1:3, y=par("usr")[3] - 0.07, srt=45, adj=0.965, xpd=NA, cex=1.8)
-	text(labels=names, x=1:2, y=par("usr")[3] - 1, srt=45, adj=0.965, xpd=NA, cex=1.4)
+	  unit <- (ylim[2] - ylim[1])/80
+	  p <- testU(tpm.1, tpm.2)
+	  text(1.5, ylim[2]-unit/8, getPvalueSignificanceLevel(p), cex=2.5)
+	  lines(c(1, 2), y=c(ylim[2]-unit*2.5, ylim[2]-unit*2.5), type="l", lwd=2)
 	
-	dev.off()
+	  abline(h=0, lty=5, lwd=2, col="black")
+	
+	  axis(side=1, at=seq(1, 2, by=1), labels=c("", ""), cex.axis=1.8)
+	  text(labels=names, x=1:2, y=par("usr")[3] - 0.15, srt=45, adj=0.965, xpd=NA, cex=1.4)
+	  mtext(ylab, side=2, line=3, cex=1.4)
+	
+	  dev.off()
 }

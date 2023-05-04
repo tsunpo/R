@@ -108,7 +108,10 @@ firstup <- function(x) {
 toString0 <- function(x, sep) {
 	  a <- unlist(strsplit(x, sep))
 	  n <- length(a)
-	  return(paste0(c(firstup(a[1]), a[2:n]), collapse=" "))
+	  if (n > 1)
+	     return(paste0(c(firstup(a[1]), a[2:n]), collapse=" "))
+	  else
+	  	  return(firstup(a[1]))
 }
 
 # -----------------------------------------------------------------------------

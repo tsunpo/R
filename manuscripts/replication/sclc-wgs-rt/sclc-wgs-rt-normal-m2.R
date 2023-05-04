@@ -24,7 +24,7 @@ load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "SCLC"
 PAIR1 <- "N"
 PAIR0 <- "N"
