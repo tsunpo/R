@@ -362,7 +362,7 @@ plotHeatmap <- function(wd.rt.plots, file.name, data0, cols, height=3, width=10,
 	  m <- as.matrix(m[, -1]) # -1 to omit categories from matrix
 	  clust <- hclust(dist(t(m)))
 
-	  pdf(file.path(wd.rt.plots, paste0(file.name, "_ggplot_clust_RFD_SIZE.pdf")), height=3, width=10)
+	  pdf(file.path(wd.rt.plots, paste0(file.name, "_ggplot_clust_RFD.pdf")), height=3, width=10)
 	  #par(mar=c(2.5, 2, 1.1, 1.4))
 	  
 	  # plotting the heatmap
@@ -371,7 +371,7 @@ plotHeatmap <- function(wd.rt.plots, file.name, data0, cols, height=3, width=10,
 	  # setting gradient color as red and white
 	  plt <- plt + scale_fill_gradient(low = cols[1], high = cols[2])
 	  plt <- plt +	scale_x_discrete(limits = colnames(m)[clust$order])
-
+	  
 	  # further customizing the heatmap by applying colors and title
 	  plt <- plt + theme_minimal()
 	  plt <- plt + theme(axis.text.x = element_text(angle=45, hjust=1))
@@ -451,34 +451,30 @@ plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, kb, lwd=
 }
 
 kbs <- seq(10, 10000, 10)
-machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("TZ_", kbs, "kb"))
+machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("IZ_", kbs, "kb"))
 rownames(machines) <- table.sv.del.20.result.20$Histology
 
-pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("TZ_RT0", "TZ_RT1", "TZ_RT2", "TZ_RT3"))
+pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
 rownames(pvals) <- table.sv.del.20.result.20$Histology
 
-sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("TZ_RT0", "TZ_RT1", "TZ_RT2", "TZ_RT3"))
+sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
 rownames(sizes) <- table.sv.del.20.result.20$Histology
 
 for (h in 1:nrow(machines)) {
 	  hist <- rownames(machines)[h]
 	
-	  #for (rt in 0:3) {	  
+	  for (rt in 0:3) {	  
 	  	  load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
 	  	  dels.nona <- dels[!is.na(dels$RFD),]
-	  	
+	  	  dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
+	  	  dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
+	  	  
 	  	  for (k in 1:length(kbs)) {
 		       kb <- kbs[k]
 		    
-		       dels.9kb <- subset(dels.nona, size < kb*1000)
-		       dels.9kb.ctr <- getBootstrapCTR(dels.9kb, 0.9)
-		       dels.9kb.ctr.iz <- subset(dels.9kb.ctr, NRFD < 0)
-		
-		       dels.10kb <- subset(dels.nona, size >= kb*1000)
-		       dels.10kb.ctr <- getBootstrapCTR(dels.10kb, 0.9)
-		       dels.10kb.ctr.iz <- subset(dels.10kb.ctr, NRFD < 0)
-		
-		       ##
+		       dels.9kb.ctr.iz  <- subset(dels.nona.ctr.iz, size < kb*1000)
+		       dels.10kb.ctr.iz <- subset(dels.nona.ctr.iz, size >= kb*1000)
+
 		       machines[h, k] <- testU(dels.9kb.ctr.iz$RFD, dels.10kb.ctr.iz$RFD)
 	     }
 	  
@@ -494,38 +490,31 @@ for (h in 1:nrow(machines)) {
 	     
 	     #x <- kbs
 	     #y <- as.numeric(-log10(machines[h, ]))
-	     #file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", hist, "_TZ"))
+	     #file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", hist, "_IZ"))
 	     #plotOS(file.name, hist, "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
 	  
 	     ##
-	     kb <- kbs[min]
+	     dels.9kb.ctr.iz  <- subset(dels.nona.ctr.iz, size < kb*1000)
+	     dels.10kb.ctr.iz <- subset(dels.nona.ctr.iz, size >= kb*1000)
 	     
-	     dels.9kb <- subset(dels.nona, size < kb*1000)
-	     dels.9kb.ctr <- getBootstrapCTR(dels.9kb, 0.9)
-	     dels.9kb.ctr.iz <- subset(dels.9kb.ctr, NRFD < 0)
-	     
-	     dels.10kb <- subset(dels.nona, size >= kb*1000)
-	     dels.10kb.ctr <- getBootstrapCTR(dels.10kb, 0.9)
-	     dels.10kb.ctr.iz <- subset(dels.10kb.ctr, NRFD < 0)
-	     
-	     ylim <- c(-1, 1.1)
-	     file.name <- paste0("vioplot_", hist, "_rt", rt, "_DEL_RFD_CTR_TZ_", kb, "kb")
-	     plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.iz$RFD, dels.10kb.ctr.iz$RFD, main=hist, names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c(blue, blue), ylim, ylab="SCLC-NL TZ RFD")
+	     #ylim <- c(-1, 1.1)
+	     #file.name <- paste0("vioplot_", hist, "_rt", rt, "_DEL_RFD_CTR_IZ_", kb, "kb")
+	     #plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.iz$RFD, dels.10kb.ctr.iz$RFD, main=hist, names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c(red, red), ylim, ylab="SCLC-NL IZ RFD")
 	  
 	     ##
 	     #file.name <- paste0("corr_", hist, "_rt", rt, "_SIZE-VS-IZ_", kb, "kb")
 	     #plotCorrelation5(file.path(wd.rt.plots, file.name), hist, paste0("Size (Del >", kb, "kb) [kb]"), "SCLC-NL RFD", dels.10kb.ctr.iz$size/1000, dels.10kb.ctr.iz$RFD, pos="bottomright", cols=c(red, lightblue))
-	  #}
+	  }
 }
 
-file.name <- "heatmap_table.sv.del.20.result.20.rfd.tz.test"
-ylab <- "TZ RFD"
-cols <- c("white", blue)
+file.name <- "heatmap_table.sv.del.20.result.20.rfd.iz.today"
+ylab <- "IZ RFD"
+cols <- c("white", red)
 data0 <- pvals
 
-file.name <- "heatmap_table.sv.del.20.result.20.rfd.tz.pval"
-plotHeatmap(wd.rt.plots, file.name, pvals, c("white", blue), height=3, width=10, text="", ylab="TZ RFD")
-save(kbs, machines, pvals, sizes, file=file.path(wd.rt.data, "table.sv.del.20.result.20.tz.RData"), version=2)
+file.name <- "heatmap_table.sv.del.20.result.20.iz"
+plotHeatmap(wd.rt.plots, file.name, pvals, c("white", red), height=3, width=10, text="", ylab="IZ")
+save(kbs, machines, pvals, sizes, file=file.path(wd.rt.data, "table.sv.del.20.result.20.rfd.iz.RData"), version=2)
 
 
 

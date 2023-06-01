@@ -341,90 +341,62 @@ getReportRFD12 <- function(report, name) {
    return(subset(report, SAMPLES == name)$Overlapping_P)
 }
 
-plotReportNRFD <- function(report.rfds, names, file.name, main.text) {
-   titles <- c("TTR", "CTR_IZ", "CTR_TZ")
-   cols <- c("black", red, blue)
+plotReportRT <- function(report.rfds, names, file.name, main.text) {
+   titles <- c("CTR_E", "CTR_L")
+   cols <- c(red, blue)
    n <- length(names)
    
-   colnames <- c("NAME", "X", "pch", "pos1", "pos2", "pos3", titles)
+   colnames <- c("NAME", "X", "pch", "pos1", "pos2", titles)
    rfds <- toTable(0, length(colnames), length(names), colnames)
    rfds$NAME <- names
    rfds$X    <- c(1, 3, 5, 7)
    rfds$pch  <- c(19, 17, 17, 17)
    rfds$cex  <- c(2.4, 2.2, 2.2, 2.2)
    rfds$pos1 <- c(3, 3, 3, 3)
-   rfds$pos2 <- c(3, 3, 3, 3)
-   rfds$pos3 <- c(1, 1, 1, 1)
+   rfds$pos2 <- c(1, 1, 1, 1)
    for (r in 1:length(names)) {
-      rfds$TTR[r]   <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
-      rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
-      rfds$CTR_L[r] <- as.numeric(round0(report.rfds[[r]][3]*100, digit=1))
+      rfds$CTR_E[r] <- as.numeric(round0(report.rfds[[r]][1]*100, digit=1))
+      rfds$CTR_L[r] <- as.numeric(round0(report.rfds[[r]][2]*100, digit=1))
       
       if (rfds$CTR_E[r] < rfds$CTR_L[r]) {
-      	  rfds$pos2[r] <- 1
-      	  rfds$pos3[r] <- 3
+      	  rfds$pos1[r] <- 1
+      	  rfds$pos2[r] <- 3
       }
    }
    
    ##
    pdf(file.name, height=6, width=6)
-   layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
-   par(mar=c(1, 4.6, 3.5, 0))
-   plot(NULL, xlim=c(0.5, 8.4), ylim=c(55, 105), ylab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   points(rfds$X, rfds$TTR, col=cols[1], pch=rfds$pch, cex=rfds$cex)
-   lines(x=rfds$X[1:4], y=rfds$TTR[1:4], type="l", lwd=3, col=cols[1])
-   #lines(x=rfds$X[5:6], y=rfds$TTR[5:6], type="l", lwd=3, col=cols[1])
+   #layout(matrix(c(1,2), 2, 1), widths=1, heights=c(1,1))           ## One figure each in row 1 and row 2; row 1 is 1/3 the height of row 2
+   par(mar=c(6, 4.6, 3.5, 0))
+   plot(NULL, xlim=c(0.5, 8.4), ylim=c(0, 105), ylab="", xlab="", main=main.text, col=cols[1], xaxt="n", yaxt="n", bty="n", pch=rfds$pch, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+
+   points(rfds$X, rfds$CTR_E, col=cols[1], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[1])
+   #lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
    
-   text(8, rfds$TTR[n], "   TTR ", cex=1.8, col="black")
-   #abline(v=4, lty=5, lwd=1, col="black")
-   #abline(v=8,  lty=5, lwd=1, col="black")
-   for (n in 1:length(names))
-      text(rfds$X[n], rfds$TTR[n], rfds$TTR[n], col=cols[1], pos=rfds$pos1[n], cex=1.8)
- 
-   ##
-   axis(side=2, at=seq(60, 100, by=20), labels=c(60, 80, 100), cex.axis=1.7)
-   #legend("top", "Normal                         ", col="black", bty="n", pch=1, pt.cex=2.8, horiz=T, cex=1.8)
-   #legend("topright", "Tumor              ", col="black", bty="n", pch=2, pt.cex=2.2, horiz=T, cex=1.8)
-   #legend("top", "Primary bulks                            ", col="black", bty="n", pt.cex=1, pch=2, horiz=T, cex=1.2)
-   #legend("topright", "Cell lines                ", col="black", bty="n", pt.cex=1, pch=0, horiz=T, cex=1.2)
-   mtext("[%]         ", side=2, line=3.2, cex=1.8)
+   points(rfds$X, rfds$CTR_L, col=cols[2], pch=rfds$pch, cex=rfds$cex)
+   lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[2])
+   #lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
    
-   ##
-   par(mar=c(6, 4.6, 0, 0))
-   plot(NULL, xlim=c(0.5, 8.4), ylim=c(0, 15), ylab="", xlab="", col=cols[2], xaxt="n", bty="n", pch=rfds$pch, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
-   points(rfds$X, rfds$CTR_L, col=cols[3], pch=rfds$pch, cex=rfds$cex)
-   lines(rfds$X[1:4], y=rfds$CTR_L[1:4], type="l", lwd=3, col=cols[3])
-   lines(rfds$X[5:6], y=rfds$CTR_L[5:6], type="l", lwd=3, col=cols[3])
-   
-   points(rfds$X, rfds$CTR_E, col=cols[2], pch=rfds$pch, cex=rfds$cex)
-   lines(rfds$X[1:4], y=rfds$CTR_E[1:4], type="l", lwd=3, col=cols[2])
-   lines(rfds$X[5:6], y=rfds$CTR_E[5:6], type="l", lwd=3, col=cols[2])
-   
-   text(8, rfds$CTR_E[n], "      IZ ", cex=1.8, col=red, pos=rfds$pos2[length(names)]) 
-   text(8, rfds$CTR_L[n], "     TZ ", cex=1.8, col=blue, pos=rfds$pos3[length(names)])
+   text(8, rfds$CTR_E[n], " Early", cex=1.8, col=red, pos=rfds$pos1[length(names)]) 
+   text(8, rfds$CTR_L[n], "  Late", cex=1.8, col=blue, pos=rfds$pos2[length(names)])
    #abline(v=4, lty=5, lwd=1, col="black")
    #abline(v=8,  lty=5, lwd=1, col="black")
    for (n in 1:length(names)) {
-      text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=red, pos=rfds$pos2[n], cex=1.8)
-      text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=blue, pos=rfds$pos3[n], cex=1.8)
+   	  text(rfds$X[n], rfds$CTR_E[n], rfds$CTR_E[n], col=red, pos=rfds$pos1[n], cex=1.8)
+   	  text(rfds$X[n], rfds$CTR_L[n], rfds$CTR_L[n], col=blue, pos=rfds$pos2[n], cex=1.8)
    }
-   #axis(side=2, at=seq(0, 20, by=10), labels=c(0, 10, 20), cex.axis=1.1)
-
+   
    ##
-   #axis(side=1, at=seq(1, 1, by=2), labels=names[1], cex.axis=1.1)
-   #axis(side=1, at=seq(1, 1, by=2), labels=c("n=92"), line=1.2, col=NA, cex.axis=1.1)
+   axis(side=2, at=seq(0, 100, by=20), labels=c(0, 20, 40, 60, 80, 100), cex.axis=1.7)
+   mtext("Frequency [%]", side=2, line=3.2, cex=1.8)
+   
    axis(side=1, at=seq(1, 7, by=2), labels=c("", "", "", ""), cex.axis=1.8)
-   #axis(side=1, at=seq(1, 7, by=4), labels=c(names[1], names[3]), line=0.5, col=NA, cex.axis=1.8)
-   #axis(side=1, at=seq(3, 7, by=4), labels=c(names[2], names[4]), line=0.5, col=NA, cex.axis=1.8)
-   text(labels=names, x=c(1,3,5,7), y=par("usr")[3] - 1.8, srt=45, adj=0.965, xpd=NA, cex=1.8)
-   
-   #axis(side=1, at=seq(1, 7, by=2), labels=c("n=46", "n=51", "n=28", "n=48"), line=1.2, col=NA, cex.axis=1.25)
-   #axis(side=1, at=seq(9, 11, by=2), labels=names[5:6], cex.axis=1.1)
-   #axis(side=1, at=seq(9, 11, by=2), labels=c("n=8", "n=14"), line=1.2, col=NA, cex.axis=1.1)
-   legend("bottom", "Normal                          ", col="black", bty="n", pch=1, pt.cex=2.8, horiz=T, cex=1.8)
-   legend("bottomright", "Tumour              ", col="black", bty="n", pch=2, pt.cex=2.2, horiz=T, cex=1.8)
-   
-   mtext("                  Frequency", side=2, line=3.2, cex=1.8)
+   text(labels=names, x=c(1,3,5,7), y=par("usr")[3] - 5, srt=45, adj=0.965, xpd=NA, cex=1.8)
+
+   legend("top", "Normal                          ", col="black", bty="n", pch=1, pt.cex=2.8, horiz=T, cex=1.8)
+   legend("topright", "Tumour              ", col="black", bty="n", pch=2, pt.cex=2.2, horiz=T, cex=1.8)
+
    dev.off()
 }
 

@@ -395,33 +395,28 @@ plotHeatmap <- function(wd.rt.plots, file.name, data0, cols, height=3, width=10,
 # Bar plot
 # Last Modified: 25/04/23
 # -----------------------------------------------------------------------------
-data0 <- toTable(0, nrow(table.sv.del.20.result.rt.10), 2, rownames(table.sv.del.20.result.rt.10))
+data0 <- toTable(0, nrow(table.sv.del.20.result.rt.20), 2, rownames(table.sv.del.20.result.rt.20))
 rownames(data0) <- c("10kb", "9kb")
 
-for (h in 1:nrow(table.sv.del.20.result.rt.10)) {
-	  hist <- rownames(table.sv.del.20.result.rt)[h]
+for (h in 1:nrow(table.sv.del.20.result.rt.20)) {
+	  hist <- rownames(table.sv.del.20.result.rt.20)[h]
 	
 	  load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
-	  dels.9kb <- subset(dels, size < 10000)
-	  dels.10kb <- subset(dels, size >= 10000)
+	  dels.9kb <- subset(dels, size < 905000)
+	  dels.10kb <- subset(dels, size >= 905000)
 	  
 	  data0[1, h] <- nrow(dels.10kb)/nrow(dels)*100
 	  data0[2, h] <- nrow(dels.9kb)/nrow(dels)*100
 }
-data0 <- as.metric(data0[, order(as.numeric(data0[1,]))])
+data0 <- as.matrix(data0[, order(as.numeric(data0[1,]))])
 
-pdf(file.path(wd.rt.plots, "sv.del.20.result.iz.10.pdf"), height=6.5, width=19)
+pdf(file.path(wd.rt.plots, "sv.del.20.result.iz.20_905kb.pdf"), height=6.5, width=19)
 par(mar=c(11.2, 5, 4, 8), xpd=T)
 cols <- c("darkgray", "white")
 barplot(data0, col=cols, ylim=c(0, 100), ylab="Frequency", xaxt="n", main="", cex.axis=1.8, cex.lab=1.9, cex.main=2)
-text(labels=colnames(data0), x=seq(0.8, 23, by=1.2), y=par("usr")[3] - 5.5, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-#mids <- barplot(facs1, xlab="")   ## To capture the midpoints
-#axis(1, at=1.9, labels="GIMEN", cex.axis=1.7, las=0, lwd.tick=0)
-#axis(1, at=4.3, labels="SKNFI", cex.axis=1.7, las=0, lwd.tick=0)
-#axis(1, at=7.9, labels="NGP", cex.axis=1.7, las=0, lwd.tick=0)
+text(labels=colnames(data0), x=seq(0.8, 24, by=1.2), y=par("usr")[3] - 5.5, srt=45, adj=0.965, xpd=NA, cex=1.9)
 	  
-legend("right", c("Del <10kb", "Del >10kb"), text.col="black", fill=cols[2:1], pt.cex=3, cex=1.8, horiz=F, bty="n", inset=c(-0.1, 0))
+legend("right", c("Del <905kb", "Del >905kb"), text.col="black", fill=cols[2:1], pt.cex=3, cex=1.8, horiz=F, bty="n", inset=c(-0.1, 0))
 #mtext(ylab.text, side=2, line=2.75, cex=1.8)
 dev.off()
 

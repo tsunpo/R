@@ -54,7 +54,7 @@ if (rt == 0) {
 
 # -----------------------------------------------------------------------------
 # RT vs. Del size
-# Last Modified: 21/04/19
+# Last Modified: 21/04/23
 # -----------------------------------------------------------------------------
 getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
 	  chr <- del$chrom1
@@ -88,9 +88,9 @@ getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
 	  for (d in 1:nrow(dels)) {
 	  	  overlaps <- getDELRTNRFD(dels[d,], nrds.RT.NRFD, bed.gc)
 	  	  
-	  	  dels$SPLINE[d]   <- median(nrds.RT.NRFD[overlaps,]$SPLINE)
-	  	  dels$RFD[d]  <- median(nrds.RT.NRFD[overlaps,]$RFD)
-	  	  dels$NRFD[d] <- median(nrds.RT.NRFD[overlaps,]$NRFD)
+	  	  dels$SPLINE[d] <- median(nrds.RT.NRFD[overlaps,]$SPLINE)
+	  	  dels$RFD[d]    <- median(nrds.RT.NRFD[overlaps,]$RFD)
+	  	  dels$NRFD[d]   <- median(nrds.RT.NRFD[overlaps,]$NRFD)
 	  }
 	  
 	  save(dels, file=file.path(wd.icgc.sv, "del", "data", paste0(hist, ".sv.del.rt", rt, ".RData")), version=2)

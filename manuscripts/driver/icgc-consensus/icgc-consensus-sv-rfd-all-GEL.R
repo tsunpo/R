@@ -36,6 +36,569 @@ wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-sv-del"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
+plotSizeDensity(gel.del$size/1000, "GEL trio deletions", file.path(plotsPath, "GEL_DEL_density.pdf"), title)
+
+dels.all <- dels[0,]
+rt <- 0
+for (h in 1:nrow(table.sv.del.20.result.20)) {
+	  hist <- table.sv.del.20.result.20$Histology[h]
+	  load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
+	  
+	  dels.all <- rbind(dels.all, dels)
+	  
+	  plotSizeDensity(dels$size/1000, paste0(hist, " deletions"), file.path(plotsPath, paste0(hist, "_DEL_density.pdf")), title)
+}
+
+# -----------------------------------------------------------------------------
+# RFD
+# Last Modified: 29/04/23
+# -----------------------------------------------------------------------------
+getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
+	  chr <- paste0("chr", del$chrom1)
+	  bed.gc.chr <- subset(bed.gc, CHR == chr)
+	
+	  bed.gc.chr.start <- subset(bed.gc.chr, START <= del$end2)
+	  bed.gc.chr.start.end <- subset(bed.gc.chr.start, END >= del$start1)
+
+	  return(intersect(rownames(bed.gc.chr.start.end), rownames(nrds.RT.NRFD)))
+}
+
+kb <- 20
+rfd <- 0.9
+for (rt in 0:3) {
+	  if (rt == 0) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 1) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 2) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("nbl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 3) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("cll_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  }
+	  s <- rt + 1
+	
+	  dels <- gel.del   ## GEL trio deletions
+	  dels$SPLINE <- NA
+	  dels$RFD <- NA
+	  dels$NRFD <- NA
+	  for (d in 1:nrow(dels)) {
+		    overlaps <- getDELRTNRFD(dels[d,], nrds.RT.NRFD, bed.gc)
+		
+		    dels$SPLINE[d] <- median(nrds.RT.NRFD[overlaps,]$SPLINE)
+		    dels$RFD[d]    <- median(nrds.RT.NRFD[overlaps,]$RFD)
+		    dels$NRFD[d]   <- median(nrds.RT.NRFD[overlaps,]$NRFD)
+	  }
+	
+	  save(dels, file=file.path(wd.rt.data, paste0("GEL.sv.del.rt", rt, ".RData")), version=2)
+}
+
+# -----------------------------------------------------------------------------
+# RFD
+# Last Modified: 25/04/23
+# -----------------------------------------------------------------------------
+colnames <- c("TTR", "TTR_P", "CTR_IZ", "CTR_IZ_P", "CTR_TZ", "CTR_TZ_P", "CTR_UN", "CTR_UN_P", "CTR_NA", "CTR_NA_P", "Mappable")
+report <- toTable(0, length(colnames), 4, colnames)
+
+colnames <- c("E", "E_P", "L", "L_P", "Mappable")
+report2 <- toTable(0, length(colnames), 4, colnames)
+
+kb <- 20
+rfd <- 0.9
+for (rt in 0:3) {
+	  s <- rt + 1
+	  dels.nona.ttr.all    <- dels[0,]	  
+	  dels.nona.ctr.iz.all <- dels[0,]
+	  dels.nona.ctr.tz.all <- dels[0,]
+	  dels.nona.e.all <- dels[0,]
+	  dels.nona.l.all <- dels[0,]
+	  
+		 load(file=file.path(wd.rt.data, paste0("GEL.sv.del.rt", rt, ".RData")))
+		 dels <- subset(dels, size >= 10000)
+		 dels.nona <- dels[!is.na(dels$RFD),]
+		
+		 dels.nona.ttr <- getBootstrapTTR(dels.nona, 0.9)
+		 dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
+		 dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
+		 dels.nona.ctr.tz <- subset(dels.nona.ctr, NRFD < 0)
+		
+	 	dels.nona.ttr.all <- rbind(dels.nona.ttr.all, dels.nona.ttr)
+	 	dels.nona.ctr.iz.all <- rbind(dels.nona.ctr.iz.all, dels.nona.ctr.iz)
+		 dels.nona.ctr.tz.all <- rbind(dels.nona.ctr.tz.all, dels.nona.ctr.tz)
+		
+	 	##
+		 dels.nona.e <- subset(dels.nona, SPLINE >= 0)
+		 dels.nona.l <- subset(dels.nona, SPLINE < 0)
+		
+		 dels.nona.e.all <- rbind(dels.nona.e.all, dels.nona.e)
+		 dels.nona.l.all <- rbind(dels.nona.l.all, dels.nona.l)
+	
+   ## TTR and CTR  
+   report$Mappable[s] <- nrow(dels.nona.ttr.all) + nrow(dels.nona.ctr.iz.all) + nrow(dels.nona.ctr.tz.all)
+	
+	  report$TTR[s]   <- nrow(dels.nona.ttr.all)
+	  report$TTR_P[s] <- report$TTR[s] / report$Mappable[s]
+	
+	  report$CTR_IZ[s]   <- nrow(dels.nona.ctr.iz.all)
+	  report$CTR_IZ_P[s] <- report$CTR_IZ[s] / report$Mappable[s]
+	  report$CTR_TZ[s]   <- nrow(dels.nona.ctr.tz.all)
+	  report$CTR_TZ_P[s] <- report$CTR_TZ[s] / report$Mappable[s]
+	
+	  ## RT  
+	  report2$Mappable[s] <- nrow(dels.nona.e.all) + nrow(dels.nona.l.all)
+	
+	  report2$E[s]   <- nrow(dels.nona.e.all)
+	  report2$E_P[s] <- report2$E[s] / report2$Mappable[s]
+	  report2$L[s]   <- nrow(dels.nona.l.all)
+	  report2$L_P[s] <- report2$L[s] / report2$Mappable[s]
+}
+#save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.RData")))
+#writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+##
+report.rfds <- list(as.numeric(report[1, c(2,4,6)]), as.numeric(report[2, c(2,4,6)]), as.numeric(report[3, c(2,4,6)]), as.numeric(report[4, c(2,4,6)]))
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_GEL_TTR-IZ-TZ_>10kb.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "GEL trio deletions > 10 kb")
+
+##
+report.rts <- list(as.numeric(report2[1, c(2,4)]), as.numeric(report2[2, c(2,4)]), as.numeric(report2[3, c(2,4)]), as.numeric(report2[4, c(2,4)]))
+
+file.name <- file.path(wd.rt.plots, paste0("RT_GEL_>10kb.pdf"))
+plotReportRT(report.rts, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "GEL trio deletions > 10 kb")
+
+# -----------------------------------------------------------------------------
+# RT vs. Del size
+# Last Modified: 25/04/23
+# -----------------------------------------------------------------------------
+plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, kb, lwd=4) {
+	  ymax <- -log10(p)
+	  ymax <- ymax + ymax/5.5
+	  xmin <- min(x)
+	
+	  pdf(paste0(file.name, ".pdf"), height=5, width=5)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(y ~ x, ylim=c(0, ymax), xlab=xlab.text, ylab=ylab.text, col="dimgray", main=main.text, pch=1, cex=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  points(kb, -log10(p), pch=1, col="black", cex=2, lwd=lwd)
+	  abline(v=kb, lty=5, lwd=3, col="black")
+	  text(kb, ymax - ymax/10, expression(italic("    P")~"="), pos=3, cex=1.7)
+	  text(kb, ymax - ymax/10, paste0("                           ", scientific(p, digits=2)), pos=3, cex=1.7)
+	  text(kb, ymax/30, paste0("                    Size = ", kb, "kb"), cex=1.7)
+	
+	  #axis(side=1, at=seq(-0.4, 0.4, by=0.4), labels=c(-0.4, 0, 0.4), cex.axis=1.7)
+	  #axis(side=1, at=rho, labels=round(rho, 2), cex.axis=1.7, col.axis=green, font.axis=2)
+	
+	  dev.off()
+}
+
+kbs <- seq(10, 10000, 10)
+#machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("IZ_", kbs, "kb"))
+#rownames(machines) <- table.sv.del.20.result.20$Histology
+
+#pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
+#rownames(pvals) <- table.sv.del.20.result.20$Histology
+
+#sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
+#rownames(sizes) <- table.sv.del.20.result.20$Histology
+
+###
+## ALL (16/05/23)
+dels.nona.ctr.iz.all <- dels[0,]
+dels.nona.ctr.tz.all <- dels[0,]
+
+#for (h in 1:nrow(machines)) {
+#	 hist <- rownames(machines)[h]
+	
+	  for (rt in 0:3) {	  
+		    load(file=file.path(wd.rt.data, paste0("GEL.sv.del.rt", rt, ".RData")))
+		    dels.nona <- dels[!is.na(dels$RFD),]
+		    dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
+		    dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
+		    dels.nona.ctr.tz <- subset(dels.nona.ctr, NRFD < 0)
+		    
+		    dels.nona.ctr.iz.all <- rbind(dels.nona.ctr.iz.all, dels.nona.ctr.iz)
+		    dels.nona.ctr.tz.all <- rbind(dels.nona.ctr.tz.all, dels.nona.ctr.tz)
+	  }
+#}
+
+##
+kbs <- seq(10, 10000, 10)
+machines <- toTable(0, length(kbs), 1, paste0("IZ_", kbs, "kb"))
+h <- 1
+
+for (k in 1:length(kbs)) {
+	  kb <- kbs[k]
+	
+	  dels.9kb.ctr.iz.all  <- subset(dels.nona.ctr.iz.all, size < kb*1000)
+	  dels.10kb.ctr.iz.all <- subset(dels.nona.ctr.iz.all, size >= kb*1000)
+	
+	  machines[h, k] <- testU(dels.9kb.ctr.iz.all$RFD, dels.10kb.ctr.iz.all$RFD)
+}
+
+##
+#idx <- which(is.na(table.sv.del.20.result.iz.size[h, ]))
+
+min <- median(which(machines[h, ] == min(machines[h, ])))
+#if (length(idx) != 0)
+#   min <- which(table.sv.del.20.result.iz.size[h, -idx] == min(table.sv.del.20.result.iz.size[h, -idx]))
+kb <- kbs[min]
+#kb <- kbs[1]
+
+#pvals[h, rt+1] <- machines[h, min]
+#sizes[h, rt+1] <- kb
+
+x <- kbs
+y <- as.numeric(-log10(machines[h, ]))
+file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "GEL", "_RFD-IZ"))
+plotOS(file.name, "GEL deletions at IZs", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
+
+##
+dels.9kb.ctr.iz.all  <- subset(dels.nona.ctr.iz.all, size < kb*1000)
+dels.10kb.ctr.iz.all <- subset(dels.nona.ctr.iz.all, size >= kb*1000)
+
+ylim <- c(-1, 1.1)
+file.name <- paste0("vioplot_", "GEL", "_DEL_RFD_IZ_", kb, "kb")
+plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.iz.all$RFD, dels.10kb.ctr.iz.all$RFD, main="GEL deletions at IZs", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c(red, red), cols2=c(orange, lightblue), ylim, ylab="RFD")
+
+###
+##
+kbs <- seq(10, 10000, 10)
+machines <- toTable(0, length(kbs), 1, paste0("TZ_", kbs, "kb"))
+h <- 1
+
+for (k in 1:length(kbs)) {
+	  kb <- kbs[k]
+	
+	  dels.9kb.ctr.tz.all  <- subset(dels.nona.ctr.tz.all, size < kb*1000)
+	  dels.10kb.ctr.tz.all <- subset(dels.nona.ctr.tz.all, size >= kb*1000)
+	
+	  machines[h, k] <- testU(dels.9kb.ctr.tz.all$RFD, dels.10kb.ctr.tz.all$RFD)
+}
+
+##
+#idx <- which(is.na(table.sv.del.20.result.iz.size[h, ]))
+
+min <- median(which(machines[h, ] == min(machines[h, ])))
+#if (length(idx) != 0)
+#   min <- which(table.sv.del.20.result.iz.size[h, -idx] == min(table.sv.del.20.result.iz.size[h, -idx]))
+kb <- kbs[min]
+kb <- kbs[1]
+
+#pvals[h, rt+1] <- machines[h, min]
+#sizes[h, rt+1] <- kb
+
+x <- kbs
+y <- as.numeric(-log10(machines[h, ]))
+file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "GEL", "_RFD-TZ"))
+plotOS(file.name, "GEL deletions at TZs", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
+
+##
+dels.9kb.ctr.tz.all  <- subset(dels.nona.ctr.tz.all, size < kb*1000)
+dels.10kb.ctr.tz.all <- subset(dels.nona.ctr.tz.all, size >= kb*1000)
+
+ylim <- c(-1, 1.1)
+file.name <- paste0("vioplot_", "GEL", "_DEL_RFD_TZ_", kb, "kb")
+plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.tz.all$RFD, dels.10kb.ctr.tz.all$RFD, main="GEL deletions at TZs", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c(blue, blue), cols2=c(orange, lightblue), ylim, ylab="RFD")
+
+########
+##
+kbs <- seq(10, 10000, 10)
+machines <- toTable(0, length(kbs), 1, paste0("IZ_", kbs, "kb"))
+h <- 1
+
+for (k in 1:length(kbs)) {
+	kb <- kbs[k]
+	
+	dels.9kb.ctr.iz.all  <- subset(dels.nona.ctr.iz.all, size < kb*1000)
+	dels.10kb.ctr.iz.all <- subset(dels.nona.ctr.iz.all, size >= kb*1000)
+	
+	machines[h, k] <- testU(dels.9kb.ctr.iz.all$SPLINE, dels.10kb.ctr.iz.all$SPLINE)
+}
+
+##
+#idx <- which(is.na(table.sv.del.20.result.iz.size[h, ]))
+
+min <- median(which(machines[h, ] == min(machines[h, ])))
+#if (length(idx) != 0)
+#   min <- which(table.sv.del.20.result.iz.size[h, -idx] == min(table.sv.del.20.result.iz.size[h, -idx]))
+kb <- kbs[min]
+
+#pvals[h, rt+1] <- machines[h, min]
+#sizes[h, rt+1] <- kb
+
+x <- kbs
+y <- as.numeric(-log10(machines[h, ]))
+file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "GEL", "_RT-IZ"))
+plotOS(file.name, "GEL deletions at IZs", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
+
+##
+dels.9kb.ctr.iz.all  <- subset(dels.nona.ctr.iz.all, size < kb*1000)
+dels.10kb.ctr.iz.all <- subset(dels.nona.ctr.iz.all, size >= kb*1000)
+
+ylim <- c(-1, 1.1)
+file.name <- paste0("vioplot_", "GEL", "_DEL_RT_IZ_", kb, "kb")
+plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.iz.all$SPLINE, dels.10kb.ctr.iz.all$SPLINE, main="GEL deletions at IZs", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c("black", "black"), cols2=c(red, blue), ylim, ylab="RT")
+
+###
+##
+kbs <- seq(10, 10000, 10)
+machines <- toTable(0, length(kbs), 1, paste0("TZ_", kbs, "kb"))
+h <- 1
+
+for (k in 1:length(kbs)) {
+	kb <- kbs[k]
+	
+	dels.9kb.ctr.tz.all  <- subset(dels.nona.ctr.tz.all, size < kb*1000)
+	dels.10kb.ctr.tz.all <- subset(dels.nona.ctr.tz.all, size >= kb*1000)
+	
+	machines[h, k] <- testU(dels.9kb.ctr.tz.all$SPLINE, dels.10kb.ctr.tz.all$SPLINE)
+}
+
+##
+#idx <- which(is.na(table.sv.del.20.result.iz.size[h, ]))
+
+min <- median(which(machines[h, ] == min(machines[h, ])))
+#if (length(idx) != 0)
+#   min <- which(table.sv.del.20.result.iz.size[h, -idx] == min(table.sv.del.20.result.iz.size[h, -idx]))
+kb <- kbs[min]
+
+#pvals[h, rt+1] <- machines[h, min]
+#sizes[h, rt+1] <- kb
+
+x <- kbs
+y <- as.numeric(-log10(machines[h, ]))
+file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "GEL", "_RT-TZ"))
+plotOS(file.name, "GEL deletions at TZs", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
+
+##
+dels.9kb.ctr.tz.all  <- subset(dels.nona.ctr.tz.all, size < kb*1000)
+dels.10kb.ctr.tz.all <- subset(dels.nona.ctr.tz.all, size >= kb*1000)
+
+ylim <- c(-1, 1.1)
+file.name <- paste0("vioplot_", "GEL", "_DEL_RT_TZ_", kb, "kb")
+plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.tz.all$SPLINE, dels.10kb.ctr.tz.all$SPLINE, main="GEL deletions at TZs", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c("black", "black"), cols2=c(red, blue), ylim, ylab="RT")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+nrow(gel.del)
+#[1] 1548
+
+colnames <- c("TTR", "TTR_P", "CTR_IZ", "CTR_IZ_P", "CTR_TZ", "CTR_TZ_P", "CTR_UN", "CTR_UN_P", "CTR_NA", "CTR_NA_P", "Mappable")
+report <- toTable(0, length(colnames), 4, colnames)
+
+colnames <- c("E", "E_P", "L", "L_P", "Mappable")
+report2 <- toTable(0, length(colnames), 4, colnames)
+
+kb <- 20
+rfd <- 0.9
+for (rt in 0:3) {
+	  if (rt == 0) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 1) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 2) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("nbl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 3) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("cll_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  }
+	  s <- rt + 1
+	
+	  nrds <- nrds.RT.NRFD[0,]
+	  for (f in 1:nrow(gel.del)) {
+		    overlaps <- getDELRTNRFD(gel.del[f,], nrds.RT.NRFD, bed.gc)
+		
+		    nrds <- rbind(nrds, nrds.RT.NRFD[overlaps,])
+	  }
+	  nrds.RT.NRFD.1 <- nrds
+  	report$Mappable[s] <- nrow(nrds.RT.NRFD.1)
+	
+	  ## TTR and CTR
+	  nrds.RT.NRFD.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.1, rfd)
+	  report$TTR[s]   <- nrow(nrds.RT.NRFD.1.ttr)
+	  report$TTR_P[s] <- report$TTR[s] / report$Mappable[s]
+	
+	  diff <- setdiff(rownames(nrds.RT.NRFD.1), rownames(nrds.RT.NRFD.1.ttr))
+	  nrds.RT.NRFD.1.ctr <- nrds.RT.NRFD.1[diff,]
+	  nrds.RT.NRFD.1.ctr.iz <- subset(nrds.RT.NRFD.1.ctr, NRFD > 0)
+	  nrds.RT.NRFD.1.ctr.tz <- subset(nrds.RT.NRFD.1.ctr, NRFD < 0)
+	  nrds.RT.NRFD.1.ctr.un <- subset(nrds.RT.NRFD.1.ctr, NRFD == 0)
+	  nrds.RT.NRFD.1.ctr.na <- nrds.RT.NRFD.1.ctr[which(is.na(nrds.RT.NRFD.1.ctr$NRFD) == T),]
+	
+	  report$CTR_IZ[s]   <- nrow(nrds.RT.NRFD.1.ctr.iz)
+	  report$CTR_IZ_P[s] <- report$CTR_IZ[s] / report$Mappable[s]
+	  report$CTR_TZ[s]   <- nrow(nrds.RT.NRFD.1.ctr.tz)
+	  report$CTR_TZ_P[s] <- report$CTR_TZ[s] / report$Mappable[s]
+	  report$CTR_UN[s]   <- nrow(nrds.RT.NRFD.1.ctr.un)
+	  report$CTR_UN_P[s] <- report$CTR_UN[s] / report$Mappable[s]
+	  report$CTR_NA[s]   <- nrow(nrds.RT.NRFD.1.ctr.na)
+	  report$CTR_NA_P[s] <- report$CTR_NA[s] / report$Mappable[s]
+	  
+	  ##
+	  report2$Mappable[s] <- nrow(nrds)
+	  
+	  report2$E[s]   <- nrow(subset(nrds, SPLINE >= 0))
+	  report2$E_P[s] <- report2$E[s] / report2$Mappable[s]
+	  report2$L[s]   <- nrow(subset(nrds, SPLINE < 0))
+	  report2$L_P[s] <- report2$L[s] / report2$Mappable[s]
+}
+save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.RData")))
+writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+##
+report.rfds <- list(as.numeric(report[1, c(2,4,6)]), as.numeric(report[2, c(2,4,6)]), as.numeric(report[3, c(2,4,6)]), as.numeric(report[4, c(2,4,6)]))
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_GEL_TTR-IZ-TZ_20kb.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "GEL trio deletions      ")
+
+##
+report.rts <- list(as.numeric(report2[1, c(2,4)]), as.numeric(report2[2, c(2,4)]), as.numeric(report2[3, c(2,4)]), as.numeric(report2[4, c(2,4)]))
+
+file.name <- file.path(wd.rt.plots, paste0("RT_GEL.pdf"))
+plotReportRT(report.rts, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "GEL trio deletions      ")
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# RFD
+# Last Modified: 25/04/23
+# -----------------------------------------------------------------------------
+##
+#cfs <- readTable(file.path(wd.rt.data, "CFS_hg19.txt"), header=T, rownames=F, sep="")
+cfs <- gel.del
+
+colnames <- c("TTR", "TTR_P", "CTR_IZ", "CTR_IZ_P", "CTR_TZ", "CTR_TZ_P", "CTR_UN", "CTR_UN_P", "CTR_NA", "CTR_NA_P", "Mappable")
+report <- toTable(0, length(colnames), 4, colnames)
+
+colnames <- c("E", "E_P", "L", "L_P", "Mappable")
+report2 <- toTable(0, length(colnames), 4, colnames)
+
+kb <- 20
+rfd <- 0.9
+for (rt in 0:3) {
+	  if (rt == 0) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 1) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 2) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("nbl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 3) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("cll_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  }
+	  s <- rt + 1
+	
+	  dels.nona.ttr.all    <- dels[0,]	  
+	  dels.nona.ctr.iz.all <- dels[0,]
+	  dels.nona.ctr.tz.all <- dels[0,]
+	  dels.nona.e.all <- dels[0,]
+	  dels.nona.l.all <- dels[0,]
+	  nrds <- nrds.RT.NRFD[0,]
+	  for (f in 1:nrow(gel.del)) {
+	  	overlaps <- getDELRTNRFD(gel.del[f,], nrds.RT.NRFD, bed.gc)
+	  	
+	  	nrds <- rbind(nrds, nrds.RT.NRFD[overlaps,])
+	  }
+	  nrds.RT.NRFD.1 <- nrds
+	  report$Mappable[s] <- nrow(nrds.RT.NRFD.1)
+	  
+	  ## TTR and CTR
+	  nrds.RT.NRFD.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.1, rfd)
+	  report$TTR[s]   <- nrow(nrds.RT.NRFD.1.ttr)
+	  report$TTR_P[s] <- report$TTR[s] / report$Mappable[s]
+	  
+	  diff <- setdiff(rownames(nrds.RT.NRFD.1), rownames(nrds.RT.NRFD.1.ttr))
+	  nrds.RT.NRFD.1.ctr <- nrds.RT.NRFD.1[diff,]
+	  nrds.RT.NRFD.1.ctr.iz <- subset(nrds.RT.NRFD.1.ctr, NRFD > 0)
+	  nrds.RT.NRFD.1.ctr.tz <- subset(nrds.RT.NRFD.1.ctr, NRFD < 0)
+	  nrds.RT.NRFD.1.ctr.un <- subset(nrds.RT.NRFD.1.ctr, NRFD == 0)
+	  nrds.RT.NRFD.1.ctr.na <- nrds.RT.NRFD.1.ctr[which(is.na(nrds.RT.NRFD.1.ctr$NRFD) == T),]
+	  
+	  
+	  
+	  for (h in 1:nrow(table.sv.del.20.result.20)) {
+		    hist <- as.vector(table.sv.del.20.result.20$Histology[h])
+		    load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
+		    dels <- subset(dels, size < 940000)
+		    dels.nona <- dels[!is.na(dels$RFD),]
+		
+		    dels.nona.ttr <- getBootstrapTTR(dels.nona, 0.9)
+		    dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
+		    dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
+		    dels.nona.ctr.tz <- subset(dels.nona.ctr, NRFD < 0)
+		
+		    dels.nona.ttr.all <- rbind(dels.nona.ttr.all, dels.nona.ttr)
+		    dels.nona.ctr.iz.all <- rbind(dels.nona.ctr.iz.all, dels.nona.ctr.iz)
+		    dels.nona.ctr.tz.all <- rbind(dels.nona.ctr.tz.all, dels.nona.ctr.tz)
+		
+		##
+		dels.nona.e <- subset(dels.nona, SPLINE >= 0)
+		dels.nona.l <- subset(dels.nona, SPLINE < 0)
+		
+		dels.nona.e.all <- rbind(dels.nona.e.all, dels.nona.e)
+		dels.nona.l.all <- rbind(dels.nona.l.all, dels.nona.l)
+	}
+	
+	## TTR and CTR  
+	report$Mappable[s] <- nrow(dels.nona.ttr.all) + nrow(dels.nona.ctr.iz.all) + nrow(dels.nona.ctr.tz.all)
+	
+	report$TTR[s]   <- nrow(dels.nona.ttr.all)
+	report$TTR_P[s] <- report$TTR[s] / report$Mappable[s]
+	
+	report$CTR_IZ[s]   <- nrow(dels.nona.ctr.iz.all)
+	report$CTR_IZ_P[s] <- report$CTR_IZ[s] / report$Mappable[s]
+	report$CTR_TZ[s]   <- nrow(dels.nona.ctr.tz.all)
+	report$CTR_TZ_P[s] <- report$CTR_TZ[s] / report$Mappable[s]
+	
+	## RT  
+	report2$Mappable[s] <- nrow(dels.nona.e.all) + nrow(dels.nona.l.all)
+	
+	report2$E[s]   <- nrow(dels.nona.e.all)
+	report2$E_P[s] <- report2$E[s] / report2$Mappable[s]
+	report2$L[s]   <- nrow(dels.nona.l.all)
+	report2$L_P[s] <- report2$L[s] / report2$Mappable[s]
+}
+save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.RData")))
+writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+##
+report.rfds <- list(as.numeric(report[1, c(2,4,6)]), as.numeric(report[2, c(2,4,6)]), as.numeric(report[3, c(2,4,6)]), as.numeric(report[4, c(2,4,6)]))
+
+file.name <- file.path(wd.rt.plots, paste0("NRFD_DEL_TTR-IZ-TZ_20kb.pdf"))
+plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "Distribution of deletions   ")
+
+##
+report.rts <- list(as.numeric(report2[1, c(2,4)]), as.numeric(report2[2, c(2,4)]), as.numeric(report2[3, c(2,4)]), as.numeric(report2[4, c(2,4)]))
+
+file.name <- file.path(wd.rt.plots, paste0("RT_DEL_Smaller.pdf"))
+plotReportRT(report.rts, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "Deletions < 940kb     ")
+
+
+
+
+
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # Load data
 # Last Modified: 22/03/22
@@ -362,7 +925,7 @@ plotHeatmap <- function(wd.rt.plots, file.name, data0, cols, height=3, width=10,
 	  m <- as.matrix(m[, -1]) # -1 to omit categories from matrix
 	  clust <- hclust(dist(t(m)))
 
-	  pdf(file.path(wd.rt.plots, paste0(file.name, "_ggplot_clust_RFD_SIZE.pdf")), height=3, width=10)
+	  pdf(file.path(wd.rt.plots, paste0(file.name, "_ggplot_clust_RFD.pdf")), height=3, width=10)
 	  #par(mar=c(2.5, 2, 1.1, 1.4))
 	  
 	  # plotting the heatmap
@@ -371,7 +934,7 @@ plotHeatmap <- function(wd.rt.plots, file.name, data0, cols, height=3, width=10,
 	  # setting gradient color as red and white
 	  plt <- plt + scale_fill_gradient(low = cols[1], high = cols[2])
 	  plt <- plt +	scale_x_discrete(limits = colnames(m)[clust$order])
-
+	  
 	  # further customizing the heatmap by applying colors and title
 	  plt <- plt + theme_minimal()
 	  plt <- plt + theme(axis.text.x = element_text(angle=45, hjust=1))
@@ -451,81 +1014,93 @@ plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, kb, lwd=
 }
 
 kbs <- seq(10, 10000, 10)
-machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("TZ_", kbs, "kb"))
+machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("IZ_", kbs, "kb"))
 rownames(machines) <- table.sv.del.20.result.20$Histology
 
-pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("TZ_RT0", "TZ_RT1", "TZ_RT2", "TZ_RT3"))
+pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
 rownames(pvals) <- table.sv.del.20.result.20$Histology
 
-sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("TZ_RT0", "TZ_RT1", "TZ_RT2", "TZ_RT3"))
+sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
 rownames(sizes) <- table.sv.del.20.result.20$Histology
+
+###
+## ALL (16/05/23)
+dels.nona.ctr.iz.all <- dels[0,]
 
 for (h in 1:nrow(machines)) {
 	  hist <- rownames(machines)[h]
 	
-	  #for (rt in 0:3) {	  
+	  for (rt in 0:3) {	  
 	  	  load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
 	  	  dels.nona <- dels[!is.na(dels$RFD),]
-	  	
-	  	  for (k in 1:length(kbs)) {
-		       kb <- kbs[k]
-		    
-		       dels.9kb <- subset(dels.nona, size < kb*1000)
-		       dels.9kb.ctr <- getBootstrapCTR(dels.9kb, 0.9)
-		       dels.9kb.ctr.iz <- subset(dels.9kb.ctr, NRFD < 0)
-		
-		       dels.10kb <- subset(dels.nona, size >= kb*1000)
-		       dels.10kb.ctr <- getBootstrapCTR(dels.10kb, 0.9)
-		       dels.10kb.ctr.iz <- subset(dels.10kb.ctr, NRFD < 0)
-		
-		       ##
-		       machines[h, k] <- testU(dels.9kb.ctr.iz$RFD, dels.10kb.ctr.iz$RFD)
-	     }
-	  
-	     ##
-	     #idx <- which(is.na(table.sv.del.20.result.iz.size[h, ]))
-	     min <- median(which(machines[h, ] == min(machines[h, ])))
-	     #if (length(idx) != 0)
-	     #   min <- which(table.sv.del.20.result.iz.size[h, -idx] == min(table.sv.del.20.result.iz.size[h, -idx]))
-	     kb <- kbs[min]
-	  
-	     pvals[h, rt+1] <- machines[h, min]
-	     sizes[h, rt+1] <- kb
-	     
-	     #x <- kbs
-	     #y <- as.numeric(-log10(machines[h, ]))
-	     #file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", hist, "_TZ"))
-	     #plotOS(file.name, hist, "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
-	  
-	     ##
-	     kb <- kbs[min]
-	     
-	     dels.9kb <- subset(dels.nona, size < kb*1000)
-	     dels.9kb.ctr <- getBootstrapCTR(dels.9kb, 0.9)
-	     dels.9kb.ctr.iz <- subset(dels.9kb.ctr, NRFD < 0)
-	     
-	     dels.10kb <- subset(dels.nona, size >= kb*1000)
-	     dels.10kb.ctr <- getBootstrapCTR(dels.10kb, 0.9)
-	     dels.10kb.ctr.iz <- subset(dels.10kb.ctr, NRFD < 0)
-	     
-	     ylim <- c(-1, 1.1)
-	     file.name <- paste0("vioplot_", hist, "_rt", rt, "_DEL_RFD_CTR_TZ_", kb, "kb")
-	     plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.iz$RFD, dels.10kb.ctr.iz$RFD, main=hist, names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c(blue, blue), ylim, ylab="SCLC-NL TZ RFD")
-	  
-	     ##
-	     #file.name <- paste0("corr_", hist, "_rt", rt, "_SIZE-VS-IZ_", kb, "kb")
-	     #plotCorrelation5(file.path(wd.rt.plots, file.name), hist, paste0("Size (Del >", kb, "kb) [kb]"), "SCLC-NL RFD", dels.10kb.ctr.iz$size/1000, dels.10kb.ctr.iz$RFD, pos="bottomright", cols=c(red, lightblue))
-	  #}
+	  	  dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
+	  	  dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
+	  	  
+	  	  dels.nona.ctr.iz.all <- rbind(dels.nona.ctr.iz.all, dels.nona.ctr.iz)
+	  }
 }
 
-file.name <- "heatmap_table.sv.del.20.result.20.rfd.tz.test"
-ylab <- "TZ RFD"
-cols <- c("white", blue)
+##
+kbs <- seq(10, 10000, 10)
+machines <- toTable(0, length(kbs), 1, paste0("IZ_", kbs, "kb"))
+h <- 1
+
+for (k in 1:length(kbs)) {
+		 kb <- kbs[k]
+		    
+		 dels.9kb.ctr.iz.all  <- subset(dels.nona.ctr.iz.all, size < kb*1000)
+		 dels.10kb.ctr.iz.all <- subset(dels.nona.ctr.iz.all, size >= kb*1000)
+
+		 machines[h, k] <- testU(dels.9kb.ctr.iz.all$RFD, dels.10kb.ctr.iz.all$RFD)
+}
+
+##
+#idx <- which(is.na(table.sv.del.20.result.iz.size[h, ]))
+min <- median(which(machines[h, ] == min(machines[h, ])))
+#if (length(idx) != 0)
+#   min <- which(table.sv.del.20.result.iz.size[h, -idx] == min(table.sv.del.20.result.iz.size[h, -idx]))
+kb <- kbs[min]
+	  
+#pvals[h, rt+1] <- machines[h, min]
+#sizes[h, rt+1] <- kb
+	     
+x <- kbs
+y <- as.numeric(-log10(machines[h, ]))
+file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "ALL", "_IZ"))
+plotOS(file.name, "Deletions in IZ", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
+	  
+##
+dels.9kb.ctr.iz.all  <- subset(dels.nona.ctr.iz.all, size < kb*1000)
+dels.10kb.ctr.iz.all <- subset(dels.nona.ctr.iz.all, size >= kb*1000)
+	     
+ylim <- c(-1, 1.1)
+file.name <- paste0("vioplot_", "ALL", "_DEL_RFD_CTR_IZ_", kb, "kb")
+plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.iz.all$RFD, dels.10kb.ctr.iz.all$RFD, main="Deletions in IZ", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c(red, red), cols2=c(orange, lightblue), ylim, ylab="RFD")
+	  
+##
+#file.name <- paste0("corr_", hist, "_rt", rt, "_SIZE-VS-IZ_", kb, "kb")
+#plotCorrelation5(file.path(wd.rt.plots, file.name), hist, paste0("Size (Del >", kb, "kb) [kb]"), "SCLC-NL RFD", dels.10kb.ctr.iz$size/1000, dels.10kb.ctr.iz$RFD, pos="bottomright", cols=c(red, lightblue))
+
+# -----------------------------------------------------------------------------
+# Density vs. Del size
+# Last Modified: 17/05/23
+# -----------------------------------------------------------------------------
+getGeneDensity
+
+dels.nona.ctr.iz.all
+
+
+
+
+
+file.name <- "heatmap_table.sv.del.20.result.20.rfd.iz.today"
+ylab <- "IZ RFD"
+cols <- c("white", red)
 data0 <- pvals
 
-file.name <- "heatmap_table.sv.del.20.result.20.rfd.tz.pval"
-plotHeatmap(wd.rt.plots, file.name, pvals, c("white", blue), height=3, width=10, text="", ylab="TZ RFD")
-save(kbs, machines, pvals, sizes, file=file.path(wd.rt.data, "table.sv.del.20.result.20.tz.RData"), version=2)
+file.name <- "heatmap_table.sv.del.20.result.20.iz"
+plotHeatmap(wd.rt.plots, file.name, pvals, c("white", red), height=3, width=10, text="", ylab="IZ")
+save(kbs, machines, pvals, sizes, file=file.path(wd.rt.data, "table.sv.del.20.result.20.rfd.iz.RData"), version=2)
 
 
 
