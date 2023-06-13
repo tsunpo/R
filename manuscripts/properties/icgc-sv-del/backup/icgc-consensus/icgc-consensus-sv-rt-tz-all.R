@@ -451,18 +451,18 @@ plotOS <- function(file.name, main.text, xlab.text, ylab.text, x, y, p, kb, lwd=
 }
 
 kbs <- seq(10, 10000, 10)
-machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("RT_", kbs, "kb"))
+machines <- toTable(0, length(kbs), nrow(table.sv.del.20.result.20), paste0("IZ_", kbs, "kb"))
 rownames(machines) <- table.sv.del.20.result.20$Histology
 
-#pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
-#rownames(pvals) <- table.sv.del.20.result.20$Histology
+pvals <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
+rownames(pvals) <- table.sv.del.20.result.20$Histology
 
-#sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
-#rownames(sizes) <- table.sv.del.20.result.20$Histology
+sizes <- toTable(0, 4, nrow(table.sv.del.20.result.20), c("IZ_RT0", "IZ_RT1", "IZ_RT2", "IZ_RT3"))
+rownames(sizes) <- table.sv.del.20.result.20$Histology
 
 ###
 ## ALL (16/05/23)
-dels.nona.rt.all <- dels[0,]
+dels.nona.ctr.iz.all <- dels[0,]
 
 for (h in 1:nrow(machines)) {
 	  hist <- rownames(machines)[h]
@@ -470,25 +470,25 @@ for (h in 1:nrow(machines)) {
 	  for (rt in 0:3) {	  
 	  	  load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
 	  	  dels.nona <- dels[!is.na(dels$RFD),]
-	  	  #dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
-	  	  #dels.nona.ctr.tz <- subset(dels.nona.ctr, NRFD < 0)
+	  	  dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
+	  	  dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
 	  	  
-	  	  dels.nona.rt.all <- rbind(dels.nona.rt.all, dels.nona)
+	  	  dels.nona.ctr.iz.all <- rbind(dels.nona.ctr.iz.all, dels.nona.ctr.iz)
 	  }
 }
 
 ##
 kbs <- seq(10, 10000, 10)
-machines <- toTable(0, length(kbs), 1, paste0("RT_", kbs, "kb"))
+machines <- toTable(0, length(kbs), 1, paste0("TZ_", kbs, "kb"))
 h <- 1
 
 for (k in 1:length(kbs)) {
 		 kb <- kbs[k]
 		    
-		 dels.9kb.rt.all  <- subset(dels.nona.rt.all, size < kb*1000)
-		 dels.10kb.rt.all <- subset(dels.nona.rt.all, size >= kb*1000)
+		 dels.9kb.ctr.tz.all  <- subset(dels.nona.ctr.tz.all, size < kb*1000)
+		 dels.10kb.ctr.tz.all <- subset(dels.nona.ctr.tz.all, size >= kb*1000)
 
-		 machines[h, k] <- testU(dels.9kb.rt.all$SPLINE, dels.10kb.rt.all$SPLINE)
+		 machines[h, k] <- testU(dels.9kb.ctr.tz.all$SPLINE, dels.10kb.ctr.tz.all$SPLINE)
 }
 
 ##
@@ -503,23 +503,26 @@ kb <- kbs[min]
 	     
 x <- kbs
 y <- as.numeric(-log10(machines[h, ]))
-file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "ALL", "_RT"))
-plotOS(file.name, "RT at deletions", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
+file.name <- file.path(wd.rt.plots, paste0("correlation_LENGTH_P_", "ALL", "_RT-TZ"))
+plotOS(file.name, "Deletions at IZs", "Size [kb]", text.Log10.P, x, y, machines[h, min], kb, lwd=3)
 	  
 ##
-dels.9kb.rt.all  <- subset(dels.nona.rt.all, size < kb*1000)
-dels.10kb.rt.all <- subset(dels.nona.rt.all, size >= kb*1000)
+dels.9kb.ctr.tz.all  <- subset(dels.nona.ctr.tz.all, size < kb*1000)
+dels.10kb.ctr.tz.all <- subset(dels.nona.ctr.tz.all, size >= kb*1000)
 	     
 ylim <- c(-1, 1.1)
-file.name <- paste0("vioplot_", "ALL", "_DEL_RT_", kb, "kb")
-plotVio20(wd.rt.plots, file.name, dels.9kb.rt.all$SPLINE, dels.10kb.rt.all$SPLINE, main="RT at deletions", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c("black", "black"), cols2=c(red, blue), ylim, ylab="RT")
-
-
-
+file.name <- paste0("vioplot_", "ALL", "_DEL_RT_TZ_", kb, "kb")
+plotVio20(wd.rt.plots, file.name, dels.9kb.ctr.tz.all$SPLINE, dels.10kb.ctr.tz.all$SPLINE, main="Deletions at TZs", names=c(paste0("Del <", kb, "kb"), paste0("Del >", kb, "kb")), cols=c("black", "black"), cols2=c(red, blue), ylim, ylab="RT")
+	  
 ##
 #file.name <- paste0("corr_", hist, "_rt", rt, "_SIZE-VS-IZ_", kb, "kb")
 #plotCorrelation5(file.path(wd.rt.plots, file.name), hist, paste0("Size (Del >", kb, "kb) [kb]"), "SCLC-NL RFD", dels.10kb.ctr.iz$size/1000, dels.10kb.ctr.iz$RFD, pos="bottomright", cols=c(red, lightblue))
 
+###
+## 18/05/23
+ylim <- c(-1, 1.1)
+file.name <- paste0("vioplot_", "ALL", "_DEL_RT_TZ_IZ_20230518")
+plotVio20(wd.rt.plots, file.name, dels.nona.ctr.tz.all$SPLINE, dels.nona.ctr.iz.all$SPLINE, main="RT at TZ and IZs", names=c("TZ", "IZ"), cols=c("black", "black"), cols2=c(red, blue), ylim, ylab="RT")
 
 
 
