@@ -49,11 +49,70 @@ gel.del$size <- gel.del$end2 - gel.del$start1
 
 ## GEL trio deletions (ALL)
 gel.del$BED <- NA
+gel.del$BED <- mapply(x = 1:nrow(gel.del), function(x) getRandomBreakpointBED(gel.del[x,], nrds.RT, bed.gc))
+gel.del.nona <- gel.del[!is.na(gel.del$BED), ]
+gel.del.nona$RT <- nrds.RT[gel.del.nona$BED,]$RT
+gel.del.nona.2 <- subset(subset(gel.del.nona, RT >= -2), RT <= 2)
+nrow(gel.del)
+# [1] 1477
+nrow(gel.del.nona)
+# [1] 1433
+nrow(gel.del.nona.2)
+# [1] 1394
+(1433 - 1394) / 1433
+# [1] 0.02721563
+
+reals <- gel.del.nona.2$RT
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL_-2.pdf"))
+main.text <- "GEL deletions"
+xlab.text <- ""
+plotMonteCarloSimulation(reals, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL_P_-2.pdf"))
+plotPropertyDensity(reals, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+## GEL trio deletions (> 10 kb)
+gel.del.10kb <- subset(gel.del.nona.2, size >= 10000)
+reals.10k <- gel.del.10kb$RT
+randoms.10k <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals.10k)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL>10kb.pdf"))
+main.text <- "GEL deletions > 10 kb"
+xlab.text <- ""
+plotMonteCarloSimulation(reals.10k, randoms.10k, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL>10kb_P.pdf"))
+plotPropertyDensity(reals.10k, randoms.10k, file.name, c(red, blue), main.text, xlab.text)
+
+## GEL trio deletions (< 10 kb)
+gel.del.9kb <- subset(gel.del.nona.2, size < 10000)
+reals.9k <- gel.del.9kb$RT
+randoms.9k <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals.9k)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL<10kb.pdf"))
+main.text <- "GEL deletions < 10 kb"
+xlab.text <- ""
+plotMonteCarloSimulation(reals.9k, randoms.9k, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL<10kb_P.pdf"))
+plotPropertyDensity(reals.9k, randoms.9k, file.name, c(red, blue), main.text, xlab.text)
+
+
+
+
+
+
+## GEL trio deletions (ALL)
+gel.del$BED <- NA
 gel.del$BED <- mapply(x = 1:nrow(gel.del), function(x) getRandomBreakpointBED(gel.del[x,], nrds.RT.NRFD.nona, bed.gc))
 gel.del.nona <- gel.del[!is.na(gel.del$BED), ]
 
 reals <- nrds.RT.NRFD.nona[gel.del.nona$BED, "RT"]
 randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.NRFD.nona, length(reals)))
+(1548 - 1387) / 1548
+# [1] 0.1040052
 
 file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_GEL.pdf"))
 main.text <- "GEL deletions"

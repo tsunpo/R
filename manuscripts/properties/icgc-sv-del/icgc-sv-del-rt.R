@@ -37,10 +37,195 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5536223/pdf/emss-73438.pdf
+# Last Modified: 13/06/23
+# -----------------------------------------------------------------------------
+rt <- readTable("/Users/ty2/Work/dev/PanBody_manuscript_analyses/mutPatternsRegions/genomic_regions/germMedian37.bed", header=F, rownames=F, sep="")
+colnames(rt) <- c("CHR", "START", "END", "RT")
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT.pdf"))
+main.text <- "ENCODE RT (10 kb)"
+xlab.text <- ""
+plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
+
+# -----------------------------------------------------------------------------
+# RT
+# Last Modified: 13/06/23
+# -----------------------------------------------------------------------------
+pipePropertyDensity0 <- function(wd.rt.plots, kb, rt, cutoff) {
+	  if (rt == "SCLC-NL") {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == "SCLC") {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == "NB") {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("nbl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == "CLL") {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("cll_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  }
+	  nrds.RT.NRFD.nona <- subset(subset(nrds.RT.NRFD, RT >= -cutoff), RT <= cutoff)
+	
+	  file.name <- file.path(wd.rt.plots, paste0("QS_", rt, "_RT_-", cutoff, ".pdf"))
+	  main.text <- paste0(rt, " RT")
+	  xlab.text <- ""
+	  plotPropertyDensity0(nrds.RT.NRFD.nona$RT, file.name, c(red, blue), main.text, xlab.text)
+	
+	  file.name <- file.path(wd.rt.plots, paste0("QS_", rt, "_SPLINE_-", cutoff, ".pdf"))
+	  main.text <- paste0(rt, " SPLINE")
+	  xlab.text <- ""
+	  plotPropertyDensity0(nrds.RT.NRFD.nona$SPLINE, file.name, c(red, blue), main.text, xlab.text)
+}
+
+kb <- 20
+pipePropertyDensity0(wd.rt.plots, kb, "SCLC", 2)
+pipePropertyDensity0(wd.rt.plots, kb, "NB", 2)
+pipePropertyDensity0(wd.rt.plots, kb, "CLL", 2)
+
+overlaps <- intersect(intersect(intersect(rownames(nrds.RT.NRFD.sclc.nl), rownames(nrds.RT.NRFD.sclc)), rownames(nrds.RT.NRFD.nbl)), rownames(nrds.RT.NRFD.cll))
+nrow(nrds.RT.NRFD.sclc.nl)
+# [1] 2651861
+nrow(nrds.RT.NRFD.sclc)
+# [1] 2650083
+nrow(nrds.RT.NRFD.nbl)
+# [1] 2650083
+nrow(nrds.RT.NRFD.cll)
+# [1] 2644419
+length(overlaps)
+# [1] 2639949
+
+nrds.RT <- as.data.frame(cbind(cbind(cbind(nrds.RT.NRFD.sclc.nl[overlaps,]$RT, nrds.RT.NRFD.sclc[overlaps,]$RT), nrds.RT.NRFD.nbl[overlaps,]$RT), nrds.RT.NRFD.cll[overlaps,]$RT))
+rownames(nrds.RT) <- overlaps
+colnames(nrds.RT) <- c("SCLC-NL", "SCLC", "NB", "CLL")
+nrds.RT$RT <- mapply(x = 1:nrow(nrds.RT), function(x) median(as.numeric(nrds.RT[x, 1:4])))
+nrds.RT$BED <- rownames(nrds.RT)
+nrds.RT <- nrds.RT[, c("BED", "RT")]
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT.pdf"))
+main.text <- "RT"
+xlab.text <- ""
+plotPropertyDensity0(nrds.RT$MEDIAN, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_-1.pdf"))
+main.text <- "RT"
+xlab.text <- ""
+plotPropertyDensity0(subset(subset(nrds.RT, MEDIAN >= -1), MEDIAN <= 1)$MEDIAN, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_-2.pdf"))
+main.text <- "RT"
+xlab.text <- ""
+plotPropertyDensity0(subset(subset(nrds.RT, MEDIAN >= -2), MEDIAN <= 2)$MEDIAN, file.name, c(red, blue), main.text, xlab.text)
+
+##
+nrds.RT.1 <- subset(subset(nrds.RT, RT >= -1), RT <= 1)
+nrds.RT.2 <- subset(subset(nrds.RT, RT >= -2), RT <= 2)
+nrow(nrds.RT)
+# [1] 2639949
+nrow(nrds.RT.2)
+# [1] 2556085
+(2639949 - 2556085) / 2639949
+# [1] 0.03176728
+
+# -----------------------------------------------------------------------------
 # Quantile skew plot
 # Last Modified: 04/06/23
 # -----------------------------------------------------------------------------
+dels.all <- dels[0,]
+for (h in 1:nrow(table.sv.del.20.result.20)) {
+	  hist <- as.vector(table.sv.del.20.result.20$Histology[h])
+	  load(file=file.path(wd.rt.data, "beds", paste0(hist, ".sv.del.rt", 0, ".beds.RData")))
+	  dels.all <- rbind(dels.all, dels)
+}
+#dels.all.auto <- subset(subset(dels.all, chrom1 != "X"), chrom1 != "Y")
+#dels.all.auto <- subset(subset(dels.all, chrom2 != "X"), chrom2 != "Y")
+#ddels.all.nona <- dels.all[!is.na(dels.all$BED),]
+dels.all$RT <- nrds.RT[dels.all$BED,]$RT
+dels.all.nona <- dels.all[!is.na(dels.all$RT),]
+dels.all.nona.2 <- subset(subset(dels.all.nona, RT >= -2), RT <= 2)
+(75575 - 71735) / 75575
+# [1] 0.05081045
+(71735 - 69070) / 71735
+# [1] 0.03715062
+
+## PCAWG deletions (ALL)
+tests <- dels.all.nona.2$RT
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_PCAWG.pdf"))
+main.text <- "PCAWG deletions"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_PCAWG_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+## PCAWG deletions (< 10 kb)
+tests <- subset(dels.all.nona.2, size < 10000)$RT
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_PCAWG_<10kb.pdf"))
+main.text <- "PCAWG deletions < 10 kb"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_PCAWG_<10kn_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+## PCAWG deletions (> 10 kb)
+tests <- subset(dels.all.nona.2, size > 10000)$RT
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_PCAWG_>10kb.pdf"))
+main.text <- "PCAWG deletions > 10 kb"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_PCAWG_>10kn_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+
+
+
+
+
+
+
+
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_TOTAL.pdf"))
+main.text <- "RT"
+xlab.text <- ""
+plotPropertyDensity0(as.numeric(unlist(nrds.RT[, 1:4])), file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_TOTAL_-1.pdf"))
+main.text <- "RT"
+xlab.text <- ""
+plotPropertyDensity0(as.numeric(unlist(nrds.RT.1[, 1:4])), file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_RT_TOTAL_-2.pdf"))
+main.text <- "RT"
+xlab.text <- ""
+plotPropertyDensity0(as.numeric(unlist(nrds.RT.2[, 1:4])), file.name, c(red, blue), main.text, xlab.text)
+
+
+
+
+
 kb <- 20
+for (rt in 0:3) {
+	  if (rt == 0) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 1) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 2) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("nbl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  } else if (rt == 3) {
+		    load(file=file.path(wd.rt.data, "bstrps", paste0("cll_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+	  }
+	
+}
+
+
+
+
 load(file=file.path(wd.icgc.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 nrds.RT.NRFD.nona.2 <- subset(subset(nrds.RT.NRFD, RT >= -2), RT <= 2)
 nrds.RT.NRFD.nona.1 <- subset(subset(nrds.RT.NRFD, RT >= -1), RT <= 1)
@@ -65,9 +250,94 @@ main.text <- "SCLC-NL SPLINE"
 xlab.text <- ""
 plotPropertyDensity0(nrds.RT.NRFD.nona$SPLINE, file.name, c(red, blue), main.text, xlab.text)
 
+# -----------------------------------------------------------------------------
+# Quantile skew plot
+# Last Modified: 04/06/23
+# -----------------------------------------------------------------------------
+dels.all <- dels[0,]
+for (h in 1:nrow(table.sv.del.20.result.20)) {
+	  hist <- as.vector(table.sv.del.20.result.20$Histology[h])
+	  load(file=file.path(wd.rt.data, "beds", paste0(hist, ".sv.del.rt", 0, ".beds.RData")))
+	  dels.all <- rbind(dels.all, dels)
+}
+#dels.all.auto <- subset(subset(dels.all, chrom1 != "X"), chrom1 != "Y")
+#dels.all.auto <- subset(subset(dels.all, chrom2 != "X"), chrom2 != "Y")
+dels.all.nona <- dels.all[!is.na(dels.all$BED),]
+dels.all.nona$RT <- nrds.RT.NRFD.nona[dels.all.nona$BED,]$RT
+dels.all.nona <- dels.all.nona[!is.na(dels.all.nona$RT),]
+
+## PCAWG deletions (ALL)
+tests <- dels.all.nona$RT
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.NRFD.nona, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_PCAWG.pdf"))
+main.text <- "PCAWG deletions"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_PCAWG_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
 
 
 
+
+
+## PCAWG deletions (< 10 kb)
+tests <- subset(dels.all.nona, size < 10000)$SCALE
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.NRFD.nona, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_PCAWG_<10kb.pdf"))
+main.text <- "PCAWG deletions < 10 kb"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_PCAWG_<10kn_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+## PCAWG deletions (> 10 kb)
+tests <- subset(dels.all.nona, size > 10000)$SCALE
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.NRFD.nona, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_SCALE_PCAWG_>10kb.pdf"))
+main.text <- "PCAWG deletions > 10 kb"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_SCALE_PCAWG_>10kn_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+
+
+
+## PCAWG deletions (Test)
+icgc.idx <- sample(nrow(dels.all.auto), 1436, replace=F)
+icgc.del <- dels.all.auto[icgc.idx, ]
+
+icgc.del$BED <- NA
+icgc.del$BED <- mapply(x = 1:nrow(icgc.del), function(x) getRandomBreakpointBED(icgc.del[x,], nrds.RT.NRFD.nona, bed.gc))
+icgc.del.nona <- icgc.del[!is.na(icgc.del$BED), ]
+
+tests <- nrds.RT.NRFD.nona[icgc.del.nona$BED, "SPLINE"]
+randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.NRFD.nona, length(tests)))
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_PCAWG.pdf"))
+main.text <- "PCAWG deletions"
+xlab.text <- ""
+plotMonteCarloSimulation(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_PCAWG_P.pdf"))
+plotPropertyDensity(tests, randoms, file.name, c(red, blue), main.text, xlab.text)
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Quantile skew plot
+# Last Modified: 13/06/23
+# -----------------------------------------------------------------------------
 library(ggplot2)
 library(dplyr)
 
@@ -119,6 +389,8 @@ plotPropertyDensity0(nrds.RT.NRFD.nona$SPLINE, file.name, c(red, blue), main.tex
 
 
 ##
+
+
 runs <- 1000
 size <- 1437
 randoms <- replicate(runs, getMonteCarloSimulations(nrds.RT.NRFD.nona, size))

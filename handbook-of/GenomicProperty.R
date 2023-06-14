@@ -60,7 +60,7 @@ plotMonteCarloSimulation <- function(reals, randoms, file.name, cols, main.text,
 	  d <- density(ranks)
 	
 	  col <- cols[1]
-	  if (median(reals) < 0.5)
+	  if (median(reals) < 0)
 	  	  col <- cols[2]
 	  
 	  pdf(file.name, height=6, width=6)
@@ -96,14 +96,14 @@ plotPropertyDensity <- function(reals, randoms, file.name, cols, main.text, xlab
    
    col <- cols[1]
    q <- as.numeric(quantile(tests))
-   if (q[3] < 0.5)
+   if (q[3] < 0)
    	  col <- cols[2]
 
    pdf(file.name, height=6, width=6)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
    plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 
-   abline(v=median(reals), col=col, lty=5, lwd=3)
+   #abline(v=median(reals), col=col, lty=5, lwd=3)
    
    text(0, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=2.5)
    dev.off()
