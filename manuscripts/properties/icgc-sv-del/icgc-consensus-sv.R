@@ -90,7 +90,7 @@ for (h in 1:nrow(table.sv.del)) {
 	  table.sv.del$Deletion[h] <- d
 }
 table.sv.del <- table.sv.del[order(table.sv.del$Sample, decreasing=T),]
-table.sv.del.20 <- subset(table.sv.del, Sample > 20)
+#table.sv.del.20 <- subset(table.sv.del, Sample > 20)
 writeTable(table.sv.del, file.path(wd.icgc.sv, "del", "table.sv.del.txt"), colnames=T, rownames=F, sep="\t")
 
 for (h in 1:nrow(table.sv.del)) {
@@ -107,7 +107,53 @@ for (h in 1:nrow(table.sv.del)) {
 	  }
 }
 
-save(totals.sv, table.sv.del, table.sv.del.20, file=file.path(wd.rt.data, paste0("final.sv.del.RData")), version=2)
+save(totals.sv, table.sv.del, file=file.path(wd.icgc.sv, "del", "data",paste0("final.sv.del.RData")), version=2)
+
+# -----------------------------------------------------------------------------
+# DUP
+# Last Modified: 23/04/23
+# -----------------------------------------------------------------------------
+table.sv <- as.data.frame(sort(table(totals.sv$histology_abbreviation), decreasing=T))
+
+table.sv.dup <- toTable(0, 3, nrow(table.sv), c("Histology", "Sample", "Duplication"))
+table.sv.dup$Histology <- table.sv$Var1
+for (h in 1:nrow(table.sv.dup)) {
+	  hist <- as.vector(table.sv.dup$Histology[h])
+	  totals.sv.hist <- subset(totals.sv, histology_abbreviation == hist)
+	
+	  n=0
+	  d=0
+	  for (s in 1:nrow(totals.sv.hist)) {
+		    id <- totals.sv.hist$wgs_id[s]
+		    sv <- readTable(file.path(wd.icgc.sv, "final", paste0(id, ".pcawg_consensus_1.6.161116.somatic.sv.bedpe.gz")), header=T, rownames=F, sep="\t")
+		    sv.dup <- subset(sv, svclass == "DUP")
+		    if (nrow(sv.dup) > 0) {
+			      n <- n + 1
+			      d <- d + nrow(sv.dup)
+		    }
+	  }
+	  table.sv.dup$Sample[h] <- n
+	  table.sv.dup$Duplication[h] <- d
+}
+table.sv.dup <- table.sv.dup[order(table.sv.dup$Sample, decreasing=T),]
+#table.sv.dup.20 <- subset(table.sv.dup, Sample > 20)
+writeTable(table.sv.dup, file.path(wd.icgc.sv, "dup", "table.sv.dup.txt"), colnames=T, rownames=F, sep="\t")
+
+for (h in 1:nrow(table.sv.dup)) {
+	  hist <- as.vector(table.sv.dup$Histology[h])
+	  dir.create(file.path(wd.icgc.sv, "dup", "data", hist))
+	  totals.sv.hist <- subset(totals.sv, histology_abbreviation == hist)
+	
+	  for (s in 1:nrow(totals.sv.hist)) {
+		    id <- totals.sv.hist$wgs_id[s]
+		    id2 <- totals.sv.hist$specimen_id[s]
+		    sv <- readTable(file.path(wd.icgc.sv, "final", paste0(id, ".pcawg_consensus_1.6.161116.somatic.sv.bedpe.gz")), header=T, rownames=F, sep="\t")
+		    sv.dup <- subset(sv, svclass == "DUP")
+		    writeTable(sv.dup, gzfile(file.path(wd.icgc.sv, "dup", "data", hist, paste0(id2, ".somatic.sv.dup.bedpe.gz"))), colnames=T, rownames=F, sep="\t")
+	  }
+}
+
+save(totals.sv, table.sv.dup, file=file.path(wd.icgc.sv, "dup", "data", paste0("final.sv.dup.RData")), version=2)
 
 # -----------------------------------------------------------------------------
 # RT vs. Del size

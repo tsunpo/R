@@ -30,16 +30,16 @@ base <- tolower(BASE)
 
 wd.icgc     <- file.path(wd, BASE, "consensus")
 wd.icgc.sv  <- file.path(wd.icgc, "sv")
-wd.icgc.sv.plots <- file.path(wd.icgc.sv, "del", "plots")
+wd.icgc.sv.plots <- file.path(wd.icgc.sv, "dupl", "plots")
 
 wd.meta     <- file.path(wd, BASE, "metadata")
 
 wd.anlys  <- file.path(wd, BASE, "analysis")
-wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-sv-del"))
+wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-sv-dup"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
-load(file=file.path(wd.icgc.sv, "del", "data", paste0("final.sv.del.RData")))
+load(file=file.path(wd.icgc.sv, "dup", "data", paste0("final.sv.dup.RData")))
 
 kb <- 20
 if (rt == 0) {
@@ -67,24 +67,24 @@ if (rt == 0) {
 #}
 
 #for (h in 1:nrow(table.sv.del.20)) {
-	  hist <- as.vector(table.sv.del$Histology[h])
+	  hist <- as.vector(table.sv.dup$Histology[h])
 	  totals.sv.hist <- subset(totals.sv, histology_abbreviation == hist)
 	
-	  dels <- c()
+	  dups <- c()
 	  for (s in 1:nrow(totals.sv.hist)) {
 		    id2 <- totals.sv.hist$specimen_id[s]
-		    del <- readTable(file.path(wd.icgc.sv, "del", "data", hist, paste0(id2, ".somatic.sv.del.bedpe.gz")), header=T, rownames=F, sep="\t")
+		    dup <- readTable(file.path(wd.icgc.sv, "dup", "data", hist, paste0(id2, ".somatic.sv.dup.bedpe.gz")), header=T, rownames=F, sep="\t")
       
-		    if (is.null(dels))
-		    	  dels <- del
+		    if (is.null(dups))
+		    	  dups <- dup
 		    else
-		       dels <- rbind(dels, del)
+		    	  dups <- rbind(dups, dup)
 	  }
-	  dels$size <- dels$end2 - dels$start1
+	  dups$size <- dups$end2 - dups$start1
 
-	  dels$BED <- mapply(x = 1:nrow(dels), function(x) getRandomBreakpointBED(dels[x,], nrds.RT.NRFD, bed.gc))
-	  dels <- dels[!is.na(dels$BED), ]
-	  #dels <- cbind(dels, nrds.RT.NRFD[dels$BED, c("SPLINE", "RFD", "NRFD")])
+	  dups$BED <- mapply(x = 1:nrow(dups), function(x) getRandomBreakpointBED(dups[x,], nrds.RT.NRFD, bed.gc))
+	  dups <- dups[!is.na(dups$BED), ]
+	  #dups <- cbind(dups, nrds.RT.NRFD[dups$BED, c("SPLINE", "RFD", "NRFD")])
 	  
-	  save(dels, file=file.path(wd.rt.data, "beds", paste0(hist, ".sv.del.rt", rt, ".beds.RData")), version=2)
+	  save(dups, file=file.path(wd.rt.data, "beds", paste0(hist, ".sv.dup.rt", rt, ".beds.RData")), version=2)
 #}

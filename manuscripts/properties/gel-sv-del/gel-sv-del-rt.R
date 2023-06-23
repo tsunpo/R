@@ -33,6 +33,28 @@ wd.rt.plots <- file.path(wd.pt, "plots")
 wd.icgc.data  <- file.path(wd, "ICGC", "analysis/properties", paste0("icgc", "-sv-del"), "data")
 
 # -----------------------------------------------------------------------------
+# LiftOver
+# Last Modified: 23/07/23
+# -----------------------------------------------------------------------------
+gels <- readTable(file.path(wd.pt.data, "candidate-SVs.txt"), header=T, rownames=F, sep="\t")
+
+gels$chrom1 <- paste0("chr", gels$chrom1)
+gels$chrom2 <- paste0("chr", gels$chrom2)
+writeTable(cbind(gels[, 1:3], rownames(gels)), file.path(wd.pt.data, "candidate-SVs_pe1.txt"), colnames=F, rownames=F, sep="\t")
+writeTable(cbind(gels[, 4:6], rownames(gels)), file.path(wd.pt.data, "candidate-SVs_pe2.txt"), colnames=F, rownames=F, sep="\t")
+
+hg19.pe1 <- readTable(file.path(wd.pt.data, "candidate-SVs_pe1.bed"), header=F, rownames=4, sep="\t")
+hg19.pe2 <- readTable(file.path(wd.pt.data, "candidate-SVs_pe2.bed"), header=F, rownames=4, sep="\t")
+
+overlaps <- intersect(rownames(hg19.pe1), rownames(hg19.pe2))
+gels[overlaps, 1:3] <- hg19.pe1[overlaps, 1:3]
+gels[overlaps, 4:6] <- hg19.pe2[overlaps, 1:3]
+
+gels <- gels[overlaps,]
+gels$chrom1 <- mapply(x = 1:nrow(gels), function(x) unlist(strsplit(gels$chrom1[x], "chr"))[2])
+gels$chrom2 <- mapply(x = 1:nrow(gels), function(x) unlist(strsplit(gels$chrom2[x], "chr"))[2])
+
+# -----------------------------------------------------------------------------
 # Quantile skew plot: RT
 # Last Modified: 13/06/23
 # -----------------------------------------------------------------------------
@@ -42,61 +64,72 @@ getMonteCarloSimulations <- function(nrds.RT.NRFD, size) {
 	  return(median(nrds.RT.NRFD[random.beds, "RT"]))
 }
 
-gel <- readTable(file.path(wd.pt.data, "candidate-SVs.txt"), header=T, rownames=F, sep="\t")
-gel.del <- subset(gel, type == "MantaDEL")
-gel.del <- subset(gel.del, chrom1 != "X")
-gel.del$size <- gel.del$end2 - gel.del$start1
+#gels <- readTable(file.path(wd.pt.data, "candidate-SVs.txt"), header=T, rownames=F, sep="\t")
+gels.del <- subset(gels, type == "MantaDEL")
+gels.del <- subset(gels.del, chrom1 != "X")
+gels.del$size <- gels.del$end2 - gels.del$start1
 
 ## GEL trio deletions (ALL)
-gel.del$BED <- NA
-gel.del$BED <- mapply(x = 1:nrow(gel.del), function(x) getRandomBreakpointBED(gel.del[x,], nrds.RT, bed.gc))
-gel.del.nona <- gel.del[!is.na(gel.del$BED), ]
-gel.del.nona$RT <- nrds.RT[gel.del.nona$BED,]$RT
-gel.del.nona.2 <- subset(subset(gel.del.nona, RT >= -2), RT <= 2)
-nrow(gel.del)
-# [1] 1477
-nrow(gel.del.nona)
-# [1] 1433
-nrow(gel.del.nona.2)
-# [1] 1394
-(1433 - 1394) / 1433
-# [1] 0.02721563
+gels.del$BED <- NA
+gels.del$BED <- mapply(x = 1:nrow(gels.del), function(x) getRandomBreakpointBED(gels.del[x,], nrds.RT, bed.gc))
+gels.del.nona <- gels.del[!is.na(gels.del$BED), ]
+gels.del.nona$RT <- nrds.RT[gels.del.nona$BED,]$RT
+gels.del.nona.2 <- subset(subset(gels.del.nona, RT >= -2), RT <= 2)
+gels.del.nona.2.cut <- gels.del.nona[setdiff(rownames(gels.del.nona), rownames(gels.del.nona.2)),]
+nrow(gels.del)
+# [1] 1460
+nrow(gels.del.nona)
+# [1] 1442
+(1460 - 1442) / 1460
+# [1] 0.01232877
+nrow(gels.del.nona.2)
+# [1] 1418
+(1442 - 1418) / 1442
+# [1] 0.01664355
+nrow(subset(gels.del.nona.2, RT > 0))
+# [1] 861
+nrow(subset(gels.del.nona.2, RT < 0))
+# [1] 557
+nrow(subset(gels.del.nona.2.cut, RT > 0))
+# [1] 0
+nrow(subset(gels.del.nona.2.cut, RT < 0))
+# [1] 24
 
-reals <- gel.del.nona.2$RT
+reals <- gels.del.nona.2$RT
 randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals)))
 
-file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL_-2.pdf"))
-main.text <- "GEL deletions"
-xlab.text <- ""
-plotMonteCarloSimulation(reals, randoms, file.name, c(red, blue), main.text, xlab.text)
+#file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL_-2.pdf"))
+main.text <- "GEL DEL"
+#xlab.text <- ""
+#plotMonteCarloSimulation(reals, randoms, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL_P_-2.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_RT_GEL-DEL_hg19.pdf"))
 plotPropertyDensity(reals, randoms, file.name, c(red, blue), main.text, xlab.text)
 
 ## GEL trio deletions (> 10 kb)
-gel.del.10kb <- subset(gel.del.nona.2, size >= 10000)
-reals.10k <- gel.del.10kb$RT
+gels.del.10kb <- subset(gels.del.nona.2, size >= 10000)
+reals.10k <- gels.del.10kb$RT
 randoms.10k <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals.10k)))
 
-file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL>10kb.pdf"))
-main.text <- "GEL deletions > 10 kb"
-xlab.text <- ""
-plotMonteCarloSimulation(reals.10k, randoms.10k, file.name, c(red, blue), main.text, xlab.text)
+#file.name <- file.path(wd.rt.plots, paste0("Denstiy_RT_GEL-DEL_>10kb.pdf"))
+main.text <- "GEL DEL > 10 kb"
+#xlab.text <- ""
+#plotMonteCarloSimulation(reals.10k, randoms.10k, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL>10kb_P.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_RT_GEL-DEL>10kb_hg19.pdf"))
 plotPropertyDensity(reals.10k, randoms.10k, file.name, c(red, blue), main.text, xlab.text)
 
 ## GEL trio deletions (< 10 kb)
-gel.del.9kb <- subset(gel.del.nona.2, size < 10000)
-reals.9k <- gel.del.9kb$RT
+gels.del.9kb <- subset(gels.del.nona.2, size < 10000)
+reals.9k <- gels.del.9kb$RT
 randoms.9k <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals.9k)))
 
-file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL<10kb.pdf"))
-main.text <- "GEL deletions < 10 kb"
-xlab.text <- ""
-plotMonteCarloSimulation(reals.9k, randoms.9k, file.name, c(red, blue), main.text, xlab.text)
+#file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL<10kb.pdf"))
+main.text <- "GEL DEL < 10 kb"
+#xlab.text <- ""
+#plotMonteCarloSimulation(reals.9k, randoms.9k, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_RT_GEL<10kb_P.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_RT_GEL-DEL<10kb_hg19.pdf"))
 plotPropertyDensity(reals.9k, randoms.9k, file.name, c(red, blue), main.text, xlab.text)
 
 

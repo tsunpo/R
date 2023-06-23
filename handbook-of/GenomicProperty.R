@@ -65,7 +65,7 @@ plotMonteCarloSimulation <- function(reals, randoms, file.name, cols, main.text,
 	  
 	  pdf(file.name, height=6, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=c(min(ranks), max(ranks)), col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 	
 	  abline(v=0, col="black", lty=5, lwd=3)
 	  abline(v=median(reals), col=col, lty=5, lwd=3)
@@ -80,9 +80,9 @@ plotPropertyDensity0 <- function(reals, file.name, cols, main.text, xlab.text) {
 
 	  pdf(file.name, height=6, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=c(min(reals), max(reals)), col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 	
-	  abline(v=0, col="black", lty=5, lwd=3)
+	  #abline(v=0, col="black", lty=5, lwd=3)
 
 	  dev.off()
 }
@@ -101,11 +101,11 @@ plotPropertyDensity <- function(reals, randoms, file.name, cols, main.text, xlab
 
    pdf(file.name, height=6, width=6)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
-   plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+   plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=c(min(reals), max(reals)), col="black", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 
    #abline(v=median(reals), col=col, lty=5, lwd=3)
    
-   text(0, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=2.5)
+   text(0, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
    dev.off()
 }
 
