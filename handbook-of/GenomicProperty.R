@@ -30,6 +30,18 @@ getRandomBreakpointBED <- function(del, nrds.RT.NRFD, bed.gc) {
    	  return(overlaps)
 }
 
+getGenomicProperty <- function(chr, breakpoint, bed.gc) {
+	  bed.gc.chr <- subset(bed.gc, CHR == chr)
+	  
+	  bed.gc.chr.start <- subset(bed.gc.chr, START <= breakpoint)
+	  bed.gc.chr.start.end <- subset(bed.gc.chr.start, END >= breakpoint)
+	
+	  if (nrow(bed.gc.chr.start.end) == 0)
+		    return(NA)
+	  else
+		    return(bed.gc.chr.start.end$BED)
+}
+
 getPixel <- function(dels, nrds.RT.NRFD, bed.gc) {
 	  dels$BED  
 	

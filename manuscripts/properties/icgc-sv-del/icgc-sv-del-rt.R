@@ -37,6 +37,57 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
+# 
+# Last Modified: 26/06/23
+# -----------------------------------------------------------------------------
+rt <- readTable("/Users/ty2/Work/dev/nr3/data/genome_properties/intermediate/plain_text/replication_timing_mean_wave.txt", header=T, rownames=F, sep="")
+colnames(rt) <- c("CHR", "START", "END", "nhek",	"gm12878",	"imr90", "RT")
+rt.1 <- subset(rt, RT > 0)
+rt.0 <- subset(rt, RT <= 0)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave.pdf"))
+main.text <- "ENCODE RT (1 kb; Li et al.)"
+xlab.text <- ""
+plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_nhek.pdf"))
+main.text <- "NHEK RT (1 kb)"
+xlab.text <- ""
+plotPropertyDensity0(rt$nhek, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_gm12878.pdf"))
+main.text <- "GM12878 RT (1 kb)"
+xlab.text <- ""
+plotPropertyDensity0(rt$gm12878, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_imr90.pdf"))
+main.text <- "IMR90 RT (1 kb)"
+xlab.text <- ""
+plotPropertyDensity0(rt$imr90, file.name, c(red, blue), main.text, xlab.text)
+
+##
+nhek <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqNhekWaveSignalRep1.bigWig'))
+gm12878 <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqGm12878WaveSignalRep1.bigWig'))
+imr90 <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqImr90WaveSignalRep1.bigWig'))
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 26/06/23
+# -----------------------------------------------------------------------------
+sv <- readTable("/Users/ty2/Work/dev/nr3/data/genome_properties/results/2017_06_positions/svpos_with_hg19_props.csv", header=T, rownames=F, sep=",")
+colnames(sv)[c(1,2,38)] <- c("CHR", "START", "RT")
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del.pdf"))
+main.text <- "PCAWG DEL (Li et al.)"
+xlab.text <- ""
+plotPropertyDensity0(subset(sv, class1 == "Del")$RT, file.name, c(red, blue), main.text, xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Tandem Dup.pdf"))
+main.text <- "PCAWG DUP (Li et al.)"
+xlab.text <- ""
+plotPropertyDensity0(subset(sv, class1 == "Tandem Dup")$RT, file.name, c(red, blue), main.text, xlab.text)
+
+# -----------------------------------------------------------------------------
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5536223/pdf/emss-73438.pdf
 # Last Modified: 13/06/23
 # -----------------------------------------------------------------------------
@@ -44,9 +95,24 @@ rt <- readTable("/Users/ty2/Work/dev/PanBody_manuscript_analyses/mutPatternsRegi
 colnames(rt) <- c("CHR", "START", "END", "RT")
 
 file.name <- file.path(wd.rt.plots, paste0("Density_ENCODE.pdf"))
-main.text <- "ENCODE RT (10 kb)"
+main.text <- "ENCODE RT (10 kb; Moore et al.)"
 xlab.text <- ""
 plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
+
+# -----------------------------------------------------------------------------
+# getGenomicProperty()
+# Last Modified: 27/06/23
+# -----------------------------------------------------------------------------
+rt.1$BED <- mapply(x = 1:nrow(rt.1), function(x) paste0("P", x))
+rownames(rt.1) <- rt.1$BED
+
+sv.del <- subset(sv, class1 == "Del")
+#sv.del <- sv.del[1000:1100,]
+
+sv.del$BED <- NA
+sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], rt.1))
+sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
+sv.del.nona$RT2 <- rt.1[sv.del.nona$BED,]$RT
 
 # -----------------------------------------------------------------------------
 # Test
