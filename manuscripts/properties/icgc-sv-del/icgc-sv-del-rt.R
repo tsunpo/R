@@ -94,6 +94,21 @@ for (d in 1:nrow(sv.del)) {
 	  }
 }
 
+# -----------------------------------------------------------------------------
+# After running cmd_icgc-sv-del-rt_chr.R
+# Last Modified: 05/07/23
+# -----------------------------------------------------------------------------
+removed <- c()
+samples <- c()
+icgc.dels <- icgc[0,]
+
+for (c in 1:23) {
+	  file=file.path(wd.rt.data, paste0("icgc_wgs_sv_chr", c, ".RData"))
+	  
+	  removed <- c(removed.chr, removed)
+	  samples <- c(samples.chr, samples)
+	  icgc.dels <- rbind(icgc.dels.chr, icgc.dels)
+}
 
 # -----------------------------------------------------------------------------
 # 
