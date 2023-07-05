@@ -5,11 +5,11 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 22/03/22
 # =============================================================================
-#wd.src <- "/nfs/users/nfs_t/ty2/dev/R"           ## @nfs
-wd.src <- "/Users/ty2/Work/dev/R"                 ## @localhost
+wd.src <- "/nfs/users/nfs_t/ty2/dev/R"           ## @nfs
+#wd.src <- "/Users/ty2/Work/dev/R"                 ## @localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Asymmetry.R", "Mutation.R", "Survival.R", "Transcription.R")
+handbooks  <- c("Commons.R", "GenomicProperty.R", "TranscriptionReplicationInteraction.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -20,8 +20,8 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # Set up working directory
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-#wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## @lustre
-wd <- "/Users/ty2/Work/sanger/ty2"               ## @localhost
+wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## @lustre
+#wd <- "/Users/ty2/Work/sanger/ty2"             ## @localhost
 BASE <- "ICGC"
 base <- tolower(BASE)
 
@@ -29,7 +29,8 @@ wd.icgc     <- file.path(wd, BASE, "consensus")
 wd.icgc.sv  <- file.path(wd.icgc, "sv")
 wd.icgc.sv.plots <- file.path(wd.icgc.sv, "del", "plots")
 
-wd.meta     <- file.path(wd, BASE, "metadata")
+wd.nr3  <- file.path(wd, "../../dev/nr3/data/genome_properties")
+wd.meta <- file.path(wd, BASE, "metadata")
 
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt <- file.path(wd.anlys, "properties", paste0(base, "-sv-del"))
@@ -38,9 +39,95 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
 # 
+# Last Modified: 03/07/23
+# -----------------------------------------------------------------------------
+kb <- 20
+load(file.path(wd.rt.data, "bstrps", paste0("nrds.RT.2_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+nrds.RT <- cbind(bed.gc[nrds.RT$BED,], nrds.RT)
+
+sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_props.csv"), header=T, rownames=F, sep=",")
+colnames(sv)[c(1,2,38)] <- c("CHR", "START", "RT")
+
+sv.del <- subset(sv, class1 == "Del")
+sv.del$BED <- NA
+sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], nrds.RT))
+sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
+sv.del.nona$RT2 <- nrds.RT[sv.del.nona$BED,]$RT
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del_Yang.pdf"))
+main.text <- "PCAWG DEL (Yang)"
+xlab.text <- ""
+plotDensity(sv.del.nona$RT2, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del_Yang_MC.pdf"))
+main.text <- "PCAWG DEL (Yang)"
+xlab.text <- ""
+plotDensityMonteCarlo(sv.del.nona$RT2, nrds.RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
+
+save(sv.del, sv.del.nona, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang.RData")))
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 05/07/23
+# -----------------------------------------------------------------------------
+removed <- c()
+samples <- c()
+icgc.dels <- icgc[0,]
+
+for (d in 1:nrow(sv.del)) {
+	  id <- rownames(subset(release.sv, tumor_wgs_icgc_sample_id == sv.del$icgc_sample_id[d]))
+	  
+	  if (length(id) != 0) {
+	  	  icgc <- readTable(file.path(wd.icgc.sv, "final", paste0(id, ".pcawg_consensus_1.6.161116.somatic.sv.bedpe.gz")), header=T, rownames=F, sep="\t")
+	  	  icgc.del <- subset(icgc, svclass == "DEL")
+	  	  
+	  	  if (nrow(icgc.del) > 0) {
+	  		    samples <- c(id, samples)
+	  		
+	  		    sv_id <- unlist(strsplit(sv.del$breakpoint_id[d], ":"))[4]
+	  		    icgc.del.id <- subset(icgc.del, sv_id == sv_id)
+	  		    if (nrow(icgc.del.id) > 0)
+	  			      icgc.dels <- rbind(icgc.del.id, icgc.dels)
+	  	  }
+	  } else {
+	  	  removed <- c(d, removed)
+	  }
+}
+
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 03/07/23
+# -----------------------------------------------------------------------------
+load(file.path(wd.rt.data, paste0("final.sv.del.RData")))
+
+dels <- c()
+for (h in 1:nrow(table.sv.del)) {
+	  hist <- as.vector(table.sv.del$Histology[h])
+	  totals.sv.hist <- subset(totals.sv, histology_abbreviation == hist)
+	
+	  for (s in 1:nrow(totals.sv.hist)) {
+		    id2 <- totals.sv.hist$specimen_id[s]
+		    del <- readTable(file.path(wd.icgc.sv, "del", "data", hist, paste0(id2, ".somatic.sv.del.bedpe.gz")), header=T, rownames=F, sep="\t")
+		
+		    if (is.null(dels))
+			      dels <- del
+		    else
+			      dels <- rbind(dels, del)
+	  }
+}
+dels$size <- dels$end2 - dels$start1
+
+nrow(sv.del)
+# [1] 108622
+nrow(dels)
+# [1] 81399
+
+# -----------------------------------------------------------------------------
+# 
 # Last Modified: 26/06/23
 # -----------------------------------------------------------------------------
-rt <- readTable("/Users/ty2/Work/dev/nr3/data/genome_properties/intermediate/plain_text/replication_timing_mean_wave.txt", header=T, rownames=F, sep="")
+rt <- readTable(file.path(wd.nr3, "intermediate/plain_text/replication_timing_mean_wave.txt"), header=T, rownames=F, sep="")
 colnames(rt) <- c("CHR", "START", "END", "nhek",	"gm12878",	"imr90", "RT")
 rt.1 <- subset(rt, RT > 0)
 rt.0 <- subset(rt, RT <= 0)
@@ -50,20 +137,20 @@ main.text <- "ENCODE RT (1 kb; Li et al.)"
 xlab.text <- ""
 plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_nhek.pdf"))
-main.text <- "NHEK RT (1 kb)"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_nhek.1.pdf"))
+main.text <- "NHEK  (1 kb)"
 xlab.text <- ""
-plotPropertyDensity0(rt$nhek, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt.1$nhek, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_gm12878.pdf"))
-main.text <- "GM12878 RT (1 kb)"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_gm12878.1.pdf"))
+main.text <- "GM12878 (1 kb)"
 xlab.text <- ""
-plotPropertyDensity0(rt$gm12878, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt.1$gm12878, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_imr90.pdf"))
-main.text <- "IMR90 RT (1 kb)"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_imr90.1.pdf"))
+main.text <- "IMR90 (1 kb)"
 xlab.text <- ""
-plotPropertyDensity0(rt$imr90, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt.1$imr90, file.name, c(red, blue), main.text, xlab.text)
 
 ##
 nhek <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqNhekWaveSignalRep1.bigWig'))
@@ -74,16 +161,16 @@ imr90 <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqImr90WaveSignalRep1.big
 # 
 # Last Modified: 26/06/23
 # -----------------------------------------------------------------------------
-sv <- readTable("/Users/ty2/Work/dev/nr3/data/genome_properties/results/2017_06_positions/svpos_with_hg19_props.csv", header=T, rownames=F, sep=",")
+sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_props.csv"), header=T, rownames=F, sep=",")
 colnames(sv)[c(1,2,38)] <- c("CHR", "START", "RT")
 
 file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del.pdf"))
-main.text <- "PCAWG DEL (Li et al.)"
+main.text <- "PCAWG Del (Li et al.)"
 xlab.text <- ""
 plotPropertyDensity0(subset(sv, class1 == "Del")$RT, file.name, c(red, blue), main.text, xlab.text)
 
 file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Tandem Dup.pdf"))
-main.text <- "PCAWG DUP (Li et al.)"
+main.text <- "PCAWG TD (Li et al.)"
 xlab.text <- ""
 plotPropertyDensity0(subset(sv, class1 == "Tandem Dup")$RT, file.name, c(red, blue), main.text, xlab.text)
 
@@ -91,7 +178,7 @@ plotPropertyDensity0(subset(sv, class1 == "Tandem Dup")$RT, file.name, c(red, bl
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5536223/pdf/emss-73438.pdf
 # Last Modified: 13/06/23
 # -----------------------------------------------------------------------------
-rt <- readTable("/Users/ty2/Work/dev/PanBody_manuscript_analyses/mutPatternsRegions/genomic_regions/germMedian37.bed", header=F, rownames=F, sep="")
+rt <- readTable(file.path("/Users/ty2/Work/dev/PanBody_manuscript_analyses/mutPatternsRegions/genomic_regions/germMedian37.bed"), header=F, rownames=F, sep="")
 colnames(rt) <- c("CHR", "START", "END", "RT")
 
 file.name <- file.path(wd.rt.plots, paste0("Density_ENCODE.pdf"))
@@ -100,7 +187,7 @@ xlab.text <- ""
 plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
 
 # -----------------------------------------------------------------------------
-# getGenomicProperty()
+# ENCODE 1: getGenomicProperty()
 # Last Modified: 27/06/23
 # -----------------------------------------------------------------------------
 rt.1$BED <- mapply(x = 1:nrow(rt.1), function(x) paste0("P", x))
@@ -113,6 +200,69 @@ sv.del$BED <- NA
 sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], rt.1))
 sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
 sv.del.nona$RT2 <- rt.1[sv.del.nona$BED,]$RT
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del_ENCODE_Li.pdf"))
+main.text <- "PCAWG Del (ENCODE; Li)"
+xlab.text <- ""
+plotDensity(sv.del.nona$RT2, file.name, "black", main.text, xlab.text)
+
+save(sv.del.nona, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_ENCODE_Li.RData")))
+
+# -----------------------------------------------------------------------------
+# ENCODE 2: getGenomicProperty()
+# Last Modified: 27/06/23
+# -----------------------------------------------------------------------------
+rt$BED <- mapply(x = 1:nrow(rt), function(x) paste0("P", x))
+rownames(rt) <- rt$BED
+rt$START <- rt$START + 1
+
+sv.del <- subset(sv, class1 == "Del")
+#sv.del <- sv.del[1000:1100,]
+
+sv.del$BED <- NA
+sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], rt))
+sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
+sv.del.nona$RT2 <- rt[sv.del.nona$BED,]$RT
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del_ENCODE_Moore.pdf"))
+main.text <- "PCAWG Del (ENCODE; Moore)"
+xlab.text <- ""
+plotDensity(sv.del.nona$RT2, file.name, "black", main.text, xlab.text)
+
+save(sv.del.nona, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_ENCODE_Moore.RData")))
+
+# -----------------------------------------------------------------------------
+# LCL S/G1: getGenomicProperty()
+# Last Modified: 28/06/23
+# -----------------------------------------------------------------------------
+kb <- 20
+load(file.path(wd.rt.data, "bstrps", paste0("lcl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "s-g1", ".RData")))
+nrds.RT <- cbind(bed.gc[nrds.RT.NRFD$BED,], nrds.RT.NRFD)
+
+sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_props.csv"), header=T, rownames=F, sep=",")
+colnames(sv)[c(1,2,38)] <- c("CHR", "START", "RT")
+
+sv.del <- subset(sv, class1 == "Del")
+sv.del$BED <- NA
+sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], nrds.RT))
+sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
+sv.del.nona$RT2 <- nrds.RT[sv.del.nona$BED,]$RT
+
+file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del_LCL_Koren.pdf"))
+main.text <- "PCAWG Del (LCL; Koren)"
+xlab.text <- ""
+plotDensity(sv.del.nona$RT2, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
+
+save(sv.del, sv.del.nona, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_LCL_Koren.RData")))
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Test

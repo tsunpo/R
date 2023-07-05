@@ -21,7 +21,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
 #wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## @lustre
-wd <- "/Users/ty2/Work/sanger/ty2"               ## @localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"               ## @localhost
 BASE <- "ICGC"
 base <- tolower(BASE)
 
@@ -32,7 +32,7 @@ wd.icgc.sv.plots <- file.path(wd.icgc.sv, "del", "plots")
 wd.meta     <- file.path(wd, BASE, "metadata")
 
 wd.anlys  <- file.path(wd, BASE, "analysis")
-wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-sv-del"))
+wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
@@ -40,6 +40,8 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 # Load data
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
+load("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_wgs.RData")
+
 #release <- readTable(file.path(wd.meta, "data_release", "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
 #rownames(release) <- release$tumor_wgs_aliquot_id
 #nrow(release)
@@ -62,6 +64,8 @@ length(overlaps)
 # [1] 2565
 release.sv <- release.sv[overlaps,]
 totals.sv <- totals[overlaps,]
+
+save(release.sv, totals.sv, file=file.path(wd.rt.data, paste0("icgc_wgs_sv.RData")), version=2)
 
 # -----------------------------------------------------------------------------
 # DEL

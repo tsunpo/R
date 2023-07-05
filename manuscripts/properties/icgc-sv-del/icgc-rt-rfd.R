@@ -5,11 +5,11 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 22/03/22
 # =============================================================================
-#wd.src <- "/nfs/users/nfs_t/ty2/dev/R"           ## @nfs
-wd.src <- "/Users/ty2/Work/dev/R"                 ## @localhost
+wd.src <- "/nfs/users/nfs_t/ty2/dev/R"           ## @nfs
+#wd.src <- "/Users/ty2/Work/dev/R"                 ## @localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-handbooks  <- c("Commons.R", "Asymmetry.R", "Mutation.R", "Survival.R", "Transcription.R")
+handbooks  <- c("Commons.R", "GenomicProperty.R", "ReplicationForkDirectionality.R", "TranscriptionReplicationInteraction.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -20,16 +20,18 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # Set up working directory
 # Last Modified: 22/03/22
 # -----------------------------------------------------------------------------
-#wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## @lustre
-wd <- "/Users/ty2/Work/sanger/ty2"               ## @localhost
+wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## @lustre
+#wd <- "/Users/ty2/Work/sanger/ty2"             ## @localhost
 BASE <- "ICGC"
 base <- tolower(BASE)
 
-wd.icgc     <- file.path(wd, BASE, "consensus")
+wd.icgc     <- file.path(wd, "ICGC", "consensus")
 wd.icgc.sv  <- file.path(wd.icgc, "sv")
 wd.icgc.sv.plots <- file.path(wd.icgc.sv, "del", "plots")
 
-wd.meta     <- file.path(wd, BASE, "metadata")
+wd.nr3  <- file.path(wd, "../../dev/nr3/data/genome_properties")
+wd.nr3  <- file.path(wd, "dev/nr3/data/genome_properties")
+wd.meta <- file.path(wd, BASE, "metadata")
 
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt <- file.path(wd.anlys, "properties", paste0(base, "-sv-del"))
@@ -37,64 +39,140 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
-# Quantile skew plot
-# Last Modified: 04/06/23
+# ENCODE 1 (Li et al.)
+# Last Modified: 26/06/23
 # -----------------------------------------------------------------------------
-kb <- 20
-load(file=file.path(wd.icgc.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
-nrds.RT.NRFD.nona <- subset(subset(nrds.RT.NRFD, SPLINE >= -2 ), SPLINE <= 2)
+rt <- readTable(file.path(wd.nr3, "intermediate/plain_text/replication_timing_mean_wave.txt"), header=T, rownames=F, sep="")
+colnames(rt) <- c("CHR", "START", "END", "nhek",	"gm12878",	"imr90", "RT")
+rt.1 <- subset(rt, RT > 0)
+rt.0 <- subset(rt, RT <= 0)
 
-runs <- 1000
-size <- 
-randoms <- replicate(runs, getMonteCarloSimulations(nrds.RT.NRFD.nona, size))
-
-file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_-2_1436_1000000.pdf"))
-main.text <- "Simulated 1,436 pos 1,000,000 times"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave.pdf"))
+main.text <- "ENCODE RT (1 kb; Li et al.)"
 xlab.text <- ""
-plotPropertyDensity0(randoms, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_-2_SPLINE.pdf"))
-main.text <- "SCLC-NL SPLINE"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_nhek.1.pdf"))
+main.text <- "NHEK  (1 kb)"
 xlab.text <- ""
-plotPropertyDensity0(nrds.RT.NRFD.nona$SPLINE, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt.1$nhek, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_-2_RT.pdf"))
-main.text <- "SCLC-NL RT"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_gm12878.1.pdf"))
+main.text <- "GM12878 (1 kb)"
 xlab.text <- ""
-plotPropertyDensity0(nrds.RT.NRFD.nona$RT, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt.1$gm12878, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_-2_RFD.pdf"))
-main.text <- "SCLC-NL RFD"
+file.name <- file.path(wd.rt.plots, paste0("Density_replication_timing_mean_wave_imr90.1.pdf"))
+main.text <- "IMR90 (1 kb)"
 xlab.text <- ""
-plotPropertyDensity0(nrds.RT.NRFD.nona$RFD, file.name, c(red, blue), main.text, xlab.text)
+plotPropertyDensity0(rt.1$imr90, file.name, c(red, blue), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("QS_SCLC-NL_RT_-2_NRFD.pdf"))
-main.text <- "SCLC-NL NRFD"
-xlab.text <- ""
-plotPropertyDensity0(nrds.RT.NRFD.nona$NRFD, file.name, c(red, blue), main.text, xlab.text)
+##
+nhek <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqNhekWaveSignalRep1.bigWig'))
+gm12878 <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqGm12878WaveSignalRep1.bigWig'))
+imr90 <- import.bw(file.path(wd.meta, 'wgEncodeUwRepliSeqImr90WaveSignalRep1.bigWig'))
 
 # -----------------------------------------------------------------------------
-# Quantile skew plot
-# Last Modified: 04/06/23
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5536223/pdf/emss-73438.pdf
+# Last Modified: 13/06/23
 # -----------------------------------------------------------------------------
-dels.all <- dels[0,]
-for (h in 1:nrow(table.sv.del.20.result.20)) {
-	  hist <- as.vector(table.sv.del.20.result.20$Histology[h])
-	  load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
-	  dels.all <- rbind(dels.all, dels)
+rt <- readTable(file.path("/Users/ty2/Work/dev/PanBody_manuscript_analyses/mutPatternsRegions/genomic_regions/germMedian37.bed"), header=F, rownames=F, sep="")
+colnames(rt) <- c("CHR", "START", "END", "RT")
+
+file.name <- file.path(wd.rt.plots, paste0("Density_ENCODE.pdf"))
+main.text <- "ENCODE RT (10 kb; Moore et al.)"
+xlab.text <- ""
+plotPropertyDensity0(rt$RT, file.name, c(red, blue), main.text, xlab.text)
+
+# -----------------------------------------------------------------------------
+# RT
+# Last Modified: 13/06/23
+# -----------------------------------------------------------------------------
+pipePropertyDensity0 <- function(wd.rt.plots, nrds.RT, rt, cutoff) {
+	  nrds.RT.nona <- nrds.RT
+	  file.name <- file.path(wd.rt.plots, paste0("Density_", rt, "_RT.pdf"))
+	  if (!is.na(cutoff)) {
+	     nrds.RT.nona <- subset(subset(nrds.RT, RT >= -cutoff), RT <= cutoff)
+	     file.name <- file.path(wd.rt.plots, paste0("Density_", rt, "_RT_-", cutoff, ".pdf"))
+	  }
+	  
+	  main.text <- paste0(rt, " RT")
+	  xlab.text <- ""
+	  plotPropertyDensity0(nrds.RT.nona$RT, file.name, c(red, blue), main.text, xlab.text)
 }
-dels.all.auto <- subset(subset(dels.all, chrom1 != "X"), chrom1 != "Y")
-dels.all.auto <- subset(subset(dels.all, chrom2 != "X"), chrom2 != "Y")
 
+kb <- 20
+pipePropertyDensity0(wd.rt.plots, nrds.RT.NRFD.sclc.nl, "SCLC-NL", 2)
+pipePropertyDensity0(wd.rt.plots, nrds.RT.NRFD.sclc, "SCLC", 2)
+pipePropertyDensity0(wd.rt.plots, nrds.RT.NRFD.nbl, "NB", 2)
+pipePropertyDensity0(wd.rt.plots, nrds.RT.NRFD.cll, "CLL", 2)
+pipePropertyDensity0(wd.rt.plots, nrds.RT.NRFD.lcl, "LCL", 2)
 
+nrow(nrds.RT.NRFD.lcl)
+# [1] 2534909
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT.NRFD.lcl_max=2.pdf"))
+main.text <- "LCL RT (Koren et al.)"
+xlab.text <- ""
+plotDensity(nrds.RT.NRFD.lcl$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
+overlaps <- intersect(intersect(intersect(rownames(nrds.RT.NRFD.sclc.nl), rownames(nrds.RT.NRFD.sclc)), rownames(nrds.RT.NRFD.nbl)), rownames(nrds.RT.NRFD.cll))
+nrow(nrds.RT.NRFD.sclc.nl)
+# [1] 2651861
+nrow(nrds.RT.NRFD.sclc)
+# [1] 2650083
+nrow(nrds.RT.NRFD.nbl)
+# [1] 2652467
+nrow(nrds.RT.NRFD.cll)
+# [1] 2644419
+length(overlaps)
+# [1] 2638393
+
+nrds.RT <- as.data.frame(cbind(cbind(cbind(nrds.RT.NRFD.sclc.nl[overlaps,]$RT, nrds.RT.NRFD.sclc[overlaps,]$RT), nrds.RT.NRFD.nbl[overlaps,]$RT), nrds.RT.NRFD.cll[overlaps,]$RT))
+rownames(nrds.RT) <- overlaps
+colnames(nrds.RT) <- c("SCLC-NL", "SCLC", "NB", "CLL")
+nrds.RT$RT <- mapply(x = 1:nrow(nrds.RT), function(x) median(as.numeric(nrds.RT[x, 1:4])))
+nrds.RT$BED <- rownames(nrds.RT)
+nrds.RT <- nrds.RT[, c("BED", "RT")]
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT_max=2.pdf"))
+main.text <- "RT (Yang et al.)"
+xlab.text <- ""
+plotDensity(nrds.RT$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
+
+##
+nrds.RT.2 <- subset(subset(nrds.RT, RT >= -2), RT <= 2)
+nrds.RT.2.cut <- nrds.RT[setdiff(rownames(nrds.RT), rownames(nrds.RT.2)),]
+nrow(nrds.RT)
+# [1] 2638393
+nrow(nrds.RT.2)
+# [1] 2580771
+(2638393 - 2580771) / 2638393
+# [1] 0.02183981
+nrow(subset(nrds.RT.2, RT > 0))
+# [1] 1406997
+nrow(subset(nrds.RT.2, RT < 0))
+# [1] 1173774
+nrow(subset(nrds.RT.2.cut, RT > 0))
+# [1] 39
+nrow(subset(nrds.RT.2.cut, RT < 0))
+# [1] 55352
+
+save(overlaps, nrds.RT, nrds.RT.2, file=file.path(wd.rt.data, "bstrps", paste0("nrds.RT.2_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+
+# -----------------------------------------------------------------------------
+# RT RFD
+# Last Modified: 29/06/23
+# -----------------------------------------------------------------------------
 kb <- 20
 rfd <- 0.9
-load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+load(file.path(wd.rt.data, "bstrps", paste0("nrds.RT.2_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
+#overlaps.2 <- rownames(nrds.RT.2)
+colnames <- c("BED", "RT", "RFD", "NRFD")
 
-file.name <- file.path(wd.rt.plots, paste0("PQS_SCLC-NL_RT.pdf"))
-plotReportNRFD(nrds.RT.NRFD, file.name, "Distribution of RT     ")
-
+nrds <- nrds.RT.NRFD[0, colnames]
+nrds.ttr.all    <- nrds[0, colnames]
+nrds.ctr.iz.all <- nrds[0, colnames]
+nrds.ctr.tz.all <- nrds[0, colnames]
 for (rt in 0:3) {
 	  if (rt == 0) {
 		    load(file=file.path(wd.rt.data, "bstrps", paste0("sclc-nl_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
@@ -105,44 +183,122 @@ for (rt in 0:3) {
 	  } else if (rt == 3) {
 		    load(file=file.path(wd.rt.data, "bstrps", paste0("cll_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 	  }
-	
-	  dels.all <- dels[0,]
-	  dels.nona.ttr.all    <- dels[0,]	  
-	  dels.nona.ctr.iz.all <- dels[0,]
-	  dels.nona.ctr.tz.all <- dels[0,]
-	  dels.nona.e.all <- dels[0,]
-	  dels.nona.l.all <- dels[0,]
-	  for (h in 1:nrow(table.sv.del.20.result.20)) {
-		    hist <- as.vector(table.sv.del.20.result.20$Histology[h])
-		    load(file=file.path(wd.rt.data, paste0(hist, ".sv.del.rt", rt, ".RData")))
-		    dels.all <- rbind(dels.all, dels)
-		    #dels <- subset(dels, size >= 10000)
-		    dels.nona <- dels[!is.na(dels$RFD),]
+
+	  nrds.ttr <- getBootstrapTTR(nrds.RT.NRFD[overlaps, ], 0.9)[, colnames]
+	  nrds.ctr <- getBootstrapCTR(nrds.RT.NRFD[overlaps, ], 0.9)[, colnames]
+	  nrds.ctr.iz <- subset(nrds.ctr, NRFD >= 0)[, colnames]
+	  nrds.ctr.tz <- subset(nrds.ctr, NRFD < 0)[, colnames]
 		
-		    ## RFD
-	    	dels.nona.ttr <- getBootstrapTTR(dels.nona, 0.9)
-		    dels.nona.ctr <- getBootstrapCTR(dels.nona, 0.9)
-		    dels.nona.ctr.iz <- subset(dels.nona.ctr, NRFD >= 0)
-		    dels.nona.ctr.tz <- subset(dels.nona.ctr, NRFD < 0)
-		
-		    dels.nona.ttr.all <- rbind(dels.nona.ttr.all, dels.nona.ttr)
-		    dels.nona.ctr.iz.all <- rbind(dels.nona.ctr.iz.all, dels.nona.ctr.iz)
-		    dels.nona.ctr.tz.all <- rbind(dels.nona.ctr.tz.all, dels.nona.ctr.tz)
-		
-		    ## RT
-		    dels.nona.e <- subset(dels.nona, SPLINE >= 0)
-		    dels.nona.l <- subset(dels.nona, SPLINE < 0)
-		
-		    dels.nona.e.all <- rbind(dels.nona.e.all, dels.nona.e)
-		    dels.nona.l.all <- rbind(dels.nona.l.all, dels.nona.l)
-		    
-		    ## 
-		    file.name <- file.path(wd.rt.plots, paste0("PQS_SCLC-NL_DEL_RT.pdf"))
-		    plotReportNRFD(report.rfds, c("SCLC-NL", "SCLC", "NB", "CLL"), file.name, "Deletions > 10 kb     ")
-		    
-	  }
+	  nrds.ttr.all <- rbind(nrds.ttr.all, nrds.ttr)
+	  nrds.ctr.iz.all <- rbind(nrds.ctr.iz.all, nrds.ctr.iz)
+	  nrds.ctr.tz.all <- rbind(nrds.ctr.tz.all, nrds.ctr.tz)
 }
-	
+#nrds.ttr.all.2 <- subset(subset(nrds.ttr.all, RT >= -2), RT <= 2)
+#nrds.ctr.iz.all.2 <- subset(subset(nrds.ctr.iz.all, RT >= -2), RT <= 2)
+#nrds.ctr.tz.all.2 <- subset(subset(nrds.ctr.tz.all, RT >= -2), RT <= 2)
+#nrds.all.2 <- rbind(nrds.ttr.all.2, rbind(nrds.ctr.iz.all.2, nrds.ctr.iz.all.2))
+nrds.all <- rbind(nrds.ttr.all, rbind(nrds.ctr.iz.all, nrds.ctr.iz.all))
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT.all_max=2.pdf"))
+main.text <- "RT (Total)"
+xlab.text <- ""
+plotDensity(nrds.all$RT, file.name, "black", main.text, xlab.text, showMedian=T, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT_max=2.pdf"))
+main.text <- "RT (Average)"
+xlab.text <- ""
+plotDensity(nrds.RT$RT, file.name, "black", main.text, xlab.text, showMedian=T, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT_TTR_MC_max=2.pdf"))
+main.text <- "RT (TTR)"
+xlab.text <- ""
+plotDensityMonteCarlo(nrds.ttr.all$RT, nrds.all, file.name, "black", main.text, xlab.text, showMedian=T, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT_CTR_IZ_MC_max=2.pdf"))
+main.text <- "RT (IZ)"
+xlab.text <- ""
+plotDensityMonteCarlo(nrds.ctr.iz.all$RT, nrds.all, file.name, red, main.text, xlab.text, showMedian=T, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.RT_CTR_TZ_MC_max=2.pdf"))
+main.text <- "RT (TZ)"
+xlab.text <- ""
+plotDensityMonteCarlo(nrds.ctr.tz.all$RT, nrds.all, file.name, blue, main.text, xlab.text, showMedian=T, max=2)
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 26/06/23
+# -----------------------------------------------------------------------------
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.all_TTR_W.pdf"))
+main.text <- "RT (TTR)"
+xlab.text <- ""
+plotDensityWilcox(nrds.ttr.all$RT, nrds.all$RT, file.name, "black", main.text, xlab.text, showMedian=T, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.all_CTR_IZ_W.pdf"))
+main.text <- "RT (IZ)"
+xlab.text <- ""
+plotDensityWilcox(nrds.ctr.iz.all$RT, nrds.all$RT, file.name, red, main.text, xlab.text, showMedian=T, max=2)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_nrds.all_CTR_TZ_W.pdf"))
+main.text <- "RT (TZ)"
+xlab.text <- ""
+plotDensityWilcox(nrds.ctr.tz.all$RT, nrds.all$RT, file.name, blue, main.text, xlab.text, showMedian=T, max=2)
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 26/06/23
+# -----------------------------------------------------------------------------
+rt <- nrds.RT
+rt <- cbind(bed.gc[rt$BED,], rt)
+
+sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_props.csv"), header=T, rownames=F, sep=",")
+colnames(sv)[c(1,2,38)] <- c("CHR", "START", "RT")
+
+##
+sv.del <- subset(sv, class1 == "Del")
+
+sv.del$BED <- NA
+sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], rt))
+sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
+sv.del.nona$RT2 <- nrds.RT[sv.del.nona$BED,]$RT
+
+save(sv.del, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_nrds.RT.RData")))
+
+file.name <- file.path(wd.rt.plots, paste0("Density_PCAWG_DEL_RT2_0630_MC_T.pdf"))
+main.text <- "PCAWG DEL"
+xlab.text <- ""
+plotDensityMonteCarlo(sv.del.nona$RT2, nrds.RT, file.name, "black", main.text, xlab.text, showMedian=T, max=2)
+
+
+##
+sv.dup <- subset(sv, class1 == "Tandem Dup")
+
+sv.dup$BED <- NA
+sv.dup$BED <- mapply(x = 1:nrow(sv.dup), function(x) getGenomicProperty(sv.dup$CHR[x], sv.dup$START[x], rt))
+sv.dup.nona <- sv.dup[!is.na(sv.dup$BED), ]
+sv.dup.nona$RT2 <- nrds.RT[sv.dup.nona$BED,]$RT
+
+save(sv.dup, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Dup_nrds.RT.RData")))
+
+file.name <- file.path(wd.rt.plots, paste0("Density_PCAWG_DUP_RT2_0630_MC_T.pdf"))
+main.text <- "PCAWG DUP"
+xlab.text <- ""
+plotDensityMonteCarlo(sv.dup.nona$RT2, nrds.RT, file.name, "black", main.text, xlab.text, showMedian=T, max=2)
+
 # -----------------------------------------------------------------------------
 # RFD
 # Last Modified: 25/04/23
@@ -376,7 +532,7 @@ getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
 	  return(intersect(rownames(bed.gc.chr.start.end), rownames(nrds.RT.NRFD)))
 }
 
-for (h in 1:nrow(table.sv.del)) {
+for (h in 1:nrow(table.sv.del.20)) {
 	  hist <- as.vector(table.sv.del.20$Histology[h])
 	  totals.sv.hist <- subset(totals.sv, histology_abbreviation == hist)
 	
@@ -391,7 +547,7 @@ for (h in 1:nrow(table.sv.del)) {
 		       dels <- rbind(dels, del)
 	  }
 	  dels$size <- dels$end2 - dels$start1
-}
+
 	  dels$RT <- NA
 	  dels$RFD <- NA
 	  dels$NRFD <- NA

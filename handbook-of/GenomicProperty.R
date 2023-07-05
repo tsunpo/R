@@ -2,8 +2,26 @@
 # Library      : Genomic Properties
 # Name         : handbook-of/GenomicProperty.R
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 30/05/23
+# Last Modified: 29/06/23
 # =============================================================================
+getRandomBreakpoint <- function() {
+	  return(sample(c("start1", "end1", "start2", "end2"), 1, replace=F))
+}
+
+getGenomicProperty <- function(chr, bp, rt) {
+	  rt.chr <- subset(rt, CHR == chr)
+	
+	  rt.chr.start <- subset(rt.chr, START <= bp)
+	  rt.chr.start.end <- subset(rt.chr.start, END >= bp)
+	
+	  if (nrow(rt.chr.start.end) == 0)
+	  	  return(NA)
+	  else if (nrow(rt.chr.start.end) == 1)
+	  	  return(rt.chr.start.end$BED)
+	  else
+		    return(paste(rt.chr.start.end$BED, collapse=","))
+}
+
 getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
 	  chr <- paste0("chr", del$chrom1)
 	  bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -14,33 +32,21 @@ getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
   	return(intersect(rownames(bed.gc.chr.start.end), rownames(nrds.RT.NRFD)))
 }
 
-getRandomBreakpointBED <- function(del, nrds.RT.NRFD, bed.gc) {
-	  chr <- paste0("chr", del$chrom1)
-	  bed.gc.chr <- subset(bed.gc, CHR == chr)
-	  breakpoints <- which(colnames(del) %in% c("start1", "end1", "start2", "end2"))
-	  breakpoint <- sample(breakpoints, 1, replace=F)
-	
-	  bed.gc.chr.start <- subset(bed.gc.chr, START <= del[, breakpoint])
-	  bed.gc.chr.start.end <- subset(bed.gc.chr.start, END >= del[, breakpoint])
-	
-	  overlaps <- intersect(rownames(bed.gc.chr.start.end), nrds.RT.NRFD$BED)
-	  if (length(overlaps) == 0)
-	     return(NA)
-	  else
-   	  return(overlaps)
-}
-
-getGenomicProperty <- function(chr, breakpoint, bed.gc) {
-	  bed.gc.chr <- subset(bed.gc, CHR == chr)
-	  
-	  bed.gc.chr.start <- subset(bed.gc.chr, START <= breakpoint)
-	  bed.gc.chr.start.end <- subset(bed.gc.chr.start, END >= breakpoint)
-	
-	  if (nrow(bed.gc.chr.start.end) == 0)
-		    return(NA)
-	  else
-		    return(bed.gc.chr.start.end$BED)
-}
+#getRandomBreakpointBED <- function(del, nrds.RT.NRFD, bed.gc) {
+#	  chr <- paste0("chr", del$chrom1)
+#	  bed.gc.chr <- subset(bed.gc, CHR == chr)
+#	  breakpoints <- which(colnames(del) %in% c("start1", "end1", "start2", "end2"))
+#	  breakpoint <- sample(breakpoints, 1, replace=F)
+#	
+#	  bed.gc.chr.start <- subset(bed.gc.chr, START <= del[, breakpoint])
+#	  bed.gc.chr.start.end <- subset(bed.gc.chr.start, END >= del[, breakpoint])
+#	
+#	  overlaps <- intersect(rownames(bed.gc.chr.start.end), nrds.RT.NRFD$BED)
+#	  if (length(overlaps) == 0)
+#	     return(NA)
+#	  else
+#   	  return(overlaps)
+#}
 
 getPixel <- function(dels, nrds.RT.NRFD, bed.gc) {
 	  dels$BED  
@@ -66,6 +72,80 @@ toFrequencyTable <- function(partitions) {
 # Methods: Density plot
 # Last Modified: 30/05/23
 # =============================================================================
+plotDensity <- function(reals, file.name, col, main.text, xlab.text, showMedian=F, max=NA) {
+	  ylab.text <- "Density"
+	  d <- density(reals)
+	  xlim <- c(min(reals), max(reals))
+	  if (!is.na(max))
+	  	  xlim <- c(min(-max), max(max))
+	
+	  pdf(file.name, height=6, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  if (showMedian)
+	  	  abline(v=median(reals), col=col, lty=5, lwd=3)
+
+	  dev.off()
+}
+
+plotDensityWilcox <- function(reals, randoms, file.name, col, main.text, xlab.text, showMedian=F, max=2) {
+	  ylab.text <- "Density"
+	  pval <- testU(reals, randoms)
+	
+	  d <- density(reals)
+	  xlim <- c(min(reals), max(reals))
+	  if (!is.na(max))
+		    xlim <- c(min(-max), max(max))
+	  pdf(file.name, height=6, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  if (showMedian) {
+		    abline(v=median(randoms), col="black", lty=5, lwd=3)
+		    abline(v=median(reals), col=col, lty=5, lwd=3)
+	  }
+	
+	  text(0, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
+	  dev.off()
+}
+
+getMonteCarloSimulations <- function(nrds.RT.2, size) {
+	  random.idx <- sort(sample(1:nrow(nrds.RT.2), size, replace=T))
+	
+	  return(median(nrds.RT.2[random.idx, "RT"]))
+}
+
+plotDensityMonteCarlo <- function(reals, nrds.RT.2, file.name, col, main.text, xlab.text, showMedian=F, max=2) {
+	  randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals)))
+	
+	  ylab.text <- "Density"
+	  ranks <- c(randoms, median(reals))
+	  pval <- sum(ranks >= median(reals)) / length(ranks)
+	  if (median(reals) < median(randoms))
+	  	  pval <- sum(ranks <= median(reals)) / length(ranks)
+	  
+	  d <- density(reals)
+	  xlim <- c(min(reals), max(reals))
+	  if (!is.na(max))
+	  	  xlim <- c(min(-max), max(max))
+	  pdf(file.name, height=6, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  if (showMedian) {
+	     abline(v=median(randoms), col="black", lty=5, lwd=3)
+	     abline(v=median(reals), col=col, lty=5, lwd=3)
+   }
+
+	  text(0, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
+	  dev.off()
+}
+
+
+
+
+
 plotMonteCarloSimulation <- function(reals, randoms, file.name, cols, main.text, xlab.text) {
 	  ylab.text <- "Density"
 	  ranks <- c(randoms, median(reals))
