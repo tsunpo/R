@@ -60,15 +60,24 @@ gels$chrom2 <- mapply(x = 1:nrow(gels), function(x) unlist(strsplit(gels$chrom2[
 # -----------------------------------------------------------------------------
 gels.del <- subset(gels, type == "MantaDEL")
 gels.del <- subset(gels.del, chrom1 != "X")
+gels.del <- subset(gels.del, chrom1 != "17_gl000204_random")
 gels.del$CHR <- paste0("chr", gels.del$chrom1)
-gels.del$START <- gels.del[, getRandomBreakpoint()]
-gels.del$size <- gels.del$end2 - gels.del$start1
+gels.del$START <- NA
+gels.del$size <- mapply(x = 1:nrow(gels.del), function(x) (median(gels.del$start2[x], gels.del$end2[x]) - median(gels.del$start1[x], gels.del$end1[x])))
 nrow(gels.del)
-# [1] 1460
+# [1] 1459
 nrow(subset(gels.del, size >= 100))
-# [1] 1302
+# [1] 1299
 
-save(gels, gels.del, gels.dup, file=file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del.dup.RData")))
+gels.del.1 <- gels.del
+gels.del.1$START <- mapply(x = 1:nrow(gels.del.1), function(x) gels.del.1[x, getRandomBreakpoint1()])
+gels.del.2 <- gels.del
+gels.del.2$START <- mapply(x = 1:nrow(gels.del.2), function(x) gels.del.2[x, getRandomBreakpoint2()])
+gels.del <- rbind(gels.del.1, gels.del.2)
+nrow(gels.del)
+# [1] 2918
+
+save(gels, gels.del.1, gels.del.2, gels.del, file=file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del_2bp.RData")))
 
 # -----------------------------------------------------------------------------
 # RT (Yang et al.)
@@ -78,50 +87,50 @@ save(gels, gels.del, gels.dup, file=file.path(wd.rt.data, paste0("candidate-SVs_
 #nrds.RT <- cbind(bed.gc[nrds.RT$BED,],  nrds.RT)
 
 ## GEL deletions (ALL)
-load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del.dup.RData")))
+load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del_2bp.RData")))
 
 gels.del$BED <- NA
 gels.del$BED <- mapply(x = 1:nrow(gels.del), function(x) getGenomicProperty(gels.del$CHR[x], gels.del$START[x], nrds.RT))
 gels.del.nona <- gels.del[!is.na(gels.del$BED), ]
 gels.del.nona$RT <- nrds.RT[gels.del.nona$BED,]$RT
 nrow(gels.del.nona)
-# [1] 1444
+# [1] 2885
 nrow(subset(gels.del.nona, size >= 100))
-# [1] 1288
+# [1] 2569
 nrow(subset(gels.del.nona, size < 100))
-# [1] 156
+# [1] 316
 
-file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_RT.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_RT_2bp.pdf"))
 main.text <- "GEL Del (Yang)"
 xlab.text <- ""
 plotDensity(gels.del.nona$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_RT_MC.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_RT_MC_2bp.pdf"))
 main.text <- "GEL Del (Yang)"
 xlab.text <- ""
 plotDensityMonteCarlo(gels.del.nona$RT, nrds.RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_>100_RT.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_>100_RT_2bp.pdf"))
 main.text <- "GEL Del > 100 bp (Yang)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size >= 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_>100_RT_MC.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_>100_RT_MC_2bp.pdf"))
 main.text <- "GEL Del > 100 bp (Yang)"
 xlab.text <- ""
 plotDensityMonteCarlo(subset(gels.del.nona, size >= 100)$RT, nrds.RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_<100_RT.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_<100_RT_2bp.pdf"))
 main.text <- "GEL Del < 100 bp (Yang)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size < 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_<100_RT_MC.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_<100_RT_MC_2bp.pdf"))
 main.text <- "GEL Del < 100 bp (Yang)"
 xlab.text <- ""
 plotDensityMonteCarlo(subset(gels.del.nona, size < 100)$RT, nrds.RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_RT_Yang.RData")))
+save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_RT_Yang_2bp.RData")))
 
 # -----------------------------------------------------------------------------
 # Quantile skew plot: ENCODE RT (Li et al)
@@ -134,29 +143,29 @@ rt.1$BED <- mapply(x = 1:nrow(rt.1), function(x) paste0("P", x))
 rownames(rt.1) <- rt.1$BED
 
 ## GEL deletions (ALL)
-load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del.dup.RData")))
+load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del_2bp.RData")))
 
 gels.del$BED <- NA
 gels.del$BED <- mapply(x = 1:nrow(gels.del), function(x) getGenomicProperty(gels.del$CHR[x], gels.del$START[x], rt.1))
 gels.del.nona <- gels.del[!is.na(gels.del$BED), ]
 gels.del.nona$RT <- rt.1[gels.del.nona$BED,]$RT
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_ENCODE_Li.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_ENCODE_Li_2bp.pdf"))
 main.text <- "GEL Del (Li)"
 xlab.text <- ""
 plotDensity(gels.del.nona$RT, file.name, "black", main.text, xlab.text, showMedian=F)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_ENCODE_Li.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_ENCODE_Li_2bp.pdf"))
 main.text <- "GEL Del > 100 bp (Li)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size >= 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_ENCODE_Li.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_ENCODE_Li_2bp.pdf"))
 main.text <- "GEL Del < 100 bp (Li)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size < 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F)
 
-save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_ENCODE_Li.RData")))
+save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_ENCODE_Li_2bp.RData")))
 
 # -----------------------------------------------------------------------------
 # Quantile skew plot: ENCODE RT (Moore et al)
@@ -169,29 +178,29 @@ rownames(rt) <- rt$BED
 rt$START <- rt$START + 1
 
 ## GEL deletions (ALL)
-load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del.dup.RData")))
+load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del_2bp.RData")))
 
 gels.del$BED <- NA
 gels.del$BED <- mapply(x = 1:nrow(gels.del), function(x) getGenomicProperty(gels.del$CHR[x], gels.del$START[x], rt))
 gels.del.nona <- gels.del[!is.na(gels.del$BED), ]
 gels.del.nona$RT <- rt[gels.del.nona$BED,]$RT
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_ENCODE_Moore.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_ENCODE_Moore_2bp.pdf"))
 main.text <- "GEL Del (Moore)"
 xlab.text <- ""
 plotDensity(gels.del.nona$RT, file.name, "black", main.text, xlab.text, showMedian=F)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_ENCODE_Moore.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_ENCODE_Moore_2bp.pdf"))
 main.text <- "GEL Del > 100 bp (Moore)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size >= 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_ENCODE_Moore.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_ENCODE_Moore_2bp.pdf"))
 main.text <- "GEL Del < 100 bp (Moore)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size < 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F)
 
-save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_ENCODE_Moore.RData")))
+save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_ENCODE_Moore_2bp.RData")))
 
 # -----------------------------------------------------------------------------
 # LCL S/G1: getGenomicProperty()
@@ -202,29 +211,29 @@ rt <- cbind(bed.gc[rt$BED,], rt)
 #rt.2 <- subset(subset(rt, RT >= -2), RT <= 2)
 
 ## GEL deletions (ALL)
-load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del.dup.RData")))
+load(file.path(wd.rt.data, paste0("candidate-SVs_LiftOver.hg18_gels.del_2bp.RData")))
 
 gels.del$BED <- NA
 gels.del$BED <- mapply(x = 1:nrow(gels.del), function(x) getGenomicProperty(gels.del$CHR[x], gels.del$START[x], rt))
 gels.del.nona <- gels.del[!is.na(gels.del$BED), ]
 gels.del.nona$RT <- rt[gels.del.nona$BED,]$RT
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_LCL_Koren.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_LCL_Koren_2bp.pdf"))
 main.text <- "GEL Del (Koren)"
 xlab.text <- ""
 plotDensity(gels.del.nona$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_LCL_Koren_2.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_LCL_Koren_2bp.pdf"))
 main.text <- "GEL Del > 100 bp (Koren)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size >= 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_LCL_Koren.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_LCL_Koren_2bp.pdf"))
 main.text <- "GEL Del < 100 bp (Koren)"
 xlab.text <- ""
 plotDensity(subset(gels.del.nona, size < 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
-save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_LCL_Koren.RData")))
+save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_LCL_Koren_2bp.RData")))
 
 
 

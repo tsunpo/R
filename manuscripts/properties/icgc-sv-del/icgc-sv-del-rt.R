@@ -67,48 +67,30 @@ plotDensityMonteCarlo(sv.del.nona$RT2, nrds.RT, file.name, "black", main.text, x
 save(sv.del, sv.del.nona, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang.RData")))
 
 # -----------------------------------------------------------------------------
-# 
-# Last Modified: 05/07/23
-# -----------------------------------------------------------------------------
-removed <- c()
-samples <- c()
-icgc.dels <- icgc[0,]
-
-for (d in 1:nrow(sv.del)) {
-	  id <- rownames(subset(release.sv, tumor_wgs_icgc_sample_id == sv.del$icgc_sample_id[d]))
-	  
-	  if (length(id) != 0) {
-	  	  icgc <- readTable(file.path(wd.icgc.sv, "final", paste0(id, ".pcawg_consensus_1.6.161116.somatic.sv.bedpe.gz")), header=T, rownames=F, sep="\t")
-	  	  icgc.del <- subset(icgc, svclass == "DEL")
-	  	  
-	  	  if (nrow(icgc.del) > 0) {
-	  		    samples <- c(id, samples)
-	  		
-	  		    sv_id <- unlist(strsplit(sv.del$breakpoint_id[d], ":"))[4]
-	  		    icgc.del.id <- subset(icgc.del, sv_id == sv_id)
-	  		    if (nrow(icgc.del.id) > 0)
-	  			      icgc.dels <- rbind(icgc.del.id, icgc.dels)
-	  	  }
-	  } else {
-	  	  removed <- c(d, removed)
-	  }
-}
-
-# -----------------------------------------------------------------------------
 # After running cmd_icgc-sv-del-rt_chr.R
 # Last Modified: 05/07/23
 # -----------------------------------------------------------------------------
-removed <- c()
 samples <- c()
-icgc.dels <- icgc[0,]
+icgc.del <- icgc[0,]
+sv.del.rm <- sv.del[0,]
 
 for (c in 1:23) {
-	  file=file.path(wd.rt.data, paste0("icgc_wgs_sv_chr", c, ".RData"))
+	  load(file.path(wd.rt.data, paste0("icgc_wgs_sv_chr", c, ".RData")))
 	  
-	  removed <- c(removed.chr, removed)
-	  samples <- c(samples.chr, samples)
-	  icgc.dels <- rbind(icgc.dels.chr, icgc.dels)
+	  samples <- c(samples, samples.chr)
+	  icgc.del <- rbind(icgc.del, icgc.dels.chr)
+	  sv.del.rm <- rbind(sv.del.rm, sv.del.chr.rm)
 }
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 03/07/23
+# -----------------------------------------------------------------------------
+sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_props.csv"), header=T, rownames=F, sep=",")
+sv.del <- subset(sv, class1 == "Del")
+nrow(sv.del) / 2
+# [1] 54311
+
 
 # -----------------------------------------------------------------------------
 # 
@@ -137,6 +119,10 @@ nrow(sv.del)
 # [1] 108622
 nrow(dels)
 # [1] 81399
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # 

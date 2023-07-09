@@ -55,32 +55,33 @@ load(file=file.path(wd.rt.data, paste0("icgc_wgs_sv.RData")))
 # Last Modified: 05/07/23
 # -----------------------------------------------------------------------------
 chr <- chrs[CHR]
-sv.del <- subset(sv.del, seqnames == chr)
+sv.del.chr <- subset(sv.del, seqnames == chr)
 
-removed.chr <- c()
 samples.chr <- c()
-icgc.dels.chr <- NULL
-for (d in 1:nrow(sv.del)) {
-	  id <- rownames(subset(release.sv, tumor_wgs_icgc_sample_id == sv.del$icgc_sample_id[d]))
+icgc.del.chr <- NULL
+sv.del.chr.rm <- sv.del.chr[0,]
+for (d in 1:nrow(sv.del.chr)) {
+	  id <- rownames(subset(release.sv, tumor_wgs_icgc_sample_id == sv.del.chr$icgc_sample_id[d]))
 	  
 	  if (length(id) != 0) {
 	  	  icgc <- readTable(file.path(wd.icgc.sv, "final", paste0(id, ".pcawg_consensus_1.6.161116.somatic.sv.bedpe.gz")), header=T, rownames=F, sep="\t")
 	  	  icgc.del <- subset(icgc, svclass == "DEL")
+	  	  icgc.del <- subset(icgc.del, chrom1 == CHR)
 	  	  
 	  	  if (nrow(icgc.del) > 0) {
-	  		    samples.chr <- c(id, samples.chr)
+	  		    samples.chr <- c(samples.chr, id)
 	  		
-	  		    sv_id <- unlist(strsplit(sv.del$breakpoint_id[d], ":"))[4]
-	  		    icgc.del.id <- subset(icgc.del, sv_id == sv_id)
-	  		    if (nrow(icgc.del.id) > 0)
-	  		    	  if (is.null(icgc.dels.chr))
-	  		    	  	  icgc.dels.chr <- icgc[0,]
-	  		    	  else
-	  			         icgc.dels.chr <- rbind(icgc.del.id, icgc.dels.chr)
+	  		    sv.id <- unlist(strsplit(sv.del.chr$breakpoint_id[d], ":"))[4]
+	  		    icgc.del.id <- subset(icgc.del, sv_id == sv.id)
+	  		    if (nrow(icgc.del.id) > 0) {
+	  		    	  if (is.null(icgc.del.chr))
+	  		    	  	  icgc.del.chr <- icgc[0,]
+	  			      icgc.del.chr <- rbind(icgc.del.chr, icgc.del.id)
+	  		    } else {
+	  		    	  sv.del.chr.rm <- rbind(sv.del.chr.rm, sv.del.chr[d,])
+	  		    }
 	  	  }
-	  } else {
-	  	  removed.chr <- c(d, removed.chr)
 	  }
 }
 
-save(removed.chr, samples.chr, icgc.dels.chr, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_chr", CHR, ".RData")))
+save(samples.chr, icgc.del.chr, sv.del.chr.rm, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_chr", CHR, ".RData")))

@@ -4,8 +4,12 @@
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
 # Last Modified: 29/06/23
 # =============================================================================
-getRandomBreakpoint <- function() {
-	  return(sample(c("start1", "end1", "start2", "end2"), 1, replace=F))
+getRandomBreakpoint1 <- function() {
+	  return(sample(c("start1", "end1"), 1, replace=F))
+}
+
+getRandomBreakpoint2 <- function() {
+	  return(sample(c("start2", "end2"), 1, replace=F))
 }
 
 getGenomicProperty <- function(chr, bp, rt) {
