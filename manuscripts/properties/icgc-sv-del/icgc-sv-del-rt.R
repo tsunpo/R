@@ -109,10 +109,13 @@ main.text <- "PCAWG Del"
 xlab.text <- expression("log" * ""[10] * "(Size)")
 plotDensity2(log10(sv.del.1.mfs.na$SIZE), log10(sv.del.1.mfs$SIZE), file.name, c("black", red), c("Not in FS", "21 FS"), main.text, xlab.text)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS.pdf"))
+sv.del.mfs   <- sv.del[!is.na(sv.del$MFS), ]
+sv.del.mfs.na <- sv.del[is.na(sv.del$MFS), ]
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2.pdf"))
 main.text <- "PCAWG Del (ENCODE; Li)"
 xlab.text <- "RT"
-plotDensity2(sv.del.1.mfs.na$RT, sv.del.1.mfs$RT, file.name, c("black", red), c("Not in FS", "21 FS"), main.text, xlab.text)
+plotDensity2(sv.del.mfs.na$RT, sv.del.mfs$RT, file.name, c("black", red), c("Not in FS", "21 FS"), main.text, xlab.text)
 
 # -----------------------------------------------------------------------------
 # 
@@ -120,23 +123,39 @@ plotDensity2(sv.del.1.mfs.na$RT, sv.del.1.mfs$RT, file.name, c("black", red), c(
 # -----------------------------------------------------------------------------
 load(file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang.RData")))
 
+sv.del.1$RT2 <- NA
 sv.del.1$RT2 <- mapply(x = 1:nrow(sv.del.1), function(x) subset(subset(sv.del.nona, breakpoint_id == sv.del.1$breakpoint_id[x]), START == sv.del.1$START[x])$RT2)
+sv.del.1$RT2 <- as.numeric(sv.del.1$RT2)
+
+sv.del.2$RT2 <- NA
 sv.del.2$RT2 <- mapply(x = 1:nrow(sv.del.2), function(x) subset(subset(sv.del.nona, breakpoint_id == sv.del.2$breakpoint_id[x]), START == sv.del.2$START[x])$RT2)
+sv.del.2$RT2 <- as.numeric(sv.del.2$RT2)
+
+sv.del <- rbind(sv.del.1, sv.del.2)
+sv.del.nona <- sv.del[!is.na(sv.del$RT2), ]
+
+##
+sv.del.mfs   <- sv.del.nona[!is.na(sv.del.nona$MFS), ]
+sv.del.mfs.na <- sv.del.nona[is.na(sv.del.nona$MFS), ]
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang.pdf"))
+main.text <- "PCAWG Del (Yang)"
+xlab.text <- "RT"
+plotDensity2(sv.del.mfs.na$RT2, sv.del.mfs$RT2, file.name, c("black", red), c("Not in FS", "21 FS"), main.text, xlab.text, max=2)
+
+##
+sv.del.cfs   <- sv.del.nona[!is.na(sv.del.nona$CFS), ]
+sv.del.cfs.na <- sv.del.nona[is.na(sv.del.nona$CFS), ]
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_CFS_1+2_Yang.pdf"))
+main.text <- "PCAWG Del (Yang)"
+xlab.text <- "RT"
+plotDensity2(sv.del.cfs.na$RT2, sv.del.cfs$RT2, file.name, c("black", orange), c("Not in CFS", "109 CFS"), main.text, xlab.text, max=2)
 
 
 
 
 
-
-sv.del$BED <- NA
-sv.del$BED <- mapply(x = 1:nrow(sv.del), function(x) getGenomicProperty(sv.del$CHR[x], sv.del$START[x], nrds.RT))
-sv.del.nona <- sv.del[!is.na(sv.del$BED), ]
-sv.del.nona$RT2 <- nrds.RT[sv.del.nona$BED,]$RT
-
-file.name <- file.path(wd.rt.plots, paste0("Density_svpos_with_hg19_props_Del_Yang.pdf"))
-main.text <- "PCAWG DEL (Yang)"
-xlab.text <- ""
-plotDensity(sv.del.nona$RT2, file.name, "black", main.text, xlab.text, showMedian=F, max=2)
 
 
 
