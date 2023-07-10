@@ -187,18 +187,16 @@ gels.del.nona$RT <- rt[gels.del.nona$BED,]$RT
 
 file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_ENCODE_Moore_2bp.pdf"))
 main.text <- "GEL Del (Moore)"
-xlab.text <- ""
-plotDensity(gels.del.nona$RT, file.name, "black", main.text, xlab.text, showMedian=F)
+plotDensity(gels.del.nona$RT, file.name, "black", main.text,  showMedian=F)
 
 file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_>100_ENCODE_Moore_2bp.pdf"))
 main.text <- "GEL Del > 100 bp (Moore)"
-xlab.text <- ""
-plotDensity(subset(gels.del.nona, size >= 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F)
+plotDensity(subset(gels.del.nona, size >= 100)$RT, file.name, "black", main.text, showMedian=F)
 
 file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_<100_ENCODE_Moore_2bp.pdf"))
 main.text <- "GEL Del < 100 bp (Moore)"
 xlab.text <- ""
-plotDensity(subset(gels.del.nona, size < 100)$RT, file.name, "black", main.text, xlab.text, showMedian=F)
+plotDensity(subset(gels.del.nona, size < 100)$RT, file.name, "black", main.text, showMedian=F)
 
 save(gels.del, gels.del.nona, file=file.path(wd.rt.data, paste0("Density_GEL_Del_ENCODE_Moore_2bp.RData")))
 

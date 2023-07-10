@@ -46,42 +46,61 @@ wd.rt.plots <- file.path(wd.rt, "plots")
 # Last Modified: 03/07/23
 # -----------------------------------------------------------------------------
 sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_props.csv"), header=T, rownames=F, sep=",")
+colnames(sv)[c(1,2)] <- c("CHR", "START")
 sv.del <- subset(sv, class1 == "Del")
 
-load(file=file.path(wd.rt.data, paste0("icgc_wgs_sv.RData")))
+cfs <- readTable(file.path(wd.nr3, "results/2017_06_positions/cfs_pos.txt"), header=T, rownames=F, sep="")
+colnames(cfs) <- c("CHR", "START", "END", "VALUE")
+cfs$BED <- mapply(x = 1:nrow(cfs), function(x) paste0("P", x))
+rownames(cfs) <- cfs$BED
+
+mfs <- readTable(file.path(wd.nr3, "results/2017_06_positions/Table_E2_MFS_21.txt"), header=T, rownames=F, sep="")
+mfs$BED <- mapply(x = 1:nrow(mfs), function(x) paste0("P", x))
+rownames(mfs) <- mfs$BED
 
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 05/07/23
 # -----------------------------------------------------------------------------
 chr <- chrs[CHR]
-sv.del.chr <- subset(sv.del, seqnames == chr)
+sv.del.chr <- subset(sv.del, CHR == chr)
+sv.del.chr$SIZE <- NA
+cfs.chr <- subset(cfs, CHR == chr)
 
-samples.chr <- c()
-icgc.del.chr <- NULL
-sv.del.chr.rm <- sv.del.chr[0,]
-for (d in 1:nrow(sv.del.chr)) {
-	  id <- rownames(subset(release.sv, tumor_wgs_icgc_sample_id == sv.del.chr$icgc_sample_id[d]))
+removed <- c()
+ids <- unique(sv.del.chr$breakpoint_id)
+sv.del.chr.1 <- sv.del.chr[0,]
+sv.del.chr.2 <- sv.del.chr[0,]
+for (d in 1:length(ids)) {
+	  bps <- subset(sv.del.chr, breakpoint_id == ids[d])
 	  
-	  if (length(id) != 0) {
-	  	  icgc <- readTable(file.path(wd.icgc.sv, "final", paste0(id, ".pcawg_consensus_1.6.161116.somatic.sv.bedpe.gz")), header=T, rownames=F, sep="\t")
-	  	  icgc.del <- subset(icgc, svclass == "DEL")
-	  	  icgc.del <- subset(icgc.del, chrom1 == CHR)
-	  	  
-	  	  if (nrow(icgc.del) > 0) {
-	  		    samples.chr <- c(samples.chr, id)
-	  		
-	  		    sv.id <- unlist(strsplit(sv.del.chr$breakpoint_id[d], ":"))[4]
-	  		    icgc.del.id <- subset(icgc.del, sv_id == sv.id)
-	  		    if (nrow(icgc.del.id) > 0) {
-	  		    	  if (is.null(icgc.del.chr))
-	  		    	  	  icgc.del.chr <- icgc[0,]
-	  			      icgc.del.chr <- rbind(icgc.del.chr, icgc.del.id)
-	  		    } else {
-	  		    	  sv.del.chr.rm <- rbind(sv.del.chr.rm, sv.del.chr[d,])
-	  		    }
+	  if (nrow(bps) == 2) {
+	  	  bps.1 <- bps[1,]
+	  	  bps.2 <- bps[2,]
+	  	  if (bps.1$START > bps.2$START) {
+	  	  	  bps.1 <- bps[2,]
+	  	  	  bps.2 <- bps[1,]
 	  	  }
+	  	  
+	  	  bps.1$SIZE <- bps.2$START - bps.1$START
+	  	  bps.2$SIZE <- bps.2$START - bps.1$START
+	  	  
+	  	  sv.del.chr.1 <- rbind(sv.del.chr.1, bps.1)
+	  	  sv.del.chr.2 <- rbind(sv.del.chr.2, bps.2)
+	  } else {
+	  	  removed <- c(removed, ids[d])
 	  }
 }
 
-save(samples.chr, icgc.del.chr, sv.del.chr.rm, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_chr", CHR, ".RData")))
+sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], cfs))
+sv.del.chr.1$CFS <- cfs[sv.del.chr.1$BED,]$VALUE
+
+sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], mfs))
+sv.del.chr.1$MFS <- mfs[sv.del.chr.1$BED,]$GENE
+sv.del.chr.1 <- sv.del.chr.1[, -49]
+
+sv.del.chr.2 <- sv.del.chr.2[, -49]
+sv.del.chr.2$CFS <- sv.del.chr.1$CFS
+sv.del.chr.2$MFS <- sv.del.chr.1$MFS
+
+save(removed, sv.del.chr.1, sv.del.chr.2, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_del_chr", CHR, ".RData")))

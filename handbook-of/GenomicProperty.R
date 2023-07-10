@@ -76,7 +76,7 @@ toFrequencyTable <- function(partitions) {
 # Methods: Density plot
 # Last Modified: 30/05/23
 # =============================================================================
-plotDensity <- function(reals, file.name, col, main.text, xlab.text, showMedian=F, max=NA) {
+plotDensity <- function(reals, file.name, col, main.text, xlab.text="" showMedian=F, max=NA) {
 	  ylab.text <- "Density"
 	  d <- density(reals)
 	  xlim <- c(min(reals), max(reals))
@@ -90,6 +90,27 @@ plotDensity <- function(reals, file.name, col, main.text, xlab.text, showMedian=
 	  if (showMedian)
 	  	  abline(v=median(reals), col=col, lty=5, lwd=3)
 
+	  dev.off()
+}
+
+plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xlab.text="", showMedian=F, max=NA) {
+	  ylab.text <- "Density"
+	  d <- density(reals)
+	  d2 <- density(randoms)
+	  xlim <- c(min(c(reals, randoms)), max(c(reals, randoms)))
+	  ylim <- c(min(c(d$y, d2$y)), max(c(d$y, d2$y)))
+	  if (!is.na(max))
+		    xlim <- c(min(-max), max(max))
+	
+	  pdf(file.name, height=6, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, ylim=ylim, col=cols[1], lwd=2, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  lines(density(randoms), col=cols[2], lwd=2)
+	  
+	  if (showMedian)
+		    abline(v=median(reals), col=cols[1], lty=5, lwd=3)
+	
+	  legend("topright", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
 	  dev.off()
 }
 
