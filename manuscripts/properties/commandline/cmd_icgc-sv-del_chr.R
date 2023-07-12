@@ -58,6 +58,11 @@ mfs <- readTable(file.path(wd.nr3, "results/2017_06_positions/Table_E2_MFS_21.tx
 mfs$BED <- mapply(x = 1:nrow(mfs), function(x) paste0("P", x))
 rownames(mfs) <- mfs$BED
 
+fs <- readTable(file.path(wd.nr3, "results/2017_06_positions/Supplementary_Table_5_FS_18.txt"), header=T, rownames=F, sep="")
+colnames(fs)[1:5] <- c("CHR", "START", "END", "WIDTH", "GENE")
+fs$BED <- mapply(x = 1:nrow(fs), function(x) paste0("P", x))
+rownames(fs) <- fs$BED
+
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 05/07/23
@@ -92,15 +97,26 @@ for (d in 1:length(ids)) {
 	  }
 }
 
+## Breakpoint 1
 sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], cfs))
 sv.del.chr.1$CFS <- cfs[sv.del.chr.1$BED,]$VALUE
 
 sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], mfs))
 sv.del.chr.1$MFS <- mfs[sv.del.chr.1$BED,]$GENE
+
+sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], fs))
+sv.del.chr.1$FS <- fs[sv.del.chr.1$BED,]$GENE
 sv.del.chr.1 <- sv.del.chr.1[, -49]
 
+## Breakpoint 2
+sv.del.chr.2$BED <- mapply(x = 1:nrow(sv.del.chr.2), function(x) getGenomicProperty(sv.del.chr.2$CHR[x], sv.del.chr.2$START[x], cfs))
+sv.del.chr.2$CFS <- cfs[sv.del.chr.2$BED,]$VALUE
+
+sv.del.chr.2$BED <- mapply(x = 1:nrow(sv.del.chr.2), function(x) getGenomicProperty(sv.del.chr.2$CHR[x], sv.del.chr.2$START[x], mfs))
+sv.del.chr.2$MFS <- mfs[sv.del.chr.2$BED,]$GENE
+
+sv.del.chr.2$BED <- mapply(x = 1:nrow(sv.del.chr.2), function(x) getGenomicProperty(sv.del.chr.2$CHR[x], sv.del.chr.2$START[x], fs))
+sv.del.chr.2$FS <- fs[sv.del.chr.2$BED,]$GENE
 sv.del.chr.2 <- sv.del.chr.2[, -49]
-sv.del.chr.2$CFS <- sv.del.chr.1$CFS
-sv.del.chr.2$MFS <- sv.del.chr.1$MFS
 
 save(removed, sv.del.chr.1, sv.del.chr.2, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_del_chr", CHR, ".RData")))

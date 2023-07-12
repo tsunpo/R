@@ -53,6 +53,7 @@ gels[overlaps, 4:6] <- hg19.pe2[overlaps, 1:3]
 gels <- gels[overlaps,]
 gels$chrom1 <- mapply(x = 1:nrow(gels), function(x) unlist(strsplit(gels$chrom1[x], "chr"))[2])
 gels$chrom2 <- mapply(x = 1:nrow(gels), function(x) unlist(strsplit(gels$chrom2[x], "chr"))[2])
+gels$event_id <- paste0("GEL", rownames(gels))
 
 # -----------------------------------------------------------------------------
 # 
@@ -66,8 +67,15 @@ gels.del$START <- NA
 gels.del$size <- mapply(x = 1:nrow(gels.del), function(x) (median(gels.del$start2[x], gels.del$end2[x]) - median(gels.del$start1[x], gels.del$end1[x])))
 nrow(gels.del)
 # [1] 1459
-nrow(subset(gels.del, size >= 100))
+nrow(subset(gels.del, SIZE >= 100))
 # [1] 1299
+nrow(subset(gels.del, SIZE < 100))
+# [1] 160
+
+gels.del.1$event_id <- gels.del$event_id
+gels.del.1 <- gels.del.1[, c(1:8,12,9:11)]
+gels.del.2$event_id <- gels.del$event_id
+gels.del.2 <- gels.del.2[, c(1:8,12,9:11)]
 
 gels.del.1 <- gels.del
 gels.del.1$START <- mapply(x = 1:nrow(gels.del.1), function(x) gels.del.1[x, getRandomBreakpoint1()])
@@ -99,6 +107,62 @@ nrow(subset(gels.del.nona, size >= 100))
 # [1] 2569
 nrow(subset(gels.del.nona, size < 100))
 # [1] 316
+
+##
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_1+2_Yang_>100bp.pdf"))
+main.text <- "GEL Del"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(gels.del.nona, SIZE >= 100)$RT, subset(gels.del.nona, SIZE >= 100)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_1+2_Yang_<100bp.pdf"))
+main.text <- "GEL Del < 100 bp"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(gels.del.nona, SIZE < 100)$RT, subset(gels.del.nona, SIZE < 100)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 12/07/23
+# -----------------------------------------------------------------------------
+gels.del.nona$BED2 <- mapply(x = 1:nrow(gels.del.nona), function(x) getGenomicProperty(gels.del.nona$CHR[x], gels.del.nona$START[x], fs))
+gels.del.nona$FS <- fs[gels.del.nona$BED2,]$GENE
+gels.del.nona <- gels.del.nona[, -15]
+
+##
+gels.del.fs   <- gels.del.nona[!is.na(gels.del.nona$FS), ]
+gels.del.fs.na <- gels.del.nona[is.na(gels.del.nona$FS), ]
+
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_FS_1+2_Yang.pdf"))
+main.text <- "GEL Del"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(gels.del.fs.na$RT, gels.del.fs$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+save(gels.del, gels.del.nona, gels.del.fs, gels.del.fs.na, file=file.path(wd.rt.data, paste0("Density_GEL_Del_RT_FS_1+2_Yang.RData")))
+
+##
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_FS_1+2_Yang_>100bp.pdf"))
+main.text <- "GEL Del > 100 bp"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(gels.del.fs.na, SIZE >= 100)$RT, subset(gels.del.fs, SIZE >= 100)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_FS_1+2_Yang_<100bp.pdf"))
+main.text <- "GEL Del < 100 bp"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(gels.del.fs.na, SIZE < 100)$RT, subset(gels.del.fs, SIZE < 100)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+##
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_FS_1+2_Yang_>10kp.pdf"))
+main.text <- "GEL Del > 10 kb"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(subset(gels.del.fs.na, SIZE >= 100), SIZE >= 10000)$RT, subset(subset(gels.del.fs, SIZE >= 100), SIZE >= 10000)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_GEL_Del_RT_FS_1+2_Yang_<10kp.pdf"))
+main.text <- "GEL Del < 10 kb"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(subset(gels.del.fs.na, SIZE >= 100), SIZE < 10000)$RT, subset(subset(gels.del.fs, SIZE >= 100), SIZE < 10000)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
+
+
+
 
 file.name <- file.path(wd.rt.plots, paste0("Density_gels.del.nona_RT_2bp.pdf"))
 main.text <- "GEL Del (Yang)"
