@@ -84,13 +84,95 @@ for (c in 1:23) {
 sv.del <- rbind(sv.del.1, sv.del.2) 
 
 ##
-sv.del.1.cfs   <- sv.del.1[!is.na(sv.del.1$CFS), ]
-sv.del.1.cfs.na <- sv.del.1[is.na(sv.del.1$CFS), ]
+sv.del.fs   <- sv.del[!is.na(sv.del$FS), ]
+sv.del.fs.na <- sv.del[is.na(sv.del$FS), ]
 
-file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_SIZE_CFS.pdf"))
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_SIZE_FS_1+2.pdf"))
 main.text <- "PCAWG Del"
-xlab.text <- expression("log" * ""[10] * "(Size)")
-plotDensity2(log10(sv.del.1.cfs.na$SIZE), log10(sv.del.1.cfs$SIZE), file.name, c("black", orange), c("Not in CFS", "109 CFS"), main.text, xlab.text=xlab.text)
+xlab.text <- expression("Size [log" * ""[10] * "]")
+plotDensity2(log10(sv.del.fs.na$SIZE), log10(sv.del.fs$SIZE), file.name, c("black", red), c("Non-FS", "FS"), main.text, xlab.text=xlab.text)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_SIZE+1+2.pdf"))
+plotDensity(log10(sv.del$SIZE), file.name, col="black", main.text, xlab.text)
+
+## ???
+test <- toTable(0, 2, 2, c("9kb", "10kb"))
+rownames(test) <- c("NFS", "FS")
+test[1, 1] <- nrow(subset(sv.del.fs.na, SIZE < 10000))
+test[1, 2] <- nrow(subset(sv.del.fs.na, SIZE >= 10000))
+test[2, 1] <- nrow(subset(sv.del.fs, SIZE < 10000))
+test[2, 2] <- nrow(subset(sv.del.fs, SIZE >= 10000))
+chisq.test(test)[[3]]
+fisher.test(test)[[1]]
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 10/07/23
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang.RData")))
+
+sv.del.1$BED <- NA
+sv.del.1$BED <- mapply(x = 1:nrow(sv.del.1), function(x) unlist(subset(subset(sv.del.nona, breakpoint_id == sv.del.1$breakpoint_id[x]), START == sv.del.1$START[x])$BED))
+sv.del.1$RT2 <- NA
+sv.del.1$RT2 <- mapply(x = 1:nrow(sv.del.1), function(x) subset(subset(sv.del.nona, breakpoint_id == sv.del.1$breakpoint_id[x]), START == sv.del.1$START[x])$RT2)
+sv.del.1$RT2 <- as.numeric(sv.del.1$RT2)
+
+sv.del.2$BED <- NA
+sv.del.2$BED <- mapply(x = 1:nrow(sv.del.2), function(x) unlist(subset(subset(sv.del.nona, breakpoint_id == sv.del.2$breakpoint_id[x]), START == sv.del.2$START[x])$BED))
+sv.del.2$RT2 <- NA
+sv.del.2$RT2 <- mapply(x = 1:nrow(sv.del.2), function(x) subset(subset(sv.del.nona, breakpoint_id == sv.del.2$breakpoint_id[x]), START == sv.del.2$START[x])$RT2)
+sv.del.2$RT2 <- as.numeric(sv.del.2$RT2)
+
+sv.del <- rbind(sv.del.1, sv.del.2)
+sv.del.nona <- sv.del[!is.na(sv.del$RT2), ]
+sv.del.nona$BED <- unlist(sv.del.nona$BED)
+sv.del.nona$GC <- bed.gc[sv.del.nona$BED,]$GC
+
+##
+sv.del.fs   <- sv.del.nona[!is.na(sv.del.nona$FS), ]
+sv.del.fs.na <- sv.del.nona[is.na(sv.del.nona$FS), ]
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang.pdf"))
+main.text <- "PCAWG Del"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(sv.del.fs.na$RT2, sv.del.fs$RT2, file.name, c("black", red), c("Non-FS", "FS"), main.text, xlab.text, max=2, rt=0)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_1+2_Yang.pdf"))
+plotDensity(sv.del.nona$RT2, file.name, col="black", main.text, xlab.text, max=2, rt=0)
+
+save(sv.del, sv.del.nona, sv.del.fs, sv.del.fs.na, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang_FS.RData")))
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 10/07/23
+# -----------------------------------------------------------------------------
+load(file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang_FS.RData")))
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang_>10kb.pdf"))
+main.text <- "PCAWG Del > 10 kb"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(sv.del.fs.na, SIZE >= 10000)$RT2, subset(sv.del.fs, SIZE >= 10000)$RT2, file.name, c("black", red), c("Non-FS", "FS"), main.text, xlab.text, max=2, rt=0)
+
+file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang_<10kb.pdf"))
+main.text <- "PCAWG Del < 10 kb"
+xlab.text <- "RT (Yang et al.)"
+plotDensity2(subset(sv.del.fs.na, SIZE < 10000)$RT2, subset(sv.del.fs, SIZE < 10000)$RT2, file.name, c("black", red), c("Non-FS", "FS"), main.text, xlab.text, max=2, rt=0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 sv.del.cfs   <- sv.del[!is.na(sv.del$CFS), ]
 sv.del.cfs.na <- sv.del[is.na(sv.del$CFS), ]
@@ -136,29 +218,6 @@ plotDensity2(sv.del.fs.na$RT, sv.del.fs$RT, file.name, c("black", red), c("Not i
 
 save(sv.del, sv.del.1.cfs, sv.del.1.cfs.na, sv.del.1.mfs, sv.del.1.mfs.na, sv.del.1.fs, sv.del.1.fs.na, sv.del.cfs, sv.del.cfs.na, sv.del.mfs, sv.del.mfs.na, sv.del.fs, sv.del.fs.na, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_FS.RData")))
 
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 10/07/23
-# -----------------------------------------------------------------------------
-load(file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang.RData")))
-
-sv.del.1$BED <- NA
-sv.del.1$BED <- mapply(x = 1:nrow(sv.del.1), function(x) unlist(subset(subset(sv.del.nona, breakpoint_id == sv.del.1$breakpoint_id[x]), START == sv.del.1$START[x])$BED))
-sv.del.1$RT2 <- NA
-sv.del.1$RT2 <- mapply(x = 1:nrow(sv.del.1), function(x) subset(subset(sv.del.nona, breakpoint_id == sv.del.1$breakpoint_id[x]), START == sv.del.1$START[x])$RT2)
-sv.del.1$RT2 <- as.numeric(sv.del.1$RT2)
-
-sv.del.2$BED <- NA
-sv.del.2$BED <- mapply(x = 1:nrow(sv.del.2), function(x) unlist(subset(subset(sv.del.nona, breakpoint_id == sv.del.2$breakpoint_id[x]), START == sv.del.2$START[x])$BED))
-sv.del.2$RT2 <- NA
-sv.del.2$RT2 <- mapply(x = 1:nrow(sv.del.2), function(x) subset(subset(sv.del.nona, breakpoint_id == sv.del.2$breakpoint_id[x]), START == sv.del.2$START[x])$RT2)
-sv.del.2$RT2 <- as.numeric(sv.del.2$RT2)
-
-sv.del <- rbind(sv.del.1, sv.del.2)
-sv.del.nona <- sv.del[!is.na(sv.del$RT2), ]
-sv.del.nona$BED <- unlist(sv.del.nona$BED)
-sv.del.nona$GC <- bed.gc[sv.del.nona$BED,]$GC
-
 ##
 sv.del.cfs   <- sv.del.nona[!is.na(sv.del.nona$CFS), ]
 sv.del.cfs.na <- sv.del.nona[is.na(sv.del.nona$CFS), ]
@@ -166,7 +225,7 @@ sv.del.cfs.na <- sv.del.nona[is.na(sv.del.nona$CFS), ]
 file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_CFS_1+2_Yang.pdf"))
 main.text <- "PCAWG Del"
 xlab.text <- "RT (Yang et al.)"
-plotDensity2(sv.del.cfs.na$RT2, sv.del.cfs$RT2, file.name, c("black", orange), c("Not in CFS", "109 CFS"), main.text, xlab.text, max=2, rt=0)
+plotDensity2(sv.del.cfs.na$RT2, sv.del.cfs$RT2, file.name, c("black", orange), c("Non-CFS", "109 CFS"), main.text, xlab.text, max=2, rt=0)
 
 ##
 sv.del.mfs   <- sv.del.nona[!is.na(sv.del.nona$MFS), ]
@@ -177,16 +236,11 @@ main.text <- "PCAWG Del"
 xlab.text <- "RT (Yang et al.)"
 plotDensity2(sv.del.mfs.na$RT2, sv.del.mfs$RT2, file.name, c("black", red), c("Not in MFS", "In 21 MFS"), main.text, xlab.text, max=2, rt=0)
 
-##
-sv.del.fs   <- sv.del.nona[!is.na(sv.del.nona$FS), ]
-sv.del.fs.na <- sv.del.nona[is.na(sv.del.nona$FS), ]
 
-file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang.pdf"))
-main.text <- "PCAWG Del"
-xlab.text <- "RT (Yang et al.)"
-plotDensity2(sv.del.fs.na$RT2, sv.del.fs$RT2, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
 
-save(sv.del, sv.del.nona, sv.del.cfs, sv.del.cfs.na, sv.del.mfs, sv.del.mfs.na, sv.del.fs, sv.del.fs.na, file=file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang_FS.RData")))
+
+
+
 
 # -----------------------------------------------------------------------------
 # 
@@ -211,21 +265,9 @@ main.text <- "PCAWG Del < 10 kb"
 xlab.text <- "GC content"
 plotDensity2(subset(sv.del.fs.na, SIZE < 10000)$GC, subset(sv.del.fs, SIZE < 10000)$GC, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, min=0.2, max=0.7)
 
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 10/07/23
-# -----------------------------------------------------------------------------
-load(file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_Yang_FS.RData")))
 
-file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang_>10kb.pdf"))
-main.text <- "PCAWG Del > 10 kb"
-xlab.text <- "RT (Yang et al.)"
-plotDensity2(subset(sv.del.fs.na, SIZE >= 10000)$RT2, subset(sv.del.fs, SIZE >= 10000)$RT2, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
 
-file.name <- file.path(wd.rt.plots, paste0("Density_SV_Del_RT_FS_1+2_Yang_<10kb.pdf"))
-main.text <- "PCAWG Del < 10 kb"
-xlab.text <- "RT (Yang et al.)"
-plotDensity2(subset(sv.del.fs.na, SIZE < 10000)$RT2, subset(sv.del.fs, SIZE < 10000)$RT2, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
+
 
 ##
 load(file.path(wd.rt.data, paste0("Density_svpos_with_hg19_props_Del_FS.RData")))
