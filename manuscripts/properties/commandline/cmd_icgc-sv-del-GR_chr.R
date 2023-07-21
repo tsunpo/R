@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(TRUE)
 CHR  <- as.numeric(args[1])
+FILE <- args[2]
+VALUE <- as.numeric(args[3])
 
 # =============================================================================
 # Manuscript   : 
@@ -49,17 +51,8 @@ sv <- readTable(file.path(wd.nr3, "results/2017_06_positions/svpos_with_hg19_pro
 colnames(sv)[c(1,2)] <- c("CHR", "START")
 sv.del <- subset(sv, class1 == "Del")
 
-cfs <- readTable(file.path(wd.nr3, "results/2017_06_positions/cfs_pos.txt"), header=T, rownames=F, sep="")
-colnames(cfs) <- c("CHR", "START", "END", "VALUE")
-cfs$BED <- mapply(x = 1:nrow(cfs), function(x) paste0("P", x))
-rownames(cfs) <- cfs$BED
-
-mfs <- readTable(file.path(wd.nr3, "results/2017_06_positions/Table_E2_MFS_21.txt"), header=T, rownames=F, sep="")
-mfs$BED <- mapply(x = 1:nrow(mfs), function(x) paste0("P", x))
-rownames(mfs) <- mfs$BED
-
-fs <- readTable(file.path(wd.nr3, "results/2017_06_positions/Supplementary_Table_5_FS_18.txt"), header=T, rownames=F, sep="")
-colnames(fs)[1:5] <- c("CHR", "START", "END", "WIDTH", "GENE")
+fs <- data.frame(get(load(file.path(wd.nr3, "results/GRanges", paste0(FILE, "_GR.RData")))))
+colnames(fs)[c(1:3,VALUE)] <- c("CHR", "START", "END", "VALUE")
 fs$BED <- mapply(x = 1:nrow(fs), function(x) paste0("P", x))
 rownames(fs) <- fs$BED
 
@@ -70,8 +63,9 @@ rownames(fs) <- fs$BED
 chr <- chrs[CHR]
 sv.del.chr <- subset(sv.del, CHR == chr)
 sv.del.chr$SIZE <- NA
-cfs.chr <- subset(cfs, CHR == chr)
+fs.chr <- subset(fs, CHR == chr)
 
+removed <- c()
 ids <- unique(sv.del.chr$breakpoint_id)
 sv.del.chr.1 <- sv.del.chr[0,]
 sv.del.chr.2 <- sv.del.chr[0,]
@@ -97,39 +91,13 @@ for (d in 1:length(ids)) {
 }
 
 ## Breakpoint 1
-sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], cfs))
-sv.del.chr.1$CFS <- cfs[sv.del.chr.1$BED,]$VALUE
-
-sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], mfs))
-sv.del.chr.1$MFS <- mfs[sv.del.chr.1$BED,]$GENE
-
 sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], fs))
-sv.del.chr.1$FS <- fs[sv.del.chr.1$BED,]$GENE
-#sv.del.chr.1 <- sv.del.chr.1[, -49]
+sv.del.chr.1$VALUE <- fs[sv.del.chr.1$BED,]$VALUE
+sv.del.chr.1 <- sv.del.chr.1[, -49]
 
 ## Breakpoint 2
-sv.del.chr.2$BED <- mapply(x = 1:nrow(sv.del.chr.2), function(x) getGenomicProperty(sv.del.chr.2$CHR[x], sv.del.chr.2$START[x], cfs))
-sv.del.chr.2$CFS <- cfs[sv.del.chr.2$BED,]$VALUE
-
-sv.del.chr.2$BED <- mapply(x = 1:nrow(sv.del.chr.2), function(x) getGenomicProperty(sv.del.chr.2$CHR[x], sv.del.chr.2$START[x], mfs))
-sv.del.chr.2$MFS <- mfs[sv.del.chr.2$BED,]$GENE
-
 sv.del.chr.2$BED <- mapply(x = 1:nrow(sv.del.chr.2), function(x) getGenomicProperty(sv.del.chr.2$CHR[x], sv.del.chr.2$START[x], fs))
-sv.del.chr.2$FS <- fs[sv.del.chr.2$BED,]$GENE
-#sv.del.chr.2 <- sv.del.chr.2[, -49]
+sv.del.chr.2$VALUE <- fs[sv.del.chr.2$BED,]$VALUE
+sv.del.chr.2 <- sv.del.chr.2[, -49]
 
-# -----------------------------------------------------------------------------
-# RT RFD
-# Last Modified: 29/06/23
-# -----------------------------------------------------------------------------
-kb <- 20
-rfd <- 0.9
-load(file.path(wd.rt.data, "bstrps", paste0("nrds.RT.2_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
-
-sv.del.chr.1$BED <- mapply(x = 1:nrow(sv.del.chr.1), function(x) getGenomicProperty(sv.del.chr.1$CHR[x], sv.del.chr.1$START[x], cfs))
-sv.del.chr.1$CFS <- cfs[sv.del.chr.1$BED,]$VALUE
-
-
-
-
-save(removed, sv.del.chr.1, sv.del.chr.2, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_del_chr", CHR, ".RData")))
+save(removed, sv.del.chr.1, sv.del.chr.2, file=file.path(wd.rt.data, paste0("icgc_wgs_sv_del_", FILE, "_chr", CHR, ".RData")))

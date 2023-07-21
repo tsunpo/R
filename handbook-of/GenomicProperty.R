@@ -26,6 +26,15 @@ getGenomicProperty <- function(chr, bp, rt) {
 		    return(paste(rt.chr.start.end$BED, collapse=","))
 }
 
+getGenomicPropertyCount <- function(chr, bp, rt) {
+	  rt.chr <- subset(rt, CHR == chr)
+	
+	  rt.chr.start <- subset(rt.chr, START <= bp)
+	  rt.chr.start.end <- subset(rt.chr.start, END >= bp)
+	
+	  return(nrow(rt.chr.start.end))
+}
+
 getDELRTNRFD <- function(del, nrds.RT.NRFD, bed.gc) {
 	  chr <- paste0("chr", del$chrom1)
 	  bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -81,7 +90,7 @@ plotDensity <- function(reals, file.name, col, main.text, xlab.text="", showMedi
 	  d <- density(reals)
 	  xlim <- c(min(reals), max(reals))
 	  if (!is.na(max))
-	  	  xlim <- c(min(-max), max(max))
+	  	  xlim <- c(-max, max)
 	
 	  pdf(file.name, height=6, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
@@ -93,14 +102,18 @@ plotDensity <- function(reals, file.name, col, main.text, xlab.text="", showMedi
 	  dev.off()
 }
 
-plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xlab.text="", showMedian=F, max=NA, rt=NA) {
+plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F) {
 	  ylab.text <- "Density"
 	  d <- density(reals)
 	  d2 <- density(randoms)
 	  xlim <- c(min(c(reals, randoms)), max(c(reals, randoms)))
+	  if (rev)
+	     xlim <- rev(range(c(reals, randoms)))
 	  ylim <- c(min(c(d$y, d2$y)), max(c(d$y, d2$y)))
 	  if (!is.na(max))
-		    xlim <- c(min(-max), max(max))
+		    xlim <- c(-max, max)
+	  if (!is.na(min))
+	  	  xlim <- c( min, max)
 	
 	  pdf(file.name, height=6, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))

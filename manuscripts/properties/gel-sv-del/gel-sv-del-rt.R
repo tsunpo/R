@@ -160,6 +160,21 @@ main.text <- "GEL Del < 10 kb"
 xlab.text <- "RT (Yang et al.)"
 plotDensity2(subset(subset(gels.del.fs.na, SIZE >= 100), SIZE < 10000)$RT, subset(subset(gels.del.fs, SIZE >= 100), SIZE < 10000)$RT, file.name, c("black", red), c("Not in FS", "In FS"), main.text, xlab.text, max=2, rt=0)
 
+###
+##
+gels.del.fs.na.9kb  <- subset(subset(gels.del.fs.na, SIZE >= 100), SIZE < 10000)
+gels.del.fs.na.10kb <- subset(subset(gels.del.fs.na, SIZE >= 100), SIZE >= 10000)
+
+gels.del.fs.9kb <- subset(subset(gels.del.fs, SIZE >= 100), SIZE < 10000)
+gels.del.fs.9kb.e <- subset(gels.del.fs.9kb, RT >= 0)
+gels.del.fs.9kb.l <- subset(gels.del.fs.9kb, RT < 0)
+
+gels.del.fs.10kb <- subset(subset(gels.del.fs, SIZE >= 100), SIZE >= 10000)
+gels.del.fs.10kb.e <- subset(gels.del.fs.10kb, RT >= 0)
+gels.del.fs.10kb.l <- subset(gels.del.fs.10kb, RT < 0)
+
+
+
 
 
 
