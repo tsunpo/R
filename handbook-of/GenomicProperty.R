@@ -131,7 +131,7 @@ plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xl
 	  if (showMedian)
 		    abline(v=median(reals), col=cols[1], lty=5, lwd=3)
 	
-	  legend("topright", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
+	  legend("topleft", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
 	  dev.off()
 }
 
