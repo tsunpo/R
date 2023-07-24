@@ -131,7 +131,36 @@ plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xl
 	  if (showMedian)
 		    abline(v=median(reals), col=cols[1], lty=5, lwd=3)
 	
-	  legend("topleft", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
+	  legend("topright", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
+	  dev.off()
+}
+
+plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F) {
+	  ylab.text <- "Density"
+	  d <- density(reals)
+	  d2 <- density(randoms)
+	  d3 <- density(randoms3)
+	  ylim <- c(min(c(d$y, d2$y, d3$y)), max(c(d$y, d2$y, d3$y)))
+	  xlim <- c(min(c(reals, randoms, randoms3)), max(c(reals, randoms, randoms3)))
+	  if (!is.na(max))
+		    xlim <- c(-max, max)
+	  if (!is.na(min))
+		    xlim <- c( min, max)
+	  if (rev)
+		    xlim <- rev(range(c(reals, randoms, randoms3)))
+	
+	  pdf(file.name, height=6, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, ylim=ylim, col=cols[1], lwd=3, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  lines(d2, col=cols[2], lwd=3)
+	  lines(d3, col=cols[3], lwd=3)
+	
+	  if (!is.na(rt))
+		    abline(v=rt, lty=5, lwd=2)
+	  if (showMedian)
+		    abline(v=median(reals), col=cols[1], lty=5, lwd=3)
+	
+	  legend("topright", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
 	  dev.off()
 }
 
