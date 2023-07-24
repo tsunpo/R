@@ -5,6 +5,6 @@
 
 # Temporary files
 backup/*
-manuscripts/properties/*
+manuscripts/properties
 pan-body/*
 tmp/*
