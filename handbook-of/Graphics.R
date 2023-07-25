@@ -232,7 +232,7 @@ getPvalueSignificanceLevel <- function(p) {
    return(text)
 }
 
-plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3, cols) {
+plotBox <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, height=6, width=3) {
    trait <- rep(0, nrow(tpm.1))
    trait <- c(trait, rep(1, nrow(tpm.2)))
    trait <- as.factor(trait)
