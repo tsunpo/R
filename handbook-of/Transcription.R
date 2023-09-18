@@ -268,15 +268,34 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    xlab.txt <- paste0("PC", x, " (", pcaProportionofVariance(pca, x), "%)")
    ylab.txt <- paste0("PC", y, " (", pcaProportionofVariance(pca, y), "%)")
    
-   pdf(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".pdf")), height=size, width=size)
+   png(file.path(wd.de.data, paste0(file.name, "_", names(scores)[x], "-", names(scores)[y], ".png")), units="in", res=300, height=size, width=size)
    par(mar=c(5.1, 4.7, 4.1, 1.4))
    plot(scores[, x]*flip.x, scores[, y]*flip.y, col=trait.col, pch=19, cex=2, main=file.main[1], xlab=xlab.txt, ylab=ylab.txt, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
    #plot(scores[, x]*flip.x, scores[, y]*flip.y, col=NA, pch=19, cex=1.5, main=file.main[1], xlab=xlab.txt, ylab="", cex.axis=1.8, cex.lab=1.9, cex.main=2.1)
 
+   #idx <- which(trait == "Non-FS")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   #idx <- which(trait == "PCAWG_FS")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   #idx <- which(trait == "GEL_FS")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   
+   #idx <- which(trait == "Non-FS")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   #idx <- which(trait == "PCAWG_FS_Late")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   #idx <- which(trait == "PCAWG_FS_Very_Late")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+
+   idx <- which(trait == "Non-FS")
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   idx <- which(trait == "FS")
+   points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   
    #mtext(file.main[2], cex=1.2, line=0.3)
    for (l in 1:length(trait.v))
-      trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
-      #trait.v[l] <- trait.v[l]
+   	  #trait.v[l] <- paste0(trait.v[l], " (n=", length(which(trait == trait.v[l])), ")")
+      trait.v[l] <- trait.v[l]
    
    #trait.v[5] <- "Others"   ## For PCA ALL
    #if (BASE != "") {
@@ -287,7 +306,7 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #if (is.na(legend.title))
    #   legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.8)   ##bty="n")
    #else
-      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.6)
+      legend(legend, trait.v, col=cols, pch=19, pt.cex=2.5, cex=1.6, bg="transparent")
    #mtext(ylab.txt, side=2, line=2.75, cex=1.9)
    dev.off()
 }
@@ -354,6 +373,7 @@ testANOVA <- function(x, expr, pheno) {
 
 ## source("https://bioconductor.org/biocLite.R")
 ## biocLite("qvalue")
+## BiocManager::install("qvalue")
 testFDR <- function(P, test.fdr) {
    if (test.fdr == "Q") {
       library(qvalue)
