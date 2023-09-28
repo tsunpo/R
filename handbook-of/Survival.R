@@ -144,8 +144,8 @@ getMutGene <- function(annotmuts.impact) {
 	  return(mut.gene)
 }
 
-getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=2) {
-	  pmr.mut.gene <- toTable(0, 13, nrow(mut.gene.n), c("MUT", "N_FREQ", "S_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "TTYPE"))
+getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=1) {
+	  pmr.mut.gene <- toTable(0, 15, nrow(mut.gene.n), c("MUT", "N_FREQ", "S_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "dNdS_N", "dNdS_RHO", "dNdS_P"))
    pmr.mut.gene$MUT <- rownames(mut.gene.n)
    rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
  
@@ -159,14 +159,35 @@ getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=2) {
       ids.s  <- colnames(mut.gene.s)[which(mut.gene.s[gene,] != 0)]
       #pmr.mut.gene$TTYPE[g] <- paste(unique(samples.mut.hist[ids,]$histology_abbreviation), collapse=",")
       
+      samples.mut.hist.gene <- subset(samples.mut.hist, icgc_specimen_id %in% c(ids.n, ids.s))
+      median <- median(samples.mut.hist.gene$COR)
+      
       samples.mut.mut <- subset(samples.mut.hist, icgc_specimen_id %in% ids.n)
       samples.mut.wt  <- subset(samples.mut.hist, icgc_specimen_id %in% ids.s)
   
-      mut.g1 <- rownames(subset(samples.mut.mut, SORTING == "G1"))
-      mut.s  <- rownames(subset(samples.mut.mut, SORTING == "S"))
-      wt.g1  <- rownames(subset(samples.mut.wt,  SORTING == "G1"))
-      wt.s   <- rownames(subset(samples.mut.wt,  SORTING == "S"))
-
+      #mut.g1 <- rownames(subset(samples.mut.mut, SORTING == "G1"))
+      #mut.s  <- rownames(subset(samples.mut.mut, SORTING == "S"))
+      #wt.g1  <- rownames(subset(samples.mut.wt,  SORTING == "G1"))
+      #wt.s   <- rownames(subset(samples.mut.wt,  SORTING == "S"))
+      mut.g1 <- rownames(subset(samples.mut.mut, COR < median))
+      mut.s  <- rownames(subset(samples.mut.mut, COR >= median))
+      wt.g1  <- rownames(subset(samples.mut.wt,  COR < median))
+      wt.s   <- rownames(subset(samples.mut.wt,  COR >= median))
+      
+      overlaps <- intersect(rownames((samples.mut.mut)), rownames((samples.mut.wt)))
+      if (length(overlaps) >= 3) {
+         samples.mut.hist.gene.o <- samples.mut.hist.gene[overlaps,]
+         samples.mut.hist.gene.o$dNdS <- mapply(x = 1:length(overlaps), function(x) mut.gene.n[gene, overlaps[x]] / mut.gene.s[gene, overlaps[x]])
+      
+         cor <- cor.test(samples.mut.hist.gene.o$COR, samples.mut.hist.gene.o$dNdS, method="spearman", exact=F)
+         pmr.mut.gene$dNdS_N[g] <- length(overlaps)
+         pmr.mut.gene$dNdS_RHO[g] <- cor[[4]]
+         pmr.mut.gene$dNdS_P[g] <- cor[[3]]
+         
+         #file.name <- file.path(wd.driver.plots, paste0(hist, "_", gene, "_SCF-vs-dNdS"))
+         #plotCorrelation(file.name, paste0(gene, " / ", hist), "dN/dS", "SCF index", samples.mut.hist.gene.o$dNdS, samples.mut.hist.gene.o$COR, pos="bottomright", cols=c("dimgray", "black"))
+      }
+      
       test <- toTable(0, 2, 2, c("G1", "S"))
       rownames(test) <- c("MUT", "WT")
       test[1, 1] <- sum(mut.gene.n[g, mut.g1])
@@ -179,7 +200,8 @@ getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=2) {
          pmr.mut.gene$MUT_S[g]  <- test[1, 2]
          pmr.mut.gene$WT_G1[g]  <- test[2, 1]
          pmr.mut.gene$WT_S[g]   <- test[2, 2]
-         pmr.mut.gene$P[g]     <- fisher.test(test)[[1]]
+         #pmr.mut.gene$P[g]      <- USP.test(test)[[1]]
+         pmr.mut.gene$P[g]      <- fisher.test(test)[[1]]
          #pmr.mut.gene$P[g]      <- chisq.test(test)[[3]]
    
          pmr.mut.gene$G1MR[g] <- pmr.mut.gene$MUT_G1[g] / pmr.mut.gene$WT_G1[g]
@@ -187,15 +209,23 @@ getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=2) {
          pmr.mut.gene$PMR[g]  <- pmr.mut.gene$SMR[g]    / pmr.mut.gene$G1MR[g]
       }
    }
-   pmr.mut.gene <- subset(pmr.mut.gene, P != 0)
-   pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
-   if (nrow(pmr.mut.gene) >= 4) {
-      pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "BH")
-   }
+   #pmr.mut.gene <- subset(pmr.mut.gene, dNdS_P != 0)
+   #pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
+   #if (nrow(pmr.mut.gene) >= 4) {
+   #   pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "BH")
+   #}
    #pmr <- pmr.mut.gene
    #annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
    #pmr.mut.gene <- cbind(annot[rownames(pmr),], pmr.mut.gene[, -1])
  
+   pmr.mut.gene <- subset(pmr.mut.gene, dNdS_P != 0)
+   pmr.mut.gene <- pmr.mut.gene[!is.na(pmr.mut.gene$dNdS_P),]
+   #pmr.mut.gene <- subset(pmr.mut.gene, dNdS_N >= 10)
+   pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$dNdS_P, decreasing=F),]
+   if (nrow(pmr.mut.gene) >= 4) {
+      pmr.mut.gene$dNdS_FDR <- testFDR(pmr.mut.gene$dNdS_P, "BH")
+   }
+   
    return(pmr.mut.gene)
 }
 
@@ -292,6 +322,52 @@ plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.his
 							           text(x[idx], y[idx], genes[g], col="black", pos=3, cex=1.8)
 					          }
             }
+			      }
+		    }
+	  }
+	
+	  dev.off()
+}
+
+plotdNdSCOR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.hist, xmax=NA, ymax=NA, size=6, cols=c(adjustcolor.blue, adjustcolor.red), h=3) {
+	  x <- pmr.mut.gene.hist$dNdS_RHO
+	  y <- -log10(pmr.mut.gene.hist$dNdS_P)
+	  genes <- pmr.mut.gene.hist$MUT
+	
+	  xlim <- c(min(x), max(x))
+	  if (!is.na(xmax)) xlim <- c(0, xmax)
+	  ylim <- c(0, max(y))
+	  if (!is.na(ymax)) ylim <- c(0, ymax)
+	
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=16, cex=2, col="white", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  idx.down   <- which(x < 0)
+	  points(x[idx.down], y[idx.down], pch=16, col=cols[1], cex=2)
+	  idx.up   <- which(x >= 0)
+	  points(x[idx.up],   y[idx.up],   pch=16, col=cols[2], cex=2)   
+	
+	  #abline(v=1, lty=5, col=red, lwd=2)
+	  abline(h=h, lty=5, col="black", lwd=2)
+	
+	  par(xpd=T)
+	  if (length(genes) != 0) {
+		    for (g in 1:5) {
+			      if (!is.na(genes[g])) {
+				        idx <- which(pmr.mut.gene.hist$MUT == genes[g])
+				
+				        if (length(idx) > 0) {
+					          if (x[idx] > 1) {
+						            points(x[idx], y[idx], pch=1, col="black", cex=2)
+						            #text(x[idx], y[idx], genes[g], col="black", adj=c(0, -0.5), cex=1.8)
+						            text(x[idx], y[idx], genes[g], col="black", pos=3, cex=1.8)
+					          } else {
+						            points(x[idx], y[idx], pch=1, col="black", cex=2)
+						            #text(x[idx], y[idx], genes[g], col="black", adj=c(1, -0.5), cex=1.8)
+						            text(x[idx], y[idx], genes[g], col="black", pos=3, cex=1.8)
+					          }
+				        }
 			      }
 		    }
 	  }

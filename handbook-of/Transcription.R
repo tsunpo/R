@@ -287,9 +287,14 @@ plotPCA <- function(x, y, pca, trait, wd.de.data, file.name, size, file.main, le
    #idx <- which(trait == "PCAWG_FS_Very_Late")
    #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
 
-   idx <- which(trait == "Non-FS")
+   #idx <- which(trait == "Non-FS")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   #idx <- which(trait == "FS")
+   #points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
+   
+   idx <- which(trait == "Early")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
-   idx <- which(trait == "FS")
+   idx <- which(trait == "Late")
    points(scores[idx, x]*flip.x, scores[idx, y]*flip.y, col=trait.col[idx], pch=19, cex=2)
    
    #mtext(file.main[2], cex=1.2, line=0.3)

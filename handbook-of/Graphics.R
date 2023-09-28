@@ -41,6 +41,26 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
 	  dev.off()
 }
 
+plotCorrelation2 <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5, icgc, hists, adjs) {
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	
+	  lines(x=c(-1,1), y=c(-1,1), col=cols[2], lty=2, lwd=4)
+
+	  par(xpd=T)
+	  for (h in 1:length(hists)) {
+	  	  for (i in 1:nrow(icgc)) {
+	  		    if (rownames(icgc)[i] == hists[h]) {
+	  			      points(x[i], y[i], pch=1, col="black", cex=2)
+	  			      text(x[i], y[i], hists[h], col="black", adj=unlist(adjs[h]), cex=2)
+	  		    }
+	  	  }
+	  }
+	  
+	  dev.off()
+}
+
 plotCorrelation5 <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topleft", cols=c("dimgray", "black"), size=5, icgc, hists, adjs) {
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))  
@@ -48,8 +68,35 @@ plotCorrelation5 <- function(file.name, main.text, xlab.text, ylab.text, x, y, p
 	
 	  lm.fit <- lm(y ~ x)
 	  abline(lm.fit, lwd=5, col=cols[2])
+	
+	  par(xpd=T)
+	  for (h in 1:length(hists)) {
+		    for (i in 1:nrow(icgc)) {
+			      if (rownames(icgc)[i] == hists[h]) {
+				        points(x[i], y[i], pch=1, col="black", cex=2)
+				        text(x[i], y[i], hists[h], col="black", adj=unlist(adjs[h]), cex=2)
+			      }
+		    }
+	  }
+	
+	  cor <- cor.test(y, x, method="spearman", exact=F)
+	
+	  legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=1, bty="n", cex=2)
+	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2)
+	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2)
+	
+	  dev.off()
+}
 
-	  par(xpd=T)	
+plotCorrelation50 <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topleft", cols=c("dimgray", "black"), size=5, icgc, hists, adjs) {
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))  
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=1, cex=2, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	
+	  lm.fit <- lm(y ~ x)
+	  abline(lm.fit, lwd=5, col=cols[2])
+
+	  par(xpd=T)
 	  for (h in 1:length(hists)) {
 	  	  for (i in 1:nrow(icgc)) {
 	  	  	  if (rownames(icgc)[i] == hists[h]) {

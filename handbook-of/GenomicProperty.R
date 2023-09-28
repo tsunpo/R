@@ -88,6 +88,8 @@ toFrequencyTable <- function(partitions) {
 plotDensity <- function(reals, file.name, col, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F, ymax=NA) {
 	  ylab.text <- "Density"
 	  d <- density(reals)
+	  
+	  ylim <- c(min(d$y), max(d$y))
 	  if (!is.na(ymax))
 	  	  ylim <- c(0, ymax)
 	  xlim <- c(min(reals), max(reals))
@@ -110,7 +112,7 @@ plotDensity <- function(reals, file.name, col, main.text, xlab.text="", showMedi
 	  dev.off()
 }
 
-plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F, ymax=NA) {
+plotDensity2 <- function(reals, randoms, file.name, cols, legends, legend, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F, ymax=NA) {
 	  ylab.text <- "Density"
 	  d <- density(reals)
 	  d2 <- density(randoms)
@@ -138,15 +140,21 @@ plotDensity2 <- function(reals, randoms, file.name, cols, legends, main.text, xl
 	  if (showMedian)
 		    abline(v=median(reals), col=cols[1], lty=5, lwd=3)
 	
-	  legend("topleft", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
+	  #abline(v=4, lty=5, lwd=3)
+	  
+	  legend(legend, legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
 	  dev.off()
 }
 
-plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F) {
+plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, legend, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F) {
 	  ylab.text <- "Density"
 	  d <- density(reals)
 	  d2 <- density(randoms)
 	  d3 <- density(randoms3)
+	  d$y <- d$y * length(reals) / (length(reals) + length(randoms) + length(randoms3))
+	  d2$y <- d2$y * length(randoms) / (length(reals) + length(randoms) + length(randoms3))
+	  d3$y <- d3$y * length(randoms3) / (length(reals) + length(randoms) + length(randoms3))
+	  
 	  ylim <- c(min(c(d$y, d2$y, d3$y)), max(c(d$y, d2$y, d3$y)))
 	  xlim <- c(min(c(reals, randoms, randoms3)), max(c(reals, randoms, randoms3)))
 	  if (!is.na(max))
@@ -167,9 +175,38 @@ plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, mai
 	  if (showMedian)
 		    abline(v=median(reals), col=cols[1], lty=5, lwd=3)
 	
-	  legend("topright", legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
+	  legend(legend, legend=legends, col=cols, lty=1, lwd=5, pt.cex=1.5, cex=1.8)
 	  dev.off()
 }
+
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=6, width=4) {
+	  trait <- rep(0, length(tpm.1))
+	  trait <- c(trait, rep(1, length(tpm.2)))
+	  trait <- as.factor(trait)
+	  expr <- as.numeric(c(tpm.1, tpm.2))
+	  ylim <- c(min(expr), max(expr))
+	
+	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  boxplot(expr ~ trait, outline=F, xaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  abline(h=0, col="black", lty=5, lwd=3)
+	  
+	  p <- testU(tpm.1, tpm.2)
+	  text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
+	  lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
+
+	  text(1.5, ylim[1]+0.1, expression(italic('P')~"                   "), cex=1.9)
+	  text(1.5, ylim[1]+0.1, paste0("   = ", scientific(p)), cex=1.9)
+
+	  axis(side=1, at=1, labels=names[1], font=2, cex.axis=1.8)
+	  axis(side=1, at=2, labels=names[2], font=2, cex.axis=1.8)
+	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, cex.axis=1.8)
+	  axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, cex.axis=1.8)
+	  dev.off()
+}
+
+
+
 
 plotDensityWilcox <- function(reals, randoms, file.name, col, main.text, xlab.text, showMedian=F, max=2) {
 	  ylab.text <- "Density"
