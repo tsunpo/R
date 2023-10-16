@@ -890,7 +890,7 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    xlab.text <- "Chromosome"
    cols <- c(red, blue, "black")
    #ylim <- getYlim(sprs$spr, unit)
-   ylim <- c(-0.6, 1)
+   ylim <- c(-0.8, 1)
     
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
@@ -931,7 +931,7 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
 
 plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, ylab.text, cex, size=5) {
    cols <- c(red, blue, "black", green)
-   ylim <- c(-0.6, 1)
+   ylim <- c(-0.8, 1)
    
    unit <- (max(means) - min(means))/15
    xlim <- c(min(means) - unit, max(means) + unit)

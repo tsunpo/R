@@ -192,18 +192,21 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  abline(h=0, col="black", lty=5, lwd=3)
 	  
 	  p <- testU(tpm.1, tpm.2)
-	  text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
-	  lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
+	  #text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
+	  #lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
 
-	  text(1.5, ylim[1]+0.1, expression(italic('P')~"                   "), cex=1.9)
-	  text(1.5, ylim[1]+0.1, paste0("   = ", scientific(p)), cex=1.9)
+	  text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
+	  text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
 
 	  axis(side=1, at=1, labels=names[1], font=2, cex.axis=1.8)
 	  axis(side=1, at=2, labels=names[2], font=2, cex.axis=1.8)
-	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, cex.axis=1.8)
-	  axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, cex.axis=1.8)
+	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, cex.axis=1.8, col.ticks="white")
+	  axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, cex.axis=1.8, col.ticks="white")
 	  dev.off()
 }
+
+
+
 
 
 

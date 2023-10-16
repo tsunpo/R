@@ -24,7 +24,7 @@ load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 # -----------------------------------------------------------------------------
 #wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "LCL"
 BASE1 <- "T"
 BASE0 <- "N"
@@ -144,6 +144,11 @@ file.name <- file.path(wd.rt.plots, "RTS_LCL-S-G1_spline_spearman_chr2_NEW_lwd=3
 main.text <- c("Replication timing skew (RTS)", "")
 ylab.text <- "RTS = (E-L)/(E+L)"
 plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2)
+
+file.name <- file.path(wd.rt.plots, "RTS_Koren_16")
+main.text <- c("Reference RT (Koren 2012)", "")
+ylab.text <- "Replication timing skew"
+plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 16, 17, 19), digits=3, unit=5, ylab.text, cex=2, size=6)
 
 
 

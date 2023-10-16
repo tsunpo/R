@@ -20,10 +20,9 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Step 0: Set working directory
 # Last Modified: 18/02/22
 # -----------------------------------------------------------------------------
-#wd <- "/projects/cangen/tyang2"            ## tyang2@cheops
-#wd <- "/ngs/cangen/tyang2"                 ## tyang2@gauss
-#wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
-wd <- "/Users/ty2/Work/uni-koeln/tyang2"    ## tp2@localhost
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
+wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "ICGC"
 base  <- tolower(BASE)
 
@@ -66,16 +65,6 @@ idx <- which(totals$wgs_id %in% mappings$pcawg_wgs_id)
 totals <- totals[idx,]
 nrow(totals)
 # [1] 2744
-
-idx <- which(mappings$pcawg_wgs_id %in% totals$wgs_id)
-mappings <- mappings[idx,]
-nrow(mappings)
-# [1] 3744
-mappings <- subset(mappings, specimen_library_strategy != "RNA-Seq")
-nrow(mappings)
-# [1] 2744
-rownames(mappings) <- mappings$pcawg_wgs_id
-mappings <- mappings[rownames(totals),]
 
 dim(subset(as.data.frame(table(samples$icgc_donor_id)), Freq > 1))
 # [1] 53  2
@@ -140,195 +129,14 @@ writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DAT
 save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
 
 # -----------------------------------------------------------------------------
-# PanImmune
-# Last Modified: 06/10/23; 16/03/23
+# Purity
+# Last Modified: 23/10/22
 # -----------------------------------------------------------------------------
-immunes <- readTable(file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/Thorsson 2018", "PanImmune.txt"), header=T, rownames=T, sep="\t")
-nrow(immunes)
-# [1] 11080
+purities <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/", "Purity.txt"), header=T, rownames=3, sep="\t")
+nrow(purities)
 
-tcgas <- intersect(rownames(immunes), mappings$submitted_donor_id)
-length(tcgas)
-# [1] 860
-
-mappings.tcga <- subset(mappings, submitted_donor_id %in% tcgas)
-mappings.tcga.rna <- subset(mappings.tcga, specimen_library_strategy == "RNA-Seq")
-mappings.tcga.wgs <- subset(mappings.tcga, specimen_library_strategy == "WGS")
-nrow(mappings.tcga.rna)
-# [1] 792
-nrow(mappings.tcga.wgs)
-# [1] 860
-overlaps <- intersect(mappings.tcga.wgs$icgc_specimen_id, mappings.tcga.rna$icgc_specimen_id)
-length(overlaps)
-# [1] 792
-
-rownames(mappings.tcga.rna) <- mappings.tcga.rna$submitted_specimen_id
-rownames(mappings.tcga.wgs) <- mappings.tcga.wgs$submitted_specimen_id
-overlaps.2 <- intersect(rownames(immunes), mappings.tcga.wgs$submitted_donor_id)
-length(overlaps.2)
-# [1] 860
-
-immunes.tcga <- cbind(immunes[overlaps.2,], mappings.tcga.wgs[overlaps.2,])
-rownames(immunes.tcga) <- immunes.tcga$icgc_specimen_id
-
-overlaps.3 <- intersect(rownames(samples.h), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
-samples.mut.tcga <- cbind(samples.h[overlaps.3,], immunes.tcga[overlaps.3,])
-nrow(samples.mut.tcga)
-# [1] 736
-
-overlaps.3 <- intersect(rownames(samples.mut), rownames(immunes.tcga))   ## n=2545 (Total samples with SNVs)
-samples.mut.tcga <- cbind(samples.mut[overlaps.3,], immunes.tcga[overlaps.3,])
-nrow(samples.mut.tcga)
-# [1] 710
-
-# -----------------------------------------------------------------------------
-# PanImmune (Global)
-# Last Modified: 06/10/23; 16/03/23
-# -----------------------------------------------------------------------------
-cols <- colnames(samples.mut.tcga)[18:77]
-test <- toTable(0, 3, length(cols), c("PanImmune", "rho", "P"))
-for (c in 18:77) {
-	  col <- colnames(samples.mut.tcga)[c]
-	  col2 <- paste0(unlist(strsplit(col, "\\.")), collapse=" ")
-	  if (col == "Homologous.Recombination.Defects")
-		    col2 <- "HR Defects"
-	
-	  samples.mut.tcga.col <- samples.mut.tcga[!is.na(samples.mut.tcga[, c]),]
-	  x=samples.mut.tcga.col[, c]
-	  y=samples.mut.tcga.col$COR
-	  cor <- cor.test(y, x, method="spearman", exact=F)
-	  test$PanImmune[c-17] <- col
-	  test$rho[c-17] <- cor[[4]]
-	  test$P[c-17]   <- cor[[3]]
-	
-  	file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-", col))
-	  main.text <- c(col2, "")
-	  xlab.text <- paste0("n=", nrow(samples.mut.tcga.col))
-	  ylab.text <- "SCF index"
-	  plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=x, y=y, pos="topright", cols=c("dimgray", "black"), size=5)
-}
-test <- test[order(test$rho, decreasing=T),]
-writeTable(test, file.path(wd.rt.plots, "Cor_SCF-vs-PanImmune_n=2542.txt"), colnames=T, rownames=F, sep="\t")
-
-# -----------------------------------------------------------------------------
-# PanImmune (Hist)
-# Last Modified: 06/10/23; 16/03/23
-# -----------------------------------------------------------------------------
-for (h in 1:nrow(icgc)) {
-	hist <- rownames(icgc)[h]
-	samples.mut.tcga.hist <- subset(samples.mut.tcga$histology_abbreviation == )
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-###
-## 16/03/23 PanImmune
-immunes <- readTable(file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/Thorsson 2018", "PanImmune.txt"), header=T, rownames=T, sep="\t")
-nrow(immunes)
-# [1] 11080
-
-tcgas <- intersect(rownames(immunes), mappings$submitted_donor_id)
-length(tcgas)
-# [1] 814
-
-mappings.tcga <- subset(mappings, submitted_donor_id %in% tcgas)
-rownames(mappings.tcga) <- mappings.tcga$submitted_donor_id
-immunes.tcga <- immunes[mappings.tcga$submitted_donor_id,]
-for (h in 1:length(hists)) {
-	  mappings.tcga.hist <- subset(mappings.tcga, histology_abbreviation == hists[h])
-	  immunes.tcga.hist  <- immunes[rownames(mappings.tcga.hist),]
-	  
-	  ##
-	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Leukocyte.Fraction),]
-	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
-	  if (nrow(samples.tcga) > 1) {
-	     file.names <- file.path(wd.rt.plots, paste0("Leukocyte.Fraction_", hists[h], ".pdf"))
-	     plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Leukocyte fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Leukocyte.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-	  }
-	  
-	  ##
-	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Stromal.Fraction),]
-	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
-	  if (nrow(samples.tcga) > 1) {
-	  	  file.names <- file.path(wd.rt.plots, paste0("Stromal.Fraction_", hists[h], ".pdf"))
-	  	  plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Stromal fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Stromal.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-	  }
-	  
-	  ##
-	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Proliferation),]
-	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
-	  if (nrow(samples.tcga) > 1) {
-	  	  file.names <- file.path(wd.rt.plots, paste0("Proliferation_", hists[h], ".pdf"))
-	  	  plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Proliferation", "S-phase cell fraction index", immunes.tcga.hist.nona$Proliferation, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-	  }
-}
-
-##
-for (c in 5:22) {
- 	 col <- colnames(immunes.tcga)[c]
- 	 col.name <- unlist(strsplit(col, "\\."))
- 	 col.name <- "HR defects"
- 	 if (length(col.name) != 1) {
- 	    for (n in 2:length(col.name))
- 	  	    col.name[n] <- tolower(col.name[n])
- 	    col.name <- paste(col.name, collapse=" ")
- 	 }
- 	 
- 	 immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga[, col]),]
- 	 samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
- 	 
- 	 file.names <- file.path(wd.rt.plots, paste0("PanImmune_", col, ".pdf"))
- 	 plotCorrelation5(file.names, "", paste0(col.name, " (n=", nrow(samples.tcga), ")"), "SCF index", immunes.tcga.nona[, col], samples.tcga$COR, pos="topright", cols=c("gray", "black"), size=5)
-}
-
-##
-immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Leukocyte.Fraction),]
-samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
-file.names <- file.path(wd.rt.plots, paste0("Leukocyte.Fraction.pdf"))
-plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Leukocyte fraction", "S-phase cell fraction index", immunes.tcga.nona$Leukocyte.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-
-##
-immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Stromal.Fraction),]
-samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
-file.names <- file.path(wd.rt.plots, paste0("Stromal.Fraction.pdf"))
-plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Stromal fraction", "S-phase cell fraction index", immunes.tcga.nona$Stromal.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-
-##
-immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Proliferation),]
-samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
-file.names <- file.path(wd.rt.plots, paste0("Proliferation.pdf"))
-plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Proliferation", "S-phase cell fraction index", immunes.tcga.nona$Proliferation, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-
-##
-immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Wound.Healing),]
-samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
-file.names <- file.path(wd.rt.plots, paste0("Wound.Healing.pdf"))
-plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Wound healing", "S-phase cell fraction index", immunes.tcga.nona$Wound.Healing, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-
-##
-immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$IFN.gamma.Response),]
-samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
-file.names <- file.path(wd.rt.plots, paste0("IFN.gamma.Response.pdf"))
-plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "IFN gamma response", "S-phase cell fraction index", immunes.tcga.nona$IFN.gamma.Response, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-
-##
-immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga$Lymphocyte.Infiltration.Signature.Score),]
-samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
-file.names <- file.path(wd.rt.plots, paste0("Lymphocyte.Infiltration.Signature.Score.pdf"))
-plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "Lymphocyte infiltration", "S-phase cell fraction index", immunes.tcga.nona$Lymphocyte.Infiltration.Signature.Score, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-
-
+overlaps <- intersect(rownames(samples), rownames(purities))
+samples.p <- cbind(samples[overlaps,], purities[overlaps, c(2,4)])
 
 # -----------------------------------------------------------------------------
 # samples
@@ -346,7 +154,7 @@ for (h in 1:length(hists)) {
    sum <- c()
    for (s in 1:nrow(samples.hist)) {
       sample <- samples.hist$specimen_id[s]
-      load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      load(paste0("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
       
       sum <- c(sum, as.numeric(cor))
    }
@@ -388,354 +196,32 @@ rownames(samples) <- samples$icgc_specimen_id
 samples.v <- samples
 
 # -----------------------------------------------------------------------------
-# Supplementary Table 1
-# Last Modified: 14/04/23; 18/08/22; 27/07/22; 21/04/19
-# -----------------------------------------------------------------------------
-samples.h2 <- toTable(0, 3, 0, c("histology_abbreviation", "specimen_id", "SCF"))
-for (h in 1:8) {
-	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-	
-	  q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-	  colnames(q4) <- c("specimen_id", "SCF")
-	  q4$histology_abbreviation <- samples.hist$histology_abbreviation[1]
-	  q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
-	  samples.h2 <- rbind(samples.h2, q4)
-}
-
-q4 <- samples.sclc[,1:2]
-colnames(q4) <- c("specimen_id", "SCF")
-q4$histology_abbreviation <- "Lung-SCLC"
-q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
-samples.h2 <- rbind(samples.h2, q4)
-
-for (h in 9:18) {
-	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-	
-	  q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-	  colnames(q4) <- c("specimen_id", "SCF")
-	  q4$histology_abbreviation <- samples.hist$histology_abbreviation[1]
-	  q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
-  	samples.h2 <- rbind(samples.h2, q4)
-}
-
-q4 <- samples.nbl[,1:2]
-colnames(q4) <- c("specimen_id", "SCF")
-q4$histology_abbreviation <- "Neuroblastoma"
-q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
-samples.h2 <- rbind(samples.h2, q4)
-
-for (h in 19:26) {
-	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-	
-	  q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-	  colnames(q4) <- c("specimen_id", "SCF")
-	  q4$histology_abbreviation <- samples.hist$histology_abbreviation[1]
-	  q4 <- q4[, c("histology_abbreviation", "specimen_id", "SCF")]
-	  samples.h2 <- rbind(samples.h2, q4)
-}
-
-writeTable(samples.h2, file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/", "Supplementary Table 1.txt"), colnames=T, rownames=F, sep="\t")
-
-
-
-
-
-# -----------------------------------------------------------------------------
 # Stripchart (black)
-# Last Modified: 18/08/22; 27/07/22; 21/04/19
+# Last Modified: 21/04/19
 # -----------------------------------------------------------------------------
-samples.h2 <- toTable(0, 3, 0, c("CANCER", "COR"))
-labels2 <- c()
-idx.cancer <- 0
-for (h in 1:8) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-   
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-   colnames(q4) <- c("CANCER", "COR")
-   q4$CANCER <- idx.cancer
-   samples.h2 <- rbind(samples.h2, q4)
-   labels2 <- c(labels2, rownames(icgc)[h])
-   idx.cancer <- idx.cancer + 1
-}
-
-q4 <- samples.sclc[,1:2]
-colnames(q4) <- c("CANCER", "COR")
-q4$CANCER <- idx.cancer
-samples.h2 <- rbind(samples.h2, q4)
-labels2 <- c(labels2, "Lung-SCLC")
-idx.cancer <- idx.cancer + 1
-
-for (h in 9:18) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-   
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-   colnames(q4) <- c("CANCER", "COR")
-   q4$CANCER <- idx.cancer
-   samples.h2 <- rbind(samples.h2, q4)
-   labels2 <- c(labels2, rownames(icgc)[h])
-   idx.cancer <- idx.cancer + 1
-}
-
-q4 <- samples.nbl[,1:2]
-colnames(q4) <- c("CANCER", "COR")
-q4$CANCER <- idx.cancer
-samples.h2 <- rbind(samples.h2, q4)
-labels2 <- c(labels2, "Neuroblastoma")
-idx.cancer <- idx.cancer + 1
-
-for (h in 19:26) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
- 
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-   colnames(q4) <- c("CANCER", "COR")
-   q4$CANCER <- idx.cancer
-   samples.h2 <- rbind(samples.h2, q4)
-   labels2 <- c(labels2, rownames(icgc)[h])
-   idx.cancer <- idx.cancer + 1
-}
-
-###
-##
-file.name <- "stripchart_ICGC_SCLC_NBL_colour_bold_n56_legend_violet"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
-
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
-#par(mar = c(11.2, 5, 4, 2))
-par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h2, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h$CANCER) + c(1.1, 2.8))
-text(labels=labels2[1:19], x=1:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels2[20], x=20, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels2[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-stripchart(COR ~ CANCER, data=samples.h2[1:1832,], method="jitter", cex=1.5, pch=19, col=adjustcolor.gray, vertical=T, add=T, at=c(1:19))
-stripchart(COR ~ CANCER, data=samples.h2[1889:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.gray, vertical=T, add=T, at=c(21:28))
-stripchart(subset(samples.nbl, GROUP_ID3 == "LR")$COR ~ rep(20.2, time=17), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=20.2)
-stripchart(subset(samples.nbl, GROUP_ID3 == "HR")$COR ~ rep(19.8, time=18), method="jitter", cex=1.5, pch=19, col="violet", vertical=T, add=T, at=19.8)
-stripchart(subset(samples.nbl, GROUP_ID3 == "TERT")$COR ~ rep(20.066666, time=11), method="jitter", cex=1.5, pch=19, col=yellow, vertical=T, add=T, at=20.066666)
-stripchart(subset(samples.nbl, GROUP_ID3 == "MYCN")$COR ~ rep(19.933333, time=10), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=19.933333)
-
-axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("Proliferation rate", side=2, line=3.5, cex=1.9)
-legend("topright", legend=c("HR (n=18)", "MYCN (n=10)", "TERT (n=11)", "LR (n=17)"), pch=19, pt.cex=2.5, col=c("violet", red, yellow, blue), cex=1.7)
-dev.off()
-
-# -----------------------------------------------------------------------------
-# Stripchart (black; Resting to proliferating)
-# Last Modified: 22/11/22; 22/08/22; 18/08/22; 27/07/22; 21/04/19
-# -----------------------------------------------------------------------------
-samples.h1 <- toTable(0, 3, 0, c("CANCER", "COR"))
-labels1 <- c()
-idx.cancer <- 0
-for (h in 26:19) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
- 
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-   colnames(q4) <- c("CANCER", "COR")
-   q4$CANCER <- idx.cancer
-   samples.h1 <- rbind(samples.h1, q4)
-   labels1 <- c(labels1, rownames(icgc)[h])
-   idx.cancer <- idx.cancer + 1
-}
-
-q4 <- samples.nbl[,1:2]
-colnames(q4) <- c("CANCER", "COR")
-q4$CANCER <- idx.cancer
-samples.h1 <- rbind(samples.h1, q4)
-labels1 <- c(labels1, "Neuroblastoma")
-idx.cancer <- idx.cancer + 1
-
-for (h in 18:9) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
- 
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-   colnames(q4) <- c("CANCER", "COR")
-   q4$CANCER <- idx.cancer
-   samples.h1 <- rbind(samples.h1, q4)
-   labels1 <- c(labels1, rownames(icgc)[h])
-   idx.cancer <- idx.cancer + 1
-}
-
-q4 <- samples.sclc[,1:2]
-colnames(q4) <- c("CANCER", "COR")
-q4$CANCER <- idx.cancer
-samples.h1 <- rbind(samples.h1, q4)
-labels1 <- c(labels1, "Lung-SCLC")
-idx.cancer <- idx.cancer + 1
-
-for (h in 8:1) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
- 
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)[,1:2]
-   colnames(q4) <- c("CANCER", "COR")
-   q4$CANCER <- idx.cancer
-   samples.h1 <- rbind(samples.h1, q4)
-   labels1 <- c(labels1, rownames(icgc)[h])
-   idx.cancer <- idx.cancer + 1
-}
-
-###
-##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1_test"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
-
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
-#par(mar = c(11.2, 5, 4, 2))
-par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
-text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-#stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
-stripchart(COR ~ CANCER, data=samples.h1[1:1889,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:19))
-stripchart(COR ~ CANCER, data=samples.h1[1991:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(21:28))
-stripchart(subset(samples.sclc, M2 == 2)$COR ~ rep(20, time=50), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=20)
-stripchart(subset(samples.sclc, M2 == 1)$COR ~ rep(20, time=51), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=20)
-
-axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
-legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
-dev.off()
-
-##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1_plain_bold"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
-
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
-#par(mar = c(11.2, 5, 4, 2))
-par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
-text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-#stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
-#stripchart(COR ~ CANCER, data=samples.h1[1:1889,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:19))
-#stripchart(COR ~ CANCER, data=samples.h1[1991:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(21:28))
-stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
-#stripchart(subset(samples.sclc, M2 == 2)$COR ~ rep(20, time=50), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=20)
-#stripchart(subset(samples.sclc, M2 == 1)$COR ~ rep(20, time=51), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=20)
-
-axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
-#legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
-dev.off()
-
-
-
-
-
-###
-##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_n56_legend_NEW_black"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 56 neuroblastoma (NB) primary tumour samples"))
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
-
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
-#par(mar = c(11.2, 5, 4, 2))
-par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6))
-text(labels=labels1[1:8],   x=1:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[10:28], x=10:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-stripchart(COR ~ CANCER, data=samples.h1[1:881,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(1:8))
-stripchart(COR ~ CANCER, data=samples.h1[938:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(10:28))
-stripchart(subset(samples.nbl, GROUP_ID3 == "LR")$COR ~ rep(8.7, time=17), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=8.7)
-stripchart(subset(samples.nbl, GROUP_ID3 == "HR")$COR ~ rep(9.3, time=18), method="jitter", cex=1.5, pch=19, col="black", vertical=T, add=T, at=9.3)
-stripchart(subset(samples.nbl, GROUP_ID3 == "TERT")$COR ~ rep(9.1, time=11), method="jitter", cex=1.5, pch=19, col=yellow, vertical=T, add=T, at=9.1)
-stripchart(subset(samples.nbl, GROUP_ID3 == "MYCN")$COR ~ rep(8.9, time=10), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=8.9)
-
-axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
-legend("topleft", legend=c("HR (n=18)", "TERT (n=11)", "MYCN (n=10)", "LR (n=17)"), pch=19, pt.cex=2.5, col=c("black", yellow, red, blue), cex=1.7)
-dev.off()
-
-###
-##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_black_NB"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 56 neuroblastoma (NB) primary tumour samples"))
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
-
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
-#par(mar = c(11.2, 5, 4, 2))
-par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6))
-text(labels=labels1[1:8],   x=1:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[10:28], x=10:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-stripchart(COR ~ CANCER, data=samples.h1[1:881,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(1:8))
-stripchart(COR ~ CANCER, data=samples.h1[938:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.darkgray, vertical=T, add=T, at=c(10:28))
-stripchart(subset(samples.nbl, RISK == "high")$COR ~ rep(9.1, time=39), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=9.1)
-stripchart(subset(samples.nbl, RISK == "low")$COR ~ rep(8.9, time=17), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=8.9)
-
-axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
-legend("topleft", legend=c("All high-risk (All-HR; n=39)", "Low-risk (LR; n=17)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.7)
-dev.off()
-
-###
-##
-file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_black"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
-
-pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
-#par(mar = c(11.2, 5, 4, 2))
-par(mar=c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6))
-text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
-text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
-
-axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
-#legend("topleft", legend=c("HR (n=18)", "TERT (n=11)", "MYCN (n=10)", "LR (n=17)"), pch=19, pt.cex=2.5, col=c("black", yellow, red, blue), cex=1.7)
-dev.off()
-
-
-
-
-
-###
-##
-file.name <- "stripchart_ICGC_SCLC_NBL_n57-1"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
+file.name <- "stripchart_ICGC_samples_black_0.25"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,612 ICGC PCAWG samples"))
+#labels <- paste0(labels=rownames(icgc), " (n=", icgc$N, ")")
+labels <- rownames(icgc)
+#cols <- c(blue, blue.lighter, red.lighter, red)
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
 
 pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
 par(mar = c(11.2, 5, 4, 2))
-boxplot(COR ~ CANCER, data=samples.h2, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h$CANCER) + c(1.1, 2.8))
-text(labels=labels2, x=1:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+boxplot(COR ~ CANCER, data=samples.h, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+text(labels=labels, x=1:26, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
 
-stripchart(COR ~ CANCER, data=samples.h2, method="jitter", cex=1.5, pch=19, col=adjustcolor.gray, vertical=T, add=T, at=c(1:28))
+stripchart(COR ~ CANCER, data=samples.h, method="jitter", cex=1.5, pch=19, col=adjustcolor.gray, vertical=T, add=T, at=c(1:26))
 
 axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
-mtext("Proliferation rate", side=2, line=3.5, cex=1.9)
+mtext("Spearman's rho", side=2, line=3.5, cex=1.9)
+#mtext("", cex=1.2, line=0.3)
+#mtext(text=rownames(icgc), side=1, cex=1.9, line=1.3, at=par("usr")[3], srt=35, adj=0, xpd=T)
+
+#legend("topright", legend=c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.8)
 dev.off()
 
-save(samples.sclc, samples.nbl, samples.h2, labels2, file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612+sclc+nbl.RData")), version=2)
-#save(hists, totals.hist, icgc, samples.h, samples.v, samples, file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")), version=2)
-
-
-
-
-
+save(hists, totals.hist, icgc, samples.h, samples.v, samples, file=file.path(wd.rt.data, paste0("icgc_wgs_samples_n2612.RData")), version=2)
 
 # -----------------------------------------------------------------------------
 # Stripchart (sorting)

@@ -144,49 +144,29 @@ getMutGene <- function(annotmuts.impact) {
 	  return(mut.gene)
 }
 
-getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=1) {
-	  pmr.mut.gene <- toTable(0, 15, nrow(mut.gene.n), c("MUT", "N_FREQ", "S_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "dNdS_N", "dNdS_RHO", "dNdS_P"))
+getPdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=1, t="Fisher") {
+	  pmr.mut.gene <- toTable(0, 14, nrow(mut.gene.n), c("MUT", "FREQ_N", "FREQ_S", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "TYPE_N", "TYPE_S"))
    pmr.mut.gene$MUT <- rownames(mut.gene.n)
    rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
  
-   pmr.mut.gene$N_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene.n[x,])))
-   pmr.mut.gene$S_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene.s[x,])))
-   #pmr.mut.gene <- subset(pmr.mut.gene, SAMPLE_FREQ >= s)
+   pmr.mut.gene$FREQ_N <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene.n[x,])))
+   pmr.mut.gene$FREQ_S <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene.s[x,])))
+   #pmr.mut.gene <- subset(pmr.mut.gene, FREQ_SAMPLE >= s)
  
    for (g in 1:nrow(pmr.mut.gene)) {
       gene <- pmr.mut.gene$MUT[g]
       ids.n  <- colnames(mut.gene.n)[which(mut.gene.n[gene,] != 0)]
       ids.s  <- colnames(mut.gene.s)[which(mut.gene.s[gene,] != 0)]
-      #pmr.mut.gene$TTYPE[g] <- paste(unique(samples.mut.hist[ids,]$histology_abbreviation), collapse=",")
-      
-      samples.mut.hist.gene <- subset(samples.mut.hist, icgc_specimen_id %in% c(ids.n, ids.s))
-      median <- median(samples.mut.hist.gene$COR)
+      pmr.mut.gene$TYPE_N[g] <- paste(unique(samples.mut.hist[ids.n,]$histology_abbreviation), collapse=",")
+      pmr.mut.gene$TYPE_S[g] <- paste(unique(samples.mut.hist[ids.s,]$histology_abbreviation), collapse=",")
       
       samples.mut.mut <- subset(samples.mut.hist, icgc_specimen_id %in% ids.n)
       samples.mut.wt  <- subset(samples.mut.hist, icgc_specimen_id %in% ids.s)
-  
-      #mut.g1 <- rownames(subset(samples.mut.mut, SORTING == "G1"))
-      #mut.s  <- rownames(subset(samples.mut.mut, SORTING == "S"))
-      #wt.g1  <- rownames(subset(samples.mut.wt,  SORTING == "G1"))
-      #wt.s   <- rownames(subset(samples.mut.wt,  SORTING == "S"))
-      mut.g1 <- rownames(subset(samples.mut.mut, COR < median))
-      mut.s  <- rownames(subset(samples.mut.mut, COR >= median))
-      wt.g1  <- rownames(subset(samples.mut.wt,  COR < median))
-      wt.s   <- rownames(subset(samples.mut.wt,  COR >= median))
       
-      overlaps <- intersect(rownames((samples.mut.mut)), rownames((samples.mut.wt)))
-      if (length(overlaps) >= 3) {
-         samples.mut.hist.gene.o <- samples.mut.hist.gene[overlaps,]
-         samples.mut.hist.gene.o$dNdS <- mapply(x = 1:length(overlaps), function(x) mut.gene.n[gene, overlaps[x]] / mut.gene.s[gene, overlaps[x]])
-      
-         cor <- cor.test(samples.mut.hist.gene.o$COR, samples.mut.hist.gene.o$dNdS, method="spearman", exact=F)
-         pmr.mut.gene$dNdS_N[g] <- length(overlaps)
-         pmr.mut.gene$dNdS_RHO[g] <- cor[[4]]
-         pmr.mut.gene$dNdS_P[g] <- cor[[3]]
-         
-         #file.name <- file.path(wd.driver.plots, paste0(hist, "_", gene, "_SCF-vs-dNdS"))
-         #plotCorrelation(file.name, paste0(gene, " / ", hist), "dN/dS", "SCF index", samples.mut.hist.gene.o$dNdS, samples.mut.hist.gene.o$COR, pos="bottomright", cols=c("dimgray", "black"))
-      }
+      mut.g1 <- rownames(subset(samples.mut.mut, M2 == 1))
+      mut.s  <- rownames(subset(samples.mut.mut, M2 == 2))
+      wt.g1  <- rownames(subset(samples.mut.wt,  M2 == 1))
+      wt.s   <- rownames(subset(samples.mut.wt,  M2 == 2))
       
       test <- toTable(0, 2, 2, c("G1", "S"))
       rownames(test) <- c("MUT", "WT")
@@ -200,56 +180,48 @@ getPMRdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=1) {
          pmr.mut.gene$MUT_S[g]  <- test[1, 2]
          pmr.mut.gene$WT_G1[g]  <- test[2, 1]
          pmr.mut.gene$WT_S[g]   <- test[2, 2]
-         #pmr.mut.gene$P[g]      <- USP.test(test)[[1]]
-         pmr.mut.gene$P[g]      <- fisher.test(test)[[1]]
-         #pmr.mut.gene$P[g]      <- chisq.test(test)[[3]]
+         if (t == "USP")    pmr.mut.gene$P[g] <- USP.test(test)[[1]]
+         if (t == "Fisher") pmr.mut.gene$P[g] <- fisher.test(test)[[1]]
+         if (t == "Chisq")  pmr.mut.gene$P[g] <- chisq.test(test)[[3]]
    
          pmr.mut.gene$G1MR[g] <- pmr.mut.gene$MUT_G1[g] / pmr.mut.gene$WT_G1[g]
          pmr.mut.gene$SMR[g]  <- pmr.mut.gene$MUT_S[g]  / pmr.mut.gene$WT_S[g]
          pmr.mut.gene$PMR[g]  <- pmr.mut.gene$SMR[g]    / pmr.mut.gene$G1MR[g]
       }
    }
-   #pmr.mut.gene <- subset(pmr.mut.gene, dNdS_P != 0)
-   #pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
-   #if (nrow(pmr.mut.gene) >= 4) {
-   #   pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "BH")
-   #}
+   pmr.mut.gene <- subset(pmr.mut.gene, P != 0)
+   pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$P, decreasing=F),]
+   if (nrow(pmr.mut.gene) >= 4) {
+      pmr.mut.gene$FDR <- testFDR(pmr.mut.gene$P, "BH")
+   }
    #pmr <- pmr.mut.gene
    #annot <- ensGene[,c("ensembl_gene_id", "external_gene_name", "chromosome_name", "strand", "start_position", "end_position", "gene_biotype")]
    #pmr.mut.gene <- cbind(annot[rownames(pmr),], pmr.mut.gene[, -1])
- 
-   pmr.mut.gene <- subset(pmr.mut.gene, dNdS_P != 0)
-   pmr.mut.gene <- pmr.mut.gene[!is.na(pmr.mut.gene$dNdS_P),]
-   #pmr.mut.gene <- subset(pmr.mut.gene, dNdS_N >= 10)
-   pmr.mut.gene <- pmr.mut.gene[order(pmr.mut.gene$dNdS_P, decreasing=F),]
-   if (nrow(pmr.mut.gene) >= 4) {
-      pmr.mut.gene$dNdS_FDR <- testFDR(pmr.mut.gene$dNdS_P, "BH")
-   }
    
    return(pmr.mut.gene)
 }
 
-getPMR <- function(mut.gene, samples.mut.hist, s=0, n=2) {
-	  pmr.mut.gene <- toTable(0, 13, nrow(mut.gene), c("MUT", "MUT_FREQ", "SAMPLE_FREQ", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "TTYPE"))
+getPMR <- function(mut.gene, samples.mut, s=0, n=1, t="Fisher") {
+	  pmr.mut.gene <- toTable(0, 13, nrow(mut.gene), c("MUT", "FREQ_MUT", "FREQ_SAMPLE", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "TYPE"))
 	  pmr.mut.gene$MUT <- rownames(mut.gene)
 	  rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
 	
-	  pmr.mut.gene$MUT_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene[x,])))
-	  pmr.mut.gene$SAMPLE_FREQ <- mapply(x = 1:nrow(pmr.mut.gene), function(x) length(which(mut.gene[x,] != 0)))
-	  #pmr.mut.gene <- subset(pmr.mut.gene, SAMPLE_FREQ >= s)
+	  pmr.mut.gene$FREQ_MUT <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene[x,])))
+	  pmr.mut.gene$FREQ_SAMPLE <- mapply(x = 1:nrow(pmr.mut.gene), function(x) length(which(mut.gene[x,] != 0)))
+	  #pmr.mut.gene <- subset(pmr.mut.gene, FREQ_SAMPLE >= s)
 	
 	  for (g in 1:nrow(pmr.mut.gene)) {
 		    gene <- pmr.mut.gene$MUT[g]
 		    ids  <- colnames(mut.gene)[which(mut.gene[gene,] != 0)]
-		    #pmr.mut.gene$TTYPE[g] <- paste(unique(samples.mut.hist[ids,]$histology_abbreviation), collapse=",")
+		    pmr.mut.gene$TYPE[g] <- paste(unique(samples.mut[ids,]$histology_abbreviation), collapse=",")
 		
-		    samples.mut.mut <- subset(samples.mut.hist, icgc_specimen_id %in% ids)
-		    samples.mut.wt  <- samples.mut.hist[setdiff(rownames(samples.mut.hist), ids),]
+		    samples.mut.mut <- subset(samples.mut, icgc_specimen_id %in% ids)
+		    samples.mut.wt  <- samples.mut[setdiff(rownames(samples.mut), ids),]
 		
-		    mut.g1 <- rownames(subset(samples.mut.mut, SORTING == "G1"))
-		    mut.s  <- rownames(subset(samples.mut.mut, SORTING == "S"))
-		    wt.g1  <- rownames(subset(samples.mut.wt,  SORTING == "G1"))
-		    wt.s   <- rownames(subset(samples.mut.wt,  SORTING == "S"))
+		    mut.g1 <- rownames(subset(samples.mut.mut, M2 == 1))
+		    mut.s  <- rownames(subset(samples.mut.mut, M2 == 2))
+		    wt.g1  <- rownames(subset(samples.mut.wt,  M2 == 1))
+		    wt.s   <- rownames(subset(samples.mut.wt,  M2 == 2))
 		
 		    if ((length(mut.g1) >= n) && (length(mut.s) >= n) && (length(wt.g1) >= n) && (length(wt.s) >= n)) {
 			      test <- toTable(0, 2, 2, c("G1", "S"))
@@ -263,9 +235,10 @@ getPMR <- function(mut.gene, samples.mut.hist, s=0, n=2) {
 			      pmr.mut.gene$MUT_S[g]  <- length(mut.s)
 			      pmr.mut.gene$WT_G1[g]  <- length(wt.g1)
 			      pmr.mut.gene$WT_S[g]   <- length(wt.s)
-			      pmr.mut.gene$P[g]      <- as.numeric(fisher.test(test)[[1]])
-			      #pmr.mut.gene$P[g]     <- chisq.test(test)[[3]]
-			
+			      if (t == "USP")    pmr.mut.gene$P[g] <- USP.test(test)[[1]]
+			      if (t == "Fisher") pmr.mut.gene$P[g] <- fisher.test(test)[[1]]
+			      if (t == "Chisq")  pmr.mut.gene$P[g] <- chisq.test(test)[[3]]
+
 			      pmr.mut.gene$G1MR[g] <- pmr.mut.gene$MUT_G1[g] / pmr.mut.gene$WT_G1[g]
 			      pmr.mut.gene$SMR[g]  <- pmr.mut.gene$MUT_S[g]  / pmr.mut.gene$WT_S[g]
 			      pmr.mut.gene$PMR[g]  <- pmr.mut.gene$SMR[g]    / pmr.mut.gene$G1MR[g]
@@ -283,10 +256,10 @@ getPMR <- function(mut.gene, samples.mut.hist, s=0, n=2) {
 	  return(pmr.mut.gene)
 }
 
-plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.hist, xmax=NA, ymax=NA, size=6, cols=c(adjustcolor.blue, adjustcolor.red), h=3) {
+plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.hist, xmax=NA, ymax=NA, size=6, genes=c("TP53"), cols=c(adjustcolor.blue, adjustcolor.red), h=3) {
 	  x <- pmr.mut.gene.hist$PMR
 	  y <- -log10(pmr.mut.gene.hist$P)
-	  genes <- pmr.mut.gene.hist$MUT
+	  #genes <- pmr.mut.gene.hist$MUT
 	
 	  xlim <- c(0, max(x))
 	  if (!is.na(xmax)) xlim <- c(0, xmax)
@@ -294,8 +267,8 @@ plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.his
 	  if (!is.na(ymax)) ylim <- c(0, ymax)
 	
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
-	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=16, cex=2, col="white", cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	  par(mar=c(5.1, 4.8, 4.1, 1.3))
+	  plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=16, cex=2, col="white", cex.axis=1.9, cex.lab=2, cex.main=2.1)
 	
 	  idx.down   <- which(x < 1)
 	  points(x[idx.down], y[idx.down], pch=16, col=cols[1], cex=2)
@@ -305,9 +278,10 @@ plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.his
 	  abline(v=1, lty=5, col=red, lwd=2)
 	  abline(h=h, lty=5, col="black", lwd=2)
 	
+	  #genes <- c("TP53")
 	  par(xpd=T)
 	  if (length(genes) != 0) {
-		    for (g in 1:5) {
+		    for (g in 1:length(genes)) {
 			      if (!is.na(genes[g])) {
 				        idx <- which(pmr.mut.gene.hist$MUT == genes[g])
 				
@@ -315,11 +289,11 @@ plotPMR <- function(file.name, main.text, xlab.text, ylab.text, pmr.mut.gene.his
 					          if (x[idx] > 1) {
 					            	points(x[idx], y[idx], pch=1, col="black", cex=2)
 					            	#text(x[idx], y[idx], genes[g], col="black", adj=c(0, -0.5), cex=1.8)
-							           text(x[idx], y[idx], genes[g], col="black", pos=3, cex=1.8)
+							           text(x[idx], y[idx], genes[g], col="black", pos=3, cex=2)
 					          } else {
 						            points(x[idx], y[idx], pch=1, col="black", cex=2)
 					          	  #text(x[idx], y[idx], genes[g], col="black", adj=c(1, -0.5), cex=1.8)
-							           text(x[idx], y[idx], genes[g], col="black", pos=3, cex=1.8)
+							           text(x[idx], y[idx], genes[g], col="black", pos=3, cex=2)
 					          }
             }
 			      }
