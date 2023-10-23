@@ -41,6 +41,8 @@ wd.rt.data  <- file.path(wd.rt, "data/bstrps")
 #wd.rt.plots <- file.path(wd.rt, "plots/bstrps")
 wd.rt.plots <- file.path(wd.rt, "plots/nrfd")
 
+wd.rt.meta  <- file.path(wd, BASE, "metadata")
+
 # -----------------------------------------------------------------------------
 # Bootstrap distribution
 # Last Modified: 02/11/18
@@ -77,7 +79,7 @@ nrds.RT.NRFD <- getRTNRFD(nrds, nrds.RT.BSTRPS, bed.gc, kb)
 save(nrds.RT.NRFD, file=file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".RData")))
 writeTable(nrds.RT.NRFD, gzfile(file.path(wd.rt.data, paste0(base, "_rpkm.gc.cn.d.rt.log2s.nrfd.", kb, "kb_", "m2-m1", ".txt.gz"))), colnames=T, rownames=T, sep="\t")
 nrds.RT.NRFD.sclc.nl <- nrds.RT.NRFD
-# > nrow(nrds.RT.NRFD.sclc.nl)
+nrow(nrds.RT.NRFD.sclc.nl)
 # [1] 2651861
 
 colnames <- c("S", "N", "SNR")
@@ -122,6 +124,158 @@ for (s in 1:length(sizes)) {
 }
 save(report, file=file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.RData")))
 writeTable(report, file.path(wd.rt.data, paste0("NRFD_SCLC-NL_5-20KB.txt")), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# TTR and CTR in SCLC-NL
+# Last Modified: 17/10/23
+# -----------------------------------------------------------------------------
+rfd <- 0.9
+nrds.RT.NRFD.1 <- nrds.RT.NRFD
+
+nrds.RT.NRFD.1.ttr <- getBootstrapTTR(nrds.RT.NRFD.1, rfd)
+
+diff <- setdiff(rownames(nrds.RT.NRFD.1), rownames(nrds.RT.NRFD.1.ttr))
+nrds.RT.NRFD.1.ctr <- nrds.RT.NRFD.1[diff,]
+nrds.RT.NRFD.1.ctr.iz <- subset(nrds.RT.NRFD.1.ctr, NRFD > 0)
+nrds.RT.NRFD.1.ctr.tz <- subset(nrds.RT.NRFD.1.ctr, NRFD < 0)
+nrds.RT.NRFD.1.ctr.un <- subset(nrds.RT.NRFD.1.ctr, NRFD == 0)
+nrds.RT.NRFD.1.ctr.na <- nrds.RT.NRFD.1.ctr[which(is.na(nrds.RT.NRFD.1.ctr$NRFD) == T),]
+
+nrds.RT.NRFD.sclc.nl$BRFD <- "UN"
+nrds.RT.NRFD.sclc.nl[rownames(nrds.RT.NRFD.1.ttr), ]$BRFD <- "TTR"
+nrds.RT.NRFD.sclc.nl[rownames(nrds.RT.NRFD.1.ctr.iz), ]$BRFD <- "IZ"
+nrds.RT.NRFD.sclc.nl[rownames(nrds.RT.NRFD.1.ctr.tz), ]$BRFD <- "TZ"
+
+overlaps <- rownames(nrds.RT.NRFD.sclc.nl)
+rfd <- cbind(bed.gc[overlaps,], nrds.RT.NRFD.sclc.nl[overlaps,])
+
+# -----------------------------------------------------------------------------
+# Overlaps with ORM IZs
+# Last Modified: 17/10/23
+# -----------------------------------------------------------------------------
+orm.iz <- readTable(file.path(wd.rt.meta, "Wang 2021", "Initiation Zones.bed"), header=F, rownames=F, sep="\t")
+colnames(orm.iz) <- c("CHR", "START", "END", "BED")
+orm.iz$CHR <- tolower(orm.iz$CHR)
+orm.iz$BED <- paste0("B", orm.iz$BED)
+
+orm.iz$SIZE <- orm.iz$END - orm.iz$START
+orm.iz$TTR <- 0
+orm.iz$IZ  <- 0
+orm.iz$TZ  <- 0
+for (r in 1:nrow(orm.iz)) {
+  	chr <- orm.iz$CHR[r]
+  	rfd.chr <- subset(rfd, CHR == chr)
+	
+	  rfd.chr.start <- subset(rfd.chr, START <= orm.iz$END[r])
+	  rfd.chr.start.end <- subset(rfd.chr.start, END >= orm.iz$START[r])
+	
+	  if (nrow(rfd.chr.start.end) != 0) {
+	  	  freq <- as.data.frame(table(rfd.chr.start.end$BRFD))
+	  	  
+	  	  for (f in 1:nrow(freq)) {
+	  	  	  orm.iz[r, as.vector(freq$Var1[f])] <- as.numeric(freq$Freq[f])
+	  	  }
+	  }
+}
+133501 / 159044
+# [1] 0.8393966
+13773 / 159044
+# [1] 0.08659868
+9341 / 159044
+# [1] 0.05873217
+
+##
+rfd.iz <- subset(rfd, BRFD == "IZ")
+rfd.iz$IZ <- 0
+rfd.iz$IZ <- mapply(x = 1:nrow(rfd.iz), function(x) getIZ(rfd.iz$CHR[x], rfd.iz$START[x], rfd.iz$END[x], orm.iz))
+
+# -----------------------------------------------------------------------------
+# Overlaps with Meiosis IZs
+# Last Modified: 17/10/23
+# -----------------------------------------------------------------------------
+mmc5 <- readTable(file.path(wd.rt.meta, "Pratto 2021", "mmc5"), header=T, rownames=F, sep="\t")
+colnames(mmc5)[1:3] <- c("CHR", "START", "END")
+mmc5.iz  <- subset(mmc5, origins > 0)
+mmc5.non <- subset(mmc5, origins == 0)
+
+mmc5.iz$SIZE <- mmc5.iz$END - mmc5.iz$START
+mmc5.iz$TTR <- 0
+mmc5.iz$IZ  <- 0
+mmc5.iz$TZ  <- 0
+for (r in 1:nrow(mmc5.iz)) {
+	  chr <- mmc5.iz$CHR[r]
+	  rfd.chr <- subset(rfd, CHR == chr)
+	
+	  rfd.chr.start <- subset(rfd.chr, START <= mmc5.iz$END[r])
+	  rfd.chr.start.end <- subset(rfd.chr.start, END >= mmc5.iz$START[r])
+	
+	  if (nrow(rfd.chr.start.end) != 0) {
+		    freq <- as.data.frame(table(rfd.chr.start.end$BRFD))
+		
+		    for (f in 1:nrow(freq)) {
+		    	  mmc5.iz[r, as.vector(freq$Var1[f])] <- as.numeric(freq$Freq[f])
+		    }
+	  }
+}
+sum(mmc5.iz$SIZE + 1) / 1000
+sum(mmc5.iz$TTR)
+sum(mmc5.iz$IZ)
+sum(mmc5.iz$TZ)
+
+79591 / 90070
+# [1] 0.8836572
+5325 / 90070
+# [1] 0.05912068
+5499 / 90070
+# [1] 0.06105251
+
+# -----------------------------------------------------------------------------
+# Overlaps with non Meiosis IZs
+# Last Modified: 19/10/23
+# -----------------------------------------------------------------------------
+mmc5.non <- subset(mmc5, origins == 0)
+idx <- sample(1:nrow(mmc5.non), nrow(mmc5.iz), replace=FALSE)
+mmc5.non <- mmc5.non[idx,]
+
+mmc5.non$SIZE <- mmc5.non$END - mmc5.non$START
+mmc5.non$TTR <- 0
+mmc5.non$IZ  <- 0
+mmc5.non$TZ  <- 0
+for (r in 1:nrow(mmc5.non)) {
+	  chr <- mmc5.non$CHR[r]
+	  rfd.chr <- subset(rfd, CHR == chr)
+	
+	  rfd.chr.start <- subset(rfd.chr, START <= mmc5.non$END[r])
+	  rfd.chr.start.end <- subset(rfd.chr.start, END >= mmc5.non$START[r])
+	
+	  if (nrow(rfd.chr.start.end) != 0) {
+		    freq <- as.data.frame(table(rfd.chr.start.end$BRFD))
+		
+    		for (f in 1:nrow(freq)) {
+    			  mmc5.non[r, as.vector(freq$Var1[f])] <- as.numeric(freq$Freq[f])
+		    }
+	  }
+}
+sum(mmc5.non$SIZE + 1) / 1000
+sum(mmc5.non$TTR)
+sum(mmc5.non$IZ)
+sum(mmc5.non$TZ)
+
+77989 / 90070
+# [1] 0.865871
+5364 / 90070
+# [1] 0.05955368
+5276 / 90070
+# [1] 0.05857666
+
+
+
+
+
+rfd.iz2 <- subset(rfd, BRFD == "IZ")
+rfd.iz2$IZ <- 0
+rfd.iz2$IZ <- mapply(x = 1:nrow(rfd.iz2), function(x) getIZ(rfd.iz2$CHR[x], rfd.iz2$START[x], rfd.iz2$END[x], mmc5.iz))
+
 
 # -----------------------------------------------------------------------------
 # 

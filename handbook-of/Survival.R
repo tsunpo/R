@@ -218,10 +218,10 @@ getPMR <- function(mut.gene, samples.mut, s=0, n=1, t="Fisher") {
 		    samples.mut.mut <- subset(samples.mut, icgc_specimen_id %in% ids)
 		    samples.mut.wt  <- samples.mut[setdiff(rownames(samples.mut), ids),]
 		
-		    mut.g1 <- rownames(subset(samples.mut.mut, M2 == 1))
-		    mut.s  <- rownames(subset(samples.mut.mut, M2 == 2))
-		    wt.g1  <- rownames(subset(samples.mut.wt,  M2 == 1))
-		    wt.s   <- rownames(subset(samples.mut.wt,  M2 == 2))
+		    mut.g1 <- rownames(subset(samples.mut.mut, H2 == 1))
+		    mut.s  <- rownames(subset(samples.mut.mut, H2 == 2))
+		    wt.g1  <- rownames(subset(samples.mut.wt,  H2 == 1))
+		    wt.s   <- rownames(subset(samples.mut.wt,  H2 == 2))
 		
 		    if ((length(mut.g1) >= n) && (length(mut.s) >= n) && (length(wt.g1) >= n) && (length(wt.s) >= n)) {
 			      test <- toTable(0, 2, 2, c("G1", "S"))

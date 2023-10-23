@@ -145,10 +145,10 @@ main.text <- c("Replication timing skew (RTS)", "")
 ylab.text <- "RTS = (E-L)/(E+L)"
 plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2)
 
-file.name <- file.path(wd.rt.plots, "RTS_Koren_16")
-main.text <- c("Reference RT (Koren 2012)", "")
+file.name <- file.path(wd.rt.plots, "RTS_Koren_16_Fig")
+main.text <- c("Mitotic RT (Koren 2012)", "")
 ylab.text <- "Replication timing skew"
-plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 16, 17, 19), digits=3, unit=5, ylab.text, cex=2, size=6)
+plotRTS(sprs.lcl, file.name, main.text, c(4, 13, 16, 17), digits=3, unit=5, ylab.text, cex=2, size=6)
 
 
 

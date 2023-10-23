@@ -26,6 +26,18 @@ getGenomicProperty <- function(chr, bp, rt) {
 		    return(paste(rt.chr.start.end$BED, collapse=","))
 }
 
+getIZ <- function(chr, start, end, orm.iz) {
+	  rt.chr <- subset(orm.iz, CHR == chr)
+	
+	  rt.chr.start <- subset(rt.chr, START <= end)
+	  rt.chr.start.end <- subset(rt.chr.start, END >= start)
+	
+	  if (nrow(rt.chr.start.end) != 0)
+	  	  return(1)
+	  else
+	  	  return(0)
+}
+
 getGenomicPropertyCount <- function(chr, bp, rt) {
 	  rt.chr <- subset(rt, CHR == chr)
 	
@@ -189,7 +201,7 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  boxplot(expr ~ trait, outline=F, xaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.8, cex.lab=1.9, cex.main=2)
-	  abline(h=0, col="black", lty=5, lwd=3)
+	  #abline(h=0, col="black", lty=5, lwd=3)
 	  
 	  p <- testU(tpm.1, tpm.2)
 	  #text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
@@ -197,9 +209,12 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 
 	  text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
 	  text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
+	  #text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
+	  #text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
 
-	  axis(side=1, at=1, labels=names[1], font=2, cex.axis=1.8)
-	  axis(side=1, at=2, labels=names[2], font=2, cex.axis=1.8)
+	  axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
+	  axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.8)
+	  axis(side=1, at=2, labels=names[2], font=1, cex.axis=1.8)
 	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, cex.axis=1.8, col.ticks="white")
 	  axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, cex.axis=1.8, col.ticks="white")
 	  dev.off()
