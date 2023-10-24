@@ -959,7 +959,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    points(sprs[idx] ~ means[idx], col=cols[2], pch=19, cex=cex)
    #points(sprs[2] ~ means[2], col=cols[3], pch=19, cex=cex)
    idx <- which(sprs*means < 0)
-   points(sprs[idx] ~ means[idx], col="darkgray", pch=19, cex=cex)
+   points(sprs[idx] ~ means[idx], col="lightgray", pch=19, cex=cex)
    
    lm.fit <- lm(sprs ~ means)
    abline(lm.fit, col=cols[4], lwd=4)
@@ -997,7 +997,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    legend("bottomright", expression(italic('P')~"                   "), text.col=cols[4], text.font=1, bty="n", cex=1.9)
    legend("bottomright", paste0("   = ", scientific(cor[[3]])), text.col=cols[4], text.font=1, bty="n", cex=1.9)
    
-   legend("topleft", legend=c("Early > Late", "Late > Early", "Inconsistent"), col=c(red, blue, "darkgray"), pch=19, pt.cex=2.5, cex=1.8)
+   legend("topleft", legend=c("Early > Late", "Late > Early", "Inconsistent"), col=c(red, blue, "lightgray"), pch=19, pt.cex=2.5, cex=1.8)
    
    axis(side=1, at=seq(-0.4, 0.8, by=0.4), labels=c(-0.4, 0, 0.4, 0.8), cex.axis=1.8)
    #axis(side=1, at=seq(-0.2, 0.6, by=0.4), labels=c(-0.2, 0.2, 0.6), cex.axis=1.7)

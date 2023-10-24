@@ -220,6 +220,32 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  dev.off()
 }
 
+plotCorrelationRTS <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=1.9, chr=16, sprs) {
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, xaxt="n", main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	
+	  idx <- which(sprs >= 0)
+	  points(y[idx] ~ x[idx], col=red, pch=19, cex=cex)
+	  idx <- which(sprs < 0)
+	  points(y[idx] ~ x[idx], col=blue, pch=19, cex=cex)
+	  
+	  lm.fit <- lm(y ~ x)
+	  abline(lm.fit, lwd=5, col=cols[2])
+	
+	  cor <- cor.test(y, x, method="spearman", exact=F)
+	  legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=1, bty="n", cex=2)
+	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2)
+	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2)
+	
+	  legend("topleft", legend=c("E > L", "L > E"), col=c(red, blue), pch=19, pt.cex=2.5, cex=1.8)
+	  
+	  par(xpd=T)
+	  text(x[chr], y[chr], paste0("Chr", chr), col="black", pos=3, cex=1.9)
+	  axis(side=2, at=100, labels=100, cex.axis=1.9)
+	  axis(side=1, at=seq(-0.5, 1, by=0.5), labels=c(-0.5, 0, 0.5, 1), cex.axis=1.9)
+	  dev.off()
+}
 
 
 
