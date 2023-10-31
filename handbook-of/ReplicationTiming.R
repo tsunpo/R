@@ -895,11 +895,11 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
    #plot(sprs$skew ~ sprs$chr, ylim=c(ymin, ymax), ylab=ylab.text, xlab=xlab.text, main=main.text, col=cols[3], xaxt="n", pch=19)   ## yaxt="n",
-   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text[1], col=cols[3], xaxt="n", yaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+   plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", yaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
    
    #abline(h=sprs$spr[2], lty=5, lwd=3)
-   abline(h=0, lty=5, lwd=3)
-   lines(sprs$spr, y=NULL, type="l", lwd=2, col=cols[3])
+   abline(h=0, lty=3, lwd=3)
+   lines(sprs$spr, y=NULL, lty=5, lwd=2.5, col=cols[3])
    
    #idx <- which(sprs$spr > sprs$spr[2])
    idx <- which(sprs$spr >= 0)
@@ -946,9 +946,9 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
    if (is.null(xlim))
-      plot(sprs ~ means, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="white", yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+      plot(sprs ~ means, ylim=ylim, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white", yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
    else
-      plot(sprs ~ means, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text[1], col="white", yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+      plot(sprs ~ means, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white", yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 
    abline(h=0, lty=5, lwd=3)
    abline(v=0, lty=5, lwd=3)

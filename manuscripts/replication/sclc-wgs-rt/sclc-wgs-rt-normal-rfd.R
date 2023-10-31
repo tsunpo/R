@@ -191,6 +191,9 @@ rfd.iz$IZ <- mapply(x = 1:nrow(rfd.iz), function(x) getIZ(rfd.iz$CHR[x], rfd.iz$
 
 # -----------------------------------------------------------------------------
 # Overlaps with Meiosis IZs
+
+# TO-DO mmc5 is in hg38!!!
+
 # Last Modified: 17/10/23
 # -----------------------------------------------------------------------------
 mmc5 <- readTable(file.path(wd.rt.meta, "Pratto 2021", "mmc5"), header=T, rownames=F, sep="\t")
