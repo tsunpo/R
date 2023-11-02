@@ -2,8 +2,86 @@
 # Library      : Genomic Properties
 # Name         : handbook-of/GenomicProperty.R
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 29/06/23
+# Last Modified: 02/11/23
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# Methods:
+# Last Modified: 02/11/23
+# -----------------------------------------------------------------------------
+getArm <- function(CHR, START) {
+	  centromeres.chr <- subset(centromeres, CHR == CHR)
+	  centro <- centromeres.chr[1,]$END
+	
+	  if (START > centro) {
+		    return("q")
+	  } else {
+		    return("p")
+	  }
+}
+
+getTelo <- function(CHR, START, Arm) {
+	  chromInfo.chr <- subset(chromInfo, chrom == CHR)
+	
+	  if (Arm == "q") {
+		    return(chromInfo.chr$size - START)
+	  } else {
+		    return(START)
+	  }
+}
+
+getCentro <- function(CHR, START, Arm) {
+	  centromeres.chr <- subset(centromeres, CHR == CHR)
+	  centro <- centromeres.chr[1,]$END
+	
+	  if (Arm == "q") {
+		    return(START - centro)
+	  } else {
+		    return(centro - START )
+	  }
+}
+
+# -----------------------------------------------------------------------------
+# Methods: 
+# Last Modified: 02/11/23
+# -----------------------------------------------------------------------------
+getDNS <- function(sv.del.nona, dist, phase) {
+	  dns <- as.data.frame(table(subset(sv.del.nona, Telo < dist)$CHR))
+	  rownames(dns) <- dns$Var1
+	
+	  dns.chr <- toTable(0, 2, 22, c("CHR", "Freq"))
+	  for (c in 1:22) {
+		    chr <- chrs[c]
+		    dns.chr$CHR[c] <- c
+		
+		    if (length(which(rownames(dns) == chr)) != 0)
+			      dns.chr$Freq[c] <- dns[chr,]$Freq
+	  }
+	
+	  return(dns.chr)
+}
+
+plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5) {
+	  xlab.text <- "Chromosome"
+  	cols <- c("black", blue.lighter, red.lighter)
+	
+  	pdf(paste0(file.name, ".pdf"), height=size, width=size)
+  	par(mar=c(5.1, 4.6, 4.1, 1.5))
+	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	
+	  points(dns.f$Freq ~ dns.f$CHR, col=cols[1], pch=19, cex=cex)
+	  lines(dns.f$Freq, y=NULL, lty=5, lwd=2.5, col=cols[1])
+	
+	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
+	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
+	  legend(legend, legend=legends, col=cols[1], lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Methods: 
+# Last Modified: 02/11/23
+# -----------------------------------------------------------------------------
 getRandomBreakpoint1 <- function() {
 	  return(sample(c("start1", "end1"), 1, replace=F))
 }
@@ -191,13 +269,13 @@ plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, leg
 	  dev.off()
 }
 
-plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=6, width=4) {
 	  trait <- rep(0, length(tpm.1))
 	  trait <- c(trait, rep(1, length(tpm.2)))
 	  trait <- as.factor(trait)
 	  expr <- as.numeric(c(tpm.1, tpm.2))
 	  ylim <- c(min(expr), max(expr))
-	
+	  ylim <- c(-3, 3)
+	  
 	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  boxplot(expr ~ trait, outline=F, xaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.8, cex.lab=1.9, cex.main=2)
@@ -207,10 +285,10 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  #text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
 	  #lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
 
-	  #text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
-	  #text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
-	  text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
-	  text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
+	  text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
+	  text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
+	  #text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
+	  #text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
 
 	  axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
 	  axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.8)

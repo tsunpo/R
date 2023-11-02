@@ -950,8 +950,8 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    else
       plot(sprs ~ means, ylim=ylim, xlim=xlim, ylab=ylab.text, xlab=xlab.text, main=main.text, col="white", yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 
-   abline(h=0, lty=5, lwd=3)
-   abline(v=0, lty=5, lwd=3)
+   abline(h=0, lty=3, lwd=3)
+   abline(v=0, lty=3, lwd=3)
    
    idx <- which(sprs >= 0)
    points(sprs[idx] ~ means[idx], col=cols[1], pch=19, cex=cex)
@@ -962,7 +962,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
    points(sprs[idx] ~ means[idx], col="lightgray", pch=19, cex=cex)
    
    lm.fit <- lm(sprs ~ means)
-   abline(lm.fit, col=cols[4], lwd=4)
+   abline(lm.fit, col=cols[4], lwd=3)
    
    par(xpd=T)
    #text(means[2], sprs[2], paste0("Chr", 2), col=cols[3], pos=3, cex=1.8)

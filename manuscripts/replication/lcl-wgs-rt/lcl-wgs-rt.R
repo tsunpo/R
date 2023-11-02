@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 16/06/19; 25/02/19; 16/05/18
 # =============================================================================
-wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
+#wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"                  ## tpyang@localhost
+wd.src <- "/Users/ty2/Work/dev/R"                  ## tpyang@localhost
 
 wd.src.handbook <- file.path(wd.src, "handbook-of")   ## Required handbooks/libraries for the manuscript
 handbooks <- c("Commons.R", "ReplicationTiming.R")
@@ -93,7 +93,7 @@ for (c in 1:22) {
 sprs <- getSPR(nrds, bed.gc)
 save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
-#load(file.path("/Users/tpyang/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
+#load(file.path("/Users/ty2/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 sprs.lcl <- sprs
 rts.lcl <- sprs
 colnames(rts.lcl)[7] <- "rts"
