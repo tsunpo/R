@@ -9,8 +9,10 @@
 # Methods:
 # Last Modified: 02/11/23
 # -----------------------------------------------------------------------------
-getArm <- function(CHR, START) {
-	  centromeres.chr <- subset(centromeres, CHR == CHR)
+getArm <- function(chr, START) {
+	  centromeres <- subset(cytoBand, gieStain == "acen")
+	  colnames(centromeres)[1:3] <- c("CHR", "START", "END")
+	  centromeres.chr <- subset(centromeres, CHR == chr)
 	  centro <- centromeres.chr[1,]$END
 	
 	  if (START > centro) {
@@ -30,8 +32,8 @@ getTelo <- function(CHR, START, Arm) {
 	  }
 }
 
-getCentro <- function(CHR, START, Arm) {
-	  centromeres.chr <- subset(centromeres, CHR == CHR)
+getCentro <- function(chr, START, Arm) {
+	  centromeres.chr <- subset(centromeres, CHR == chr)
 	  centro <- centromeres.chr[1,]$END
 	
 	  if (Arm == "q") {
@@ -269,12 +271,13 @@ plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, leg
 	  dev.off()
 }
 
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=6, width=4) {
 	  trait <- rep(0, length(tpm.1))
 	  trait <- c(trait, rep(1, length(tpm.2)))
 	  trait <- as.factor(trait)
 	  expr <- as.numeric(c(tpm.1, tpm.2))
 	  ylim <- c(min(expr), max(expr))
-	  ylim <- c(-3, 3)
+	  #ylim <- c(-3, 3)
 	  
 	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
@@ -285,8 +288,12 @@ plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, leg
 	  #text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
 	  #lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
 
-	  text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
-	  text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
+	  #text(1.5, 39, expression(italic('P')~"                   "), cex=1.9)
+	  #text(1.5, 39, paste0("   = ", scientific(p)), cex=1.9)
+	  text(1.5, 51, expression(italic('P')~"                   "), cex=1.9)
+	  text(1.5, 51, paste0("   = ", scientific(p)), cex=1.9)
+	  #text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
+	  #text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
 	  #text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
 	  #text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
 
@@ -298,7 +305,12 @@ plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, leg
 	  dev.off()
 }
 
-plotCorrelationRTS <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=1.9, chrs=c(4, 16), sprs) {
+plotCorrelationRTS <- function(file.name, main.text, xlab.text, ylab.text, dns, rts, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=1.9, chrs=c(4, 16)) {
+	  x=dns$Freq
+	  y=rts[dns$Var1,]$spr
+	  sprs=rts[dns$Var1,]$spr
+	  idxes <- which(dns$Var1 %in% chrs)
+	
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, yaxt="n", main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
@@ -319,9 +331,9 @@ plotCorrelationRTS <- function(file.name, main.text, xlab.text, ylab.text, x, y,
 	  legend("topleft", legend=c("E > L", "L > E"), col=c(red, blue), pch=19, pt.cex=2.5, cex=1.8)
 	  
 	  par(xpd=T)
-	  for (c in 1:length(chrs)) {
-	  	  chr <- chrs[c]
-	  	  text(x[chr], y[chr], paste0("Chr", chr), col="black", pos=3, cex=1.9)
+	  for (c in 1:length(idxes)) {
+	  	  idx <- idxes[c]
+	  	  text(x[idx], y[idx], paste0("Chr", chrs[c]), col="black", pos=3, cex=1.9)
 	  }
 	  axis(side=1, at=100, labels=100, cex.axis=1.9)
 	  axis(side=2, at=seq(-0.5, 0.5, by=0.5), labels=c(-0.5, 0, 0.5), cex.axis=1.9)
