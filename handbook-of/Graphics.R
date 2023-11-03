@@ -12,7 +12,7 @@
 plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=2, p=12, chr=2) {
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, xaxt="n", main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
 	 
 	  lm.fit <- lm(y ~ x)
 	  abline(lm.fit, lwd=5, col=cols[2])
@@ -25,7 +25,7 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
 	  par(xpd=T)
 	  text(x[p], y[p], paste0("Chr", chr), col="black", pos=3, cex=2)
 	  axis(side=2, at=100, labels=100, cex.axis=1.9)
-	  axis(side=1, at=seq(-0.5, 1, by=0.5), labels=c(-0.5, 0, 0.5, 1), cex.axis=1.9)
+	  #axis(side=1, at=seq(-0.5, 1, by=0.5), labels=c(-0.5, 0, 0.5, 1), cex.axis=1.9)
 	  dev.off()
 }
 
