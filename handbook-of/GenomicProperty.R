@@ -44,7 +44,7 @@ getCentro <- function(chr, START, Arm) {
 }
 
 # -----------------------------------------------------------------------------
-# Methods: 
+# 
 # Last Modified: 02/11/23
 # -----------------------------------------------------------------------------
 getDNS <- function(sv.del.nona, dist, phase) {
@@ -65,7 +65,7 @@ getDNS <- function(sv.del.nona, dist, phase) {
 
 plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5) {
 	  xlab.text <- "Chromosome"
-  	cols <- c("black", blue.lighter, red.lighter)
+  	cols <- c(red, blue.lighter, red.lighter)
 	
   	pdf(paste0(file.name, ".pdf"), height=size, width=size)
   	par(mar=c(5.1, 4.6, 4.1, 1.5))
@@ -77,6 +77,114 @@ plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legend
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
 	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
 	  legend(legend, legend=legends, col=cols[1], lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 04/10/23
+# -----------------------------------------------------------------------------
+getDNS2 <- function(gel.del.nona, dist, phase) {
+	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), V21 == phase)$CHR))
+	  rownames(dns) <- dns$Var1
+	
+	  dns.chr <- toTable(0, 2, 22, c("CHR", "Freq"))
+	  for (c in 1:22) {
+		    chr <- chrs[c]
+		    dns.chr$CHR[c] <- c
+		
+		    if (length(which(rownames(dns) == chr)) != 0)
+			      dns.chr$Freq[c] <- dns[chr,]$Freq
+	  }
+	
+	  return(dns.chr)
+}
+
+plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5) {
+	  xlab.text <- "Chromosome"
+	  cols <- c(blue.lighter, red.lighter, "black")
+	
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.6, 4.1, 1.5))
+	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	
+	  points(dns.f$Freq ~ dns.f$CHR, col=cols[1], pch=19, cex=cex)
+	  lines(dns.f$Freq, y=NULL, lty=5, lwd=2.5, col=cols[1])
+	
+	  points(dns.m$Freq ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
+	  lines(dns.m$Freq, y=NULL, lty=5, lwd=2.5, col=cols[2])
+	
+  	axis(side=2, at=12, cex.axis=1.8)	  
+	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
+	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
+	  legend(legend, legend=legends, col=cols[2:1], lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 04/10/23
+# -----------------------------------------------------------------------------
+getCounts <- function(sv.del.nona.chr16, sv.del.nona.others, histology) {
+	  colnames <- names(table(c(sv.del.nona.chr16[, histology], sv.del.nona.others[, histology])))
+	
+	  size.1 <- toTable(0, length(colnames), 2, colnames)
+	  rownames(size.1) <- c("Others", "Chr16")
+	
+	  gel.del.m <- sv.del.nona.others
+	  size.1[1, ] <- table(gel.del.m[, histology])[colnames]
+	  gel.del.m <- sv.del.nona.chr16
+	  size.1[2, ] <- table(gel.del.m[, histology])[colnames]
+	  size.1 <- as.data.frame(t(size.1))
+	  idx <- as.numeric(as.vector(which(is.na(size.1[,2]))))
+	  size.1$Chr16[idx] <- 0
+	  size.1 <- size.1[order(size.1[,2]),]
+	  
+	  return(as.matrix(size.1))
+}
+
+getProportions <- function(size.1) {
+	  size.2 <- size.1
+	  size.2[,1] <- size.2[,1] / sum(size.2[,1]) * 100
+	  size.2[,2] <- size.2[,2] / sum(size.2[,2]) * 100
+	  
+	  return(size.2)
+}
+
+plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, counts, counts.prop, height=6.1, outs=c(36), outs.col=c(red)) {
+	  grays <- c("lightgray", "darkgray", "dimgray")
+	  cols <- grays[rep(1:3, nrow(counts)/3)]
+	
+	  blues <- c(blue, blue.light)
+	  idx <- which(counts.prop[,2] == 0)
+	  cols[idx] <- blues[rep(1:2, length(idx)/2)]
+	  
+	  if (length(outs) != 0) {
+	  	  for (o in 1:length(outs))
+	  	  	  cols[outs[o]] <- outs.col[o]
+	  }
+	  
+	  #par(xpd=T)
+	  pdf(paste0(file.name, ".pdf"), height=height, width=6.8)
+	  par(mar=c(5.1, 4.6, 4.2, 18), xpd=TRUE)
+	  barplot(counts.prop, col=cols, ylim=c(0, 100), ylab=ylab.text, xaxt="n", main=main.text, cex.names=1.8, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  #text(labels=c("Others ", "Chr16 "), x=c(0.8, 2), y=par("usr")[3] - 4, srt=45, adj=0.965, xpd=NA, cex=1.8)
+	  axis(side=1, at=1-0.3,     labels=labels[1], font=1, cex.axis=1.9)
+	  axis(side=1, at=2-0.3/2/2, labels=labels[2], font=1, cex.axis=1.9)
+	  axis(side=1, at=1-0.3,     labels=paste0("n=", sum(counts[,1])), line=1.8, cex.axis=1.9, col.ticks="white")
+	  axis(side=1, at=2-0.3/2/2, labels=paste0("n=", sum(counts[,2])), line=1.8, cex.axis=1.9, col.ticks="white")
+	
+	  for (c in 1:ncol(counts)) {
+		    text(c - 0.3/c/c, counts.prop[1, c]/2, counts[1, c], cex=1.8)
+		    for (r in 1:nrow(counts))
+			      if (counts[r, c] != 0)
+				        text(c - 0.3/c/c, sum(counts.prop[r-1:r, c]) + (counts.prop[r, c]/2), counts[r, c], cex=1.8)
+	  }
+	
+	  #text(4.3, 86, expression(italic('P')~"                   "), cex=2)
+	  #text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
+	
+	  legend("right", rev(rownames(counts.prop)), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
 	  dev.off()
 }
 
@@ -290,12 +398,12 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 
 	  #text(1.5, 39, expression(italic('P')~"                   "), cex=1.9)
 	  #text(1.5, 39, paste0("   = ", scientific(p)), cex=1.9)
-	  text(1.5, 51, expression(italic('P')~"                   "), cex=1.9)
-	  text(1.5, 51, paste0("   = ", scientific(p)), cex=1.9)
+	  #text(1.5, 51, expression(italic('P')~"                   "), cex=1.9)
+	  #text(1.5, 51, paste0("   = ", scientific(p)), cex=1.9)
 	  #text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
 	  #text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
-	  #text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
-	  #text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
+	  text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
+	  text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
 
 	  axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
 	  axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.8)
