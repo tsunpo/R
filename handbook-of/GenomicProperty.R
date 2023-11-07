@@ -182,9 +182,8 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 		    	  	  if (counts[r, c] > 0)
 			   	        text(c - 0.3/c/c, sum(counts.prop[r-1:r, c]) + (counts.prop[r, c]/2), counts[r, c], cex=1.8)
 	
-	  text(4.3, 86, expression(italic('P')~"                   "), cex=2)
-	  text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
-	
+	  #text(4.3, 86, expression(italic('P')~"                   "), cex=2)
+	  #text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
 	  legend("right", rev(rownames(counts.prop[idx,])), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
 	  dev.off()
 }
