@@ -151,7 +151,7 @@ getProportions <- function(size.1) {
 	  return(size.2)
 }
 
-plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, counts, counts.prop, height=6.1, outs=c(36), outs.col=c(red)) {
+plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, counts, counts.prop, outs=c(36), outs.col=c(red), height=6.1, cutoff=20) {
 	  grays <- c("lightgray", "darkgray", "dimgray")
 	  cols <- grays[rep(1:3, nrow(counts)/3)]
 	
@@ -164,7 +164,7 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 	  	  	  cols[outs[o]] <- outs.col[o]
 	  }
 	  
-	  #par(xpd=T)
+	  par(xpd=T)
 	  pdf(paste0(file.name, ".pdf"), height=height, width=6.8)
 	  par(mar=c(5.1, 4.6, 4.2, 18), xpd=TRUE)
 	  barplot(counts.prop, col=cols, ylim=c(0, 100), ylab=ylab.text, xaxt="n", main=main.text, cex.names=1.8, cex.axis=1.8, cex.lab=1.9, cex.main=2)
@@ -174,17 +174,18 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 	  axis(side=1, at=1-0.3,     labels=paste0("n=", sum(counts[,1])), line=1.8, cex.axis=1.9, col.ticks="white")
 	  axis(side=1, at=2-0.3/2/2, labels=paste0("n=", sum(counts[,2])), line=1.8, cex.axis=1.9, col.ticks="white")
 	
-	  for (c in 1:ncol(counts)) {
-		    text(c - 0.3/c/c, counts.prop[1, c]/2, counts[1, c], cex=1.8)
+	  idx <- as.numeric(which(counts[,2] >= cutoff))
+	  for (c in 1:ncol(counts))
+	  	  #text(c - 0.3/c/c, counts.prop[1, c]/2, counts[1, c], cex=1.8)
 		    for (r in 1:nrow(counts))
-			      if (counts[r, c] != 0)
-				        text(c - 0.3/c/c, sum(counts.prop[r-1:r, c]) + (counts.prop[r, c]/2), counts[r, c], cex=1.8)
-	  }
+		    	  if (r %in% idx)
+		    	  	  if (counts[r, c] > 0)
+			   	        text(c - 0.3/c/c, sum(counts.prop[r-1:r, c]) + (counts.prop[r, c]/2), counts[r, c], cex=1.8)
 	
-	  #text(4.3, 86, expression(italic('P')~"                   "), cex=2)
-	  #text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
+	  text(4.3, 86, expression(italic('P')~"                   "), cex=2)
+	  text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
 	
-	  legend("right", rev(rownames(counts.prop)), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
+	  legend("right", rev(rownames(counts.prop[idx,])), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
 	  dev.off()
 }
 
