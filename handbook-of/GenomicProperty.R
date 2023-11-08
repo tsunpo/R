@@ -63,15 +63,14 @@ getDNS <- function(sv.del.nona, dist, phase) {
 	  return(dns.chr)
 }
 
-plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5) {
+plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols="black") {
 	  xlab.text <- "Chromosome"
-  	cols <- c(red, blue.lighter, red.lighter)
 	
   	pdf(paste0(file.name, ".pdf"), height=size, width=size)
   	par(mar=c(5.1, 4.6, 4.1, 1.5))
 	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 	
-	  points(dns.f$Freq ~ dns.f$CHR, col=cols[1], pch=19, cex=cex)
+	  points(dns.f$Freq ~ dns.f$CHR, col=cols, pch=19, cex=cex)
 	  lines(dns.f$Freq, y=NULL, lty=5, lwd=2.5, col=cols[1])
 	
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
@@ -100,9 +99,8 @@ getDNS2 <- function(gel.del.nona, dist, phase) {
 	  return(dns.chr)
 }
 
-plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5) {
+plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(blue, red, "black")) {
 	  xlab.text <- "Chromosome"
-	  cols <- c(blue.lighter, red.lighter, "black")
 	
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
 	  par(mar=c(5.1, 4.6, 4.1, 1.5))
@@ -114,7 +112,7 @@ plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend
 	  points(dns.m$Freq ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
 	  lines(dns.m$Freq, y=NULL, lty=5, lwd=2.5, col=cols[2])
 	
-  	axis(side=2, at=12, cex.axis=1.8)	  
+	  #axis(side=2, at=12, cex.axis=1.8)	  
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
 	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
 	  legend(legend, legend=legends, col=cols[2:1], lty=2, lwd=5, pt.cex=2, cex=1.9)
@@ -136,10 +134,13 @@ getCounts <- function(sv.del.nona.chr16, sv.del.nona.others, histology) {
 	  gel.del.m <- sv.del.nona.chr16
 	  size.1[2, ] <- table(gel.del.m[, histology])[colnames]
 	  size.1 <- as.data.frame(t(size.1))
+	  
+	  idx <- as.numeric(as.vector(which(is.na(size.1[,1]))))
+	  size.1$Others[idx] <- 0
 	  idx <- as.numeric(as.vector(which(is.na(size.1[,2]))))
 	  size.1$Chr16[idx] <- 0
-	  size.1 <- size.1[order(size.1[,2]),]
 	  
+	  size.1 <- size.1[order(size.1[,2]),]
 	  return(as.matrix(size.1))
 }
 
@@ -153,11 +154,11 @@ getProportions <- function(size.1) {
 
 plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, counts, counts.prop, outs=c(36), outs.col=c(red), height=6.1, cutoff=20) {
 	  grays <- c("lightgray", "darkgray", "dimgray")
-	  cols <- grays[rep(1:3, nrow(counts)/3)]
+	  cols <- grays[rep_len(1:3, nrow(counts))]
 	
 	  blues <- c(blue, blue.light)
-	  idx <- which(counts.prop[,2] == 0)
-	  cols[idx] <- blues[rep(1:2, length(idx)/2)]
+	  idx <- as.numeric(which(counts.prop[,2] == 0))
+	  cols[idx] <- blues[rep_len(1:2, length(idx))]
 	  
 	  if (length(outs) != 0) {
 	  	  for (o in 1:length(outs))
@@ -184,7 +185,7 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 	
 	  #text(4.3, 86, expression(italic('P')~"                   "), cex=2)
 	  #text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
-	  legend("right", rev(rownames(counts.prop[idx,])), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
+	  legend("right", rev(rownames(counts.prop)[idx]), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
 	  dev.off()
 }
 
