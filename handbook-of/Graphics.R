@@ -22,8 +22,8 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
 	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2)
 	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2)
 	
-	  par(xpd=T)
-	  text(x[p], y[p], paste0("Chr", chr), col="black", pos=3, cex=2)
+	  #par(xpd=T)
+	  #text(x[p], y[p], paste0("Chr", chr), col="black", pos=3, cex=2)
 	  axis(side=2, at=100, labels=100, cex.axis=1.9)
 	  #axis(side=1, at=seq(-0.5, 1, by=0.5), labels=c(-0.5, 0, 0.5, 1), cex.axis=1.9)
 	  dev.off()

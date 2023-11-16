@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 11/09/19; 12/11/18
 # =============================================================================
-wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/Users/ty2/Work/dev/R"              ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "ReplicationForkDirectionality.R", "ReplicationTiming.R")
@@ -150,7 +150,285 @@ overlaps <- rownames(nrds.RT.NRFD.sclc.nl)
 rfd <- cbind(bed.gc[overlaps,], nrds.RT.NRFD.sclc.nl[overlaps,])
 
 # -----------------------------------------------------------------------------
-# Overlaps with ORM IZs
+# Find median size of IZs ()
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+colnames <- c("IZ", "IZ_length", "IZ_inter")
+report   <- toTable(0, length(colnames), 20, colnames)
+
+for (r in 1:20) {
+	  cut <- 1 - 0.01 * r
+	  rownames(report)[r] <- cut
+	  
+	  rfd.ttr <- getBootstrapTTR(rfd, cut)
+	  diff <- setdiff(rownames(rfd), rownames(rfd.ttr))
+	  rfd.ctr <- rfd[diff,]
+	  rfd.ctr.iz <- subset(rfd.ctr, NRFD > 0)
+	  #rfd.ctr.iz <- subset(rfd.ctr.iz, SPLINE < 0)
+	  
+	  report$IZ[r] <- nrow(rfd.ctr.iz) / nrow(rfd)
+	  
+	  lengths <- c()
+	  gaps <- c()
+	  for (c in 1:22) {
+	  	  rfd.ctr.iz.chr <- subset(rfd.ctr.iz, CHR == chrs[c])
+	  	  bins <- rfd.ctr.iz.chr$START
+	  	  
+	  	  runs <- rle(diff(bins) == 1000)
+	  	  connected_bin_lengths <- runs$lengths[runs$values]
+	  	  lengths <- c(lengths, connected_bin_lengths)
+	  	  #report$IZ_length[r] <- median(connected_bin_lengths)
+	  	  
+	  	  gap_positions <- which(diff(bins) > 1000)
+	  	  gap_sizes <- bins[gap_positions + 1] - bins[gap_positions]
+	  	  gaps <- c(gaps, gap_sizes/1000)
+	  	  #report$IZ_inter[r] <- median(gap_sizes)
+	  }
+	  report$IZ_length[r] <- median(lengths)
+	  report$IZ_inter[r] <- median(gaps)
+}
+
+file.name <- "RFD_IZ_length_L"
+main.text <- c("|RFD| < 0.9", "")
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=6)
+par(mar=c(5.1, 4.8, 4.1, 1.3))
+plot(rownames(report) ~ report$IZ_length, ylab="|RFD|", xlab="IZ length [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#idx <- which(test$P == min(test$P))
+#points(-log10(test$P[idx]) ~ test$Mb[idx], pch=16, col="black", cex=2)
+abline(h=0.9, col="black", lty=5, lwd=3)
+#axis(side=2, at=seq(0, 2, by=1), labels=c(0, 1, 2), cex.axis=1.8)
+#axis(side=2, at=2.5, labels=2.5, cex.axis=1.8)
+#axis(side=1, at=seq(25, 150, by=25), labels=c("",50,"",100,"",150), cex.axis=1.9)
+#axis(side=1, at=5, labels=5, cex.axis=1.9)
+#axis(side=1, at=100, labels=100, cex.axis=1.9)
+#axis(side=1, at=150, labels=150, cex.axis=1.9)
+dev.off()
+
+file.name <- "RFD_IZ_gaps_L"
+main.text <- c("|RFD| < 0.9", "")
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=6)
+par(mar=c(5.1, 4.8, 4.1, 1.3))
+plot(rownames(report) ~ report$IZ_inter, ylab="|RFD|", xlab="Inter-IZ distance [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#idx <- which(test$P == min(test$P))
+#points(-log10(test$P[idx]) ~ test$Mb[idx], pch=16, col="black", cex=2)
+abline(h=0.9, col="black", lty=5, lwd=3)
+#axis(side=2, at=seq(0, 2, by=1), labels=c(0, 1, 2), cex.axis=1.8)
+#axis(side=2, at=2.5, labels=2.5, cex.axis=1.8)
+#axis(side=1, at=seq(25, 150, by=25), labels=c("",50,"",100,"",150), cex.axis=1.9)
+#axis(side=1, at=5, labels=5, cex.axis=1.9)
+#axis(side=1, at=100, labels=100, cex.axis=1.9)
+#axis(side=1, at=150, labels=150, cex.axis=1.9)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Find median size of TZs ()
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+colnames <- c("TZ", "TZ_length", "TZ_length_peak", "TZ_inter", "TZ_inter_peak")
+report   <- toTable(0, length(colnames), 20, colnames)
+
+for (r in 1:20) {
+	  cut <- 1 - 0.01 * r
+	  rownames(report)[r] <- cut
+	
+	  rfd.ttr <- getBootstrapTTR(rfd, cut)
+	  diff <- setdiff(rownames(rfd), rownames(rfd.ttr))
+	  rfd.ctr <- rfd[diff,]
+	  rfd.ctr.tz <- subset(rfd.ctr, NRFD < 0)
+	
+	  report$TZ[r] <- nrow(rfd.ctr.tz) / nrow(rfd)
+	
+	  lengths <- c()
+	  gaps <- c()
+	  for (c in 1:22) {
+		    rfd.ctr.tz.chr <- subset(rfd.ctr.tz, CHR == chrs[c])
+		    bins <- rfd.ctr.tz.chr$START
+		
+		    runs <- rle(diff(bins) == 1000)
+		    connected_bin_lengths <- runs$lengths[runs$values]
+		    lengths <- c(lengths, connected_bin_lengths)
+		    #report$IZ_length[r] <- median(connected_bin_lengths)
+		
+		    gap_positions <- which(diff(bins) > 1000)
+		    gap_sizes <- bins[gap_positions + 1] - bins[gap_positions]
+		    gaps <- c(gaps, gap_sizes)
+		    #report$IZ_inter[r] <- median(gap_sizes)
+	  }
+	
+	  #file.name <- file.path(wd.rt.plots, paste0("Density_RFD_IZ_length_", cut, ".pdf"))
+	  #main.text <- c(paste0("|RFD| > ", cut), "")
+	  #xlab.text <- "IZ length [kb]"
+	  #plotDensity(lengths, file.name, col="black", main.text, xlab.text)
+	
+	  report$TZ_length[r] <- median(lengths)
+	  d <- density(lengths)
+	  report$TZ_length_peak[r] <- d$x[which(d$y == max(d$y))]
+	
+	  #file.name <- file.path(wd.rt.plots, paste0("Density_RFD_IZ_gaps_", cut, ".pdf"))
+	  #main.text <- c(paste0("|RFD| > ", cut), "")
+	  #xlab.text <- "Inter-IZ distance [kb]"
+	  #plotDensity(gaps/1000, file.name, col="black", main.text, xlab.text)
+	
+	  report$TZ_inter[r] <- median(gaps/1000)
+	  d <- density(gaps/1000)
+	  report$TZ_inter_peak[r] <- d$x[which(d$y == max(d$y))]
+}
+
+file.name <- "RFD_TZ_length"
+main.text <- c("|RFD| < 0.9", "")
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=6)
+par(mar=c(5.1, 4.8, 4.1, 1.3))
+plot(rownames(report) ~ report$TZ_length, ylab="|RFD|", xlab="TZ length [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#idx <- which(test$P == min(test$P))
+#points(-log10(test$P[idx]) ~ test$Mb[idx], pch=16, col="black", cex=2)
+abline(h=0.9, col="black", lty=5, lwd=3)
+#axis(side=2, at=seq(0, 2, by=1), labels=c(0, 1, 2), cex.axis=1.8)
+#axis(side=2, at=2.5, labels=2.5, cex.axis=1.8)
+#axis(side=1, at=seq(25, 150, by=25), labels=c("",50,"",100,"",150), cex.axis=1.9)
+#axis(side=1, at=5, labels=5, cex.axis=1.9)
+#axis(side=1, at=100, labels=100, cex.axis=1.9)
+#axis(side=1, at=150, labels=150, cex.axis=1.9)
+dev.off()
+
+file.name <- "RFD_TZ_gaps"
+main.text <- c("|RFD| < 0.9", "")
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=6)
+par(mar=c(5.1, 4.8, 4.1, 1.3))
+plot(rownames(report) ~ report$TZ_inter, ylab="|RFD|", xlab="Inter-TZ distance [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#idx <- which(test$P == min(test$P))
+#points(-log10(test$P[idx]) ~ test$Mb[idx], pch=16, col="black", cex=2)
+abline(h=0.9, col="black", lty=5, lwd=3)
+#axis(side=2, at=seq(0, 2, by=1), labels=c(0, 1, 2), cex.axis=1.8)
+#axis(side=2, at=2.5, labels=2.5, cex.axis=1.8)
+#axis(side=1, at=seq(25, 150, by=25), labels=c("",50,"",100,"",150), cex.axis=1.9)
+#axis(side=1, at=5, labels=5, cex.axis=1.9)
+#axis(side=1, at=100, labels=100, cex.axis=1.9)
+#axis(side=1, at=150, labels=150, cex.axis=1.9)
+dev.off()
+
+
+
+# -----------------------------------------------------------------------------
+# GM06990 OK-seq IZs 
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+gm.iz <- getPublicRFD(file.path(wd.rt.meta, "Wu 2023", "GM_hmm_HMMsegments_IZ.bed"), rfd)
+empty <- subset(subset(subset(gm.iz, TTR == 0), IZ == 0), TZ == 0)
+gm.iz.nona <- gm.iz[setdiff(rownames(gm.iz), rownames(empty)),]
+
+sum(gm.iz.nona$SIZE)/1000
+# [1] 190840
+sum(gm.iz.nona$TTR) / 190840
+# [1] 0.8962272
+sum(gm.iz.nona$IZ) / 190840
+# [1] 0.07923915
+sum(gm.iz.nona$TZ) / 190840
+# [1] 0.05198596
+
+gm.iz.auto <- subset(gm.iz, CHR %in% auto)
+sum(gm.iz.auto$SIZE) / 2875001522
+# [1] 0.0663951
+
+# -----------------------------------------------------------------------------
+# GM06990 OK-seq TZs 
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+gm.tz <- getPublicRFD(file.path(wd.rt.meta, "Wu 2023", "GM_hmm_HMMsegments_TZ.bed"), rfd)
+empty <- subset(subset(subset(gm.tz, TTR == 0), IZ == 0), TZ == 0)
+gm.tz.nona <- gm.tz[setdiff(rownames(gm.tz), rownames(empty)),]
+
+sum(gm.tz.nona$SIZE)/1000
+# [1] 1042221
+sum(gm.tz.nona$TTR) / 1042221
+# [1] 0.8789124
+sum(gm.tz.nona$IZ) / 1042221
+# [1] 0.05766052
+sum(gm.tz.nona$TZ) / 1042221
+# [1] 0.06554848
+
+gm.tz.auto <- subset(gm.tz, CHR %in% auto)
+sum(gm.tz.auto$SIZE) / 2875001522
+# [1] 0.3625758
+
+# -----------------------------------------------------------------------------
+# HeLa OK-seq IZs
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+hela.iz <- getPublicRFD(file.path(wd.rt.meta, "Wu 2023", "HeLa_hmm_HMMsegments_IZ.bed"), rfd)
+empty <- subset(subset(subset(hela.iz, TTR == 0), IZ == 0), TZ == 0)
+hela.iz.nona <- hela.iz[setdiff(rownames(hela.iz), rownames(empty)),]
+
+sum(hela.iz.nona$SIZE)/1000
+# [1] 306898
+sum(hela.iz.nona$TTR) / 306898
+# [1] 0.8961642
+sum(hela.iz.nona$IZ) / 306898
+# [1] 0.07873952
+sum(hela.iz.nona$TZ) / 306898
+# [1] 0.05479671
+
+##
+hela.iz.auto <- subset(hela.iz, CHR %in% auto)
+sum(hela.iz.auto$SIZE) / 2875001522
+# [1] 0.1067648
+
+# -----------------------------------------------------------------------------
+# HeLa OK-seq TZs
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+hela.tz <- getPublicRFD(file.path(wd.rt.meta, "Wu 2023", "Hela_S3_all_cutadapt_sort_delDupl_merge_hmm_TZ.bed"), rfd)
+empty <- subset(subset(subset(hela.tz, TTR == 0), IZ == 0), TZ == 0)
+hela.tz.nona <- hela.tz[setdiff(rownames(hela.tz), rownames(empty)),]
+
+sum(hela.tz.nona$SIZE)/1000
+# [1] 1329511
+sum(hela.tz.nona$TTR) / 1329511
+# [1] 0.882256
+sum(hela.tz.nona$IZ) / 1329511
+# [1] 0.05931655
+sum(hela.tz.nona$TZ) / 1329511
+# [1] 0.06178512
+
+hela.tz.auto <- subset(hela.tz, CHR %in% auto)
+sum(hela.tz.auto$SIZE) / 2875001522
+# [1] 0.4625104
+
+# -----------------------------------------------------------------------------
+# HeLa S3 OK-seq IZs
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+hela.s3.iz <- getPublicRFD(file.path(wd.rt.meta, "Wu 2023", "Hela_S3_all_cutadapt_sort_delDupl_merge_hmm_IZ.bed"), rfd)
+empty <- subset(subset(subset(hela.s3.iz, TTR == 0), IZ == 0), TZ == 0)
+hela.s3.iz.nona <- hela.s3.iz[setdiff(rownames(hela.s3.iz), rownames(empty)),]
+
+sum(hela.s3.iz.nona$SIZE)/1000
+# [1] 275493.5
+sum(hela.s3.iz.nona$TTR) / 275493.5
+# [1] 0.8592362
+sum(hela.s3.iz.nona$IZ) / 275493.5
+# [1] 0.07735573
+sum(hela.s3.iz.nona$TZ) / 275493.5
+# [1] 0.05248037
+
+# -----------------------------------------------------------------------------
+# HeLa S3 OK-seq TZs
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+hela.s3.tz <- getPublicRFD(file.path(wd.rt.meta, "Wu 2023", "HeLa_hmm_HMMsegments_TZ.bed"), rfd)
+empty <- subset(subset(subset(hela.s3.tz, TTR == 0), IZ == 0), TZ == 0)
+hela.s3.tz.nona <- hela.s3.tz[setdiff(rownames(hela.s3.tz), rownames(empty)),]
+
+sum(hela.s3.tz.nona$SIZE)/1000
+# [1] 
+sum(hela.s3.tz.nona$TTR) / 
+# [1] 
+sum(hela.s3.tz.nona$IZ) / 
+# [1] 
+sum(hela.s3.tz.nona$TZ) / 
+# [1] 
+
+# -----------------------------------------------------------------------------
+# ORM IZs
 # Last Modified: 17/10/23
 # -----------------------------------------------------------------------------
 orm.iz <- readTable(file.path(wd.rt.meta, "Wang 2021", "Initiation Zones.bed"), header=F, rownames=F, sep="\t")
@@ -177,6 +455,30 @@ for (r in 1:nrow(orm.iz)) {
 	  	  }
 	  }
 }
+
+empty <- subset(subset(subset(orm.iz, TTR == 0), IZ == 0), TZ == 0)
+orm.iz.nona <- orm.iz[setdiff(rownames(orm.iz), rownames(empty)),]
+
+sum(orm.iz.nona$SIZE)/1000
+# [1] 153275
+sum(orm.iz.nona$TTR) / 153275
+# [1] 0.8709901
+sum(orm.iz.nona$IZ) / 153275
+# [1] 0.0898581
+sum(orm.iz.nona$TZ) / 153275
+# [1] 0.06094275
+
+##
+auto <- unique(rfd$CHR)
+orm.iz.auto <- subset(orm.iz, CHR %in% auto)
+sum(chromInfo[auto,]$size)
+# [1] 2875001522
+sum(orm.iz.auto$SIZE) / 2875001522
+# [1] 0.05338884
+
+
+
+
 133501 / 159044
 # [1] 0.8393966
 13773 / 159044

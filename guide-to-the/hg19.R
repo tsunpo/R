@@ -136,6 +136,7 @@ chromInfo <- readTable(file.path(wd.reference, "ucsc/chromInfo.txt.gz"), header=
 colnames(chromInfo) <- c("chrom", "size")
 rownames(chromInfo) <- chromInfo$chrom
 chromInfo <- subset(chromInfo, chrom %in% chrs)[, 1:2]
+chromInfo <- chromInfo[chrs,]   ## ADD 02/11/23
 
 ## The Bioinformatician's Guide to the Human Genome
 save(ensGene, ensGene.transcript, ensGene.transcript.exon, cytoBand, chromInfo, chrs, file=file.path(wd.src.ref, "hg19.RData"))

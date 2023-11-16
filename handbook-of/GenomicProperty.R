@@ -99,7 +99,7 @@ getDNS2 <- function(gel.del.nona, dist, phase) {
 	  return(dns.chr)
 }
 
-plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(blue, red, "black")) {
+plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(blue.lighter, red.lighter, "black")) {
 	  xlab.text <- "Chromosome"
 	
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
@@ -112,7 +112,7 @@ plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend
 	  points(dns.m$Freq ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
 	  lines(dns.m$Freq, y=NULL, lty=5, lwd=2.5, col=cols[2])
 	
-	  #axis(side=2, at=12, cex.axis=1.8)	  
+	  axis(side=2, at=12, cex.axis=1.8)	  
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
 	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
 	  legend(legend, legend=legends, col=cols[2:1], lty=2, lwd=5, pt.cex=2, cex=1.9)
@@ -154,6 +154,7 @@ getProportions <- function(size.1) {
 
 plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, counts, counts.prop, outs=c(36), outs.col=c(red), height=6.1, cutoff=20) {
 	  grays <- c("lightgray", "darkgray", "dimgray")
+	  #grays <- c("dimgray", "darkgray", "lightgray")
 	  cols <- grays[rep_len(1:3, nrow(counts))]
 	
 	  blues <- c(blue, blue.light)
@@ -190,6 +191,38 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 }
 
 # -----------------------------------------------------------------------------
+# 
+# Last Modified: 09/11/23
+# -----------------------------------------------------------------------------
+getPublicRFD <- function(file.name, rfd) {
+	  orm.iz <- readTable(file.name, header=F, rownames=F, sep="\t")
+	  colnames(orm.iz) <- c("CHR", "START", "END")
+	  orm.iz$BED <- paste0("B", rownames(orm.iz))
+	
+	  orm.iz$SIZE <- orm.iz$END - orm.iz$START
+	  orm.iz$TTR <- 0
+	  orm.iz$IZ  <- 0
+	  orm.iz$TZ  <- 0
+	  for (r in 1:nrow(orm.iz)) {
+		    chr <- orm.iz$CHR[r]
+		    rfd.chr <- subset(rfd, CHR == chr)
+		
+		    rfd.chr.start <- subset(rfd.chr, START <= orm.iz$END[r])
+		    rfd.chr.start.end <- subset(rfd.chr.start, END >= orm.iz$START[r])
+		
+		    if (nrow(rfd.chr.start.end) != 0) {
+			      freq <- as.data.frame(table(rfd.chr.start.end$BRFD))
+			
+			      for (f in 1:nrow(freq)) {
+				        orm.iz[r, as.vector(freq$Var1[f])] <- as.numeric(freq$Freq[f])
+			      }
+		    }
+	  }
+	
+	  return(orm.iz)
+}
+
+# -----------------------------------------------------------------------------
 # Methods: 
 # Last Modified: 02/11/23
 # -----------------------------------------------------------------------------
@@ -215,6 +248,18 @@ getGenomicProperty <- function(chr, bp, rt) {
 		    return(paste(rt.chr.start.end$BED, collapse=","))
 }
 
+getGenomicProperty2 <- function(chr, start, end, rt) {
+	  rt.chr <- subset(rt, CHR == chr)
+	
+	  rt.chr.start <- subset(rt.chr, START <= end)
+	  rt.chr.start.end <- subset(rt.chr.start, END >= start)
+	
+	  if (nrow(rt.chr.start.end) == 0)
+		    return(NA)
+	  else
+	  	  return(rt.chr.start.end)
+}
+
 getIZ <- function(chr, start, end, orm.iz) {
 	  rt.chr <- subset(orm.iz, CHR == chr)
 	
@@ -227,6 +272,10 @@ getIZ <- function(chr, start, end, orm.iz) {
 	  	  return(0)
 }
 
+# -----------------------------------------------------------------------------
+# Methods: 
+# Last Modified: 02/11/23
+# -----------------------------------------------------------------------------
 getGenomicPropertyCount <- function(chr, bp, rt) {
 	  rt.chr <- subset(rt, CHR == chr)
 	
@@ -397,16 +446,26 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  #text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
 	  #lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
 
-	  #text(1.5, 39, expression(italic('P')~"                   "), cex=1.9)
-	  #text(1.5, 39, paste0("   = ", scientific(p)), cex=1.9)
-	  #text(1.5, 51, expression(italic('P')~"                   "), cex=1.9)
-	  #text(1.5, 51, paste0("   = ", scientific(p)), cex=1.9)
-	  #text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
-	  #text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
-	  text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
-	  text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
-
-	  axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
+	  #text(1.5, -0.1, expression(italic('P')~"                   "), cex=1.9)
+	  #text(1.5, -0.1, paste0("   = ", scientific(p)), cex=1.9)
+	  if (main == "Microhomolgy") {
+	     text(1.5, 28, expression(italic('P')~"                   "), cex=1.9)
+	     text(1.5, 28, paste0("   = ", scientific(p)), cex=1.9)
+	  } else if (main == "Mother's age at birth") {
+	     text(1.5, 39, expression(italic('P')~"                   "), cex=1.9)
+	     text(1.5, 39, paste0("   = ", scientific(p)), cex=1.9)
+	  } else if (main == "Father's age at birth") {
+	     text(1.5, 51, expression(italic('P')~"                   "), cex=1.9)
+	     text(1.5, 51, paste0("   = ", scientific(p)), cex=1.9)
+	  } else if (main == "Dist. to telomere") {
+	     text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
+	     text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
+	  } else if (main == "Replication timing") {
+	     text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
+	     text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
+   }
+	  #axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
+	  #axis(side=2, at=seq(-0.2, 0.2, by=0.1), labels=c(-0.2, -0.1, 0, 0.1, 0.2), cex.axis=1.8)
 	  axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.8)
 	  axis(side=1, at=2, labels=names[2], font=1, cex.axis=1.8)
 	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, cex.axis=1.8, col.ticks="white")
