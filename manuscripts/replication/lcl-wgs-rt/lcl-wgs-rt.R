@@ -3,7 +3,7 @@
 # Chapter      : Chromosome replication timing of the human genome
 # Name         : manuscripts/replication/lcl-wgs-rt.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 16/06/19; 25/02/19; 16/05/18
+# Last Modified: 16/11/23; 16/06/19; 25/02/19; 16/05/18
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"            ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"                 ## tyang2@gauss
@@ -49,6 +49,10 @@ n0 <- length(samples0)
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 07/08/19; 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
+nrds.chr.t <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", BASE1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
+nrds.chr.n <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", BASE0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+
+
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, bed.gc)
 save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))

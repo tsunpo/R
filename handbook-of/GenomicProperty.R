@@ -190,6 +190,25 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 	  dev.off()
 }
 
+plotMH2 <- function(file.name, main.text, mh, gel.del.nona.mother.others, gel.del.nona.mother.chr16, legends, cols) {
+	  mh.others <- as.data.frame(table(gel.del.nona.mother.others$Microhomolgy_length[which(!is.na(gel.del.nona.mother.others$Microhomolgy_length))]))
+	  mh.chr16  <- as.data.frame(table(gel.del.nona.mother.chr16$Microhomolgy_length[which(!is.na(gel.del.nona.mother.chr16$Microhomolgy_length))]))
+	
+	  pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=4, width=8)
+	  par(mar=c(5.1, 4.8, 4.1, 1.3))
+	  if (is.null(mh))
+   	  plot(mh$Freq ~ mh$Var1, xaxt="n", ylab="Frequency", xlab="Bases of microhomology [bp]", main=main.text, col="white", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  else
+	  	  plot(mh.others$Freq ~ mh.others$Var1, xaxt="n", ylab="Frequency", xlab="Bases of microhomology [bp]", main=main.text, col="white", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	 
+	  points(mh.others$Freq ~ mh.others$Var1, col=cols[1], pch=16, cex=2)
+	  points(mh.chr16$Freq ~ mh.chr16$Var1, col=cols[2], pch=16, cex=2)
+	
+	  legend("topright", legend=c(paste0(legends[1], " (n=", nrow(gel.del.nona.mother.others), ")"), paste0(legends[2], " (n=", nrow(gel.del.nona.mother.chr16), ")")), col=c("black", red.lighter), pch=19, pt.cex=2.5, cex=1.8)
+	  axis(side=1, at=seq(1, 71, by=5), labels=c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70), cex.axis=1.9)
+	  dev.off()
+}
+
 # -----------------------------------------------------------------------------
 # 
 # Last Modified: 09/11/23
