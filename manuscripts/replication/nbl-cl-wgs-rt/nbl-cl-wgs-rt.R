@@ -25,7 +25,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 #wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
 wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
-BASE  <- "NBL-CL"
+BASE  <- "NB-CL"
 PAIR1 <- "T"
 base  <- tolower(BASE)
 method <- "rpkm"
@@ -38,7 +38,7 @@ wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 wd.ngs.data <- file.path(wd.ngs, "data")
-samples1 <- readTable(file.path(wd.ngs, "nbl_cl_n8.list"), header=F, rownames=F, sep="")
+samples1 <- readTable(file.path(wd.ngs, "nb-cl_wgs_n8.list"), header=F, rownames=F, sep="")
 samples1 <- toupper(gsub("-", "", samples1)) 
 n1 <- length(samples1)
 
@@ -48,27 +48,265 @@ n1 <- length(samples1)
 # Last Modified: 15/11/19; 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+colnames(cors.samples) <- toupper(gsub("-", "", colnames(cors.samples)))
 save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
-# > min(cors.samples[,-c(1:4)])
-# [1] -0.7915794
-# > max(cors.samples[,-c(1:4)])
-# [1] 0.759842
 
-#load(file.path(wd.rt.data, paste0("samples-vs-rt_nbl-cl-vs-lcl_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-CL-vs-LCL_spline_spearman")
-main.text <- c("NBL-CL read depth vs. LCL S/G1", "")
-ymin <- -0.8773492
-ymax <- 0.8392611
-plotSAMPLEvsRT(cors.samples, samples1, file.name, main.text, ymin, ymax)
+# -----------------------------------------------------------------------------
+# Overall correlation with LCL S/G1
+# Last Modified: 20/11/23
+# -----------------------------------------------------------------------------
+facs <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS.txt"), header=T, rownames=T, sep="")
+for (s in 1:nrow(facs)) {
+	  sum <- sum(facs[s, 2:4])
+	  facs[s, 2:4] <- facs[s, 2:4] / sum * 100
+}
+facs <- facs[samples1,]
+
+insilico <- toTable(0, 4, 22, c("CHR", "S", "G2", "G1"))
+insilico$CHR <- sprs.order$chr
+for (c in 1:nrow(sprs.order)) {
+	  cors.all <- toTable(0, 4, length(samples1), c("SAMPLE_ID", "COR", "Q4", "M2"))
+	  rownames(cors.all) <- samples1
+	  cors.all$SAMPLE_ID <- samples1
+	  for (s in 1:length(samples1)) {
+		    sample <- samples1[s]
+		    load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+		
+		    cors.all$COR[s] <- cors$cor[c]
+	  }
+	
+	  cor <- cor.test(facs$S, cors.all$COR, method="spearman", exact=F)
+	  insilico$S[c] <- cor[[4]]
+	
+	  cor <- cor.test(facs$G2, cors.all$COR, method="spearman", exact=F)
+	  insilico$G2[c] <- cor[[4]]
+	
+  	cor <- cor.test(facs$G1, cors.all$COR, method="spearman", exact=F)
+  	insilico$G1[c] <- cor[[4]]
+}
+
+##
+ylim <- c(-0.4, 0.9)  #, dns.u$Freq)))
+file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red"))
+#main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
+main.text <- c("NB-CL SCF correlation", "")
+ylab.text <- "Correlation to cells"
+xlab.text <- "Chromosome"
+legends <- c("S", "G0 / G1 (Inverted)", "G2 / M")
+#cols <- c(red, blue, "dimgray")
+cols <- c(flowjo.red, flowjo.blue, flowjo.grey)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+
+points(insilico$G2 ~ rownames(insilico), col=cols[3], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$G2, lty=5, lwd=2.5, col=cols[3])
+
+points(insilico$G1*-1 ~ rownames(insilico), col=cols[2], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$G1*-1, lty=5, lwd=2.5, col=cols[2])
+
+points(insilico$S ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$S, lty=5, lwd=2.5, col=cols[1])
+
+abline(v=7, lty=5, lwd=3, col=red)
+
+axis(side=2, at=seq(-0.4, 0.8, by=0.2), labels=c(-0.4, "", 0, "", 0.4, "", 0.8), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends, col=cols, pch=15, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+
+samples <- samples[order(samples$COR),]
+#samples <- samples[facs$SAMPLE_ID,]
+
+
+
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
 # Last Modified: 15/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.nbl.cl <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.nbl.cl, file.path(wd.ngs, "nbl-cl_wgs_n8.txt"), colnames=T, rownames=F, sep="\t")
+samples.nbl.cl <- setSamplesM2(wd.rt.data, samples1, c=7)
+samples.nbl.cl <- samples.nbl.cl[order(samples.nbl.cl$COR),]
+samples.nbl.cl$SAMPLE_ID <- toupper(gsub("-", "", samples.nbl.cl$SAMPLE_ID))
+rownames(samples.nbl.cl) <- samples.nbl.cl$SAMPLE_ID
+writeTable(samples.nbl.cl, file.path(wd.ngs, "nb-cl_wgs_n8.txt"), colnames=T, rownames=F, sep="\t")
 #          0%         25%         50%         75%        100% 
 # -0.32832776 -0.23125788 -0.02602659  0.39228813  0.44813604
+
+samples <- samples.nbl.cl[order(samples.nbl.cl$COR, decreasing=T),]
+
+# -----------------------------------------------------------------------------
+# Beeswarm plots
+# Last Modified: 21/04/19
+# -----------------------------------------------------------------------------
+n.nbl.cl  <- nrow(samples.nbl.cl)
+
+samples <- toTable(0, 5, n.nbl.cl, c("CANCER", "COR", "Q4", "M2", "SAMPLE_ID"))
+samples$CANCER[1:n.nbl.cl] <- 1
+samples$COR <- samples.nbl.cl$COR
+samples$Q4  <- samples.nbl.cl$Q4
+samples$M2  <- samples.nbl.cl$M2
+samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
+rownames(samples) <- samples$SAMPLE_ID
+#adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
+
+pdf(file.path(wd.rt.plots, "boxplot_nb-cl_width=5_c=7_cex=3.3_5.5.pdf"), height=5.5, width=5)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+ymax <- 0.6
+ymin <- 0.13
+main.text <- c(expression(bolditalic('In silico')~bold("SCF estimation")), "")
+boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="Correlation to RT", xlab="(n=8)", main=main.text, yaxt="n", col="white", boxwex=0.75, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(h=0, lty=5, lwd=2)
+
+#adjustcolor.gray <- adjustcolor("black", alpha.f=0.625)
+points(subset(samples, M2 == 2)$CANCER, subset(samples, M2 == 2)$COR, pch=19, col=red, cex=3, lwd=1)
+points(subset(samples, M2 == 1)$CANCER, subset(samples, M2 == 1)$COR, pch=19, col=blue, cex=3, lwd=1)
+#points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col=blue.lighter, pch=19, cex=2)
+#points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col=blue, pch=19, cex=2)
+#points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col=red.lighter, pch=19, cex=2)
+#points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, pch=19, cex=2)
+
+#points(samples$CANCER, samples$COR, col=adjustcolor.gray, pch=19, cex=2.5)
+
+for (s in 1:nrow(samples)) {
+   sample <- samples[s,]
+
+   if (sample$SAMPLE_ID == "NGP" || sample$SAMPLE_ID == "LAN6" || sample$SAMPLE_ID == "TR14")
+   	  text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.3, 0.5), cex=1.8)
+   else if (sample$SAMPLE_ID == "CLBGA" || sample$SAMPLE_ID == "SKNAS")
+   	  text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, 0.5), cex=1.8)
+   else if (sample$SAMPLE_ID == "SKNFI")
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.3, -0.45), cex=1.8)
+   else if (sample$SAMPLE_ID == "GIMEN")
+   	  text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.2), cex=1.8)
+   else if (sample$SAMPLE_ID == "LS")
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.6, 0.5), cex=1.8)
+   else if (sample$SAMPLE_ID == "")
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.19, 1.1), cex=1.8)
+   else
+      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.8)
+}
+
+legend("topright", legend = c("M2", "M1"), pch=19, pt.cex=3.3, col=c(red, blue), cex=1.9)
+
+axis(side=2, at=seq(-0.2, 0.6, by=0.1), labels=c(-0.2, "", 0, "", 0.2, "", 0.4, "", 0.6), cex.axis=1.8)
+#mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
+#mtext("", cex=1.2, line=0.3)
+axis(side=1, at=1, labels="NB-CL", cex.axis=1.9)
+#mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
+#mtext(text=c("(n=8)"), side=1, cex=1.9, line=2.8, at=c(1,2,3))
+dev.off()
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 10/10/23
+# -----------------------------------------------------------------------------
+facs <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS.txt"), header=T, rownames=T, sep="")
+for (s in 1:nrow(facs)) {
+	  sum <- sum(facs[s, 2:4])
+	  facs[s, 2:4] <- facs[s, 2:4] / sum * 100
+}
+samples <- samples[order(samples$COR),]
+#samples <- samples[facs$SAMPLE_ID,]
+facs <- facs[samples$SAMPLE_ID,]
+
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-S_c=7"))
+main.text <- "S"
+xlab.text <- expression(italic('In vitro')~"FACS")
+ylab.text <- expression(italic('In silico')~"SCF")
+plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$S, y=samples$COR, pos="bottomright", cols=c(flowjo.red, red), size=4.5, pch=15, cex=3)
+
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G1_c=7"))
+main.text <- "G0 / G1"
+xlab.text <- expression(italic('In vitro')~"FACS")
+ylab.text <- expression(italic('In silico')~"SCF")
+plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G1, y=samples$COR, pos="bottomleft", cols=c(flowjo.blue, blue), size=4.5, pch=15, cex=3)
+
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G2_c=7"))
+main.text <- "G2 / M"
+xlab.text <- expression(italic('In vitro')~"FACS")
+ylab.text <- expression(italic('In silico')~"SCF")
+plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G2, y=samples$COR, pos="bottomright", cols=c(flowjo.grey, "dimgray"), size=4.5, pch=15, cex=3)
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 10/10/23
+# -----------------------------------------------------------------------------
+## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_RDC_16")
+main.text <- c(expression(bolditalic('In vitro')~bold("FACS validation")), "")
+xlab.text <- ""
+ylab.text <- "Fraction of cells"
+#blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
+#red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
+#green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
+#cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
+cols <- c(blue, red, "darkgray")
+cols2 <- c(flowjo.red, flowjo.grey, flowjo.blue)
+facs1 <- t(as.matrix(facs[,-1]))
+facs2 <- facs1[c(2,3,1),]
+
+pdf(paste0(file.name, ".pdf"), height=5.5, width=12)
+par(mar=c(5.1, 4.6, 4.1, 7.4), xpd=TRUE)
+barplot(facs2, col=cols2, ylim=c(0, 100), ylab=ylab.text, xaxt="n", main=main.text[1], cex.names=1.7, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+text(labels=facs$SAMPLE_ID, x=c(0.8, 2, 3.2, 4.4, 5.6, 6.8, 8, 9.2), y=par("usr")[3] - 4, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+#mids <- barplot(facs1, xlab="")   ## To capture the midpoints
+#axis(1, at=1.9, labels="GIMEN", cex.axis=1.7, las=0, lwd.tick=0)
+#axis(1, at=4.3, labels="SKNFI", cex.axis=1.7, las=0, lwd.tick=0)
+#axis(1, at=7.9, labels="NGP", cex.axis=1.7, las=0, lwd.tick=0)
+
+legend("right", c("G0 / G1", "G2 / M", "S"), text.col="black", pch=c(15, 15, 15), col=cols2[3:1], pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-0.16, 0))
+#mtext(ylab.text, side=2, line=2.75, cex=1.8)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# NBL-CL vs LCL S/G1
+# http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
+# Last Modified: 15/11/19; 05/06/19; 20/04/19; 06/03/19
+# -----------------------------------------------------------------------------
+cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
+# > min(cors.samples[,-c(1:4)])
+# [1] -0.2733976
+# > max(cors.samples[,-c(1:4)])
+# [1] 0.8063618
+
+#load(file.path(wd.rt.data, paste0("samples-vs-rt_nbl-cl-vs-lcl_spline_spearman.RData")))
+#file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_NBL-CL-vs-LCL_spline_spearman")
+#main.text <- c("NBL-CL read depth vs. LCL S/G1", "")
+#ymin <- -0.2733976
+#ymax <- 0.8063618
+#plotSAMPLEvsRT(cors.samples, samples1, file.name, main.text, ymin, ymax)
 
 # -----------------------------------------------------------------------------
 # Last Modified: 30/11/20; 04/06/19; 21/04/19
@@ -92,14 +330,14 @@ nrow(nrds.d)
 nrds.T.chr.d.all <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", "chr1", "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
 colnames(nrds.T.chr.d.all) <- toupper(gsub("\\.", "", colnames(nrds.T.chr.d.all)))
 for (c in 2:22) {
-   chr <- chrs[c]
- 
-   ## Read depth
-   #nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
-   nrds.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
-   colnames(nrds.T.chr.d) <- toupper(gsub("\\.", "", colnames(nrds.T.chr.d)))
-   
-   nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, nrds.T.chr.d)
+	chr <- chrs[c]
+	
+	## Read depth
+	#nrds.T.chr.d <- pipeGetDetectedRD(wd.ngs.data, BASE, chr, PAIR1, method)
+	nrds.T.chr.d <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", PAIR1, "_n", n1, ".txt.gz")), header=T, rownames=F, sep="\t")
+	colnames(nrds.T.chr.d) <- toupper(gsub("\\.", "", colnames(nrds.T.chr.d)))
+	
+	nrds.T.chr.d.all <- rbind(nrds.T.chr.d.all, nrds.T.chr.d)
 }
 
 ##
@@ -116,120 +354,6 @@ trait[which(trait == 2)] <- "Q2"
 trait[which(trait == 1)] <- "Q1"
 plotPCA(1, 2, pca.de, trait, wd.rt.plots, "PCA_NBL-CL", size=6, file.main, "top", c("red", "lightpink1", "lightskyblue2", "blue"), samples1, flip.x=-1, flip.y=1, legend.title=NA)
 
-# -----------------------------------------------------------------------------
-# Beeswarm plots
-# Last Modified: 21/04/19
-# -----------------------------------------------------------------------------
-n.nbl.cl  <- nrow(samples.nbl.cl)
-
-samples <- toTable(0, 5, n.nbl.cl, c("CANCER", "COR", "Q4", "M2", "SAMPLE_ID"))
-samples$CANCER[1:n.nbl.cl] <- 1
-samples$COR <- samples.nbl.cl$COR
-samples$Q4  <- samples.nbl.cl$Q4
-samples$M2  <- samples.nbl.cl$M2
-samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
-rownames(samples) <- samples$SAMPLE_ID
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
-
-pdf(file.path(wd.rt.plots, "boxplot_nb-cl_pch=19_cex=2.5_adjustcolor.gray0.625_1.8-1.9-2.pdf"), height=6, width=4.2)
-par(mar=c(5.1, 4.6, 4.1, 1.5))
-ymax <- 0.5
-ymin <- -0.367
-boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="Spearman's rho", xlab="", main=expression(bolditalic('In silico')~bold("estimation")), yaxt="n", col="white", boxwex=0.75, cex.axis=1.8, cex.lab=1.9, cex.main=2)
-#abline(h=0, lty=5, lwd=2)
-
-adjustcolor.gray <- adjustcolor("black", alpha.f=0.625)
-points(subset(samples, M2 == 2)$CANCER, subset(samples, M2 == 2)$COR, col=adjustcolor.gray, pch=19, cex=2.5, lwd=1)
-points(subset(samples, M2 == 1)$CANCER, subset(samples, M2 == 1)$COR, col=adjustcolor.gray, pch=19, cex=2.5, lwd=1)
-#points(subset(samples, Q4 == 2)$CANCER, subset(samples, Q4 == 2)$COR, col=blue.lighter, pch=19, cex=2)
-#points(subset(samples, Q4 == 1)$CANCER, subset(samples, Q4 == 1)$COR, col=blue, pch=19, cex=2)
-#points(subset(samples, Q4 == 3)$CANCER, subset(samples, Q4 == 3)$COR, col=red.lighter, pch=19, cex=2)
-#points(subset(samples, Q4 == 4)$CANCER, subset(samples, Q4 == 4)$COR, col=red, pch=19, cex=2)
-
-#points(samples$CANCER, samples$COR, col=adjustcolor.gray, pch=19, cex=2.5)
-
-for (s in 1:nrow(samples)) {
-   sample <- samples[s,]
-
-   if ( sample$SAMPLE_ID == "SKNFI")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.55), cex=1.8) 
-   else if (sample$SAMPLE_ID == "CLBGA")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, -0.55), cex=1.8)
-   else if (sample$SAMPLE_ID == "NGP" || sample$SAMPLE_ID == "TR14")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.22, 0.5), cex=1.8)
-   else if (sample$SAMPLE_ID == "LS")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.5, 0.5), cex=1.8)
-   else if (sample$SAMPLE_ID == "LAN6")
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, 1.17), cex=1.8)
-   else
-      text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.15, 1.17), cex=1.8)
-}
-
-#legend("topright", legend = c("Q4", "Q3", "Q2", "Q1"), pch=19, pt.cex=2.5, col=c(red, red.lighter, blue.lighter, blue), cex=1.5)
-
-axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, -0.2, 0, 0.2, 0.4), cex.axis=1.8)
-#mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
-#mtext("", cex=1.2, line=0.3)
-axis(side=1, at=1, labels="NB-CL", cex.axis=1.9)
-#mtext(text=c(), side=1, cex=1.4, line=0.9, at=c(1,2,3))
-mtext(text=c("(n = 8)"), side=1, cex=1.9, line=2.6, at=c(1,2,3))
-dev.off()
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 10/10/23
-# -----------------------------------------------------------------------------
-facs <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS.txt"), header=T, rownames=T, sep="")
-samples <- samples[facs$SAMPLE_ID,]
-
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-S"))
-main.text <- "S"
-xlab.text <- expression(italic('In vitro'))
-ylab.text <- expression(italic('In silico'))
-plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$S, y=samples$COR, pos="bottomright", cols=c(flowjo.red, red), size=5, pch=15, cex=3)
-
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G1"))
-main.text <- "G0 / G1"
-xlab.text <- expression(italic('In vitro'))
-ylab.text <- expression(italic('In silico'))
-plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G1, y=samples$COR, pos="topright", cols=c(flowjo.blue, blue), size=5, pch=15, cex=3)
-
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G2"))
-main.text <- "G2 / M"
-xlab.text <- expression(italic('In vitro'))
-ylab.text <- expression(italic('In silico'))
-plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G2, y=samples$COR, pos="bottomright", cols=c(flowjo.grey, "dimgray"), size=5, pch=15, cex=3)
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 10/10/23
-# -----------------------------------------------------------------------------
-## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_barchart_italic_count_1.8-1.9-2")
-main.text <- c(expression(bolditalic('In vitro')~bold("flow cytometry validation")), "")
-xlab.text <- ""
-ylab.text <- "Fraction of cells"
-#blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
-#red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
-#green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
-#cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
-cols <- c(blue, red, "darkgray")
-cols2 <- c(flowjo.blue, flowjo.red, flowjo.grey)
-facs1 <- t(as.matrix(facs[,-1]))
-
-pdf(paste0(file.name, ".pdf"), height=6, width=9.3)
-par(mar=c(5.1, 4.6, 4.1, 3.7), xpd=TRUE)
-barplot(facs1, col=cols2, ylim=c(0, 100), ylab=ylab.text, xaxt="n", main=main.text[1], cex.names=1.7, cex.axis=1.8, cex.lab=1.9, cex.main=2)
-text(labels=facs$SAMPLE_ID, x=c(0.8, 2, 3.2, 4.4, 5.6, 6.8, 8, 9.2), y=par("usr")[3] - 4, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-#mids <- barplot(facs1, xlab="")   ## To capture the midpoints
-#axis(1, at=1.9, labels="GIMEN", cex.axis=1.7, las=0, lwd.tick=0)
-#axis(1, at=4.3, labels="SKNFI", cex.axis=1.7, las=0, lwd.tick=0)
-#axis(1, at=7.9, labels="NGP", cex.axis=1.7, las=0, lwd.tick=0)
-
-legend("right", rownames(facs1)[3:1], text.col="black", pch=c(15, 15, 15), col=cols2[3:1], pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-0.11, 0))
-#mtext(ylab.text, side=2, line=2.75, cex=1.8)
-dev.off()
 
 # -----------------------------------------------------------------------------
 # Plot signal-to-noice

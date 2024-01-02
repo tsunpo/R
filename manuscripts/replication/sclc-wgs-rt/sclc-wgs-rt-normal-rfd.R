@@ -150,10 +150,10 @@ overlaps <- rownames(nrds.RT.NRFD.sclc.nl)
 rfd <- cbind(bed.gc[overlaps,], nrds.RT.NRFD.sclc.nl[overlaps,])
 
 # -----------------------------------------------------------------------------
-# Find median size of IZs ()
+# Find median size of IZs (E)
 # Last Modified: 09/11/23
 # -----------------------------------------------------------------------------
-colnames <- c("IZ", "IZ_length", "IZ_inter")
+colnames <- c("IZ", "IZ_length_median", "IZ_length_mean", "IZ_length_sd", "IZ_inter_median", "IZ_inter_mean", "IZ_inter_sd")
 report   <- toTable(0, length(colnames), 20, colnames)
 
 for (r in 1:20) {
@@ -164,9 +164,10 @@ for (r in 1:20) {
 	  diff <- setdiff(rownames(rfd), rownames(rfd.ttr))
 	  rfd.ctr <- rfd[diff,]
 	  rfd.ctr.iz <- subset(rfd.ctr, NRFD > 0)
-	  #rfd.ctr.iz <- subset(rfd.ctr.iz, SPLINE < 0)
+	  #rfd.ctr.iz <- subset(rfd.ctr.iz, SPLINE > 0)   ## (E)arly or (L)ate
 	  
-	  report$IZ[r] <- nrow(rfd.ctr.iz) / nrow(rfd)
+	  #report$IZ[r] <- nrow(rfd.ctr.iz) / nrow(rfd)
+	  report$IZ[r] <- nrow(rfd.ctr.iz) / 2881033.286
 	  
 	  lengths <- c()
 	  gaps <- c()
@@ -184,15 +185,20 @@ for (r in 1:20) {
 	  	  gaps <- c(gaps, gap_sizes/1000)
 	  	  #report$IZ_inter[r] <- median(gap_sizes)
 	  }
-	  report$IZ_length[r] <- median(lengths)
-	  report$IZ_inter[r] <- median(gaps)
+	  report$IZ_length_median[r] <- median(lengths)
+	  report$IZ_length_mean[r]   <- mean(lengths)
+	  report$IZ_length_sd[r]     <- sd(lengths)
+	  report$IZ_inter_median[r]  <- median(gaps)
+	  report$IZ_inter_mean[r]    <- mean(gaps)
+	  report$IZ_inter_sd[r]      <- sd(gaps)
 }
+save(report, file=file.path(wd.rt.data, paste0("RFD_IZ_length.RData")))
 
-file.name <- "RFD_IZ_length_L"
-main.text <- c("|RFD| < 0.9", "")
+file.name <- "RFD_IZ_length"
+main.text <- c("Medain IZ length", "")
 pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=6)
 par(mar=c(5.1, 4.8, 4.1, 1.3))
-plot(rownames(report) ~ report$IZ_length, ylab="|RFD|", xlab="IZ length [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+plot(rownames(report) ~ report$IZ_length_median, ylab="|RFD|", xlab="Length [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 #idx <- which(test$P == min(test$P))
 #points(-log10(test$P[idx]) ~ test$Mb[idx], pch=16, col="black", cex=2)
 abline(h=0.9, col="black", lty=5, lwd=3)
@@ -204,11 +210,11 @@ abline(h=0.9, col="black", lty=5, lwd=3)
 #axis(side=1, at=150, labels=150, cex.axis=1.9)
 dev.off()
 
-file.name <- "RFD_IZ_gaps_L"
-main.text <- c("|RFD| < 0.9", "")
+file.name <- "RFD_IZ_gaps"
+main.text <- c("Median inter-IZ distance", "")
 pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=6, width=6)
 par(mar=c(5.1, 4.8, 4.1, 1.3))
-plot(rownames(report) ~ report$IZ_inter, ylab="|RFD|", xlab="Inter-IZ distance [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+plot(rownames(report) ~ report$IZ_inter_median, ylab="|RFD|", xlab="Length [kb]", main=main.text, col="black", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 #idx <- which(test$P == min(test$P))
 #points(-log10(test$P[idx]) ~ test$Mb[idx], pch=16, col="black", cex=2)
 abline(h=0.9, col="black", lty=5, lwd=3)

@@ -10,7 +10,7 @@
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
 plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=2, p=12, chr=2) {
-	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  pdf(paste0(file.name, ".pdf"), height=size, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
 	 

@@ -49,20 +49,13 @@ n0 <- length(samples0)
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 07/08/19; 28/05/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
-nrds.chr.t <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", BASE1, "_n", n1, ".txt.gz")), header=T, rownames=T, sep="\t")
-nrds.chr.n <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d_", chr, "_", BASE0, "_n", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
-
-
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, bed.gc)
-save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
-#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "s-g1", ".RData")))
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "s-g1", ".RData")))
 # [1] 2684771 (All)
 # [1] 2654359 (M; RT != NA)
 # [1] 2582940 (D)
 # [1] 2582940 - 22
-nrds.lcl <- nrds
-
-load(file.path(wd.rt.data, paste0("lcl", "_", "rpkm", ".gc.cn.d.rt.log2s_", "s-g1", ".RData")))
 nrds.lcl <- nrds
 
 ymax <- 0.6
@@ -71,13 +64,15 @@ for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-   #lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
+   lcl.rt.chr <- subset(lcl.rt, CHR == chr)   ## Koren 2012
    
    ## Plot RT
-   main.text <- paste0(BASE, " S to G1 read depth ratio replication timing (RT)")  
-   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".d.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   main.text <- c(paste0(BASE, " S to G1 replication timing (RT)"), "")
+   file.name <- file.path(wd.rt.plots, paste0("RT_", BASE, "_", method, ".m.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
    plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=13, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="bottomright")
-   #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=NULL, nrds.lcl.chr=NULL, legend="bottomright")
+   
+   file.name <- file.path(wd.rt.plots, "with-koren", paste0("RT_", BASE, "_", method, ".m.rt.log2s_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ""))   
+   plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=13, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=lcl.rt.chr, nrds.lcl.chr=NULL, legend="bottomright")
    #plotRT(file.name, main.text, chr, NA, NA, nrds.chr, bed.gc.chr, c(red, blue, green), c("S phase", "G1 phase"), c(red, blue), c("S", "G1"), "png", width=10, peaks=c(), ylim=c(ymin, ymax), lcl.rt.chr=lcl.rt.chr, nrds.lcl.chr=NULL, legend="bottomright")
 
    ## chr2
@@ -102,7 +97,7 @@ sprs.lcl <- sprs
 rts.lcl <- sprs
 colnames(rts.lcl)[7] <- "rts"
 
-for (c in 2:2) {
+for (c in 1:22) {
    chr <- chrs[c]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
    
@@ -114,25 +109,345 @@ for (c in 2:2) {
    ## Figure 1
    xlab.text <- expression("RT [log" * ""[2] * "]")
    ylab.text <- "Read depth [RPKM]"
-   main.text <- c(paste0("Spearman's correlation (", "Chr", c, ")"))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
-   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, ""))
-   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+   main.text <- c(paste0("Chr", c), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   file.name <- file.path(wd.rt.plots, "chrs_test", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_Fig. 1_P_S+G1_0.01"))
+   #plotSvsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red, alpha.f=0.01), adjustcolor(blue, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red, alpha.f=0.01), adjustcolor(blue, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
    
    ## SFigure 1
    xlab.text <- expression("RT [Log" * ""[2] * "]")
    ylab.text <- "Read depth [RPKM]"
-   #main.text <- c(paste0("Chr", c))   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
-   #file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
+   main.text <- c(paste0("Chr", c), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+   file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_spline_spearman"))
    #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
    
    main.text <- c(paste0("Chr", c), "")
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-G1_chr", c, "_spline_spearman"))
-   #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(lighterblue, alpha.f=0.01)), c("S", "G1"), method="spearman")
+   #plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
    
    main.text <- c(paste0("Chr", c), "")
    file.name <- file.path(wd.rt.plots, "chrs", paste0("RD-vs-RT_LCL-S_chr", c, "_spline_spearman"))
-   #plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(lighterred, alpha.f=0.01)), c("S", "G1"), method="spearman")
+   #plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
 }
+
+###
+##
+ylim <- c(-0.05, 0.95)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_cex=2_-0.05"))
+main.text <- c("LCL read depth correlation", "")
+ylab.text <- "Correlation to RT"
+xlab.text <- "Chromosome"
+legends <- c("S vs. RT", "|G1 vs. RT|")
+cols <- c(red, blue)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(abs(sprs.order$cor2) ~ rownames(sprs.order), col=cols[2], pch=19, cex=2)
+lines(rownames(sprs.order), y=abs(sprs.order$cor2), lty=5, lwd=2.5, col=cols[2])
+
+points(abs(sprs.order$cor1) ~ rownames(sprs.order), col=cols[1], pch=19, cex=2)
+lines(rownames(sprs.order), y=abs(sprs.order$cor1), lty=5, lwd=2.5, col=cols[1])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomleft", legend=legends, col=cols, lty=5, lwd=3, pt.cex=2, cex=1.9)
+dev.off()
+
+###
+## GC-corrected
+load("/Users/ty2/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data/rd-vs-rt_lcl-s-g1_spline_spearman.RData")
+sprs.order <- sprs[order(abs(sprs$cor1), decreasing=T),]
+rownames(sprs.order) <- 1:22
+
+ylim <- c(-0.23, 0.95)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_-1_3_simple"))
+main.text <- c("LCL read depth correlation", "")
+ylab.text <- "Correlation to RT"
+xlab.text <- "Chromosome"
+legends <- c("S phase", "G1 phase (Inverted)")
+cols <- c(red, blue)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(sprs.order$cor1 ~ rownames(sprs.order), col=cols[1], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor1, lty=5, lwd=2.5, col=cols[1])
+
+points(sprs.order$cor2*-1 ~ rownames(sprs.order), col=cols[2], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor2 * -1, lty=5, lwd=2.5, col=cols[2])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=sprs.order$chr[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=sprs.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends, col=cols, pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# RD vs RT (RDS and SPR)
+# Last Modified: 11/07/19; 27/05/19
+# -----------------------------------------------------------------------------
+sprs.gc <- getGCSPR(nrds, bed.gc)
+sprs.gc.order <- sprs.gc[order(sprs.gc$cor2),]
+rownames(sprs.gc.order) <- 1:22
+save(sprs.gc.order, file=file.path(wd.rt.data, paste0("rd-vs-gc_", base, "-s-g1_spline_spearman.RData")))
+
+##
+ylim <- c(-0.23, 0.95)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_GC"))
+main.text <- c("LCL read depth correlation", "")
+ylab.text <- "Correlation to GC"
+xlab.text <- "Chromosome"
+legends <- c("S phase", "G1 phase (Inverted)")
+cols <- c(red, blue)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(sprs.gc.order$cor1 ~ rownames(sprs.gc.order), col=cols[1], pch=19, cex=2.5)
+lines(rownames(sprs.gc.order), y=sprs.gc.order$cor1, lty=5, lwd=2.5, col=cols[1])
+
+points(sprs.gc.order$cor2*-1 ~ rownames(sprs.gc.order), col=cols[2], pch=19, cex=2.5)
+lines(rownames(sprs.gc.order), y=sprs.gc.order$cor2 * -1, lty=5, lwd=2.5, col=cols[2])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=sprs.gc.order$chr[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=sprs.gc.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends[2:1], col=cols[2:1], pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+
+
+
+
+
+
+sprs.gc <- toTable(0, 4, 22, c("chr", "cor0", "cor1", "cor2"))
+sprs.gc$chr <- 1:22
+for (c in 1:22) {
+	  chr <- chrs[c]
+	  bed.gc.chr <- subset(bed.gc, CHR == chr)
+	  bed.gc.chr$BED <- rownames(bed.gc.chr)
+	  nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+	  nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+	  nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+	  bed.gc.chr <- bed.gc.chr[intersect(nrds.chr.T$BED, bed.gc.chr$BED),]
+	  nrds.chr.GC <- setSpline(bed.gc.chr, bed.gc.chr, "GC")
+	
+	  sprs.gc$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.GC$SPLINE, method="spearman")[[4]]
+	  sprs.gc$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.GC$SPLINE, method="spearman")[[4]]
+	  
+	  ##
+	  xlab.text <- expression("GC content")
+	  ylab.text <- "Read depth [RPKM]"
+	  main.text <- c(paste0("Chr", c), "")
+	  file.name <- file.path(wd.rt.plots, "GC", paste0("RD-vs-GC_G1_chr", c, "_spline_spearman"))
+	  plotRDvsRT(nrds.chr.N$SPLINE, nrds.chr.GC$SPLINE, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+	  
+	  main.text <- c(paste0("Chr", c), "")
+	  file.name <- file.path(wd.rt.plots, "GC", paste0("RD-vs-GC_S_chr", c, "_spline_spearman"))
+	  plotRDvsRT(nrds.chr.T$SPLINE, nrds.chr.GC$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+}
+
+
+
+
+
+for (c in 1:22) {
+	  chr <- chrs[c]
+	  bed.gc.chr <- subset(bed.gc, CHR == chr)
+	
+	  nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+	  nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+	  nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+	  nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+	
+	  ## Figure 1
+	  xlab.text <- expression("RT [log" * ""[2] * "]")
+	  ylab.text <- "Read depth [RPKM]"
+	  main.text <- c(paste0("Chr", c), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+	  file.name <- file.path(wd.rt.plots, "chrs_test", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_Fig. 1_P_S+G1_0.01"))
+	  plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red, alpha.f=0.01), adjustcolor(blue, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# GC correlation (GCC) 
+# Last Modified: 25/11/23; 11/07/19; 27/05/19
+# -----------------------------------------------------------------------------
+rdc <- getGCC(nrds, bed.gc)
+save(rdc, file=file.path(wd.rt.data, paste0("gc-vs-rd_", base, "-s-g1_spearman.RData")))
+#writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file.path("/Users/ty2/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("rd-vs-rt_", base, "-s-g1_spearman.RData")))
+
+for (c in 1:22) {
+	chr <- chrs[c]
+	bed.gc.chr <- subset(bed.gc, CHR == chr)
+	
+	nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+	#nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+	#nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+	#nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+	
+	## Figure 1
+	xlab.text <- expression("RT [log" * ""[2] * "]")
+	ylab.text <- "Read depth [RPKM]"
+	main.text <- c(paste0("Correlation to RT"), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+	file.name <- file.path(wd.rt.plots,  paste0("RD-vs-RATIO_LCL-S-G1_chr", c, "_Fig. 1"))
+	#plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+	
+	## SFigure 1
+	xlab.text <- expression("RT [Log" * ""[2] * "]")
+	ylab.text <- "Read depth [RPKM]"
+	main.text <- c(paste0("Chr", c), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+	file.name <- file.path(wd.rt.plots, "RDC", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_SPR"))
+	plotRD2vsRT(nrds.chr$T, nrds.chr$N, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
+	
+	main.text <- c(paste0("Chr", c), "")
+	file.name <- file.path(wd.rt.plots, "RDC", paste0("RD-vs-RT_LCL-G1_chr", c, "_SPR"))
+	plotRDvsRT(nrds.chr$N, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+	
+	main.text <- c(paste0("Chr", c), "")
+	file.name <- file.path(wd.rt.plots, "RDC", paste0("RD-vs-RT_LCL-S_chr", c, "_SPR"))
+	plotRDvsRT(nrds.chr$T, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+}
+
+###
+##
+ylim <- c(-0.05, 0.95)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_cex=2_-0.05"))
+main.text <- c("LCL read depth correlation", "")
+ylab.text <- "Correlation to RT"
+xlab.text <- "Chromosome"
+legends <- c("S vs. RT", "|G1 vs. RT|")
+cols <- c(red, blue)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(abs(sprs.order$cor2) ~ rownames(sprs.order), col=cols[2], pch=19, cex=2)
+lines(rownames(sprs.order), y=abs(sprs.order$cor2), lty=5, lwd=2.5, col=cols[2])
+
+points(abs(sprs.order$cor1) ~ rownames(sprs.order), col=cols[1], pch=19, cex=2)
+lines(rownames(sprs.order), y=abs(sprs.order$cor1), lty=5, lwd=2.5, col=cols[1])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomleft", legend=legends, col=cols, lty=5, lwd=3, pt.cex=2, cex=1.9)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Read depth correlation (RDC) 
+# Last Modified: 25/11/23; 11/07/19; 27/05/19
+# -----------------------------------------------------------------------------
+rdc <- getRDC(nrds, bed.gc)
+save(rdc, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spearman.RData")))
+#writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spearman.txt")), colnames=T, rownames=F, sep="\t")
+#load(file.path("/Users/ty2/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("rd-vs-rt_", base, "-s-g1_spearman.RData")))
+
+for (c in 1:22) {
+	chr <- chrs[c]
+	bed.gc.chr <- subset(bed.gc, CHR == chr)
+	
+	nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
+	#nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+	#nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+	#nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+	
+	## Figure 1
+	xlab.text <- expression("RT [log" * ""[2] * "]")
+	ylab.text <- "Read depth [RPKM]"
+	main.text <- c(paste0("Correlation to RT"), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+	file.name <- file.path(wd.rt.plots,  paste0("RD-vs-RATIO_LCL-S-G1_chr", c, "_Fig. 1"))
+	#plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+	
+	## SFigure 1
+	xlab.text <- expression("RT [Log" * ""[2] * "]")
+	ylab.text <- "Read depth [RPKM]"
+	main.text <- c(paste0("Chr", c), "")   #, paste0("rho = ", round0(sprs$cor[c], digits=2), " (S vs. G1)"))
+	file.name <- file.path(wd.rt.plots, "RDC", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_SPR"))
+	plotRD2vsRT(nrds.chr$T, nrds.chr$N, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman")
+	
+	main.text <- c(paste0("Chr", c), "")
+	file.name <- file.path(wd.rt.plots, "RDC", paste0("RD-vs-RT_LCL-G1_chr", c, "_SPR"))
+	plotRDvsRT(nrds.chr$N, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(blue, adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+	
+	main.text <- c(paste0("Chr", c), "")
+	file.name <- file.path(wd.rt.plots, "RDC", paste0("RD-vs-RT_LCL-S_chr", c, "_SPR"))
+	plotRDvsRT(nrds.chr$T, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman")
+}
+
+###
+##
+ylim <- c(-0.05, 0.95)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_cex=2_-0.05"))
+main.text <- c("LCL read depth correlation", "")
+ylab.text <- "Correlation to RT"
+xlab.text <- "Chromosome"
+legends <- c("S vs. RT", "|G1 vs. RT|")
+cols <- c(red, blue)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(abs(sprs.order$cor2) ~ rownames(sprs.order), col=cols[2], pch=19, cex=2)
+lines(rownames(sprs.order), y=abs(sprs.order$cor2), lty=5, lwd=2.5, col=cols[2])
+
+points(abs(sprs.order$cor1) ~ rownames(sprs.order), col=cols[1], pch=19, cex=2)
+lines(rownames(sprs.order), y=abs(sprs.order$cor1), lty=5, lwd=2.5, col=cols[1])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomleft", legend=legends, col=cols, lty=5, lwd=3, pt.cex=2, cex=1.9)
+dev.off()
+
+
+
+
+
+
+
+
+
+
 
 ###
 ##

@@ -84,7 +84,7 @@ plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legend
 # Last Modified: 04/10/23
 # -----------------------------------------------------------------------------
 getDNS2 <- function(gel.del.nona, dist, phase) {
-	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), V21 == phase)$CHR))
+	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), Phase_combined == phase)$CHR))
 	  rownames(dns) <- dns$Var1
 	
 	  dns.chr <- toTable(0, 2, 22, c("CHR", "Freq"))
@@ -106,16 +106,36 @@ plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend
 	  par(mar=c(5.1, 4.6, 4.1, 1.5))
 	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 	
+	  points(dns.f$Freq/total.f*100 ~ dns.f$CHR, col=cols[1], pch=19, cex=cex)
+	  lines(dns.f$Freq/total.f*100, y=NULL, lty=5, lwd=2.5, col=cols[1])
+	
+	  points(dns.m$Freq/total.m*100 ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
+	  lines(dns.m$Freq/total.m*100, y=NULL, lty=5, lwd=2.5, col=cols[2])
+	
+	  axis(side=2, at=12, cex.axis=1.8)	  
+	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
+	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
+	  legend(legend, legend=legends, col=cols[2:1], lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  dev.off()
+}
+
+plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(blue.lighter, red.lighter, "black")) {
+	  xlab.text <- "Chromosome"
+	
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.6, 4.1, 1.5))
+	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	
 	  points(dns.f$Freq ~ dns.f$CHR, col=cols[1], pch=19, cex=cex)
 	  lines(dns.f$Freq, y=NULL, lty=5, lwd=2.5, col=cols[1])
 	
 	  points(dns.m$Freq ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
 	  lines(dns.m$Freq, y=NULL, lty=5, lwd=2.5, col=cols[2])
 	
-	  axis(side=2, at=12, cex.axis=1.8)	  
+	  #axis(side=2, at=12, cex.axis=1.8)	  
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
 	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
-	  legend(legend, legend=legends, col=cols[2:1], lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  legend(legend, legend=legends, col=cols, lty=2, lwd=5, pt.cex=2, cex=1.9)
 	  dev.off()
 }
 
@@ -186,7 +206,7 @@ plotProportions <- function(file.name, main.text, xlab.text, ylab.text, labels, 
 	
 	  #text(4.3, 86, expression(italic('P')~"                   "), cex=2)
 	  #text(4.3, 86, paste0("   = ", scientific(fisher.test(counts)[[1]])), cex=2)
-	  legend("right", rev(rownames(counts.prop)[idx]), text.col="black", pch=15, col=rev(cols), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
+	  legend("right", c(rev(rownames(counts.prop)[idx]), paste0("Not in ", labels[2])), text.col="black", pch=15, col=c(rev(cols[idx]), blue), pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-1.6, 0))
 	  dev.off()
 }
 
@@ -196,16 +216,16 @@ plotMH2 <- function(file.name, main.text, mh, gel.del.nona.mother.others, gel.de
 	
 	  pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=4, width=8)
 	  par(mar=c(5.1, 4.8, 4.1, 1.3))
-	  if (is.null(mh))
-   	  plot(mh$Freq ~ mh$Var1, xaxt="n", ylab="Frequency", xlab="Bases of microhomology [bp]", main=main.text, col="white", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  if (!is.null(mh))
+	  	  plot(mh$Var1, mh$Freq, bty="n", pch="", xaxt="n", ylab="Frequency", xlab="Bases of microhomology [bp]", main=main.text, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 	  else
-	  	  plot(mh.others$Freq ~ mh.others$Var1, xaxt="n", ylab="Frequency", xlab="Bases of microhomology [bp]", main=main.text, col="white", cex=2, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  	  plot(mh.others$Var1, mh.others$Freq, bty="n", pch="", xaxt="n", ylab="Frequency", xlab="Bases of microhomology [bp]", main=main.text, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 	 
-	  points(mh.others$Freq ~ mh.others$Var1, col=cols[1], pch=16, cex=2)
-	  points(mh.chr16$Freq ~ mh.chr16$Var1, col=cols[2], pch=16, cex=2)
+	  points(mh.others$Var1, mh.others$Freq, col=cols[1], pch=16, cex=2)
+	  points(mh.chr16$Var1, mh.chr16$Freq, col=cols[2], pch=16, cex=2)
 	
-	  legend("topright", legend=c(paste0(legends[1], " (n=", nrow(gel.del.nona.mother.others), ")"), paste0(legends[2], " (n=", nrow(gel.del.nona.mother.chr16), ")")), col=c("black", red.lighter), pch=19, pt.cex=2.5, cex=1.8)
-	  axis(side=1, at=seq(1, 71, by=5), labels=c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70), cex.axis=1.9)
+	  legend("topright", legend=c(paste0(legends[1], " (n=", nrow(gel.del.nona.mother.others), ")"), paste0(legends[2], " (n=", nrow(gel.del.nona.mother.chr16), ")")), col=cols, pch=19, pt.cex=2.5, cex=1.8)
+	  axis(side=1, at=seq(1, 71, by=5), labels=c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70), cex.axis=1.8)
 	  dev.off()
 }
 
