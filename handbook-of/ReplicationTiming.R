@@ -389,9 +389,9 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    nrds.chr   <- nrds.chr[overlaps,]
    bed.gc.chr <- bed.gc.chr[overlaps,]
    
-   nrds.chr.T  <- setSpline0(nrds.chr, bed.gc.chr, "T")
-   nrds.chr.N  <- setSpline0(nrds.chr, bed.gc.chr, "N")
-   nrds.chr.RT <- setSpline0(nrds.chr, bed.gc.chr, "RT")
+   nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
+   nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
+   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
    if (!is.null(nrds.lcl.chr))
       nrds.lcl.chr.RT <- setSpline0(nrds.lcl.chr, bed.gc.chr, "RT")
     
@@ -477,7 +477,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    }
    ## Plot smoothing spline
    points(bed.gc.chr$START/1E6, nrds.chr.RT$SPLINE, col="black", pch=16, cex=0.4)
-   abline(h=0, lty=5, lwd=2, col="black")
+   #abline(h=0, lty=5, lwd=2, col="black")
+   abline(h=0, lty=3, lwd=3, col="black")
    axis(side=2, at=seq(-2, 2, by=4), labels=c("\u22122", 2), cex.axis=1.8)
    axis(side=2, at=seq(-1, 1, by=1), labels=c("\u22121", 0, 1), cex.axis=1.8)
    axis(side=2, at=0, labels=0, cex.axis=1.8)
@@ -601,7 +602,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    par(mar=c(5.1, 4.6, 4.1, 1.5))
    plot(reads2 ~ timings, ylab=ylab.text, xlab=xlab.text, xlim=xlim, ylim=ylim, main=main.text, xaxt="n", yaxt="n", col=cols2[2], cex.axis=1.8, cex.lab=1.9, cex.main=2)
    points(timings, reads1, col=cols2[1])
-   abline(v=0, lty=5, lwd=2.5)
+   abline(v=0, lty=3, lwd=3)
    
    lm.fit1 <- lm(reads1 ~ timings)   ## S next (on top)!
    abline(lm.fit1, col=cols[1], lwd=5)
@@ -962,21 +963,25 @@ getGCSPR <- function(nrds, bed.gc) {
 # Last Modified: 06/10/19
 # -----------------------------------------------------------------------------
 getSPR <- function(nrds, bed.gc) {
-   sprs <- toTable(0, 7, 22, c("chr", "cor", "cor1", "cor2", "e", "l", "spr"))
+   sprs <- toTable(0, 9, 22, c("chr", "cor", "cor1", "cor2", "cor_gc_rt", "cor_gc_rt_spline", "e", "l", "spr"))
    sprs$chr <- 1:22
    
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
-      nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]
-      nrds.chr.T  <- setSpline(nrds.chr, bed.gc.chr, "T")
-      nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
-      nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+      overlaps <- intersect(nrds$BED, rownames(bed.gc.chr))
+      nrds.chr <- nrds[overlaps,]
+      nrds.chr.T  <- setSpline0(nrds.chr, bed.gc.chr, "T")
+      nrds.chr.N  <- setSpline0(nrds.chr, bed.gc.chr, "N")
+      nrds.chr.RT <- setSpline0(nrds.chr, bed.gc.chr, "RT")
   
       sprs$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")[[4]]
       sprs$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")[[4]]
       sprs$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")[[4]]
   
+      sprs$cor_gc_rt[c]        <- getCor(bed.gc.chr[overlaps,]$GC, nrds.chr.RT$RT, method="spearman")[[4]]
+      sprs$cor_gc_rt_spline[c] <- getCor(bed.gc.chr[overlaps,]$GC, nrds.chr.RT$SPLINE, method="spearman")[[4]]
+      
       e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
       l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
       sprs$e[c] <- e

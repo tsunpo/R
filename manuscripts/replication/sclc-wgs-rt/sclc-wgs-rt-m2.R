@@ -148,17 +148,17 @@ for (c in 1:22) {
 }
 
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_chr2")
-main.text <- c("Replication timing skew", "RTS = (E-L)/(E+L)")
-ylab.text <- "SCLC M2/M1"
-plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2, size=6)
+file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_NEW")
+main.text <- c("SCLC M2/M1 RTS", "")
+ylab.text <- "RTS"
+plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2, size=6, isRef=F)
 
 ### Figure 4D
 ## SCLC vs. LCL
-file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman")
-main.text <- c("Replication timing skew", "")
-xlab.text <- "LCL S/G1"
-ylab.text <- "SCLC M2/M1"
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman_NEW")
+main.text <- c("Replication timing skew (RTS)", "")
+xlab.text <- "LCL S/G1 RTS"
+ylab.text <- "SCLC M2/M1 RTS"
 plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19), xlab.text, unit=5, ylab.text, cex=2, size=6)
 
 

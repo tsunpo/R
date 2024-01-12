@@ -87,12 +87,12 @@ for (c in 1:nrow(sprs.order)) {
 
 ##
 ylim <- c(-0.4, 0.9)  #, dns.u$Freq)))
-file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red"))
+file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red_FACS_22_3_3"))
 #main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
 main.text <- c("NB-CL SCF correlation", "")
-ylab.text <- "Correlation to cells"
+ylab.text <- "Correlation to FACS cells"
 xlab.text <- "Chromosome"
-legends <- c("S", "G0 / G1 (Inverted)", "G2 / M")
+legends <- c("S", "G0/G1 (Inverted)", "G2/M")
 #cols <- c(red, blue, "dimgray")
 cols <- c(flowjo.red, flowjo.blue, flowjo.grey)
 
@@ -109,7 +109,7 @@ lines(rownames(insilico), y=insilico$G1*-1, lty=5, lwd=2.5, col=cols[2])
 points(insilico$S ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
 lines(rownames(insilico), y=insilico$S, lty=5, lwd=2.5, col=cols[1])
 
-abline(v=7, lty=5, lwd=3, col=red)
+abline(v=7, lty=3, lwd=3, col=red)
 
 axis(side=2, at=seq(-0.4, 0.8, by=0.2), labels=c(-0.4, "", 0, "", 0.4, "", 0.8), cex.axis=1.8)	  
 axis(side=2, at=0.4, cex.axis=1.8)	
@@ -215,20 +215,20 @@ samples <- samples[order(samples$COR),]
 #samples <- samples[facs$SAMPLE_ID,]
 facs <- facs[samples$SAMPLE_ID,]
 
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-S_c=7"))
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-S_c=7_NEW"))
 main.text <- "S"
 xlab.text <- expression(italic('In vitro')~"FACS")
 ylab.text <- expression(italic('In silico')~"SCF")
 plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$S, y=samples$COR, pos="bottomright", cols=c(flowjo.red, red), size=4.5, pch=15, cex=3)
 
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G1_c=7"))
-main.text <- "G0 / G1"
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G1_c=7_NEW"))
+main.text <- "G0/G1"
 xlab.text <- expression(italic('In vitro')~"FACS")
 ylab.text <- expression(italic('In silico')~"SCF")
 plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G1, y=samples$COR, pos="bottomleft", cols=c(flowjo.blue, blue), size=4.5, pch=15, cex=3)
 
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G2_c=7"))
-main.text <- "G2 / M"
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G2_c=7_NEW"))
+main.text <- "G2/M"
 xlab.text <- expression(italic('In vitro')~"FACS")
 ylab.text <- expression(italic('In silico')~"SCF")
 plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G2, y=samples$COR, pos="bottomright", cols=c(flowjo.grey, "dimgray"), size=4.5, pch=15, cex=3)
@@ -238,7 +238,7 @@ plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G2, y=samples
 # Last Modified: 10/10/23
 # -----------------------------------------------------------------------------
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_RDC_16")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_RDC_16_G0_G1")
 main.text <- c(expression(bolditalic('In vitro')~bold("FACS validation")), "")
 xlab.text <- ""
 ylab.text <- "Fraction of cells"
@@ -261,7 +261,7 @@ text(labels=facs$SAMPLE_ID, x=c(0.8, 2, 3.2, 4.4, 5.6, 6.8, 8, 9.2), y=par("usr"
 #axis(1, at=4.3, labels="SKNFI", cex.axis=1.7, las=0, lwd.tick=0)
 #axis(1, at=7.9, labels="NGP", cex.axis=1.7, las=0, lwd.tick=0)
 
-legend("right", c("G0 / G1", "G2 / M", "S"), text.col="black", pch=c(15, 15, 15), col=cols2[3:1], pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-0.16, 0))
+legend("right", c("G0/G1", "G2/M", "S"), text.col="black", pch=c(15, 15, 15), col=cols2[3:1], pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-0.16, 0))
 #mtext(ylab.text, side=2, line=2.75, cex=1.8)
 dev.off()
 

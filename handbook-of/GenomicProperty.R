@@ -99,28 +99,29 @@ getDNS2 <- function(gel.del.nona, dist, phase) {
 	  return(dns.chr)
 }
 
-plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(blue.lighter, red.lighter, "black")) {
+plotDNS2Freq <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(red.lighter, blue.lighter, "black")) {
 	  xlab.text <- "Chromosome"
 	
-	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  pdf(paste0(file.name, ".pdf"), height=4, width=6)
 	  par(mar=c(5.1, 4.6, 4.1, 1.5))
-	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, yaxt="n", main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 	
-	  points(dns.f$Freq/total.f*100 ~ dns.f$CHR, col=cols[1], pch=19, cex=cex)
-	  lines(dns.f$Freq/total.f*100, y=NULL, lty=5, lwd=2.5, col=cols[1])
+	  points(dns.f$Freq/total.f*100 ~ dns.f$CHR, col=cols[2], pch=19, cex=cex)
+	  lines(dns.f$Freq/total.f*100, y=NULL, lty=5, lwd=2.5, col=cols[2])
 	
-	  points(dns.m$Freq/total.m*100 ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
-	  lines(dns.m$Freq/total.m*100, y=NULL, lty=5, lwd=2.5, col=cols[2])
+	  points(dns.m$Freq/total.m*100 ~ dns.m$CHR, col=cols[1], pch=19, cex=cex)
+	  lines(dns.m$Freq/total.m*100, y=NULL, lty=5, lwd=2.5, col=cols[1])
 	
-	  axis(side=2, at=12, cex.axis=1.8)	  
+	  #axis(side=2, at=12, cex.axis=1.8)	  
+	  axis(side=2, at=seq(0, 3, by=0.5), labels=c(0,"",1,"",2,"",3), cex.axis=1.8)
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
 	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
-	  legend(legend, legend=legends, col=cols[2:1], lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  legend("topleft", legend=legends[1:2], col=cols[1:2], pch=19, lty=2, lwd=5, pt.cex=2, cex=1.9, bty="n")
 	  dev.off()
 }
 
 plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(blue.lighter, red.lighter, "black")) {
-	  xlab.text <- "Chromosome"
+	  xlab.text <- ""
 	
 	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
 	  par(mar=c(5.1, 4.6, 4.1, 1.5))
@@ -132,10 +133,10 @@ plotDNS2 <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend
 	  points(dns.m$Freq ~ dns.m$CHR, col=cols[2], pch=19, cex=cex)
 	  lines(dns.m$Freq, y=NULL, lty=5, lwd=2.5, col=cols[2])
 	
-	  #axis(side=2, at=12, cex.axis=1.8)	  
+	  axis(side=2, at=12, cex.axis=1.8)	  
 	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
 	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
-	  legend(legend, legend=legends, col=cols, lty=2, lwd=5, pt.cex=2, cex=1.9)
+	  #legend(legend, legend=legends[2:1], col=cols[1:2], lty=2, lwd=5, pt.cex=2, cex=1.9)
 	  dev.off()
 }
 
