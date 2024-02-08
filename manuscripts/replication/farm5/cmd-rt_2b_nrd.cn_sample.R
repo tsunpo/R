@@ -71,7 +71,7 @@ for (c in 1:nrow(sprs.order)) {
    
    nrds.T.chr.m.sample <- nrds.T.chr.m[,c("BED", SAMPLE)]
    colnames(nrds.T.chr.m.sample) <- c("BED", "T")
-   nrds.T.chr.d.sample$T <- log2(nrds.T.chr.d.sample$T + 0.01)
+   #nrds.T.chr.d.sample$T <- log2(nrds.T.chr.d.sample$T + 0.01)
    nrds.T.chr.m.sample.T <- setSpline(nrds.T.chr.m.sample, bed.gc.chr, "T")
    #nrds.T.chr.m.sample.T <- nrds.T.chr.m.sample
    

@@ -84,7 +84,7 @@ plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legend
 # Last Modified: 04/10/23
 # -----------------------------------------------------------------------------
 getDNS2 <- function(gel.del.nona, dist, phase) {
-	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), Phase_combined == phase)$CHR))
+	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), parent_of_origin == phase)$CHR))
 	  rownames(dns) <- dns$Var1
 	
 	  dns.chr <- toTable(0, 2, 22, c("CHR", "Freq"))
@@ -99,12 +99,12 @@ getDNS2 <- function(gel.del.nona, dist, phase) {
 	  return(dns.chr)
 }
 
-plotDNS2Freq <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c(red.lighter, blue.lighter, "black")) {
+plotDNS2Freq <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, legend, legends, cex=2.5, size=5, cols=c("black", "gray", "black")) {
 	  xlab.text <- "Chromosome"
 	
-	  pdf(paste0(file.name, ".pdf"), height=4, width=6)
+	  pdf(paste0(file.name, ".pdf"), height=5, width=6)
 	  par(mar=c(5.1, 4.6, 4.1, 1.5))
-	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, yaxt="n", main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, yaxt="n", main=main.text, col=cols[3], xaxt="n", pch=19, cex.axis=1.9, cex.lab=2, cex.main=2.2)
 	
 	  points(dns.f$Freq/total.f*100 ~ dns.f$CHR, col=cols[2], pch=19, cex=cex)
 	  lines(dns.f$Freq/total.f*100, y=NULL, lty=5, lwd=2.5, col=cols[2])
@@ -113,10 +113,11 @@ plotDNS2Freq <- function(dns.f, dns.m, file.name, main.text, ylab.text, ylim, le
 	  lines(dns.m$Freq/total.m*100, y=NULL, lty=5, lwd=2.5, col=cols[1])
 	
 	  #axis(side=2, at=12, cex.axis=1.8)	  
-	  axis(side=2, at=seq(0, 3, by=0.5), labels=c(0,"",1,"",2,"",3), cex.axis=1.8)
-	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.8)
-	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.8)
-	  legend("topleft", legend=legends[1:2], col=cols[1:2], pch=19, lty=2, lwd=5, pt.cex=2, cex=1.9, bty="n")
+	  axis(side=2, at=seq(0, 12, by=2), labels=c(0,"",4,"",8,"",12), cex.axis=1.9)
+	  #axis(side=2, at=seq(0, 7, by=1), labels=c(0,"",2,"",4,"",6, ""), cex.axis=1.9)
+	  axis(side=1, at=seq(2, 22, by=4), cex.axis=1.9)
+	  axis(side=1, at=seq(4, 20, by=4), cex.axis=1.9)
+	  #legend("topleft", legend=legends[1:2], col=cols[1:2], pch=19, lty=2, lwd=5, pt.cex=2, cex=2, bty="n")
 	  dev.off()
 }
 
@@ -375,8 +376,25 @@ toFrequencyTable <- function(partitions) {
 # Methods: Density plot
 # Last Modified: 30/05/23
 # =============================================================================
+plotDensity0_1 <- function(reals, file.name, col, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F, ymax=NA, scale=F) {
+	  ylab.text <- "Density"
+	  reals.2 <- reals[!is.na(reals)]
+	  if (scale) {
+	     reals.2 <- scale(reals)
+	     reals.2 <- (reals.2-min(reals.2))/(max(reals.2)-min(reals.2))
+	  }
+	  d <- density(reals.2)
+	
+	  pdf(file.name, height=6, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, col=col, lwd=3, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+
+	  dev.off()
+}
+
 plotDensity <- function(reals, file.name, col, main.text, xlab.text="", showMedian=F, min=NA, max=NA, rt=NA, rev=F, ymax=NA) {
 	  ylab.text <- "Density"
+	  reals <- reals[!is.na(reals)]
 	  d <- density(reals)
 	  
 	  ylim <- c(min(d$y), max(d$y))
@@ -390,6 +408,8 @@ plotDensity <- function(reals, file.name, col, main.text, xlab.text="", showMedi
 	  if (rev)
 	  	  xlim <- rev(range(reals))
 	
+	  xlim <- c(0, 1)
+	  
 	  pdf(file.name, height=6, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, ylim=ylim, col=col, lwd=3, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
@@ -469,7 +489,7 @@ plotDensity3 <- function(reals, randoms, randoms3, file.name, cols, legends, leg
 	  dev.off()
 }
 
-plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=6, width=4) {
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=4, width=4) {
 	  trait <- rep(0, length(tpm.1))
 	  trait <- c(trait, rep(1, length(tpm.2)))
 	  trait <- as.factor(trait)
@@ -479,38 +499,87 @@ plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, yl
 	  
 	  pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  boxplot(expr ~ trait, outline=F, xaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+	  boxplot(expr ~ trait, outline=F, xaxt="n", yaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 	  #abline(h=0, col="black", lty=5, lwd=3)
 	  
 	  p <- testU(tpm.1, tpm.2)
 	  #text(1.5, ylim[2]-1.4, getPvalueSignificanceLevel(p), cex=2.5)
 	  #lines(c(1, 2), y=c(ylim[2]-2, ylim[2]-2), type="l", lwd=2)
 
-	  #text(1.5, -0.1, expression(italic('P')~"                   "), cex=1.9)
-	  #text(1.5, -0.1, paste0("   = ", scientific(p)), cex=1.9)
-	  if (main == "Microhomolgy") {
+	  text(1.5, -0.1, expression(italic('P')~"                   "), cex=1.9)
+	  text(1.5, -0.1, paste0("   = ", scientific(p)), cex=1.9)
+	  if (main[1] == "Microhomolgy") {
 	     text(1.5, 28, expression(italic('P')~"                   "), cex=1.9)
 	     text(1.5, 28, paste0("   = ", scientific(p)), cex=1.9)
-	  } else if (main == "Mother's age at birth") {
+	  } else if (main[1] == "Mother's age at birth") {
 	     text(1.5, 39, expression(italic('P')~"                   "), cex=1.9)
 	     text(1.5, 39, paste0("   = ", scientific(p)), cex=1.9)
-	  } else if (main == "Father's age at birth") {
+	  } else if (main[1] == "Father's age at birth") {
 	     text(1.5, 51, expression(italic('P')~"                   "), cex=1.9)
 	     text(1.5, 51, paste0("   = ", scientific(p)), cex=1.9)
-	  } else if (main == "Dist. to telomere") {
+	  } else if (main[1] == "Dist. to telomere") {
 	     text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=1.9)
 	     text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=1.9)
-	  } else if (main == "Replication timing") {
-	     text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
-	     text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
+	  } else if (main[1] == "Replication timing") {
+	  	  #text(1.5, ylim[1]+0.125, expression(italic('P')~"                   "), cex=1.9)
+	  	  #text(1.5, ylim[1]+0.125, paste0("   = ", scientific(p)), cex=1.9)
    }
-	  #axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
-	  #axis(side=2, at=seq(-0.2, 0.2, by=0.1), labels=c(-0.2, -0.1, 0, 0.1, 0.2), cex.axis=1.8)
+	  axis(side=2, at=0, labels=0, font=1, cex.axis=1.8)
+	  axis(side=2, at=seq(-0.2, 0.2, by=0.05), labels=c(-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2), cex.axis=1.8)
+	  axis(side=2, at=-0.15, labels=-0.15, font=1, cex.axis=1.8)
 	  axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.8)
 	  axis(side=1, at=2, labels=names[2], font=1, cex.axis=1.8)
-	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1))), line=1.8, cex.axis=1.8, col.ticks="white")
-	  axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2))), line=1.8, cex.axis=1.8, col.ticks="white")
+	  axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1)/2)), line=1.8, cex.axis=1.8, col.ticks="white")
+	  axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2)/2)), line=1.8, cex.axis=1.8, col.ticks="white")
 	  dev.off()
+}
+
+plotBox2RT <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=5, width=4) {
+	trait <- rep(0, length(tpm.1))
+	trait <- c(trait, rep(1, length(tpm.2)))
+	trait <- as.factor(trait)
+	expr <- as.numeric(c(tpm.1, tpm.2))
+	ylim <- c(min(expr), max(expr))
+
+	pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	par(mar=c(5.1, 4.7, 4.1, 1.4))
+	boxplot(expr ~ trait, outline=F, xaxt="n", yaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.9, cex.lab=2, cex.main=2.2)
+
+	p <- testU(tpm.1, tpm.2)
+	text(1.5, -0.1, expression(italic('P')~"                   "), cex=2)
+	text(1.5, -0.1, paste0("   = ", scientific(p)), cex=2)
+
+	#axis(side=2, at=0, labels=0, font=1, cex.axis=1.9)
+	axis(side=2, at=seq(-0.2, 0.2, by=0.05), labels=c(-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2), cex.axis=1.9)
+	axis(side=2, at=-0.15, labels=-0.15, font=1, cex.axis=1.9)
+	axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.9)
+	axis(side=1, at=2, labels=names[2], font=1, cex.axis=1.9)
+	#axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1)/2)), line=1.8, cex.axis=1.8, col.ticks="white")
+	#axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2)/2)), line=1.8, cex.axis=1.8, col.ticks="white")
+	dev.off()
+}
+
+
+plotBox2Telo <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylab, height=5, width=4) {
+	trait <- rep(0, length(tpm.1))
+	trait <- c(trait, rep(1, length(tpm.2)))
+	trait <- as.factor(trait)
+	expr <- as.numeric(c(tpm.1, tpm.2))
+	ylim <- c(min(expr), max(expr))
+
+	pdf(file.path(wd.de.plots, paste0(file.name, ".pdf")), height=height, width=width)
+	par(mar=c(5.1, 4.7, 4.1, 1.4))
+	boxplot(expr ~ trait, outline=F, xaxt="n", xlab="", ylab=ylab, ylim=ylim, main=main, col=cols, cex.axis=1.9, cex.lab=2, cex.main=2.2)
+
+	p <- testU(tpm.1, tpm.2)
+		text(1.5, ylim[2]-1, expression(italic('P')~"                   "), cex=2)
+		text(1.5, ylim[2]-1, paste0("   = ", scientific(p)), cex=2)
+
+	axis(side=1, at=1, labels=names[1], font=1, cex.axis=1.9)
+	axis(side=1, at=2, labels=names[2], font=1, cex.axis=1.9)
+	axis(side=1, at=1, labels=paste0("n=", separator(length(tpm.1)/2)), line=1.8, cex.axis=1.9, col.ticks="white")
+	axis(side=1, at=2, labels=paste0("n=", separator(length(tpm.2)/2)), line=1.8, cex.axis=1.9, col.ticks="white")
+	dev.off()
 }
 
 plotCorrelationRTS <- function(file.name, main.text, xlab.text, ylab.text, dns, rts, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=1.9, chrs=c(4, 16)) {
@@ -548,10 +617,15 @@ plotCorrelationRTS <- function(file.name, main.text, xlab.text, ylab.text, dns, 
 	  dev.off()
 }
 
-
-
-
-
+# =============================================================================
+# Methods: Density plot
+# Last Modified: 15/01/24
+# =============================================================================
+getMonteCarloSimulations <- function(nrds.RT.2, column, size) {
+	random.idx <- sort(sample(1:nrow(nrds.RT.2), size, replace=T))
+	
+	return(median(nrds.RT.2[random.idx, column]))
+}
 
 plotDensityWilcox <- function(reals, randoms, file.name, col, main.text, xlab.text, showMedian=F, max=2) {
 	  ylab.text <- "Density"
@@ -561,6 +635,7 @@ plotDensityWilcox <- function(reals, randoms, file.name, col, main.text, xlab.te
 	  xlim <- c(min(reals), max(reals))
 	  if (!is.na(max))
 		    xlim <- c(min(-max), max(max))
+	  
 	  pdf(file.name, height=6, width=6)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
@@ -574,16 +649,42 @@ plotDensityWilcox <- function(reals, randoms, file.name, col, main.text, xlab.te
 	  dev.off()
 }
 
-getMonteCarloSimulations <- function(nrds.RT.2, size) {
+getMonteCarloSimulations <- function(nrds.RT.2, column, size) {
 	  random.idx <- sort(sample(1:nrow(nrds.RT.2), size, replace=T))
 	
-	  return(median(nrds.RT.2[random.idx, "RT"]))
+	  return(median(nrds.RT.2[random.idx, column]))
 }
 
-plotDensityMonteCarlo <- function(reals, nrds.RT.2, file.name, col, main.text, xlab.text, showMedian=F, max=2) {
-	  randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2, length(reals)))
+plotDensityMonteCarlo2 <- function(reals, nrds.RT.2, column, file.name, col, main.text, xlab.text, ylab.text, showMedian=F, max=NA, rev=F) {
+	  reals <- reals[!is.na(reals)]
+	  nrds.RT.2.nona <- nrds.RT.2[!is.na(nrds.RT.2$VALUE),]
+	  randoms <- replicate(1000, getMonteCarloSimulations(nrds.RT.2.nona, column, length(reals)))
 	
-	  ylab.text <- "Density"
+	  ranks <- c(randoms, median(reals))
+	  pval <- sum(ranks >= median(reals)) / length(ranks)
+	  if (median(reals) < median(randoms))
+		    pval <- sum(ranks <= median(reals)) / length(ranks)
+	
+	  d <- density(reals)
+	  xlim <- c(0, 1)
+	  if (rev)
+		     xlim <- rev(xlim)
+	  #xlim <- c(0.2, 0.7)   ## GC contents
+	  pdf(file.name, height=4, width=4)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+	
+	  text((xlim[1] + xlim[2])/2, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
+	  dev.off()
+}
+
+scale_values <- function(x){(x-min(x))/(max(x)-min(x))}
+
+plotDensityMonteCarlo <- function(reals, vs, column, file.name, col, main.text, xlab.text, ylab.text, showMedian=F, max=NA, rev=F) {
+	  reals <- reals[!is.na(reals)]
+	  vs.nona <- vs[!is.na(vs$VALUE),]
+	  randoms <- replicate(1000, getMonteCarloSimulations(vs.nona, column, length(reals)))
+	
 	  ranks <- c(randoms, median(reals))
 	  pval <- sum(ranks >= median(reals)) / length(ranks)
 	  if (median(reals) < median(randoms))
@@ -593,16 +694,86 @@ plotDensityMonteCarlo <- function(reals, nrds.RT.2, file.name, col, main.text, x
 	  xlim <- c(min(reals), max(reals))
 	  if (!is.na(max))
 	  	  xlim <- c(min(-max), max(max))
-	  pdf(file.name, height=6, width=6)
+	  if (rev)
+	  	  xlim <- rev(xlim)
+	  #xlim <- c(0.2, 0.7)   ## GC contents
+	  
+	  #reals.2 <- scale(rank(reals), center=F)
+	  reals.2 <- scale(reals, center=F)
+	  reals.2 <- scale_values(reals.2)
+	  median_normalized <- median(reals.2)
+	  median_shift_normalized <- median_normalized - 0.5  # Assuming a uniform distribution has a median of 0.5
+	  col.idx <- ceiling(median_shift_normalized/0.05)
+	  if (median_shift_normalized < 0)
+	  	  col.idx <- floor(median_shift_normalized/0.05)
+	  #if (median(reals) < median(randoms))
+	  #	  col.idx <- col.idx * -1
+	  if (rev)
+	  	  col.idx <- col.idx * -1
+	  
+	  pdf(file.name, height=4, width=4)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
 	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
 	
-	  if (showMedian) {
-	     abline(v=median(randoms), col="black", lty=5, lwd=3)
-	     abline(v=median(reals), col=col, lty=5, lwd=3)
-   }
+	  if (col.idx > 0)
+	  	  polygon(d,	col=reds[col.idx])
+	  else 
+	     polygon(d,	col=blues[col.idx])
+	  
+	  text((xlim[1] + xlim[2])/2, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
+	  #text((xlim[1] + xlim[2])/2, (max(d$y) + min(d$y))/2, median_shift_normalized, col="black", cex=1)
+	  dev.off()
+}
 
-	  text(0, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
+plotDensityKS <- function(reals, vs, column, file.name, col, main.text, xlab.text, ylab.text, showMedian=F, max=NA, rev=F) {
+	  real_observations <- reals[!is.na(reals)]
+	  vs <- vs[!is.na(vs$VALUE),]
+	  
+	  random.idx <- sort(sample(1:nrow(vs), 500000, replace=F))
+	  random_observations <- vs[random.idx, column]
+
+	  ## Pool real observations with random ones, rank-transform them, and normalize the values on a scale from 0 to 1
+	  all_observations <- c(real_observations, random_observations)
+	  all_observations <- unique(all_observations)
+	  #ranked_observations <- rank(all_observations)
+	  normalized_observations <- scale(all_observations, center=F)
+	  normalized_observations <- scale_values(normalized_observations)
+	  
+	  ks_result <- ks.test(normalized_observations, "punif")
+	  pval <- ks_result$p.value
+	
+	  d <- density(real_observations)
+	  xlim <- c(min(real_observations), max(real_observations))
+	  if (!is.na(max))
+	  	  xlim <- c(min(-max), max(max))
+	  if (rev)
+	  	  xlim <- rev(xlim)
+	  #xlim <- c(0.2, 0.7)   ## GC contents
+	  
+	  # Calculate the median shift using normalized and ranked observations on a scale from 0 to 1
+	  reals.2 <- scale(real_observations, center=F)
+	  reals.2 <- scale_values(reals.2)
+	  median_normalized <- median(reals.2)
+	  median_shift_normalized <- median_normalized - 0.5  # Assuming a uniform distribution has a median of 0.5
+	  col.idx <- ceiling(median_shift_normalized/0.05)
+	  if (median_shift_normalized < 0)
+	  	  col.idx <- floor(median_shift_normalized/0.05)
+	  #if (median(reals) < median(randoms))
+	  #	  col.idx <- col.idx * -1
+	  if (rev)
+	  	  col.idx <- col.idx * -1
+	  
+	  pdf(file.name, height=4, width=4)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(d, xlab=xlab.text, ylab=ylab.text, main=main.text, xlim=xlim, col=col, cex.axis=1.7, cex.lab=1.8, cex.main=1.9)
+
+	  if (col.idx > 0)
+	  	polygon(d,	col=reds[col.idx])
+	  else 
+	  	polygon(d,	col=blues[col.idx])
+	  
+	  text((xlim[1] + xlim[2])/2, (max(d$y) + min(d$y))/2, getPvalueSignificanceLevel(pval), col="black", cex=5)
+	  #text((xlim[1] + xlim[2])/2, (max(d$y) + min(d$y))/2, median_shift_normalized, col="black", cex=0.5)
 	  dev.off()
 }
 

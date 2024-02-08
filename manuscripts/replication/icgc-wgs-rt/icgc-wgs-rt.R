@@ -33,7 +33,7 @@ wd.meta  <- file.path(wd, BASE, "metadata")
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
-wd.rt.plots <- file.path(wd.rt, "plots")
+wd.rt.plots <- file.path(wd.rt, "plots", "PanImmune_2024")
 
 # -----------------------------------------------------------------------------
 # 
@@ -140,6 +140,58 @@ writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DAT
 save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
 
 # -----------------------------------------------------------------------------
+# samples
+# Last Modified: 06/02/24 (re-run); 21/04/19
+# -----------------------------------------------------------------------------
+hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
+totals.hist <- subset(totals, histology_abbreviation %in% hists)
+
+icgc <- toTable(0, 2, length(hists), c("MEDIAN", "N"))
+rownames(icgc) <- hists
+for (h in 1:length(hists)) {
+	  samples.hist   <- subset(totals.hist, histology_abbreviation == hists[h])
+	  icgc$N[h] <- nrow(samples.hist)
+	
+	  sum <- c()
+	  for (s in 1:nrow(samples.hist)) {
+		    sample <- samples.hist$specimen_id[s]
+		    load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+		
+		    sum <- c(sum, as.numeric(cor))
+	  }
+	  icgc$MEDIAN[h] <- median(sum)
+}
+icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
+writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
+
+# -----------------------------------------------------------------------------
+# samples
+# Last Modified: 06/02/24 (re-run)
+# -----------------------------------------------------------------------------
+samples$COR <- NA
+samples$Q4  <- NA
+samples$M2  <- NA
+samples$SORTING <- NA
+for (s in 1:nrow(samples)) {
+		 sample <- rownames(samples)[s]
+		 load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+		
+		 #samples$COR[s] <- as.numeric(cor)
+		 samples$COR[s] <- as.numeric(cors$cor[22])
+}
+
+samples.mut$COR <- NA
+samples.mut$Q4  <- NA
+samples.mut$M2  <- NA
+for (s in 1:nrow(samples.mut)) {
+	  sample <- rownames(samples.mut)[s]
+	  load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+	
+	  #samples.mut$COR[s] <- as.numeric(cor)
+	  samples.mut$COR[s] <- as.numeric(cors$cor[22])
+}
+
+# -----------------------------------------------------------------------------
 # PanImmune
 # Last Modified: 06/10/23; 16/03/23
 # -----------------------------------------------------------------------------
@@ -171,9 +223,9 @@ length(overlaps.2)
 immunes.tcga <- cbind(immunes[overlaps.2,], mappings.tcga.wgs[overlaps.2,])
 rownames(immunes.tcga) <- immunes.tcga$icgc_specimen_id
 
-overlaps.3 <- intersect(rownames(samples.h), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
-samples.mut.tcga <- cbind(samples.h[overlaps.3,], immunes.tcga[overlaps.3,])
-nrow(samples.mut.tcga)
+#overlaps.3 <- intersect(rownames(samples.h), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
+#samples.mut.tcga <- cbind(samples.h[overlaps.3,], immunes.tcga[overlaps.3,])
+#nrow(samples.mut.tcga)
 # [1] 736
 
 overlaps.3 <- intersect(rownames(samples.mut), rownames(immunes.tcga))   ## n=2545 (Total samples with SNVs)
@@ -201,14 +253,151 @@ for (c in 18:77) {
 	  test$rho[c-17] <- cor[[4]]
 	  test$P[c-17]   <- cor[[3]]
 	
-  	file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-", col))
-	  main.text <- c(col2, "")
-	  xlab.text <- paste0("n=", nrow(samples.mut.tcga.col))
+  	file.name <- file.path(wd.rt.plots, "cors-cor22", paste0("Cor_SCF-vs-", col))
+	  main.text <- c("", "")
+	  xlab.text <- col2
 	  ylab.text <- "SCF index"
 	  plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=x, y=y, pos="topright", cols=c("dimgray", "black"), size=5)
 }
 test <- test[order(test$rho, decreasing=T),]
-writeTable(test, file.path(wd.rt.plots, "Cor_SCF-vs-PanImmune_n=2542.txt"), colnames=T, rownames=F, sep="\t")
+test$Q <- qvalue(test$P)$qvalue
+writeTable(test, file.path(wd.rt.plots, "Cor_SCF-vs-PanImmune_n=2542_cors-cor22.txt"), colnames=T, rownames=F, sep="\t")
+
+# -----------------------------------------------------------------------------
+# Overall correlation with LCL S/G1
+# Last Modified: 07/02/24 (re-run); 20/11/23
+# -----------------------------------------------------------------------------
+cols <- colnames(samples.mut.tcga)[22:23]
+insilico <- toTable(0, 3, 22, c("CHR", cols))
+insilico$CHR <- sprs.order$chr
+for (c in 1:nrow(sprs.order)) {
+  	cors.all <- toTable(0, 4, nrow(samples.mut.tcga), c("SAMPLE_ID", "COR", "Q4", "M2"))
+	  rownames(cors.all) <- rownames(samples.mut.tcga)
+	  cors.all$SAMPLE_ID <- rownames(samples.mut.tcga)
+	  for (s in 1:nrow(samples.mut.tcga)) {
+		    sample <- rownames(samples.mut.tcga)[s]
+		    load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+		    
+		    cors.all$COR[s] <- cors$cor[c]
+	  }
+	
+  	cor <- cor.test(samples.mut.tcga[, 22], cors.all$COR, method="spearman", exact=F)
+  	insilico$Proliferation[c] <- cor[[4]]
+	
+  	cor <- cor.test(samples.mut.tcga[, 23], cors.all$COR, method="spearman", exact=F)
+  	insilico$Wound.Healing[c] <- cor[[4]]
+}
+
+##
+ylim <- c(-0.4, 0.9)  #, dns.u$Freq)))
+file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red_FACS_22_3_3"))
+#main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
+main.text <- c("PCAWG SCF correlation", "")
+ylab.text <- "Correlation to PanImmune"
+xlab.text <- "Chromosome"
+legends <- c("Wound Healing", "Proliferation")
+#cols <- c(red, blue, "dimgray")
+cols <- c(flowjo.grey, flowjo.red)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+
+points(insilico$Wound.Healing ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Wound.Healing, lty=5, lwd=2.5, col=cols[1])
+
+points(insilico$Proliferation ~ rownames(insilico), col=cols[2], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Proliferation, lty=5, lwd=2.5, col=cols[2])
+
+abline(v=11, lty=3, lwd=3, col=red)
+
+axis(side=2, at=seq(-0.4, 0.8, by=0.2), labels=c(-0.4, "", 0, "", 0.4, "", 0.8), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends, col=cols, pch=15, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# samples
+# Last Modified: 06/02/24 (re-run); 21/04/19
+# -----------------------------------------------------------------------------
+hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
+totals.hist <- subset(totals, histology_abbreviation %in% hists)
+
+icgc <- toTable(0, 2, length(hists), c("MEDIAN", "N"))
+rownames(icgc) <- hists
+for (h in 1:length(hists)) {
+   samples.hist   <- subset(totals.hist, histology_abbreviation == hists[h])
+   icgc$N[h] <- nrow(samples.hist)
+   
+   sum <- c()
+   for (s in 1:nrow(samples.hist)) {
+      sample <- samples.hist$specimen_id[s]
+      load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      
+      sum <- c(sum, as.numeric(cor))
+   }
+   icgc$MEDIAN[h] <- median(sum)
+}
+icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
+writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
+
+###
+##
+donors <- c("project_code", "icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
+samples <- toTable(0, 12, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "icgc_specimen_id", "histology_abbreviation", donors))
+idx.cor    <- 0
+idx.sample <- 0
+for (h in 1:nrow(icgc)) {
+   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
+   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)
+   
+   for (s in 1:nrow(samples.hist)) {
+      sample <- samples.hist$specimen_id[s]
+      load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+  
+      samples$COR[idx.sample + s] <- as.numeric(cors$cor[22])
+      samples$icgc_specimen_id[idx.sample + s] <- sample
+      samples$histology_abbreviation[idx.sample + s] <- rownames(icgc)[h]
+      
+      samples[idx.sample + s, c(donors)] <- clinicals[grep(paste0(sample, ","), clinicals$icgc_specimen_id), c(donors)]
+   }
+   samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- idx.cor
+   samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q4
+   samples$M2[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$M2
+   #samples$Q35[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q35
+   
+   idx.cor <- idx.cor + 1
+   idx.sample <- idx.sample + nrow(samples.hist)
+}
+rownames(samples) <- samples$icgc_specimen_id
+#samples.h <- samples
+samples.v <- samples
+
+samples.tmp <- samples.mut
+samples.mut <- samples[intersect(rownames(samples), rownames(samples.mut)),]
+samples.mut$tumor_wgs_aliquot_id <- samples.tmp[rownames(samples.mut),]$tumor_wgs_aliquot_id
+
+save(icgc, samples, samples.v, samples.mut, file=file.path(wd.driver.data, "icgc_wgs_samples_n2542_re-run_cor-22.RData"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # PanImmune (Hist)
@@ -246,50 +435,50 @@ mappings.tcga <- subset(mappings, submitted_donor_id %in% tcgas)
 rownames(mappings.tcga) <- mappings.tcga$submitted_donor_id
 immunes.tcga <- immunes[mappings.tcga$submitted_donor_id,]
 for (h in 1:length(hists)) {
-	  mappings.tcga.hist <- subset(mappings.tcga, histology_abbreviation == hists[h])
-	  immunes.tcga.hist  <- immunes[rownames(mappings.tcga.hist),]
-	  
-	  ##
-	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Leukocyte.Fraction),]
-	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
-	  if (nrow(samples.tcga) > 1) {
-	     file.names <- file.path(wd.rt.plots, paste0("Leukocyte.Fraction_", hists[h], ".pdf"))
-	     plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Leukocyte fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Leukocyte.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-	  }
-	  
-	  ##
-	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Stromal.Fraction),]
-	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
-	  if (nrow(samples.tcga) > 1) {
-	  	  file.names <- file.path(wd.rt.plots, paste0("Stromal.Fraction_", hists[h], ".pdf"))
-	  	  plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Stromal fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Stromal.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-	  }
-	  
-	  ##
-	  immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Proliferation),]
-	  samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
-	  if (nrow(samples.tcga) > 1) {
-	  	  file.names <- file.path(wd.rt.plots, paste0("Proliferation_", hists[h], ".pdf"))
-	  	  plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Proliferation", "S-phase cell fraction index", immunes.tcga.hist.nona$Proliferation, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
-	  }
+	mappings.tcga.hist <- subset(mappings.tcga, histology_abbreviation == hists[h])
+	immunes.tcga.hist  <- immunes[rownames(mappings.tcga.hist),]
+	
+	##
+	immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Leukocyte.Fraction),]
+	samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
+	if (nrow(samples.tcga) > 1) {
+		file.names <- file.path(wd.rt.plots, paste0("Leukocyte.Fraction_", hists[h], ".pdf"))
+		plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Leukocyte fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Leukocyte.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+	}
+	
+	##
+	immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Stromal.Fraction),]
+	samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
+	if (nrow(samples.tcga) > 1) {
+		file.names <- file.path(wd.rt.plots, paste0("Stromal.Fraction_", hists[h], ".pdf"))
+		plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Stromal fraction", "S-phase cell fraction index", immunes.tcga.hist.nona$Stromal.Fraction, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+	}
+	
+	##
+	immunes.tcga.hist.nona <- immunes.tcga.hist[!is.na(immunes.tcga.hist$Proliferation),]
+	samples.tcga <- samples[mappings.tcga.hist[rownames(immunes.tcga.hist.nona),]$icgc_specimen_id,]
+	if (nrow(samples.tcga) > 1) {
+		file.names <- file.path(wd.rt.plots, paste0("Proliferation_", hists[h], ".pdf"))
+		plotCorrelation(file.names, paste0(hists[h], " (n=", nrow(samples.tcga), ")"), "Proliferation", "S-phase cell fraction index", immunes.tcga.hist.nona$Proliferation, samples.tcga$COR, pos="bottomright", cols=c("dimgray", "black"), size=6)
+	}
 }
 
 ##
 for (c in 5:22) {
- 	 col <- colnames(immunes.tcga)[c]
- 	 col.name <- unlist(strsplit(col, "\\."))
- 	 col.name <- "HR defects"
- 	 if (length(col.name) != 1) {
- 	    for (n in 2:length(col.name))
- 	  	    col.name[n] <- tolower(col.name[n])
- 	    col.name <- paste(col.name, collapse=" ")
- 	 }
- 	 
- 	 immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga[, col]),]
- 	 samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
- 	 
- 	 file.names <- file.path(wd.rt.plots, paste0("PanImmune_", col, ".pdf"))
- 	 plotCorrelation5(file.names, "", paste0(col.name, " (n=", nrow(samples.tcga), ")"), "SCF index", immunes.tcga.nona[, col], samples.tcga$COR, pos="topright", cols=c("gray", "black"), size=5)
+	col <- colnames(immunes.tcga)[c]
+	col.name <- unlist(strsplit(col, "\\."))
+	col.name <- "HR defects"
+	if (length(col.name) != 1) {
+		for (n in 2:length(col.name))
+			col.name[n] <- tolower(col.name[n])
+		col.name <- paste(col.name, collapse=" ")
+	}
+	
+	immunes.tcga.nona <- immunes.tcga[!is.na(immunes.tcga[, col]),]
+	samples.tcga <- samples[mappings.tcga[rownames(immunes.tcga.nona),]$icgc_specimen_id,]
+	
+	file.names <- file.path(wd.rt.plots, paste0("PanImmune_", col, ".pdf"))
+	plotCorrelation5(file.names, "", paste0(col.name, " (n=", nrow(samples.tcga), ")"), "SCF index", immunes.tcga.nona[, col], samples.tcga$COR, pos="topright", cols=c("gray", "black"), size=5)
 }
 
 ##
@@ -330,62 +519,7 @@ plotCorrelation(file.names, paste0("CIBERSORT (n=", nrow(samples.tcga), ")"), "L
 
 
 
-# -----------------------------------------------------------------------------
-# samples
-# Last Modified: 21/04/19
-# -----------------------------------------------------------------------------
-hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
-totals.hist <- subset(totals, histology_abbreviation %in% hists)
 
-icgc <- toTable(0, 2, length(hists), c("MEDIAN", "N"))
-rownames(icgc) <- hists
-for (h in 1:length(hists)) {
-   samples.hist   <- subset(totals.hist, histology_abbreviation == hists[h])
-   icgc$N[h] <- nrow(samples.hist)
-   
-   sum <- c()
-   for (s in 1:nrow(samples.hist)) {
-      sample <- samples.hist$specimen_id[s]
-      load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
-      
-      sum <- c(sum, as.numeric(cor))
-   }
-   icgc$MEDIAN[h] <- median(sum)
-}
-icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
-writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
-
-###
-##
-donors <- c("project_code", "icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
-samples <- toTable(0, 13, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "Q35", "icgc_specimen_id", "histology_abbreviation", donors))
-idx.cor    <- 0
-idx.sample <- 0
-for (h in nrow(icgc):1) {
-   samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)
-   
-   for (s in 1:nrow(samples.hist)) {
-      sample <- samples.hist$specimen_id[s]
-      load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
-  
-      samples$COR[idx.sample + s] <- as.numeric(cor)
-      samples$icgc_specimen_id[idx.sample + s] <- sample
-      samples$histology_abbreviation[idx.sample + s] <- rownames(icgc)[h]
-      
-      samples[idx.sample + s, c(donors)] <- clinicals[grep(paste0(sample, ","), clinicals$icgc_specimen_id), c(donors)]
-   }
-   samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- idx.cor
-   samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q4
-   samples$M2[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$M2
-   #samples$Q35[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q35
-   
-   idx.cor <- idx.cor + 1
-   idx.sample <- idx.sample + nrow(samples.hist)
-}
-rownames(samples) <- samples$icgc_specimen_id
-#samples.h <- samples
-samples.v <- samples
 
 # -----------------------------------------------------------------------------
 # Supplementary Table 1
