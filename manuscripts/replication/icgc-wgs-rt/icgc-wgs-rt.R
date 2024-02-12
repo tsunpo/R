@@ -33,7 +33,8 @@ wd.meta  <- file.path(wd, BASE, "metadata")
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
-wd.rt.plots <- file.path(wd.rt, "plots", "PanImmune_2024")
+#wd.rt.plots <- file.path(wd.rt, "plots", "PanImmune_2024")
+wd.rt.plots <- file.path(wd.rt, "plots", "SCP")
 
 # -----------------------------------------------------------------------------
 # 
@@ -337,7 +338,7 @@ for (h in 1:length(hists)) {
       sample <- samples.hist$specimen_id[s]
       load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
       
-      sum <- c(sum, as.numeric(cor))
+      sum <- c(sum, as.numeric(cors$cor[22]))
    }
    icgc$MEDIAN[h] <- median(sum)
 }
@@ -380,7 +381,91 @@ samples.tmp <- samples.mut
 samples.mut <- samples[intersect(rownames(samples), rownames(samples.mut)),]
 samples.mut$tumor_wgs_aliquot_id <- samples.tmp[rownames(samples.mut),]$tumor_wgs_aliquot_id
 
-save(icgc, samples, samples.v, samples.mut, file=file.path(wd.driver.data, "icgc_wgs_samples_n2542_re-run_cor-22.RData"))
+save(icgc, samples, samples.v, samples.mut, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor-22.RData"))
+
+# -----------------------------------------------------------------------------
+# Stripchart (black; Resting to proliferating)
+# Last Modified: 08/02/24; 22/11/22; 22/08/22; 18/08/22; 27/07/22; 21/04/19
+# -----------------------------------------------------------------------------
+samples.h1 <- toTable(0, 2, 0, c("CANCER", "COR"))
+labels1 <- c()
+idx.cancer <- 0
+for (h in 26:1) {
+   q4 <- subset(samples, histology_abbreviation == rownames(icgc)[h])
+	  q4$CANCER <- idx.cancer
+	  samples.h1 <- rbind(samples.h1, q4)
+	  labels1 <- c(labels1, rownames(icgc)[h])
+	  idx.cancer <- idx.cancer + 1
+}
+
+###
+##
+file.name <- "stripchart_ICGC_SCP_n=2612_cor22"
+main.text <- c("", "")
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
+stripchart(COR ~ CANCER, data=samples.h1, method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:26))
+text(labels=labels1[1:26],   x=1:26,   y=par("usr")[3] - 0.05, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("SCF index", side=2, line=3.5, cex=1.9)
+legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
+dev.off()
+
+save(icgc, samples, samples.v, samples.mut, samples.h1, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor-22.RData"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##
+file.name <- "stripchart_ICGC_NBL_SCLC_colour_bold_NEW_medcol=red_medlwd=5_SCLC_NB_n57-1_plain_bold"
+main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.2, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.8, cex.lab=1.9, cex.main=2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
+text(labels=labels1[1],     x=1,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[2:8],   x=2:8,   y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[9],     x=9,     y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[10:19], x=10:19, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+text(labels=labels1[20],    x=20,    y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9, font=2)
+text(labels=labels1[21:28], x=21:28, y=par("usr")[3] - 0.1, srt=45, adj=0.965, xpd=NA, cex=1.9)
+
+#stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
+#stripchart(COR ~ CANCER, data=samples.h1[1:1889,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:19))
+#stripchart(COR ~ CANCER, data=samples.h1[1991:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(21:28))
+stripchart(COR ~ CANCER, data=samples.h1[1:2769,], method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:28))
+#stripchart(subset(samples.sclc, M2 == 2)$COR ~ rep(20, time=50), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=20)
+#stripchart(subset(samples.sclc, M2 == 1)$COR ~ rep(20, time=51), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=20)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.8)
+mtext("S-phase cell fraction index", side=2, line=3.5, cex=1.9)
+#legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
+dev.off()
+
+
+
 
 
 
