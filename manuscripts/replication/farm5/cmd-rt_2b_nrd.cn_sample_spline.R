@@ -47,6 +47,7 @@ wd.rt.data <- file.path(wd.rt, "data")
 ## LCL S/G1
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/rd-vs-rt_lcl-s-g1_spline_spearman.RData"))
 sprs.order <- sprs[order(sprs$cor1, decreasing=T),]
+#sprs.order <- sprs[order(sprs$chr, decreasing=F),]
 
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1.RData"))
 nrds <- nrds[which(is.na(nrds$RT) == F),]   ## ADD 29/11/20
@@ -54,7 +55,7 @@ nrds <- nrds[which(is.na(nrds$RT) == F),]   ## ADD 29/11/20
 nrds.T.chr.m.sample.T.all <- NULL
 nrds.chr.RT.all <- NULL
 cors <- toTable(0, 3, 22, c("chr", "cor0", "cor"))
-cors$chr <- 1:22
+cors$chr <- sprs.order$chr
 for (c in 1:nrow(sprs.order)) {
    chr <- chrs[sprs.order$chr[c]]
    bed.gc.chr <- subset(bed.gc, CHR == chr)
@@ -80,7 +81,7 @@ for (c in 1:nrow(sprs.order)) {
    
    ## Keep 1kb slopes based on overlapping windows
    overlaps <- intersect(nrds.T.chr.m.sample.T$BED, nrds.chr.RT$BED)
-   cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.T.chr.m.sample.T[overlaps,]$SPLINE, method="spearman")
+   cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.T.chr.m.sample.T[overlaps,]$SPLINE, method="spearman")[[4]]
    
    ##
    if (is.null(nrds.T.chr.m.sample.T.all)) {
@@ -95,7 +96,7 @@ for (c in 1:nrow(sprs.order)) {
       nrds.chr.RT.all <- rbind(nrds.chr.RT.all, nrds.chr.RT[overlaps,])
    }
    
-   cors$cor[c] <- getCor(nrds.chr.RT.all$SPLINE, nrds.T.chr.m.sample.T.all$SPLINE, method="spearman")
+   cors$cor[c] <- getCor(nrds.chr.RT.all$SPLINE, nrds.T.chr.m.sample.T.all$SPLINE, method="spearman")[[4]]
 }
-cor <- getCor(nrds.chr.RT.all$SPLINE, nrds.T.chr.m.sample.T.all$SPLINE, method="spearman")
+cor <- getCor(nrds.chr.RT.all$SPLINE, nrds.T.chr.m.sample.T.all$SPLINE, method="spearman")[[4]]
 save(cor, cors, file=file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spline_spearman.RData")))

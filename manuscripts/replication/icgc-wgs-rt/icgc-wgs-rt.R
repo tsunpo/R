@@ -158,7 +158,8 @@ for (h in 1:length(hists)) {
 		    sample <- samples.hist$specimen_id[s]
 		    load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
 		
-		    sum <- c(sum, as.numeric(cor))
+		    #sum <- c(sum, as.numeric(cor))
+		    sum <- c(sum, as.numeric(cors$cor[22]))
 	  }
 	  icgc$MEDIAN[h] <- median(sum)
 }

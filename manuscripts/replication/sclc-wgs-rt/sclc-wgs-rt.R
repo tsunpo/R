@@ -24,7 +24,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "SCLC"
 PAIR1 <- "T"
 PAIR0 <- "N"
@@ -44,6 +44,26 @@ samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.list"), header=F, rowna
 #samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n9_WB.list"), header=F, rownames=F, sep="")
 n1 <- length(samples1)
 n0 <- length(samples0)
+
+# -----------------------------------------------------------------------------
+# SCLC T vs LCL S/G1
+# http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
+# Last Modified: 13/02/24; 05/06/19; 20/04/19; 06/03/19
+# -----------------------------------------------------------------------------
+cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
+# > min(cors.samples[,-c(1:4)])
+# [1] -0.8457817
+# > max(cors.samples[,-c(1:4)])
+# [1] 0.8088429
+
+#load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
+main.text <- c("SCLC read depth vs. RT", "")
+ymin <- -0.8773492
+ymax <- 0.8392611
+plotSAMPLEvsRT(cors.samples, samples1, file.name, main.text, ymin, ymax)
+
 
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
@@ -140,6 +160,11 @@ ymin <- -1.1
 ymax <- 1.1
 plotRD3vsRTALL(cors, file.name, main.text, ymin, ymax, cols=c("red", "blue", "black"), c("T", "N", "T/N"), c=NA, isRT=T)
 
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # SCLC T vs LCL S/G1
 # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
@@ -187,6 +212,7 @@ writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_
 writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")
 
 ## Random 25/26
+samples.sclc <- readTable(file.path(wd.ngs, "sclc_wgs_n101.txt"), header=T, rownames=T, sep="\t")
 m2.25 <- sort(rownames(subset(samples.sclc, M2 == 1))[sample(1:50, round(50/2), replace=F)])
 m1.26 <- sort(rownames(subset(samples.sclc, M2 == 0))[sample(1:51, round(51/2), replace=F)])
 

@@ -270,7 +270,7 @@ getLog2ScaledRT <- function(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs
    for (c in 1:22) {
       chr <- chrs[c]
       bed.gc.chr <- subset(bed.gc, CHR == chr)
-      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.ratio_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
+      nrds.chr <- readTable(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt_", chr, "_", BASE1, "-", BASE0, "_n", n1, "-", n0, ".txt.gz")), header=T, rownames=T, sep="\t")
   
       nrds <- rbind(nrds, nrds.chr)
    }
@@ -278,6 +278,7 @@ getLog2ScaledRT <- function(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs
       nrds$RT <- nrds$N / nrds$T
    }
    nrds$RT <- log2(nrds$RT)   ## MUY MUY IMPORTANTE!! 2019/10/10
+   #nrds <- nrds[which(nrds$MEDIAN != 0),]
    nrds$RT <- scale(nrds$RT)
  
    return(nrds)
@@ -393,7 +394,7 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    nrds.chr.N  <- setSpline(nrds.chr, bed.gc.chr, "N")
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
    if (!is.null(nrds.lcl.chr))
-      nrds.lcl.chr.RT <- setSpline0(nrds.lcl.chr, bed.gc.chr, "RT")
+      nrds.lcl.chr.RT <- setSpline(nrds.lcl.chr, bed.gc.chr, "RT")
     
    #nrds.chr.RT$SPLINE <- scale(nrds.chr.RT$SPLINE)
    #bed.gc.chr <- bed.gc.chr[rownames(nrds.chr.RT),]   ## NOT HERE?
@@ -487,8 +488,8 @@ plotRT <- function(file.name, main.text, chr, xmin, xmax, nrds.chr, bed.gc.chr, 
    legend("topleft", paste0("Early (", legends2[1], " > ", legends2[2], ")"), bty="n", text.col="black", pt.cex=1.5, pt.lwd=2, pch=1, col=adjustcolor(colours2[1], alpha.f=0.7), cex=1.9)   
    legend("bottomleft", paste0("Late (", legends2[1], " < ", legends2[2], ")"), bty="n", text.col="black", pt.cex=1.5, pt.lwd=2, pch=1, col=adjustcolor(colours2[2], alpha.f=0.7), cex=1.9)
    if (width != 6)
-      legend("topright", "S/G1 read depth ratio", col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.9)
-      #legend("topright", paste0(BASE, "", " ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.8)
+   	  #legend("topright", "S/G1 read depth ratio", col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.9)
+      legend("topright", paste0(BASE, "", " ", legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.8)
    else
       legend("topright", paste0(legends2[1], "/", legends2[2], " ratio"), col="black", lty=1, lwd=4, bty="n", horiz=T, cex=1.9)
    if (!is.null(lcl.rt.chr))
@@ -1046,7 +1047,7 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
    xlab.text <- "Chromosome"
    cols <- c(red, blue, "black")
    #ylim <- getYlim(sprs$spr, unit)
-   ylim <- c(-0.8, 1)
+   ylim <- c(-0.7, 1.1)
     
    pdf(paste0(file.name, ".pdf"), height=size, width=size)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
@@ -1094,7 +1095,7 @@ plotRTS <- function(sprs, file.name, main.text, cs=NULL, digits, unit, ylab.text
 
 plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, ylab.text, cex, size=5) {
    cols <- c(red, blue, "black", "black")
-   ylim <- c(-0.8, 1)
+   ylim <- c(-0.7, 1.1)
    
    unit <- (max(means) - min(means))/15
    xlim <- c(min(means) - unit, max(means) + unit)
@@ -1210,6 +1211,7 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
       load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
   
       cors.all$COR[s] <- cor
+      #cors.all$COR[s] <- as.numeric(cors$cor[22])
    }
  
    q <- quantile(as.numeric(cors.all$COR))

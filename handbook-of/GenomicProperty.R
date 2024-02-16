@@ -84,7 +84,7 @@ plotDNS <- function(dns.f, file.name, main.text, ylab.text, ylim, legend, legend
 # Last Modified: 04/10/23
 # -----------------------------------------------------------------------------
 getDNS2 <- function(gel.del.nona, dist, phase) {
-	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), parent_of_origin == phase)$CHR))
+	  dns <- as.data.frame(table(subset(subset(gel.del.nona, Telo < dist), V21 == phase)$CHR))
 	  rownames(dns) <- dns$Var1
 	
 	  dns.chr <- toTable(0, 2, 22, c("CHR", "Freq"))

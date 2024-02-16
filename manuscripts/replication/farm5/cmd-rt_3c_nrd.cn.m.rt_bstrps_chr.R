@@ -49,5 +49,5 @@ load(file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.", COLUMN, "
    nrds.RT.BSTRPS.chr <- pipeBootstrap(nrds.RT.BSTRPS.chr, BSTRPS)
 
    nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[,c("POS", "NEG")]
-   save(nrds.RT.BSTRPS.chr, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.RT.", COLUMN, "_chr", CHR, ".RData")))
+   save(nrds.RT.BSTRPS.chr, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.", COLUMN, "_chr", CHR, ".RData")))
 #}

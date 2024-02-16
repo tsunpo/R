@@ -60,8 +60,8 @@ n0 <- length(samples0)
    
    ## Replication timing
    if (RATIO != "NA") {
-      nrds.T.chr.m <- nrds.T.chr.m[-which(nrds.T.chr.m$MEDIAN == 0),]      ## ADD 29/11/20
-      nrds.N.chr.m <- nrds.N.chr.m[-which(nrds.N.chr.m$MEDIAN == 0),]      ## ADD 29/11/20
+      nrds.T.chr.m <- nrds.T.chr.m[which(nrds.T.chr.m$MEDIAN != 0),]      ## ADD 29/11/20
+      nrds.N.chr.m <- nrds.N.chr.m[which(nrds.N.chr.m$MEDIAN != 0),]      ## ADD 29/11/20
     
       overlaps <- intersect(rownames(nrds.T.chr.m), rownames(nrds.N.chr.m))
       nrds.T.chr.m.o <- nrds.T.chr.m[overlaps,]
@@ -71,7 +71,7 @@ n0 <- length(samples0)
       rownames(nrds.chr) <- overlaps
       nrds.chr$T  <- nrds.T.chr.m.o$MEDIAN
       nrds.chr$N  <- nrds.N.chr.m.o$MEDIAN
-      nrds.chr$RT <- mapply(x = 1:nrow(nrds.chr), function(x) (nrds.chr[x,]$T / nrds.chr[x,]$N))
+      nrds.chr$RT <- nrds.chr$T / nrds.chr$N
 
       writeTable(outputRT(nrds.chr), gzfile(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.ratio_", chr, "_", PAIR1, "-", PAIR0, "_n", n1, "-", n0, ".txt.gz"))), colnames=T, rownames=F, sep="\t")
    }

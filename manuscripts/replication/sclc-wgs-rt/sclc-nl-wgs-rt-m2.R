@@ -22,9 +22,9 @@ load(file.path(wd.src.ref, "hg19.lcl.koren.woodfine.RData"))
 # Step 0: Set working directory
 # Last Modified: 30/01/18
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
+#wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "SCLC"
 PAIR1 <- "N"
 PAIR0 <- "N"
@@ -34,14 +34,14 @@ method <- "rpkm"
 wd.ngs   <- file.path(wd, BASE, "ngs/WGS")
 wd.anlys <- file.path(wd, BASE, "analysis")
 
-wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt-normal"))
+wd.rt       <- file.path(wd.anlys, "replication", paste0(base, "-nl-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 samples1 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.txt"), header=T, rownames=T, sep="")
-samples1 <- subset(samples1, M2 == 1)[,1]
+samples1 <- subset(samples1, M2 == 2)[,1]
 samples0 <- readTable(file.path(wd.ngs, "sclc_wgs_n92_NL.txt"), header=T, rownames=T, sep="")
-samples0 <- subset(samples0, M2 == 0)[,1]
+samples0 <- subset(samples0, M2 == 1)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
@@ -50,15 +50,16 @@ n0 <- length(samples0)
 # Last Modified: 09/08/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 nrds <- getLog2ScaledRT(wd.rt.data, base, method, PAIR1, PAIR0, n1, n0, chrs, bed.gc)
-save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-#load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
-# nrow(nrds)
+save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "m2-m1", ".RData")))
+#load(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "m2-m1", ".RData")))
+nrow(nrds)
 # [1] 2658679
+# [1] 2673826
 nrds.sclc.nl.m2 <- nrds
 
-load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1.RData"))
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1.RData"))
 nrds.lcl <- nrds
-load(file.path(wd.rt.data, paste0(base, "_", method, ".gc.cn.d.rt.log2s_", "m2-m1", ".RData")))
+load(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "m2-m1", ".RData")))
 
 ymax <- 0.6
 ymin <- 0.15

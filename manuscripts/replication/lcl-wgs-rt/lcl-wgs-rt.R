@@ -53,7 +53,7 @@ nrds <- getLog2ScaledRT(wd.rt.data, base, method, BASE1, BASE0, n1, n0, chrs, be
 save(nrds, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "s-g1", ".RData")))
 #load(file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.log2s_", "s-g1", ".RData")))
 # [1] 2684771 (All)
-# [1] 2654359 (M; RT != NA)
+# [1] 2654359 (M; RT != NA; cn.m.rt.log2s)
 # [1] 2582940 (D)
 # [1] 2582940 - 22
 nrds.lcl <- nrds
@@ -201,6 +201,50 @@ axis(side=1, at=seq(1, 22, by=2), labels=sprs.order$chr[seq(1, 22, by=2)], cex.a
 axis(side=1, at=seq(2, 22, by=2), labels=sprs.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
 legend("bottomright", legend=legends, col=cols, pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)
 dev.off()
+
+
+
+# -----------------------------------------------------------------------------
+# RD vs RT (RDS and SPR) -- OLD GC-corrected S and G1 and RT
+# Last Modified: 15/02/24; 11/07/19; 27/05/19
+# -----------------------------------------------------------------------------
+###
+## GC-corrected
+load("/Users/ty2/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data_gc/rd-vs-rt_lcl-s-g1_spline_spearman.RData")
+sprs.order <- sprs[order(abs(sprs$cor2), decreasing=T),]
+rownames(sprs.order) <- 1:22
+
+ylim <- c(-0.23, 0.95)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL-GC_COR_-1_3_simple_NEW"))
+main.text <- c("LCL read depth correlation (GC-corrected)", "")
+ylab.text <- "Correlation to RT"
+xlab.text <- "Chromosome"
+legends <- c("S phase", "G1 phase (Inverted)")
+cols <- c(red, blue)
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(sprs.order$cor1 ~ rownames(sprs.order), col=cols[1], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor1, lty=5, lwd=2.5, col=cols[1])
+
+points(sprs.order$cor2*-1 ~ rownames(sprs.order), col=cols[2], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor2 * -1, lty=5, lwd=2.5, col=cols[2])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.4, cex.axis=1.8)	
+axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=sprs.order$chr[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=sprs.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends[2:1], col=cols[2:1], pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # RD vs RT (RDS and SPR)

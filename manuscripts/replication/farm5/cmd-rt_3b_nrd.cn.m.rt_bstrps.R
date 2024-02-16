@@ -4,13 +4,13 @@ BASE   <- args[1]   ## Cancer type
 BSTRPS <- as.numeric(args[2])
 CV     <- args[3]
 COLUMN <- args[4]
-CHR    <- as.numeric(args[5])
+#CHR    <- as.numeric(args[4])
 base   <- tolower(BASE)
 method <- "rpkm"
 cv     <- tolower(CV)
 
 # =============================================================================
-# Name: cmd-rt_3c_nrd.gc.cn.d.rt.RT_bstrps_chr.R (commandline mode)
+# Name: cmd-rt_3c_nrd.gc.cn.d.rt.RT_bstrps.R (commandline mode)
 # Author: Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 20/09/19; 01/11/18
 # =============================================================================
@@ -27,27 +27,26 @@ load(file.path(wd.src.ref, "hg19.RData"))
 load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 
 # -----------------------------------------------------------------------------
-# Determine replication timing from bootstrapping data (in 2c and 2d)
+# Read in bootstrapped data (in 3a)
 # Last Modified: 01/11/18
 # -----------------------------------------------------------------------------
 wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## tyang2@cheops
-wd.anlys   <- file.path(wd, "analysis")
+wd.anlys   <- file.path(wd, BASE, "analysis")
 wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data/bstrps")
 if (CV != "NA")
    wd.rt.data <- file.path(wd.rt, "data", cv)
 
-load(file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.", COLUMN, ".BSTRPS.RData")))
-#for (c in 1:22) {
-   chr <- chrs[CHR]
-   bed.gc.chr <- subset(bed.gc, CHR == chr)
-   
-   overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds.RT.BSTRPS))
-   nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS[overlaps,]
-   rm(nrds.RT.BSTRPS)   ## ADD 01/11/18
-   
-   nrds.RT.BSTRPS.chr <- pipeBootstrap(nrds.RT.BSTRPS.chr, BSTRPS)
-
-   nrds.RT.BSTRPS.chr <- nrds.RT.BSTRPS.chr[,c("POS", "NEG")]
-   save(nrds.RT.BSTRPS.chr, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.RT.", COLUMN, "_chr", CHR, ".RData")))
-#}
+load(file.path(wd.rt.data, 1, paste0(base, "_", method, ".cn.m.rt.RData")))
+nrds.RT.BSTRPS <- getBSTRPS(nrds.RT, COLUMN, 1)
+for (b in 2:BSTRPS) {
+   load(file.path(wd.rt.data, b, paste0(base, "_", method, ".cn.m.rt.RData")))
+   nrds.RT.BSTRP <- getBSTRPS(nrds.RT, COLUMN, b)
+  
+   #overlaps <- intersect(rownames(nrds.RT.BSTRPS), rownames(nrds.RT.BSTRP))
+   #nrds.RT.BSTRPS <- cbind(nrds.RT.BSTRPS[overlaps,], nrds.RT.BSTRP[overlaps, -1])
+   nrds.RT.BSTRPS <- cbind(nrds.RT.BSTRPS, nrds.RT.BSTRP[, -1])
+   colnames(nrds.RT.BSTRPS)[1+b] <- colnames(nrds.RT.BSTRP)[2]
+}
+nrds.RT.BSTRPS <- nrds.RT.BSTRPS[,-1]
+save(nrds.RT.BSTRPS, file=file.path(wd.rt.data, paste0(base, "_", method, ".cn.m.rt.", COLUMN, ".BSTRPS.RData")))
