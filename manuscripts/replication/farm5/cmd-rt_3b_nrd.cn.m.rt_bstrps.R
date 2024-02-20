@@ -2,12 +2,12 @@
 args <- commandArgs(TRUE)
 BASE   <- args[1]   ## Cancer type
 BSTRPS <- as.numeric(args[2])
-CV     <- args[3]
-COLUMN <- args[4]
+#CV     <- args[3]
+COLUMN <- args[3]
 #CHR    <- as.numeric(args[4])
 base   <- tolower(BASE)
 method <- "rpkm"
-cv     <- tolower(CV)
+#cv     <- tolower(CV)
 
 # =============================================================================
 # Name: cmd-rt_3c_nrd.gc.cn.d.rt.RT_bstrps.R (commandline mode)
@@ -34,8 +34,8 @@ wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## tyang2@cheops
 wd.anlys   <- file.path(wd, BASE, "analysis")
 wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data/bstrps")
-if (CV != "NA")
-   wd.rt.data <- file.path(wd.rt, "data", cv)
+#if (CV != "NA")
+#   wd.rt.data <- file.path(wd.rt, "data", cv)
 
 load(file.path(wd.rt.data, 1, paste0(base, "_", method, ".cn.m.rt.RData")))
 nrds.RT.BSTRPS <- getBSTRPS(nrds.RT, COLUMN, 1)
@@ -43,9 +43,9 @@ for (b in 2:BSTRPS) {
    load(file.path(wd.rt.data, b, paste0(base, "_", method, ".cn.m.rt.RData")))
    nrds.RT.BSTRP <- getBSTRPS(nrds.RT, COLUMN, b)
   
-   #overlaps <- intersect(rownames(nrds.RT.BSTRPS), rownames(nrds.RT.BSTRP))
-   #nrds.RT.BSTRPS <- cbind(nrds.RT.BSTRPS[overlaps,], nrds.RT.BSTRP[overlaps, -1])
-   nrds.RT.BSTRPS <- cbind(nrds.RT.BSTRPS, nrds.RT.BSTRP[, -1])
+   overlaps <- intersect(rownames(nrds.RT.BSTRPS), rownames(nrds.RT.BSTRP))
+   nrds.RT.BSTRPS <- cbind(nrds.RT.BSTRPS[overlaps,], nrds.RT.BSTRP[overlaps, -1])
+   #nrds.RT.BSTRPS <- cbind(nrds.RT.BSTRPS, nrds.RT.BSTRP[, -1])
    colnames(nrds.RT.BSTRPS)[1+b] <- colnames(nrds.RT.BSTRP)[2]
 }
 nrds.RT.BSTRPS <- nrds.RT.BSTRPS[,-1]

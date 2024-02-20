@@ -32,7 +32,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## tyang2@cheops
 wd.anlys   <- file.path(wd, BASE, "analysis")
-wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
+wd.rt      <- file.path(wd.anlys, "replication", paste0(base, "-nl-wgs-rt"))
 wd.rt.data <- file.path(wd.rt, "data/bstrps")
 #if (CV != "NA")
 #   wd.rt.data <- file.path(wd.rt, "data", cv)
