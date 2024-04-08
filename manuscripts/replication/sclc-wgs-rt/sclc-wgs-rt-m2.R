@@ -47,6 +47,18 @@ samples0 <- subset(samples0, M2 == 1)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
+samples1.old <- readTable(file.path(wd.ngs, "backup", "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
+m2 <- rownames(subset(samples1, M2 == 2))
+m1 <- rownames(subset(samples1, M2 == 1))
+m2.old <- rownames(subset(samples1.old, M2 == 2))
+m1.old <- rownames(subset(samples1.old, M2 == 1))
+length(intersect(m2, m2.old))
+# [1] 47
+length(intersect(m1, m1.old))
+# [1] 48
+47 + 48
+# [1] 95
+
 # -----------------------------------------------------------------------------
 # Plot RD and RT (see ReplicationTiming.R)
 # Last Modified: 09/08/19; 14/02/19; 10/01/19; 31/08/18; 13/06/17

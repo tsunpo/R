@@ -33,7 +33,6 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## ty2@farm5
 #wd <- "/projects/cangen/tyang2"                ## tyang2@cheops
-#wd <- "/Users/ty2/Work/uni-koeln/tyang2"       ## ty2@local
 wd.ngs    <- file.path(wd, BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data") 
 
@@ -46,10 +45,9 @@ wd.rt.data <- file.path(wd.rt, "data")
 #n <- length(samples)
 
 ## LCL S/G1
-load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/rd-vs-rt_lcl-s-g1_spearman.RData"))
-sprs.order <- sprs[order(sprs$cor1, decreasing=T),]
-#sprs.order <- sprs[order(sprs$chr, decreasing=F),]
-
+load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/rd-vs-rt_lcl-s-g1_spline_spearman.RData"))
+sprs.order <- sprs[order(abs(sprs$cor1), decreasing=T),]
+rownames(sprs.order) <- 1:22
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1.RData"))
 nrds <- nrds[which(is.na(nrds$RT) == F),]   ## ADD 29/11/20
 
@@ -75,15 +73,18 @@ for (c in 1:nrow(sprs.order)) {
    colnames(nrds.T.chr.m.sample) <- c("BED", "T")
    #nrds.T.chr.d.sample$T <- log2(nrds.T.chr.d.sample$T + 0.01)
    nrds.T.chr.m.sample.T <- setSpline(nrds.T.chr.m.sample, bed.gc.chr, "T")
-
+   #nrds.T.chr.m.sample.T <- nrds.T.chr.m.sample
+   
    ## Replication timing
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]   ## Reference LCL S/G1 ratio
    nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #nrds.chr.RT <- nrds.chr
    
    ## Keep 1kb slopes based on overlapping windows
+   #overlaps <- intersect(nrds.T.chr.m.sample.T$BED, nrds.chr.RT$BED)
+   #cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.T.chr.m.sample.T[overlaps,]$SPLINE, method="spearman")
    overlaps <- intersect(nrds.T.chr.m.sample.T$BED, nrds.chr.RT$BED)
-   #cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$SPLINE, nrds.T.chr.m.sample.T[overlaps,]$SPLINE, method="spearman")[[4]]
-   cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$RT, nrds.T.chr.m.sample.T[overlaps,]$T, method="spearman")
+   cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$RT, nrds.T.chr.m.sample.T[overlaps,]$T, method="spearman")[[4]]
    
    ##
    if (is.null(nrds.T.chr.m.sample.T.all)) {
@@ -98,8 +99,7 @@ for (c in 1:nrow(sprs.order)) {
       nrds.chr.RT.all <- rbind(nrds.chr.RT.all, nrds.chr.RT[overlaps,])
    }
    
-   #cors$cor[c] <- getCor(nrds.chr.RT.all$SPLINE, nrds.T.chr.m.sample.T.all$SPLINE, method="spearman")[[4]]
-   cors$cor[c] <- getCor(nrds.chr.RT.all$RT, nrds.T.chr.m.sample.T.all$T, method="spearman")
+   cors$cor[c] <- getCor(nrds.chr.RT.all$RT, nrds.T.chr.m.sample.T.all$T, method="spearman")[[4]]
 }
-cor.all <- getCor(nrds.chr.RT.all$RT, nrds.T.chr.m.sample.T.all$T, method="spearman")
-save(cor.all, cors, file=file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spearman.RData")))
+cor <- getCor(nrds.chr.RT.all$RT, nrds.T.chr.m.sample.T.all$T, method="spearman")[[4]]
+save(cor, cors, file=file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spline_spearman.RData")))

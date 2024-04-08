@@ -9,10 +9,10 @@
 # 
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="topright", cols=c("dimgray", "black"), size=5, pch=1, cex=2, p=12, chr=2) {
-	  pdf(paste0(file.name, ".pdf"), height=size, width=5)
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomleft", cols=c("dimgray", "black"), size=5, pch=1, cex=2, p=12, chr=2) {
+	  pdf(paste0(file.name, ".pdf"), height=size, width=7)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, yaxt="n", main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
 	 
 	  lm.fit <- lm(y ~ x)
 	  abline(lm.fit, lwd=5, col=cols[2])
@@ -25,7 +25,7 @@ plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, po
 	  #par(xpd=T)
 	  #text(x[p], y[p], paste0("Chr", chr), col="black", pos=3, cex=2)
 	  #axis(side=2, at=100, labels=100, cex.axis=1.9)
-	  axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, "", 0, "", 0.4), cex.axis=1.9)
+	  #axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, "", 0, "", 0.4), cex.axis=1.9)
 	  dev.off()
 }
 

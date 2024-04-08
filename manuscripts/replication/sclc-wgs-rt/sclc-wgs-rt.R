@@ -51,14 +51,14 @@ n0 <- length(samples0)
 # Last Modified: 13/02/24; 05/06/19; 20/04/19; 06/03/19
 # -----------------------------------------------------------------------------
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spearman.RData")))
 # > min(cors.samples[,-c(1:4)])
 # [1] -0.8457817
 # > max(cors.samples[,-c(1:4)])
 # [1] 0.8088429
 
 #load(file.path(wd.rt.data, paste0("samples-vs-rt_sclc-vs-lcl_spline_spearman.RData")))
-file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spline_spearman")
+file.name <- file.path(wd.rt.plots, "SAMPLES-vs-RT_SCLC-vs-LCL_spearman")
 main.text <- c("SCLC read depth vs. RT", "")
 ymin <- -0.8773492
 ymax <- 0.8392611
@@ -203,10 +203,12 @@ nrow(nrds.d)
 # Overall correlation with LCL S/G1
 # Last Modified: 18/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.sclc <- setSamplesQ4(wd.rt.data, samples1)
+samples.sclc <- setSamplesM2(wd.rt.data, samples1)
 writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7438588 -0.6840244 -0.6474195 -0.5555826  0.6806205 
+#          0%         25%         50%         75%        100% 
+# -0.28196306 -0.05942197  0.05213843  0.18977098  0.38440731
 
 writeTable(subset(samples.sclc, Q4 %in% c(4,1)), file.path(wd.ngs, "sclc_wgs_q4_n51.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(subset(samples.sclc, Q4 %in% c(3,1)), file.path(wd.ngs, "sclc_wgs_q3_n51.txt"), colnames=T, rownames=F, sep="\t")

@@ -49,7 +49,7 @@ n1 <- length(samples1)
 # -----------------------------------------------------------------------------
 cors.samples <- getSAMPLEvsRT(wd.rt.data, samples1)
 colnames(cors.samples) <- toupper(gsub("-", "", colnames(cors.samples)))
-save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spline_spearman.RData")))
+save(cors.samples, file=file.path(wd.rt.data, paste0("samples-vs-rt_", base, "-vs-lcl_spearman.RData")))
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
@@ -70,24 +70,19 @@ for (c in 1:nrow(sprs.order)) {
 	  cors.all$SAMPLE_ID <- samples1
 	  for (s in 1:length(samples1)) {
 		    sample <- samples1[s]
-		    load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+		    load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
 		
 		    cors.all$COR[s] <- cors$cor[c]
 	  }
 	
-	  cor <- cor.test(facs$S, cors.all$COR, method="spearman", exact=F)
-	  insilico$S[c] <- cor[[4]]
-	
-	  cor <- cor.test(facs$G2, cors.all$COR, method="spearman", exact=F)
-	  insilico$G2[c] <- cor[[4]]
-	
-  	cor <- cor.test(facs$G1, cors.all$COR, method="spearman", exact=F)
-  	insilico$G1[c] <- cor[[4]]
+	  insilico$S[c]  <- cor.test(facs$S,  cors.all$COR, method="spearman", exact=F)[[4]]
+	  insilico$G2[c] <- cor.test(facs$G2, cors.all$COR, method="spearman", exact=F)[[4]]
+	  insilico$G1[c] <- cor.test(facs$G1, cors.all$COR, method="spearman", exact=F)[[4]]
 }
 
 ##
 ylim <- c(-0.4, 0.9)  #, dns.u$Freq)))
-file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red_FACS_22_3_3"))
+file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red_FACS_22_3_3_RAW_22"))
 #main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
 main.text <- c("NB-CL SCF correlation", "")
 ylab.text <- "Correlation to FACS cells"
@@ -109,7 +104,7 @@ lines(rownames(insilico), y=insilico$G1*-1, lty=5, lwd=2.5, col=cols[2])
 points(insilico$S ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
 lines(rownames(insilico), y=insilico$S, lty=5, lwd=2.5, col=cols[1])
 
-abline(v=7, lty=3, lwd=3, col=red)
+abline(v=22, lty=3, lwd=3, col=red)
 
 axis(side=2, at=seq(-0.4, 0.8, by=0.2), labels=c(-0.4, "", 0, "", 0.4, "", 0.8), cex.axis=1.8)	  
 axis(side=2, at=0.4, cex.axis=1.8)	
@@ -130,13 +125,13 @@ samples <- samples[order(samples$COR),]
 # Overall correlation with LCL S/G1
 # Last Modified: 15/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.nbl.cl <- setSamplesM2(wd.rt.data, samples1, c=7)
+samples.nbl.cl <- setSamplesM2(wd.rt.data, samples1, c=22)
 samples.nbl.cl <- samples.nbl.cl[order(samples.nbl.cl$COR),]
 samples.nbl.cl$SAMPLE_ID <- toupper(gsub("-", "", samples.nbl.cl$SAMPLE_ID))
 rownames(samples.nbl.cl) <- samples.nbl.cl$SAMPLE_ID
-writeTable(samples.nbl.cl, file.path(wd.ngs, "nb-cl_wgs_n8.txt"), colnames=T, rownames=F, sep="\t")
-#          0%         25%         50%         75%        100% 
-# -0.32832776 -0.23125788 -0.02602659  0.39228813  0.44813604
+writeTable(samples.nbl.cl, file.path(wd.ngs, "nb-cl_wgs_n8_raw_c=22.txt"), colnames=T, rownames=F, sep="\t")
+#         0%        25%        50%        75%       100% 
+# 0.05727529 0.07889518 0.18397910 0.22642838 0.26588293
 
 samples <- samples.nbl.cl[order(samples.nbl.cl$COR, decreasing=T),]
 
@@ -155,10 +150,10 @@ samples$SAMPLE_ID <- samples.nbl.cl$SAMPLE_ID
 rownames(samples) <- samples$SAMPLE_ID
 #adjustcolor.gray <- adjustcolor("black", alpha.f=0.75)
 
-pdf(file.path(wd.rt.plots, "boxplot_nb-cl_width=5_c=7_cex=3.3_5.5.pdf"), height=5.5, width=5)
+pdf(file.path(wd.rt.plots, "boxplot_nb-cl_width=5_c=7_cex=3.3_5.5_RAW_c=16.pdf"), height=5.5, width=5)
 par(mar=c(5.1, 4.6, 4.1, 1.5))
-ymax <- 0.6
-ymin <- 0.13
+ymax <- 0.275
+ymin <- 0.05
 main.text <- c(expression(bolditalic('In silico')~bold("SCF estimation")), "")
 boxplot(COR ~ CANCER, data=samples, outline=F, names=c(""), ylim=c(ymin, ymax), ylab="Correlation to RT", xlab="(n=8)", main=main.text, yaxt="n", col="white", boxwex=0.75, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 #abline(h=0, lty=5, lwd=2)
@@ -183,7 +178,7 @@ for (s in 1:nrow(samples)) {
    else if (sample$SAMPLE_ID == "SKNFI")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.3, -0.45), cex=1.8)
    else if (sample$SAMPLE_ID == "GIMEN")
-   	  text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.2), cex=1.8)
+   	  text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.2, -0.5), cex=1.8)
    else if (sample$SAMPLE_ID == "LS")
       text(sample$CANCER, sample$COR, sample$SAMPLE_ID, col="black", adj=c(1.6, 0.5), cex=1.8)
    else if (sample$SAMPLE_ID == "")
@@ -194,7 +189,8 @@ for (s in 1:nrow(samples)) {
 
 legend("topright", legend = c("M2", "M1"), pch=19, pt.cex=3.3, col=c(red, blue), cex=1.9)
 
-axis(side=2, at=seq(-0.2, 0.6, by=0.1), labels=c(-0.2, "", 0, "", 0.2, "", 0.4, "", 0.6), cex.axis=1.8)
+#axis(side=2, at=seq(-0.2, 0.6, by=0.1), labels=c(-0.2, "", 0, 0.1, 0.2, 0.3, 0.4, "", 0.6), cex.axis=1.8)
+axis(side=2, at=seq(0.05, 0.25, by=0.05), labels=c(0.05, "", 0.15, "", 0.25), cex.axis=1.8)
 #mtext("Spearman's rho", side=2, line=2.73, cex=1.8)
 #mtext("", cex=1.2, line=0.3)
 axis(side=1, at=1, labels="NB-CL", cex.axis=1.9)
@@ -206,6 +202,26 @@ dev.off()
 # 
 # Last Modified: 10/10/23
 # -----------------------------------------------------------------------------
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomleft", cols=c("dimgray", "black"), size=5, pch=1, cex=2, p=12, chr=2) {
+  	pdf(paste0(file.name, ".pdf"), height=size, width=6)
+	  par(mar=c(5.1, 4.7, 4.1, 1.4))
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	
+  	lm.fit <- lm(y ~ x)
+  	abline(lm.fit, lwd=5, col=cols[2])
+	
+	  cor <- cor.test(y, x, method="spearman", exact=F)
+	  legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=1, bty="n", cex=2)
+	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2)
+	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2)
+	
+  	#par(xpd=T)
+	  #text(x[p], y[p], paste0("Chr", chr), col="black", pos=3, cex=2)
+	  #axis(side=2, at=100, labels=100, cex.axis=1.9)
+	  #axis(side=2, at=seq(-0.4, 0.4, by=0.2), labels=c(-0.4, "", 0, "", 0.4), cex.axis=1.9)
+	  dev.off()
+}
+
 facs <- readTable(file.path(wd.ngs, "nbl_cl_n8_FACS.txt"), header=T, rownames=T, sep="")
 for (s in 1:nrow(facs)) {
 	  sum <- sum(facs[s, 2:4])
@@ -215,19 +231,19 @@ samples <- samples[order(samples$COR),]
 #samples <- samples[facs$SAMPLE_ID,]
 facs <- facs[samples$SAMPLE_ID,]
 
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-S_c=7_NEW"))
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-S_c=16_RAW"))
 main.text <- "S"
 xlab.text <- expression(italic('In vitro')~"FACS")
 ylab.text <- expression(italic('In silico')~"SCF")
 plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$S, y=samples$COR, pos="bottomright", cols=c(flowjo.red, red), size=4.5, pch=15, cex=3)
 
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G1_c=7_NEW"))
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G1_c=16_RAW"))
 main.text <- "G0/G1"
 xlab.text <- expression(italic('In vitro')~"FACS")
 ylab.text <- expression(italic('In silico')~"SCF")
 plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G1, y=samples$COR, pos="bottomleft", cols=c(flowjo.blue, blue), size=4.5, pch=15, cex=3)
 
-file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G2_c=7_NEW"))
+file.name <- file.path(wd.rt.plots, paste0("Cor_SCF-vs-G2_c=16_RAW"))
 main.text <- "G2/M"
 xlab.text <- expression(italic('In vitro')~"FACS")
 ylab.text <- expression(italic('In silico')~"SCF")
@@ -238,7 +254,7 @@ plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=facs$G2, y=samples
 # Last Modified: 10/10/23
 # -----------------------------------------------------------------------------
 ## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_RDC_16_G0_G1")
+file.name <- file.path(wd.rt.plots, "FACS_NBL-CL_RDC_16_G0_G1_RAW_c=16")
 main.text <- c(expression(bolditalic('In vitro')~bold("FACS validation")), "")
 xlab.text <- ""
 ylab.text <- "Fraction of cells"

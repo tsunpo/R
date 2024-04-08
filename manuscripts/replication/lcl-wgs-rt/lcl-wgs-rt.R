@@ -90,12 +90,15 @@ for (c in 1:22) {
 # Last Modified: 11/07/19; 27/05/19
 # -----------------------------------------------------------------------------
 sprs <- getSPR(nrds, bed.gc)
-save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
-writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.txt")), colnames=T, rownames=F, sep="\t")
+save(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spearman.RData")))
+writeTable(sprs, file=file.path(wd.rt.data, paste0("rd-vs-rt_", base, "-s-g1_spearman.txt")), colnames=T, rownames=F, sep="\t")
 #load(file.path("/Users/ty2/Work/uni-koeln/tyang2/LCL/analysis/replication/lcl-wgs-rt/data", paste0("rd-vs-rt_", base, "-s-g1_spline_spearman.RData")))
 sprs.lcl <- sprs
 #rts.lcl <- sprs
 #colnames(rts.lcl)[7] <- "rts"
+
+sprs.order <- sprs[order(abs(sprs$cor2), decreasing=T),]
+rownames(sprs.order) <- 1:22
 
 for (c in 1:22) {
    chr <- chrs[c]
@@ -113,15 +116,15 @@ for (c in 1:22) {
    file.name <- file.path(wd.rt.plots, "", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_Fig. 1_P_S+G1_0.01_NEW_spline0"))
    #plotSvsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
    #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
-   plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red.lighter, alpha.f=0.01), adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
+   #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red.lighter, alpha.f=0.01), adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
    #plotRD2vsRT(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE, nrds.chr$RT, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red, alpha.f=0.01), adjustcolor(blue, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
 
-   file.name <- file.path(wd.rt.plots, "", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_Fig. 1_P_S+G1_0.01_NEW_T+N-RT"))
+   file.name <- file.path(wd.rt.plots, "chrs_RD2_RAW", paste0("RD-vs-RT_LCL-S-G1_chr", c, "_S+G1_RAW"))
    plotRD2vsRT(nrds.chr.T$T, nrds.chr.N$N, nrds.chr.RT$RT, file.name, main.text, ylab.text, xlab.text, c(red, blue), c(adjustcolor(red.lighter, alpha.f=0.01), adjustcolor(blue.lighter, alpha.f=0.01)), c("S", "G1"), method="spearman", ylim=c(0.15, 0.6))
    
-   file.name <- file.path(wd.rt.plots, "", paste0("RD-vs-RT_GC-RT_chr", c, "_spline_spearman"))
-   overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds.chr.RT))
-   plotRDvsRT(bed.gc.chr[overlaps,]$GC, nrds.chr.RT[overlaps,]$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("GC", ""), method="spearman")
+   #file.name <- file.path(wd.rt.plots, "", paste0("RD-vs-RT_GC-RT_chr", c, "_spline_spearman"))
+   #overlaps <- intersect(rownames(bed.gc.chr), rownames(nrds.chr.RT))
+   #plotRDvsRT(bed.gc.chr[overlaps,]$GC, nrds.chr.RT[overlaps,]$SPLINE, file.name, main.text, ylab.text, xlab.text, c(red, adjustcolor(red.lighter, alpha.f=0.01)), c("GC", ""), method="spearman")
    
    
    ## SFigure 1
@@ -142,12 +145,12 @@ for (c in 1:22) {
 
 ###
 ##
-ylim <- c(-0.05, 0.95)
-file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_cex=2_-0.05"))
+ylim <- c(0.125, 0.675)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_cex=2_RAW"))
 main.text <- c("LCL read depth correlation", "")
 ylab.text <- "Correlation to RT"
 xlab.text <- "Chromosome"
-legends <- c("S vs. RT", "|G1 vs. RT|")
+legends <- c("S phase", "G1 phase (Inverted)")
 cols <- c(red, blue)
 
 pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
@@ -155,19 +158,61 @@ par(mar=c(5.1, 4.6, 4.1, 1.5))
 plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
 #abline(v=7, lty=3, lwd=3)
 
-points(abs(sprs.order$cor2) ~ rownames(sprs.order), col=cols[2], pch=19, cex=2)
-lines(rownames(sprs.order), y=abs(sprs.order$cor2), lty=5, lwd=2.5, col=cols[2])
+points(sprs.order$cor1 ~ rownames(sprs.order), col=cols[1], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor1, lty=5, lwd=2.5, col=cols[1])
 
-points(abs(sprs.order$cor1) ~ rownames(sprs.order), col=cols[1], pch=19, cex=2)
-lines(rownames(sprs.order), y=abs(sprs.order$cor1), lty=5, lwd=2.5, col=cols[1])
+points(sprs.order$cor2*-1 ~ rownames(sprs.order), col=cols[2], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor2 * -1, lty=5, lwd=2.5, col=cols[2])
 
-axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
-axis(side=2, at=0.4, cex.axis=1.8)	
-axis(side=2, at=0.8, cex.axis=1.8)	
-axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
-axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
-legend("bottomleft", legend=legends, col=cols, lty=5, lwd=3, pt.cex=2, cex=1.9)
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, 0.2, 0.4, 0.6, 0.8, ""), cex.axis=1.8)	  
+#axis(side=2, at=0.4, cex.axis=1.8)	
+#axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=sprs.order$chr[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=sprs.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomleft", legend=legends, col=cols, pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)
 dev.off()
+
+###
+##
+ylim <- c(-0.2, 0.675)
+file.name <- file.path(wd.rt.plots, paste0("DNS_LCL_COR_cex=2_RAW_GC"))
+main.text <- c("LCL read depth correlation", "")
+ylab.text <- "Correlation to RT"
+xlab.text <- "Chromosome"
+legends <- c("S phase", "G1 phase (Inverted)", "GC content")
+cols <- c(red, blue, "black")
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, yaxt="n", xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+#abline(v=7, lty=3, lwd=3)
+
+points(sprs.order$cor1 ~ rownames(sprs.order), col=cols[1], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor1, lty=5, lwd=2.5, col=cols[1])
+
+points(sprs.order$cor2*-1 ~ rownames(sprs.order), col=cols[2], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor2 * -1, lty=5, lwd=2.5, col=cols[2])
+
+points(sprs.order$cor_gc_rt ~ rownames(sprs.order), col=cols[3], pch=19, cex=2.5)
+lines(rownames(sprs.order), y=sprs.order$cor_gc_rt, lty=5, lwd=2.5, col=cols[3])
+
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, 0.2, 0.4, 0.6, 0.8, ""), cex.axis=1.8)	  
+#axis(side=2, at=0.4, cex.axis=1.8)	
+#axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=1, at=seq(1, 22, by=2), labels=sprs.order$chr[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=sprs.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomleft", legend=legends, col=cols, pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+
+
+
+
+
+
+
+
+
 
 ###
 ## GC-corrected
@@ -194,9 +239,8 @@ lines(rownames(sprs.order), y=sprs.order$cor1, lty=5, lwd=2.5, col=cols[1])
 points(sprs.order$cor2*-1 ~ rownames(sprs.order), col=cols[2], pch=19, cex=2.5)
 lines(rownames(sprs.order), y=sprs.order$cor2 * -1, lty=5, lwd=2.5, col=cols[2])
 
-axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, "", 0.4, "", 0.8, ""), cex.axis=1.8)	  
-axis(side=2, at=0.4, cex.axis=1.8)	
-axis(side=2, at=0.8, cex.axis=1.8)	
+axis(side=2, at=seq(-0.2, 1, by=0.2), labels=c("", 0, 0.2, 0.4, 0.6, 0.8, ""), cex.axis=1.8)	  
+axis(side=2, at=0.6, cex.axis=1.8)	
 axis(side=1, at=seq(1, 22, by=2), labels=sprs.order$chr[seq(1, 22, by=2)], cex.axis=1.8)
 axis(side=1, at=seq(2, 22, by=2), labels=sprs.order$chr[seq(2, 22, by=2)], cex.axis=1.8)
 legend("bottomright", legend=legends, col=cols, pch=19, lty=5, lwd=3, pt.cex=3, cex=1.9)

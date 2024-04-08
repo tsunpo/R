@@ -511,7 +511,7 @@ getCor <- function(reads, timings, method) {
    if (method == "pearson") {
       return(cor.test(reads, timings, method="pearson")$estimate)
    } else if (method == "spearman") {
-      return(cor.test(reads, timings, method="spearman", exact=F))
+      return(cor.test(reads, timings, method="spearman", exact=F)[[4]][[1]])
    } else if (method == "linear") {
       lm.fit <- lm(reads ~ timings)
       return(summary(lm.fit)$r.squared)
@@ -593,6 +593,7 @@ plotSvsRT <- function(reads1, reads2=NA, timings, file.name, main.text, ylab.tex
 
 plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text, xlab.text, cols, cols2, legends, method, ylim=NULL) {
 	  xlim <- c(min(timings), max(timings))
+	  xlim <- c(-2, 2)
 	  if (is.null(ylim))
 	     ylim <- c(min(c(reads1, reads2)), max(c(reads1, reads2)))
    cor <- "rho"
@@ -601,7 +602,7 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    #png(paste0(file.name, ".png"), height=6, width=6, units="in", res=300)
    jpeg(paste0(file.name, ".jpg"), height=6, width=6, units="in", res=300)
    par(mar=c(5.1, 4.6, 4.1, 1.5))
-   plot(reads2 ~ timings, ylab=ylab.text, xlab=xlab.text, xlim=xlim, ylim=ylim, main=main.text, xaxt="n", yaxt="n", col=cols2[2], cex.axis=1.8, cex.lab=1.9, cex.main=2)
+   plot(reads2 ~ timings, ylab=ylab.text, xlab=xlab.text, xlim=xlim, ylim=ylim, main=main.text, col=cols2[2], cex.axis=1.8, cex.lab=1.9, cex.main=2)
    points(timings, reads1, col=cols2[1])
    abline(v=0, lty=3, lwd=3)
    
@@ -617,9 +618,9 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    
    RT <- paste0(legends[1], "/", legends[2])   # "RT"
    RT <- "RT"
-   if (cor1[[4]] < 0 && cor2[[4]] < 0) {
-      legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1[[4]], digits=2), ")"), paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")")), text.col=colours, text.font=2, bty="n", cex=1.9)
-   } else if (as.numeric(cor1[[4]]) > 0 && as.numeric(cor2[[4]]) < 0) {
+   if (cor1 < 0 && cor2 < 0) {
+      legend("bottomright", c(paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")")), text.col=colours, text.font=2, bty="n", cex=1.9)
+   } else if (as.numeric(cor1) > 0 && as.numeric(cor2) < 0) {
    	  #legend("topright", paste0("rho = ", round0(cor1[[4]], digits=2)), text.col=c(cols[1], "white"), text.font=1, bty="n", cex=1.9)
    	  #legend("topright", c("", expression(italic('P')~"                   ")), text.col=cols[1], text.font=1, bty="n", cex=1.9)
    	  #legend("topright", c("", paste0("   = ", scientific(cor1[[3]]))), text.col=cols[1], text.font=1, bty="n", cex=1.9)
@@ -629,19 +630,19 @@ plotRD2vsRT <- function(reads1, reads2, timings, file.name, main.text, ylab.text
    	  #legend("bottomright", c("", paste0("   = ", scientific(cor2[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=1.9)
    	  
    	  #legend("topright", c(paste0(legends[1], " vs. ", RT), paste0(cor, " = ", round0(cor1[[4]], digits=2)), "                    "), text.col=cols[1], text.font=1, bty="n", cex=1.9)        
-   	  legend("topright", c(paste0(legends[1], " phase"), paste0(cor, " = ", round0(cor1[[4]], digits=2)), "                   "), text.col=cols[1], text.font=1, bty="n", cex=1.9)        
+   	  legend("topright", c(paste0(legends[1], " phase"), paste0(cor, " = ", round0(cor1, digits=2)), "                   "), text.col=cols[1], text.font=1, bty="n", cex=1.9)        
    	  legend("topright", c("", "", expression(italic('P')~"< 2.2E-16")), text.col=cols[1], text.font=1, bty="n", cex=1.9)
    	
    	  #legend("bottomright", c(paste0(legends[2], " vs. ", RT), paste0(cor, " = ", round0(cor2[[4]], digits=2)), "                    "), text.col=cols[2], text.font=1, bty="n", cex=1.9)
-   	  legend("bottomright", c(paste0(legends[2], " phase"), paste0(cor, " = ", round0(cor2[[4]], digits=2)), "                   "), text.col=cols[2], text.font=1, bty="n", cex=1.9)
+   	  legend("bottomright", c(paste0(legends[2], " phase"), paste0(cor, " = ", round0(cor2, digits=2)), "                   "), text.col=cols[2], text.font=1, bty="n", cex=1.9)
    	  legend("bottomright", c("", "", expression(italic('P')~"< 2.2E-16")), text.col=cols[2], text.font=1, bty="n", cex=1.9)
    	  
    	  #legend("topright", paste0(legends[1], " vs. ", RT, " (", cor, " = ", round0(cor1, digits=2), ")"), text.col=colours[1], text.font=2, bty="n", cex=1.9)        
    	  #legend("bottomright", paste0(legends[2], " vs. ", RT, " (", cor, " = ", round0(cor2, digits=2), ")"), text.col=colours[2], text.font=2, bty="n", cex=1.9)
    }
    
-   axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, "", -2, "", -1, "", 0, "", 1, "", 2, "", 3), cex.axis=1.8)
-   axis(side=2, at=seq(0.2, 0.6, by=0.1), labels=c(0.2, "", 0.4, "", 0.6), cex.axis=1.8)
+   #axis(side=1, at=seq(-3, 3, by=0.5), labels=c(-3, "", -2, "", -1, "", 0, "", 1, "", 2, "", 3), cex.axis=1.8)
+   #axis(side=2, at=seq(0.2, 0.6, by=0.1), labels=c(0.2, "", 0.4, "", 0.6), cex.axis=1.8)
    mtext(main.text[2], line=0.3, cex=1.9)
    dev.off()
 }
@@ -892,7 +893,7 @@ getSAMPLEvsRT <- function(wd.rt.data, samples1) {
    cors.samples$chr <- 1:22
    for (s in 1:length(samples1)) {
       sample <- samples1[s]
-      load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+      load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
   
       cors.samples[, sample] <- cors$cor
    }
@@ -964,7 +965,7 @@ getGCSPR <- function(nrds, bed.gc) {
 # Last Modified: 06/10/19
 # -----------------------------------------------------------------------------
 getSPR <- function(nrds, bed.gc) {
-   sprs <- toTable(0, 9, 22, c("chr", "cor", "cor1", "cor2", "cor_gc_rt", "cor_gc_rt_spline", "e", "l", "spr"))
+   sprs <- toTable(0, 10, 22, c("chr", "cor", "cor1", "cor2", "cor3", "cor_gc_rt", "cor_gc_rt_spline", "e", "l", "spr"))
    sprs$chr <- 1:22
    
    for (c in 1:22) {
@@ -976,12 +977,12 @@ getSPR <- function(nrds, bed.gc) {
       nrds.chr.N  <- setSpline0(nrds.chr, bed.gc.chr, "N")
       nrds.chr.RT <- setSpline0(nrds.chr, bed.gc.chr, "RT")
   
-      sprs$cor[c]  <- getCor(nrds.chr.T$SPLINE, nrds.chr.N$SPLINE,  method="spearman")[[4]]
-      sprs$cor1[c] <- getCor(nrds.chr.T$SPLINE, nrds.chr.RT$SPLINE, method="spearman")[[4]]
-      sprs$cor2[c] <- getCor(nrds.chr.N$SPLINE, nrds.chr.RT$SPLINE, method="spearman")[[4]]
+      sprs$cor[c]  <- getCor(nrds.chr.T$T, nrds.chr.N$N,  method="spearman")
+      sprs$cor1[c] <- getCor(nrds.chr.T$T, nrds.chr.RT$RT, method="spearman")
+      sprs$cor2[c] <- getCor(nrds.chr.N$N, nrds.chr.RT$RT, method="spearman")
   
-      sprs$cor_gc_rt[c]        <- getCor(bed.gc.chr[overlaps,]$GC, nrds.chr.RT$RT, method="spearman")[[4]]
-      sprs$cor_gc_rt_spline[c] <- getCor(bed.gc.chr[overlaps,]$GC, nrds.chr.RT$SPLINE, method="spearman")[[4]]
+      sprs$cor_gc_rt[c]        <- getCor(bed.gc.chr[overlaps,]$GC, nrds.chr.RT$RT, method="spearman")
+      sprs$cor_gc_rt_spline[c] <- getCor(bed.gc.chr[overlaps,]$GC, nrds.chr.RT$SPLINE, method="spearman")
       
       e <- nrow(subset(nrds.chr.RT, SPLINE > 0))
       l <- nrow(subset(nrds.chr.RT, SPLINE < 0))
@@ -1167,13 +1168,13 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
 # Find S-like and G1-like tumour samples
 # Last Modified: 04/06/19
 # -----------------------------------------------------------------------------
-setSamplesM2 <- function(wd.rt.data, samples1, c=7) {
+setSamplesM2 <- function(wd.rt.data, samples1, c=22) {
 	  cors.all <- toTable(0, 4, length(samples1), c("SAMPLE_ID", "COR", "Q4", "M2"))
 	  rownames(cors.all) <- samples1
 	  cors.all$SAMPLE_ID <- samples1
 	  for (s in 1:length(samples1)) {
 		    sample <- samples1[s]
-		    load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+		    load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
 		
 		    cors.all$COR[s] <- cors$cor[c]
 	  }
@@ -1208,7 +1209,7 @@ setSamplesQ4 <- function(wd.rt.data, samples1) {
    cors.all$SAMPLE_ID <- samples1
    for (s in 1:length(samples1)) {
       sample <- samples1[s]
-      load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData")))
+      load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
   
       cors.all$COR[s] <- cor
       #cors.all$COR[s] <- as.numeric(cors$cor[22])
