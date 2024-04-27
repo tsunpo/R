@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 19/02/22
 # =============================================================================
-#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
-#wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+#wd.src <- "/projects/cangen/tyang2/dev/R"   ## tyang2@cheops
+#wd.src <- "/ngs/cangen/tyang2/dev/R"        ## tyang2@gauss
+wd.src <- "/Users/ty2/Work/dev/R"            ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "Survival.R", "Transcription.R", "survminer/ggforest.R")
@@ -34,7 +34,7 @@ wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
 #wd.rt.plots <- file.path(wd.rt, "plots", "PanImmune_2024")
-wd.rt.plots <- file.path(wd.rt, "plots", "SCP")
+wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
 # 
@@ -145,7 +145,7 @@ save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data
 # Last Modified: 06/02/24 (re-run); 21/04/19
 # -----------------------------------------------------------------------------
 hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
-totals.hist <- subset(totals, histology_abbreviation %in% hists)
+totals.hist <- subset(samples, histology_abbreviation %in% hists)
 
 icgc <- toTable(0, 2, length(hists), c("MEDIAN", "N"))
 rownames(icgc) <- hists
@@ -155,43 +155,54 @@ for (h in 1:length(hists)) {
 	
 	  sum <- c()
 	  for (s in 1:nrow(samples.hist)) {
-		    sample <- samples.hist$specimen_id[s]
-		    load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+		    sample <- samples.hist$icgc_specimen_id[s]
+		    load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
 		
 		    #sum <- c(sum, as.numeric(cor))
-		    sum <- c(sum, as.numeric(cors$cor[22]))
+		    sum <- c(sum, as.numeric(cors$cor[13]))
 	  }
 	  icgc$MEDIAN[h] <- median(sum)
 }
 icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
-writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
+writeTable(icgc, "/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20_cor13_samples.txt", colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
-# samples
-# Last Modified: 06/02/24 (re-run)
+# Stripchart (black; Resting to proliferating)
+# Last Modified: 08/02/24; 22/11/22; 22/08/22; 18/08/22; 27/07/22; 21/04/19
 # -----------------------------------------------------------------------------
-samples$COR <- NA
-samples$Q4  <- NA
-samples$M2  <- NA
-samples$SORTING <- NA
-for (s in 1:nrow(samples)) {
-		 sample <- rownames(samples)[s]
-		 load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
-		
-		 #samples$COR[s] <- as.numeric(cor)
-		 samples$COR[s] <- as.numeric(cors$cor[22])
+samples.h1 <- toTable(0, 2, 0, c("CANCER", "COR"))
+labels1 <- c()
+idx.cancer <- 0
+for (h in 26:1) {
+	  q4 <- subset(samples, histology_abbreviation == rownames(icgc)[h])
+	  q4$CANCER <- idx.cancer
+	  samples.h1 <- rbind(samples.h1, q4)
+	  labels1 <- c(labels1, rownames(icgc)[h])
+	  idx.cancer <- idx.cancer + 1
 }
 
-samples.mut$COR <- NA
-samples.mut$Q4  <- NA
-samples.mut$M2  <- NA
-for (s in 1:nrow(samples.mut)) {
-	  sample <- rownames(samples.mut)[s]
-	  load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
-	
-	  #samples.mut$COR[s] <- as.numeric(cor)
-	  samples.mut$COR[s] <- as.numeric(cors$cor[22])
-}
+###
+##
+file.name <- "stripchart_ICGC_SCP_n=2612_cor13"
+main.text <- c(expression(bolditalic('In silico')~bold("sorting of PCAWG primary tumours (n=2,612)")), "")
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
+
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.55, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.9, cex.lab=2, cex.main=2.2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
+stripchart(COR ~ CANCER, data=samples.h1, method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:26))
+text(labels=labels1[1:26],   x=1:26,   y=par("usr")[3] - 0.05, srt=45, adj=0.965, xpd=NA, cex=2)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.9)
+mtext("SCF index", side=2, line=3.5, cex=2)
+#legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
+dev.off()
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # PanImmune
@@ -225,8 +236,11 @@ length(overlaps.2)
 immunes.tcga <- cbind(immunes[overlaps.2,], mappings.tcga.wgs[overlaps.2,])
 rownames(immunes.tcga) <- immunes.tcga$icgc_specimen_id
 
-#overlaps.3 <- intersect(rownames(samples.h), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
-#samples.mut.tcga <- cbind(samples.h[overlaps.3,], immunes.tcga[overlaps.3,])
+##
+load(file=file.path(wd.driver.data, "icgc_wgs_samples_n2542.RData"))
+
+#overlaps.3 <- intersect(rownames(samples), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
+#samples.mut.tcga <- cbind(samples[overlaps.3,], immunes.tcga[overlaps.3,])
 #nrow(samples.mut.tcga)
 # [1] 736
 
@@ -234,6 +248,96 @@ overlaps.3 <- intersect(rownames(samples.mut), rownames(immunes.tcga))   ## n=25
 samples.mut.tcga <- cbind(samples.mut[overlaps.3,], immunes.tcga[overlaps.3,])
 nrow(samples.mut.tcga)
 # [1] 710
+
+# -----------------------------------------------------------------------------
+# Using PanImmune (Global) to find chrs
+# Last Modified: 27/04/24
+# -----------------------------------------------------------------------------
+insilico <- toTable(0, 4, 22, c("CHR", "Proliferation", "Wound.Healing", "Th17.Cells"))
+insilico$CHR <- sprs.order$chr
+
+for (chr in 1:nrow(sprs.order)) {
+	  for (c in c(22:23,45)) {
+		    col <- colnames(samples.mut.tcga)[c]
+		
+		    samples.mut.tcga.col <- samples.mut.tcga[!is.na(samples.mut.tcga[, c]),]
+		    x=samples.mut.tcga.col[, c]
+		    
+		    for (s in 1:nrow(samples.mut.tcga.col)) {
+		    	  sample <- rownames(samples.mut.tcga.col)[s]
+		    	  load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
+		    	
+		    	  samples.mut.tcga.col$COR[s] <- cors$cor[chr]
+		    }
+		    y=samples.mut.tcga.col$COR
+		    
+		    cor <- cor.test(y, x, method="spearman", exact=F)
+		    if (c == 45)
+		    	  insilico[chr, 4] <- cor[[4]]
+		    else
+		       insilico[chr, c-20] <- cor[[4]]
+	  }
+}
+
+##
+ylim <- c(0.1, 0.35)  #, dns.u$Freq)))
+file.name <- file.path(wd.rt.plots, paste0("DNS_ICGC_COR_Proliferation+Th17.Cells_n=710_lwd=4"))
+#main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
+main.text <- c("PCAWG SCF correlation", "")
+ylab.text <- "Correlation to PanImmune"
+xlab.text <- "Chromosome"
+legends <- c("Proliferation", "Wound Healing", "Th17 Cells (Inverted)")
+#cols <- c(red, blue, "dimgray")
+cols <- c("gray", "dimgray", "black")
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+
+points(insilico$Proliferation ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Proliferation, lty=5, lwd=2.5, col=cols[1])
+
+points(insilico$Wound.Healing ~ rownames(insilico), col=cols[2], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Wound.Healing, lty=5, lwd=2.5, col=cols[2])
+
+points(insilico$Th17.Cells*-1 ~ rownames(insilico), col=cols[3], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Th17.Cells*-1, lty=5, lwd=2.5, col=cols[3])
+
+abline(v=13, lty=3, lwd=4, col=red)
+
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends[3:1], col=cols[3:1], pch=15, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# samples
+# Last Modified: 27/04/24 (re-run)
+# -----------------------------------------------------------------------------
+samples$COR <- NA
+samples$Q4  <- NA
+samples$M2  <- NA
+samples$SORTING <- NA
+for (s in 1:nrow(samples)) {
+	  sample <- rownames(samples)[s]
+	  load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
+	
+	  #samples$COR[s] <- as.numeric(cor)
+	  samples$COR[s] <- as.numeric(cors$cor[13])
+}
+
+samples.mut$COR <- NA
+samples.mut$Q4  <- NA
+samples.mut$M2  <- NA
+for (s in 1:nrow(samples.mut)) {
+	  sample <- rownames(samples.mut)[s]
+	  load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
+	
+	  #samples.mut$COR[s] <- as.numeric(cor)
+	  samples.mut$COR[s] <- as.numeric(cors$cor[13])
+}
+
+save(icgc, samples, samples.mut, samples.mut.tcga, file=file.path(wd.driver.data, "icgc_wgs_samples_n2542_re-run_cor13_n710.RData"))
 
 # -----------------------------------------------------------------------------
 # PanImmune (Global)
@@ -255,19 +359,26 @@ for (c in 18:77) {
 	  test$rho[c-17] <- cor[[4]]
 	  test$P[c-17]   <- cor[[3]]
 	
-  	file.name <- file.path(wd.rt.plots, "cors-cor22", paste0("Cor_SCF-vs-", col))
+  	file.name <- file.path(wd.rt.plots, "PanImmune_n=2542", paste0("Cor_SCF-vs-", col, ""))
 	  main.text <- c("", "")
 	  xlab.text <- col2
 	  ylab.text <- "SCF index"
-	  plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=x, y=y, pos="topright", cols=c("dimgray", "black"), size=5)
+	  plotCorrelation(file.name, main.text, xlab.text, ylab.text, x=x, y=y, pos="topright", cols=c("darkgray", "black"), size=5)
 }
 test <- test[order(test$rho, decreasing=T),]
 test$Q <- qvalue(test$P)$qvalue
-writeTable(test, file.path(wd.rt.plots, "Cor_SCF-vs-PanImmune_n=2542_cors-cor22.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(test, file.path(wd.rt.plots, "Cor_SCF-vs-PanImmune_n=2542_cor13.txt"), colnames=T, rownames=F, sep="\t")
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Overall correlation with LCL S/G1
-# Last Modified: 07/02/24 (re-run); 20/11/23
+# Last Modified: 27/04/24 (re-run); 20/11/23
 # -----------------------------------------------------------------------------
 cols <- colnames(samples.mut.tcga)[22:23]
 insilico <- toTable(0, 3, 22, c("CHR", cols))
@@ -321,6 +432,10 @@ axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axi
 legend("bottomright", legend=legends, col=cols, pch=15, lty=5, lwd=3, pt.cex=3, cex=1.9)
 dev.off()
 
+
+
+
+
 # -----------------------------------------------------------------------------
 # samples
 # Last Modified: 06/02/24 (re-run); 21/04/19
@@ -337,14 +452,14 @@ for (h in 1:length(hists)) {
    sum <- c()
    for (s in 1:nrow(samples.hist)) {
       sample <- samples.hist$specimen_id[s]
-      load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
       
-      sum <- c(sum, as.numeric(cors$cor[22]))
+      sum <- c(sum, as.numeric(cors$cor[13]))
    }
    icgc$MEDIAN[h] <- median(sum)
 }
 icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
-writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20.txt", colnames=T, rownames=T, sep="\t")
+writeTable(icgc, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20_cor13.txt", colnames=T, rownames=T, sep="\t")
 
 ###
 ##
@@ -354,11 +469,11 @@ idx.cor    <- 0
 idx.sample <- 0
 for (h in 1:nrow(icgc)) {
    samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-   q4 <- setSamplesQ4(wd.rt.data, samples.hist$specimen_id)
+   q4 <- setSamplesM2(wd.rt.data, samples.hist$specimen_id)
    
    for (s in 1:nrow(samples.hist)) {
       sample <- samples.hist$specimen_id[s]
-      load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spline_spearman.RData"))
+      load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
   
       samples$COR[idx.sample + s] <- as.numeric(cors$cor[22])
       samples$icgc_specimen_id[idx.sample + s] <- sample
@@ -382,7 +497,7 @@ samples.tmp <- samples.mut
 samples.mut <- samples[intersect(rownames(samples), rownames(samples.mut)),]
 samples.mut$tumor_wgs_aliquot_id <- samples.tmp[rownames(samples.mut),]$tumor_wgs_aliquot_id
 
-save(icgc, samples, samples.v, samples.mut, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor-22.RData"))
+save(icgc, samples, samples.v, samples.mut, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor13.RData"))
 
 # -----------------------------------------------------------------------------
 # Stripchart (black; Resting to proliferating)
@@ -417,7 +532,7 @@ mtext("SCF index", side=2, line=3.5, cex=1.9)
 legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
 dev.off()
 
-save(icgc, samples, samples.v, samples.mut, samples.h1, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor-22.RData"))
+save(icgc, samples, samples.v, samples.mut, samples.h1, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor13.RData"))
 
 
 

@@ -82,7 +82,7 @@ for (c in 1:nrow(sprs.order)) {
 
 ##
 ylim <- c(-0.4, 0.9)  #, dns.u$Freq)))
-file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red_FACS_22_3_3_RAW_22"))
+file.name <- file.path(wd.rt.plots, paste0("DNS_NB-CL_COR_-1_7_flowjo_2.5_red_FACS_22_3_3_RAW_lwd=4"))
 #main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
 main.text <- c("NB-CL SCF correlation", "")
 ylab.text <- "Correlation to FACS cells"
@@ -104,7 +104,7 @@ lines(rownames(insilico), y=insilico$G1*-1, lty=5, lwd=2.5, col=cols[2])
 points(insilico$S ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
 lines(rownames(insilico), y=insilico$S, lty=5, lwd=2.5, col=cols[1])
 
-abline(v=22, lty=3, lwd=3, col=red)
+abline(v=16, lty=3, lwd=4, col=red)
 
 axis(side=2, at=seq(-0.4, 0.8, by=0.2), labels=c(-0.4, "", 0, "", 0.4, "", 0.8), cex.axis=1.8)	  
 axis(side=2, at=0.4, cex.axis=1.8)	

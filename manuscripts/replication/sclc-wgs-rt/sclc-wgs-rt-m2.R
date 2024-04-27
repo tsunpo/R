@@ -47,6 +47,7 @@ samples0 <- subset(samples0, M2 == 1)[,1]
 n1 <- length(samples1)
 n0 <- length(samples0)
 
+##
 samples1.old <- readTable(file.path(wd.ngs, "backup", "sclc_wgs_n101.txt"), header=T, rownames=T, sep="")
 m2 <- rownames(subset(samples1, M2 == 2))
 m1 <- rownames(subset(samples1, M2 == 1))
@@ -161,18 +162,18 @@ for (c in 1:22) {
 }
 
 ## Replication timing skew (RTS)
-file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_NEW")
+file.name <- file.path(wd.rt.plots, "RTS_SCLC-M2-M1_spline_spearman_NEW_no-chr17")
 main.text <- c("SCLC M2/M1 RTS", "")
 ylab.text <- "RTS"
-plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 17, 19), digits=3, unit=5, ylab.text, cex=2, size=6, isRef=F)
+plotRTS(sprs.sclc, file.name, main.text, c(4, 13, 19), digits=3, unit=5, ylab.text, cex=2, size=6, isRef=F)
 
 ### Figure 4D
 ## SCLC vs. LCL
-file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman_NEW")
+file.name <- file.path(wd.rt.plots, "RTS2_SCLC-M2-M1_vs_LCL_spline_spearman_NEW_no-chr17")
 main.text <- c("Replication timing skew (RTS)", "")
 xlab.text <- "LCL S/G1 RTS"
 ylab.text <- "SCLC M2/M1 RTS"
-plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 17, 19), xlab.text, unit=5, ylab.text, cex=2, size=6)
+plotRTS2(sprs.sclc$spr, sprs.lcl$spr, file.name, main.text, c(4, 13, 19), xlab.text, unit=5, ylab.text, cex=2, size=6)
 
 
 

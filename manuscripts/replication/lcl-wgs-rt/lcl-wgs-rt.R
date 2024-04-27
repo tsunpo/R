@@ -97,7 +97,7 @@ sprs.lcl <- sprs
 #rts.lcl <- sprs
 #colnames(rts.lcl)[7] <- "rts"
 
-sprs.order <- sprs[order(abs(sprs$cor2), decreasing=T),]
+sprs.order <- sprs[order(abs(sprs$cor1), decreasing=T),]
 rownames(sprs.order) <- 1:22
 
 for (c in 1:22) {

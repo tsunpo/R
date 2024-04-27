@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(TRUE)
-BASE   <- args[1]   ## Cancer type
-SAMPLE <- args[2]   ## Sample ID
-SAMPLE2 <- args[3]   ## Sample ID
+BASE   <- args[1]   ## BLCA-US
+SAMPLE <- args[2]   ## SSP1003
+SAMPLE2 <- args[3]   ## 2b142863-b963-4cc9-8f8f-c72503c93390
 PAIR   <- args[4]   ## T(umour) or N(ormal) pair
 CN     <- as.logical(args[5])   ## T(rue) or F(alse) to correct CN
 METHOD <- args[6]
@@ -15,6 +15,7 @@ method <- tolower(METHOD)
 # Last Modified: 04/12/23; 11/06/17
 # =============================================================================
 wd.src <- "/projects/cangen/tyang2/dev/R"         ## tyang2@cheops
+wd.src <- "/nfs/users/nfs_t/ty2/dev/R"            ## ty2@farm5
 #wd.src <- "/re/home/tyang2/dev/R"                ## tyang2@gauss
 #wd.src <- "/Users/tpyang/Work/dev/R"             ## tpyang@localhost
 
@@ -31,6 +32,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.icgc.RData"))
 # Last Modified: 02/08/19; 01/05/17
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd <- "/lustre/scratch127/casm/team294rr/ty2"     ## ty2@farm5
 wd.ngs <- file.path(wd, "ICGC", BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data")
 
@@ -42,7 +44,8 @@ wd.ngs.data <- file.path(wd.ngs, "data")
    specimen_id <- SAMPLE
  
    ## INPUT: *_cn.txt.gz (read counts)
-   rd <- read.peiflyne.icgc.cn.txt(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/converted_data", paste0(wgs_id, "_CONVERTED"), paste0(wgs_id, "_cn.txt")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+   rd <- read.peiflyne.icgc.cn.txt(file.path("/lustre/scratch127/casm/team294rr/ty2/ICGC/consensus/copy_number/converted_data", paste0(wgs_id, "_CONVERTED"), paste0(wgs_id, "_cn.txt")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+   #rd <- read.peiflyne.icgc.cn.txt(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/converted_data", paste0(wgs_id, "_CONVERTED"), paste0(wgs_id, "_cn.txt")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
    nrd <- initNRD(rd, bed.gc, pair="T", method=METHOD)   ## See ReplicationTiming.R
    #nrd.N <- initNRD(rd, bed.gc, pair="N", method=METHOD)
    rm(rd)
@@ -57,6 +60,7 @@ wd.ngs.data <- file.path(wd.ngs, "data")
 # Last Modified: 14/05/17
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd <- "/lustre/scratch127/casm/team294rr/ty2"     ## ty2@farm5
 wd.ngs      <- file.path(wd, "ICGC", BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data")
 wd.anlys   <- file.path(wd, "ICGC", BASE, "analysis")
@@ -73,7 +77,8 @@ wd.rt.data <- file.path(wd.rt, "data")
    #nrd <- readTable(file.path(wd.ngs.data, sample, paste0(sample, "_", PAIR, ".", method, ".txt.gz")), header=T, rownames=T, sep="")
    segs <- NA
    if (CN)
-      segs <- read.peiflyne.cn.seg(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/sclust_final_copy_number_analysis_files", sample2, paste0(sample2, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+   	  segs <- read.peiflyne.cn.seg(file.path("/lustre/scratch127/casm/team294rr/ty2/ICGC/consensus/copy_number/sclust_final_copy_number_analysis_files", sample2, paste0(sample2, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
+      #segs <- read.peiflyne.cn.seg(file.path("/projects/cangen/PCAWG-Repository/PCAWG.raw.data/copy_number/sclust_final_copy_number_analysis_files", sample2, paste0(sample2, "_cn.seg")))   ## See ReplicationTiming.R / Inner Class / PeifLyne File Reader
    
    ## Correcte read counts fpr copy number
    nrd.cn <- getNRDGCCN(nrd, segs, bed.gc, PAIR, F, CN)   ## See ReplicationTiming.R
@@ -87,6 +92,7 @@ rm(segs)
 # Last Modified: 21/04/19; 31/08/18; 13/06/17
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"   ## tyang2@cheops
+wd <- "/lustre/scratch127/casm/team294rr/ty2"     ## ty2@farm5
 wd.ngs    <- file.path(wd, "ICGC", BASE, "ngs/WGS")
 wd.ngs.data <- file.path(wd.ngs, "data") 
    
@@ -105,15 +111,14 @@ rownames(sprs.order) <- 1:22
 
 load(file.path(wd, "LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1_icgc.RData"))
 nrds <- nrds[which(is.na(nrds$RT) == F),]   ## ADD 29/11/20
-rownames(nrds) <- nrds$BED                  ## ADD 18/04/24
 
 nrds.T.chr.m.sample <- nrd.cn[,c("BED", "NRD_GC_CN")]
 rm(nrd.cn)
 colnames(nrds.T.chr.m.sample) <- c("BED", "T")
 rownames(nrds.T.chr.m.sample) <- nrds.T.chr.m.sample$BED
 
-nrds.T.chr.m.sample.T.all <- NULL
-nrds.chr.RT.all <- NULL
+nrds.T.chr.m.sample.all <- NULL
+nrds.chr.all <- NULL
 cors <- toTable(0, 3, 22, c("chr", "cor0", "cor"))
 cors$chr <- sprs.order$chr
 for (c in 1:nrow(sprs.order)) {
@@ -131,8 +136,8 @@ for (c in 1:nrow(sprs.order)) {
    #SAMPLE <- toupper(SAMPLE)           ## ADD 05/10/19
     
    #nrds.T.chr.d.sample$T <- log2(nrds.T.chr.d.sample$T + 0.01)
-   overlaps <- intersect(rownames(bed.gc.chr), nrds.T.chr.m.sample$BED)
-   nrds.T.chr.m.sample.T <- setSpline(nrds.T.chr.m.sample[overlaps,], bed.gc.chr[overlaps,], "T")
+   #overlaps <- intersect(rownames(bed.gc.chr), nrds.T.chr.m.sample$BED)
+   #nrds.T.chr.m.sample.T <- setSpline(nrds.T.chr.m.sample[overlaps,], bed.gc.chr[overlaps,], "T")
     
    ## Replication timing
    #load(file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1_icgc_", chr, ".RData")))   ## 26/02/22: ADD
@@ -140,28 +145,28 @@ for (c in 1:nrow(sprs.order)) {
    #overlaps <- intersect(rownames(bed.gc.chr), nrds.chr$BED)
    #nrds.chr.RT <- setSpline(nrds.chr[overlaps,], bed.gc.chr[overlaps,], "RT")   ## Reference LCL S/G1 ratio
    nrds.chr <- nrds[intersect(nrds$BED, rownames(bed.gc.chr)),]   ## Reference LCL S/G1 ratio
-   nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
+   #nrds.chr.RT <- setSpline(nrds.chr, bed.gc.chr, "RT")
    
    ## Keep 1kb slopes based on overlapping windows
-   overlaps <- intersect(nrds.T.chr.m.sample.T$BED, nrds.chr.RT$BED)
-   cors$cor0[c] <- getCor(nrds.chr.RT[overlaps,]$RT, nrds.T.chr.m.sample.T[overlaps,]$T, method="spearman")
+   overlaps <- intersect(nrds.T.chr.m.sample$BED, nrds.chr$BED)
+   cors$cor0[c] <- getCor(nrds.chr[overlaps,]$RT, nrds.T.chr.m.sample[overlaps,]$T, method="spearman")
     
    ##
-   if (is.null(nrds.T.chr.m.sample.T.all)) {
-      nrds.T.chr.m.sample.T.all <- nrds.T.chr.m.sample.T[overlaps,]
+   if (is.null(nrds.T.chr.m.sample.all)) {
+      nrds.T.chr.m.sample.all <- nrds.T.chr.m.sample[overlaps,]
    } else {
-      nrds.T.chr.m.sample.T.all <- rbind(nrds.T.chr.m.sample.T.all, nrds.T.chr.m.sample.T[overlaps,])
+      nrds.T.chr.m.sample.all <- rbind(nrds.T.chr.m.sample.all, nrds.T.chr.m.sample[overlaps,])
+   }
+    
+   if (is.null(nrds.chr.all)) {
+      nrds.chr.all <- nrds.chr[overlaps,]
+   } else {
+      nrds.chr.all <- rbind(nrds.chr.all, nrds.chr[overlaps,])
    }
    
-   if (is.null(nrds.chr.RT.all)) {
-      nrds.chr.RT.all <- nrds.chr.RT[overlaps,]
-   } else {
-      nrds.chr.RT.all <- rbind(nrds.chr.RT.all, nrds.chr.RT[overlaps,])
-   }
-   
-   cors$cor[c] <- getCor(nrds.chr.RT.all$RT, nrds.T.chr.m.sample.T.all$T, method="spearman")
-   rm(nrds.T.chr.m.sample.T)
+   cors$cor[c] <- getCor(nrds.chr.all$RT, nrds.T.chr.m.sample.all$T, method="spearman")
+   rm(nrds.T.chr.m.sample)
    rm(nrds.chr.RT)
 }
-cor.all <- getCor(nrds.chr.RT.all$RT, nrds.T.chr.m.sample.T.all$T, method="spearman")
+cor.all <- getCor(nrds.chr.all$RT, nrds.T.chr.m.sample.all$T, method="spearman")
 save(cor.all, cors, file=file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", SAMPLE, "-vs-lcl_spearman.RData")))

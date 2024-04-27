@@ -87,12 +87,12 @@ save(nrds.chr, file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/da
 
 ###
 ##
-load(file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1_icgc_chr1.RData")))
+load(file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1_icgc_chr1.RData")))
 nrds <- nrds.chr
 for (c in 2:22) {
    chr <- chrs[c]
-   load(file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1_icgc_", chr, ".RData")))
+   load(file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1_icgc_", chr, ".RData")))
    
    nrds <- rbind(nrds, nrds.chr)
 }
-save(nrds, file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.gc.cn.d.rt.log2s_s-g1_icgc.RData")))
+save(nrds, file=file.path(wd, paste0("LCL/analysis/replication/lcl-wgs-rt/data/lcl_rpkm.cn.m.rt.log2s_s-g1_icgc.RData")))

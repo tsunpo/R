@@ -9,18 +9,18 @@
 # 
 # Last Modified: 06/03/22; 29/05/20
 # -----------------------------------------------------------------------------
-plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomleft", cols=c("dimgray", "black"), size=5, pch=1, cex=2, p=12, chr=2) {
-	  pdf(paste0(file.name, ".pdf"), height=size, width=7)
+plotCorrelation <- function(file.name, main.text, xlab.text, ylab.text, x, y, pos="bottomleft", cols=c("dimgray", "black"), size=4.5, pch=1, cex=2, p=12, chr=2) {
+	  pdf(paste0(file.name, ".pdf"), height=size, width=5.5)
 	  par(mar=c(5.1, 4.7, 4.1, 1.4))
-	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	  plot(y ~ x, ylab=ylab.text, xlab=xlab.text, main=main.text, pch=pch, cex=cex, col=cols[1], cex.axis=2.2, cex.lab=2.3, cex.main=2.4)
 	 
 	  lm.fit <- lm(y ~ x)
 	  abline(lm.fit, lwd=5, col=cols[2])
 	  
 	  cor <- cor.test(y, x, method="spearman", exact=F)
-	  legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=1, bty="n", cex=2)
-	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2)
-	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2)
+	  legend(pos, c(paste0("rho = ", round0(cor[[4]], digits=2)), paste0("P = 1.00E-00")), text.col=c(cols[2], "white"), text.font=1, bty="n", cex=2.3)
+	  legend(pos, c("", expression(italic('P')~"                   ")), text.col=cols[2], text.font=1, bty="n", cex=2.3)
+	  legend(pos, c("", paste0("   = ", scientific(cor[[3]]))), text.col=cols[2], text.font=1, bty="n", cex=2.3)
 	
 	  #par(xpd=T)
 	  #text(x[p], y[p], paste0("Chr", chr), col="black", pos=3, cex=2)
