@@ -148,7 +148,7 @@ getPdNdS <- function(mut.gene.n, mut.gene.s, samples.mut.hist, s=0, n=1, t="Fish
 	  pmr.mut.gene <- toTable(0, 14, nrow(mut.gene.n), c("MUT", "FREQ_N", "FREQ_S", "MUT_G1", "MUT_S", "WT_G1", "WT_S", "P", "FDR", "G1MR", "SMR", "PMR", "TYPE_N", "TYPE_S"))
    pmr.mut.gene$MUT <- rownames(mut.gene.n)
    rownames(pmr.mut.gene) <- pmr.mut.gene$MUT
- 
+   
    pmr.mut.gene$FREQ_N <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene.n[x,])))
    pmr.mut.gene$FREQ_S <- mapply(x = 1:nrow(pmr.mut.gene), function(x) sum(as.numeric(mut.gene.s[x,])))
    #pmr.mut.gene <- subset(pmr.mut.gene, FREQ_SAMPLE >= s)

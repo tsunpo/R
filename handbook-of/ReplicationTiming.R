@@ -1168,7 +1168,7 @@ plotRTS2 <- function(sprs, means, file.name, main.text, cs, xlab.text, unit, yla
 # Find S-like and G1-like tumour samples
 # Last Modified: 04/06/19
 # -----------------------------------------------------------------------------
-setSamplesM2 <- function(wd.rt.data, samples1, c=22) {
+setSamplesM2 <- function(wd.rt.data, samples1, c=13) {
 	  cors.all <- toTable(0, 4, length(samples1), c("SAMPLE_ID", "COR", "Q4", "M2"))
 	  rownames(cors.all) <- samples1
 	  cors.all$SAMPLE_ID <- samples1
