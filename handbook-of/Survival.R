@@ -118,6 +118,143 @@ plotStripchartV <- function(wd.rt.plots, file.name, main.text, samples.v, hists.
 }
 
 # -----------------------------------------------------------------------------
+# Preparing inputs for package dNdScv from SNVs in 2,542 (out of 2,612) tumours
+# http://htmlpreview.github.io/?http://github.com/im3sanger/dndscv/blob/master/vignettes/dNdScv.html
+# Last Modified: 07/05/24; 01/08/23
+# -----------------------------------------------------------------------------
+get_dndsout <- function(samples.mut.hist) {
+		  ## Running dNdScv for each cancer type
+		  colnames <- c("sampleID", "chr", "pos", "ref", "mut")
+		  snvs <- toTable(0, 5, 0, colnames)
+		  for (s in 1:nrow(samples.mut.hist)) {
+			    aliquotID <- samples.mut.hist$tumor_wgs_aliquot_id[s]
+			    sampleID  <- samples.mut.hist$icgc_specimen_id[s]
+			
+			    vcf <- read.peiflyne.mutcall.filtered.vcf(file.path(wd.icgc.vcf, paste0(aliquotID, "_mutcall_filtered.vcf.gz")), pass=T, rs=F)
+			    vcf.snv <- subset(vcf,     REF %in% c("A", "T", "C", "G"))
+			    vcf.snv <- subset(vcf.snv, ALT %in% c("A", "T", "C", "G"))
+			    vcf.snv$sampleID <- sampleID
+			    vcf.snv <- vcf.snv[, c(9,1,2,4,5)]
+			    colnames(vcf.snv) <- colnames
+			    vcf.snv$chr <- gsub("chr", "", vcf.snv$chr)
+			
+			    snvs <- rbind(snvs, vcf.snv)
+		  }
+		
+		  dndsout = dndscv(snvs)
+		  return(dndsout)
+}
+
+variable_dNdS_twodatasets2 = function(dnds1, dnds2, genestotest) {
+	  library("seqinr")
+	  library("Biostrings")
+	  library("MASS")
+	  library("GenomicRanges")
+	  library("dndscv")
+	
+	  pvec = rmisvec = rtruvec = rep(NA, length(genestotest)) # Initialising vectors for p-values and for the ratios of wmis and wtru between dataset 1 and 2
+	  w1 = dnds1$globaldnds$mle; names(w1) = dnds1$globaldnds$name
+	  w2 = dnds2$globaldnds$mle; names(w2) = dnds2$globaldnds$name
+	
+	  for (g in 1:length(genestotest)) {
+		    # We can implement a simple LRT model based on the uniform dNdS model
+		    # This is different from the Fisher test in that it uses synonymous mutations (i.e. dN/dS ratios)
+		    # instead of comparing the contribution of nonsyn muts of a gene *relative* to other genes.
+		    # Being a uniform model it assumes no considerable changes in the mutation rate variation or coverage
+		    # across genes in both datasets. But takes into account signature and rate variation between two
+		    # datasets.
+		    # H0: wmis1==wmis2 & wtru1==wtru2
+		    # H1: wmis1!=wmis2 & wtru1!=wtru2
+		    # This is simply done using obs1, exp1, obs2, exp2 (y1 and y2 vectors below)
+		
+	    	y1 = as.numeric(dnds1$genemuts[dnds1$genemuts$gene==genestotest[g],])
+	  	  y2 = as.numeric(dnds2$genemuts[dnds2$genemuts$gene==genestotest[g],])
+		
+		    # Global dN/dS ratios from all other genes (to normalise the differences for the gene being tested)        
+		    ind1 = dnds1$genemuts$gene!=genestotest[g]
+		    ind2 = dnds2$genemuts$gene!=genestotest[g]
+		    wmis1_global = sum(dnds1$genemuts$n_mis[ind1])/sum(dnds1$genemuts$exp_mis[ind1])
+		    wmis2_global = sum(dnds2$genemuts$n_mis[ind2])/sum(dnds2$genemuts$exp_mis[ind2])
+	    	wtru1_global = sum(dnds1$genemuts$n_non[ind1]+dnds1$genemuts$n_spl[ind1])/sum(dnds1$genemuts$exp_non[ind1]+dnds1$genemuts$exp_spl[ind1])
+		    wtru2_global = sum(dnds2$genemuts$n_non[ind2]+dnds2$genemuts$n_spl[ind2])/sum(dnds2$genemuts$exp_non[ind2]+dnds2$genemuts$exp_spl[ind2])
+		
+   	 	# MLE dN/dS ratios using the uniform model under H0 and H1
+	    	wmis_mle0 = (y1[3]+y2[3])/(y1[7]*wmis1_global+y2[7]*wmis2_global)
+	    	wtru_mle0 = sum(y1[4:5]+y2[4:5])/sum(y1[8:9]*wtru1_global+y2[8:9]*wtru2_global)
+	    	wmis_mle1 = c(y1[3],y2[3])/c(y1[7]*wmis1_global,y2[7]*wmis2_global)
+		    wtru_mle1 = c(sum(y1[4:5]),sum(y2[4:5]))/c(sum(y1[8:9]*wtru1_global),sum(y2[8:9]*wtru2_global))
+		
+		    # Observed and predicted counts under H0 and H1
+		    obs = as.numeric(c(y1[3], sum(y1[4:5]), y2[3], sum(y2[4:5])))
+		    exp0 = as.numeric(c(y1[7]*wmis1_global*wmis_mle0, sum(y1[8:9])*wtru1_global*wtru_mle0, y2[7]*wmis2_global*wmis_mle0, sum(y2[8:9])*wtru2_global*wtru_mle0))
+		    exp1 = as.numeric(c(y1[7]*wmis1_global*wmis_mle1[1], sum(y1[8:9])*wtru1_global*wtru_mle1[1], y2[7]*wmis2_global*wmis_mle1[2], sum(y2[8:9])*wtru2_global*wtru_mle1[2])) # Note that exp1 == obs (we only have this line here for confirmation purposes)
+		    ll0 = c(sum(dpois(x=obs[c(1,3)], lambda=exp0[c(1,3)], log=T)), sum(dpois(x=obs[c(2,4)], lambda=exp0[c(2,4)], log=T)))
+		    ll1 = c(sum(dpois(x=obs[c(1,3)], lambda=exp1[c(1,3)], log=T)), sum(dpois(x=obs[c(2,4)], lambda=exp1[c(2,4)], log=T)))
+		
+		    # One-sided p-values
+		    pvals = (1-pchisq(2*(ll1-ll0), df=1))
+		    if (wmis_mle1[1]<wmis_mle1[2]) { pvals[1] = 1 } else { pvals[1] = pvals[1]/2 }
+		    if (wtru_mle1[1]<wtru_mle1[2]) { pvals[2] = 1 } else { pvals[2] = pvals[2]/2 }
+		
+		    # Saving the results
+		    pvec[g] = 1 - pchisq(-2 * sum(log(pvals)), df = 4) # Fisher combined p-value
+		    rmisvec[g] = wmis_mle1[1]/wmis_mle1[2]
+		    rtruvec[g] = wtru_mle1[1]/wtru_mle1[2]
+		
+	  }
+	  out = data.frame(genestotest,pvec,rmisvec,rtruvec)
+	  return(out)
+}
+
+plotPMR2 <- function(file.name, main.text, xlab.text, ylab.text, out, xmax=NA, ymax=NA, size=6, genes=c("TP53"), cols=c(adjustcolor.blue, adjustcolor.red), h=3) {
+	  x <- out$rmisvec
+	  y <- -log10(out$pvec)
+	  #genes <- pmr.mut.gene.hist$MUT
+	
+	  xlim <- c(0, max(x))
+	  if (!is.na(xmax)) xlim <- c(0, xmax)
+	     ylim <- c(0, max(y))
+	  if (!is.na(ymax)) ylim <- c(0, ymax)
+	
+	  pdf(paste0(file.name, ".pdf"), height=size, width=size)
+	  par(mar=c(5.1, 4.8, 4.1, 1.3))
+	  plot(y ~ x, ylab=ylab.text, xlim=xlim, ylim=ylim, xlab=xlab.text, main=main.text, pch=16, cex=2, col="white", cex.axis=1.9, cex.lab=2, cex.main=2.1)
+	
+	  idx.down   <- which(x < 1)
+	  points(x[idx.down], y[idx.down], pch=16, col=cols[1], cex=2)
+	  idx.up   <- which(x >= 1)
+	  points(x[idx.up],   y[idx.up],   pch=16, col=cols[2], cex=2)   
+	
+	  abline(v=1, lty=5, col=red, lwd=2)
+	  abline(h=h, lty=5, col="black", lwd=2)
+	
+	  #genes <- c("TP53")
+	  par(xpd=T)
+	  if (length(genes) != 0) {
+		    for (g in 1:length(genes)) {
+			      if (!is.na(genes[g])) {
+		        		idx <- which(pmr.mut.gene.hist$MUT == genes[g])
+				
+			     	   if (length(idx) > 0) {
+					          if (x[idx] > 1) {
+						            points(x[idx], y[idx], pch=1, col="black", cex=2)
+						            #text(x[idx], y[idx], genes[g], col="black", adj=c(0, -0.5), cex=1.8)
+					         	   text(x[idx], y[idx], genes[g], col="black", pos=3, cex=2)
+					          } else {
+						            points(x[idx], y[idx], pch=1, col="black", cex=2)
+						            #text(x[idx], y[idx], genes[g], col="black", adj=c(1, -0.5), cex=1.8)
+					         	   text(x[idx], y[idx], genes[g], col="black", pos=3, cex=2)
+					          }
+				        }
+			      }
+		    }
+	  }
+	
+	  dev.off()
+}
+
+
+# -----------------------------------------------------------------------------
 # Driver PMR (Proliferation Mutational Ratio)
 # Last Modified: 03/04/22
 # -----------------------------------------------------------------------------

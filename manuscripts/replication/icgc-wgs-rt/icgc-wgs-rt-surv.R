@@ -5,9 +5,9 @@
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
 # Last Modified: 19/02/22
 # =============================================================================
-wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
+#wd.src <- "/projects/cangen/tyang2/dev/R"        ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"             ## tyang2@gauss
-#wd.src <- "/Users/tpyang/Work/dev/R"              ## tpyang@localhost
+wd.src <- "/Users/ty2/Work/dev/R"                 ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
 handbooks  <- c("Commons.R", "Survival.R", "Transcription.R")
@@ -20,9 +20,9 @@ load(file.path(wd.src.ref, "hg19.RData"))
 # Step 0: Set working directory
 # Last Modified: 18/02/22
 # -----------------------------------------------------------------------------
-wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
-#wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/projects/cangen/tyang2"           ## tyang2@cheops
+#wd <- "/ngs/cangen/tyang2"                ## tyang2@gauss
+wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "ICGC"
 base  <- tolower(BASE)
 
@@ -206,51 +206,57 @@ samples.surv.hist0 <- samples.surv[1,][-1,]
 results <- toTable(0, 6, length(hists.surv), c("histology_abbreviation", "RHO", "G1", "S", "P", "FDR"))
 results$histology_abbreviation <- hists.surv
 for (h in 1:length(hists.surv)) {
-   h <- 6
    hist <- hists.surv[h]
    samples.surv.hist <- subset(samples.surv, histology_abbreviation == hist)
-   #samples.surv.hist <- samples.surv.hist[order(samples.surv.hist$COR),]
+   samples.surv.hist <- samples.surv.hist[order(samples.surv.hist$COR),]
  
-   size <- nrow(samples.surv.hist)
-   pvals <- c()
-   for (s in 1:size) {
-      samples.surv.hist$SORTING <- "G1"
-      idx <- which(samples.surv.hist$COR >= samples.surv.hist$COR[s])
-      if (length(idx) != 0)
-         samples.surv.hist[idx,]$SORTING <- "S"
-      samples.surv.hist$SORTING <- as.factor(samples.surv.hist$SORTING)
-    
-      fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
-      if (length(unique(samples.surv.hist$SORTING)) != 1){
-         pvals <- c(pvals, surv_pvalue(fit)$pval)
-      } else {
-         pvals <- c(pvals, NA)
-      }
-   }
-   idx <- which(is.na(pvals))
-   s <- which(pvals == min(pvals[-idx]))
-   rho <- samples.surv.hist$COR[s]
+   #size <- nrow(samples.surv.hist)
+   #pvals <- c()
+   #for (s in 1:size) {
+   #   samples.surv.hist$SORTING <- "G1"
+   #   idx <- which(samples.surv.hist$COR >= samples.surv.hist$COR[s])
+   #   if (length(idx) != 0)
+   #      samples.surv.hist[idx,]$SORTING <- "S"
+   #   samples.surv.hist$SORTING <- as.factor(samples.surv.hist$SORTING)
+   # 
+   #   fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
+   #   if (length(unique(samples.surv.hist$SORTING)) != 1){
+   #      pvals <- c(pvals, surv_pvalue(fit)$pval)
+   #   } else {
+   #      pvals <- c(pvals, NA)
+   #   }
+   #}
+   #idx <- which(is.na(pvals))
+   #s <- which(pvals == min(pvals[-idx]))
+   
+   #rho <- samples.surv.hist$COR[s]
+   #samples.surv.hist$SORTING <- "G1"
+   #idx <- which(samples.surv.hist$COR >= samples.surv.hist$COR[s])
+   #if (length(idx) != 0)
+   #   samples.surv.hist[idx,]$SORTING <- "S"
+   #samples.surv.hist$SORTING <- as.factor(samples.surv.hist$SORTING)
+   
    samples.surv.hist$SORTING <- "G1"
-   idx <- which(samples.surv.hist$COR >= samples.surv.hist$COR[s])
-   if (length(idx) != 0)
-      samples.surv.hist[idx,]$SORTING <- "S"
+   idx <- which(samples.surv.hist$M2 == 2)
+   samples.surv.hist[idx,]$SORTING <- "S"
    samples.surv.hist$SORTING <- as.factor(samples.surv.hist$SORTING)
    
    fit <- survfit(Surv(OS_month, OS_censor) ~ SORTING, data=samples.surv.hist)
    pval <- surv_pvalue(fit)$pval
-   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, "_S-G1"))
+   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, "_G1-S"))
    #plotSurvfit55(fit, file.name, hist, c("Resting", "Proliferating"), c(blue, red))
-   plotSurvfit(fit, file.name, hist, legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
+   #plotSurvfit(fit, file.name, hist, legend.labs=c("Resting", "Proliferative"), name="SORTING", strata=c("G1", "S"), cols=c(blue, red), size=5)
+   file.name <- file.path(paste0(wd.rt.plots, "/hists/survfit_in-silico_samples.surv.hist_", hist, "_S-G1"))
    plotSurvfit(fit, file.name, hist, legend.labs=c("Proliferative", "Resting"), name="SORTING", strata=c("S", "G1"), cols=c(red, blue), size=5)
    
-   idx <- which(is.na(pvals))
-   x <- samples.surv.hist$COR[-idx]
-   y <- -log10(pvals[-idx])
-   file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", hist)
-   plotOS(file.name, hist, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
+   #idx <- which(is.na(pvals))
+   #x <- samples.surv.hist$COR[-idx]
+   #y <- -log10(pvals[-idx])
+   #file.name <- paste0(wd.rt.plots, "/hists/correlation_in-silico_P_KM_OS_", hist)
+   #plotOS(file.name, hist, text.In.silico, text.Log10.P, x, y, pvals[s], rho, lwd=3)
    
    samples.surv.hist0 <- rbind(samples.surv.hist0, samples.surv.hist)
-   results$RHO[h] <- rho
+   #results$RHO[h] <- rho
    results$G1[h]  <- nrow(subset(samples.surv.hist, SORTING == "G1"))
    results$S[h]   <- nrow(subset(samples.surv.hist, SORTING == "S"))
    results$P[h]   <- pval
@@ -267,7 +273,7 @@ for (h in 1:length(hists.surv)) {
    
 }
 samples.surv.hist <- samples.surv.hist0
-writeTable(results, file.path(wd.meta, paste0("samples.surv.hist.results.txt")), colnames=T, rownames=F, sep="\t")
+writeTable(results, file.path(wd.rt.data, paste0("samples.surv.hist.results.txt")), colnames=T, rownames=F, sep="\t")
 
 ##
 file.name <- "stripchart_ICGC_samples.surv.hist"
