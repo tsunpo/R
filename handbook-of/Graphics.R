@@ -462,7 +462,7 @@ plotStripchartATRX <- function(wd.de.plots, file.name, phenos, main, names, cols
    dev.off()
 }
 
-plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim) {
+plotBox2 <- function(wd.de.plots, file.name, tpm.1, tpm.2, main, names, cols, ylim, ylab) {
    trait <- rep(0, length(tpm.1))
    trait <- c(trait, rep(1, length(tpm.2)))
    trait <- as.factor(trait)

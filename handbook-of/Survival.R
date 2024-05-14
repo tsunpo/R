@@ -207,7 +207,8 @@ variable_dNdS_twodatasets2 = function(dnds1, dnds2, genestotest) {
 }
 
 plotPMR2 <- function(file.name, main.text, xlab.text, ylab.text, out, xmax=NA, ymax=NA, size=6, genes=c("TP53"), cols=c(adjustcolor.blue, adjustcolor.red), h=3) {
-	  x <- out$rmisvec
+	  #x <- out$rmisvec
+	  x <- out$rtruvec
 	  y <- -log10(out$pvec)
 	  #genes <- pmr.mut.gene.hist$MUT
 	
@@ -233,7 +234,7 @@ plotPMR2 <- function(file.name, main.text, xlab.text, ylab.text, out, xmax=NA, y
 	  if (length(genes) != 0) {
 		    for (g in 1:length(genes)) {
 			      if (!is.na(genes[g])) {
-		        		idx <- which(pmr.mut.gene.hist$MUT == genes[g])
+		        		idx <- which(out$genestotest == genes[g])
 				
 			     	   if (length(idx) > 0) {
 					          if (x[idx] > 1) {

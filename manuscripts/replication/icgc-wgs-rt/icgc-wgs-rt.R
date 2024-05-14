@@ -285,7 +285,28 @@ mtext("SCF index", side=2, line=3.5, cex=2)
 legend("topleft", legend=c("Proliferative (S)", "Resting (G1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
 dev.off()
 
+###
+##
+file.name <- "stripchart_ICGC_SCP_n=2612_cor13_ColoRect-AdenoCA"
+main.text <- c(expression(bolditalic('In silico')~bold("sorting of PCAWG primary tumours (n=2,612)")), "")
+adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
 
+pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)
+#par(mar = c(11.2, 5, 4, 2))
+par(mar=c(11.55, 5, 4, 2))
+boxplot(COR ~ CANCER, data=samples.h1, yaxt="n", xaxt="n", ylab="", xlab="", main=main.text, col="white", outline=F, cex.axis=1.9, cex.lab=2, cex.main=2.2, xlim=range(samples.h1$CANCER) + c(1.4, 0.6), medcol=red, medlwd=5)
+stripchart(COR ~ CANCER, data=subset(samples.h1, histology_abbreviation != "ColoRect-AdenoCA"), method="jitter", cex=1.5, pch=19, col=adjustcolor.black, vertical=T, add=T, at=c(1:16,18:26))
+stripchart(COR ~ CANCER, data=subset(subset(samples.h1, histology_abbreviation == "ColoRect-AdenoCA"), M2 == 2), method="jitter", cex=1.5, pch=19, col=red, vertical=T, add=T, at=17)
+stripchart(COR ~ CANCER, data=subset(subset(samples.h1, histology_abbreviation == "ColoRect-AdenoCA"), M2 == 1), method="jitter", cex=1.5, pch=19, col=blue, vertical=T, add=T, at=17)
+
+text(labels=labels1[1:16],  x=1:16,   y=par("usr")[3] - 0.05, srt=45, adj=0.965, xpd=NA, cex=2)
+text(labels=labels1[17],    x=17,     y=par("usr")[3] - 0.05, srt=45, adj=0.965, xpd=NA, cex=2, font=2)
+text(labels=labels1[18:26], x=18:26,  y=par("usr")[3] - 0.05, srt=45, adj=0.965, xpd=NA, cex=2)
+
+axis(side=2, at=seq(-0.8, 0.8, by=0.4), labels=c(-0.8, -0.4, 0, 0.4, 0.8), cex.axis=1.9)
+mtext("SCF index", side=2, line=3.5, cex=2)
+legend("topleft", legend=c("Second median (M2)", "First median (M1)"), pch=19, pt.cex=2.5, col=c(red, blue), cex=1.9)
+dev.off()
 
 # -----------------------------------------------------------------------------
 # PanImmune
