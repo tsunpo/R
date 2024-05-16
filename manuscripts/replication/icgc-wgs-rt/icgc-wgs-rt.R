@@ -203,7 +203,7 @@ samples.tmp <- samples.mut
 samples.mut <- samples[intersect(rownames(samples), rownames(samples.mut)),]
 samples.mut$tumor_wgs_aliquot_id <- samples.tmp[rownames(samples.mut),]$tumor_wgs_aliquot_id
 
-save(icgc, samples, samples.v, samples.mut, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor13.RData"))
+#save(icgc, samples, samples.v, samples.mut, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor13.RData"))
 
 # -----------------------------------------------------------------------------
 # Stripchart (black; Resting to proliferating)
