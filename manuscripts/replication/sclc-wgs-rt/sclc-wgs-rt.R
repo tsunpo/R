@@ -203,8 +203,8 @@ nrow(nrds.d)
 # Overall correlation with LCL S/G1
 # Last Modified: 18/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.sclc <- setSamplesM2(wd.rt.data, samples1)
-writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101.txt"), colnames=T, rownames=F, sep="\t")
+samples.sclc <- setSamplesM2(wd.rt.data, samples1, c=13)
+writeTable(samples.sclc, file.path(wd.ngs, "sclc_wgs_n101_cor13.txt"), colnames=T, rownames=F, sep="\t")
 #         0%        25%        50%        75%       100% 
 # -0.7438588 -0.6840244 -0.6474195 -0.5555826  0.6806205 
 #          0%         25%         50%         75%        100% 

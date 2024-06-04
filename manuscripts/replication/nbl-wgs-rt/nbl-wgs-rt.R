@@ -24,7 +24,7 @@ load(file.path(wd.src.ref, "hg19.bed.gc.1kb.RData"))
 # -----------------------------------------------------------------------------
 wd <- "/projects/cangen/tyang2"              ## tyang2@cheops
 #wd <- "/ngs/cangen/tyang2"                   ## tyang2@gauss
-#wd <- "/Users/tpyang/Work/uni-koeln/tyang2"   ## tpyang@localhost
+#wd <- "/Users/ty2/Work/uni-koeln/tyang2"   ## tpyang@localhost
 BASE  <- "NBL"
 PAIR1 <- "T"
 PAIR0 <- "N"
@@ -94,13 +94,15 @@ nrow(nrds.d)
 # Overall correlation with LCL S/G1
 # Last Modified: 19/11/19; 16/06/19; 04/06/19; 06/03/19
 # -----------------------------------------------------------------------------
-samples.nbl <- setSamplesQ4(wd.rt.data, samples1)
-writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n56.txt"), colnames=T, rownames=F, sep="\t")
+samples.nbl <- setSamplesM2(wd.rt.data, samples1, c=13)
+writeTable(samples.nbl, file.path(wd.ngs, "nbl_wgs_n57-1_cor13.txt"), colnames=T, rownames=F, sep="\t")
 writeTable(median(samples.nbl$COR), file.path(wd.ngs, "nbl_wgs_n57-1_COR.txt"), colnames=F, rownames=F, sep="\t")
 writeTable(median(samples.sclc$COR), file.path(wd.ngs, "nbl_wgs_n57-1_COR_SCLC.txt"), colnames=F, rownames=F, sep="\t")
-#         0%        25%        50%        75%       100%   ## n=56/57
+#         0%         25%         50%         75%        100% 
+# -0.19619889 -0.06616305  0.01765322  0.19912003  0.35027779.  ## n=57-1 (NEW 02/06/24)
+#         0%        25%        50%        75%       100%        ## n=56/57
 # -0.7603965 -0.7321717 -0.7109754 -0.4246964  0.7624673
-#         0%        25%        50%        75%       100%   ## n=57-1
+#         0%        25%        50%        75%       100%        ## n=57-1
 # -0.7684906 -0.7397140 -0.7200663 -0.4456056  0.7665285
 
 writeTable(subset(samples.nbl, Q4 %in% c(4,1)), file.path(wd.ngs, "nbl_wgs_q4_n28.txt"), colnames=T, rownames=F, sep="\t")

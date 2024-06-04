@@ -42,6 +42,7 @@ samples1 <- samples1[rownames(samples0),]
 library(dplyr)
 library(Seurat)
 library(patchwork)
+library(clustree)
 
 colnames <- c("PD_ID", "genes_0", "genes_1", "genes_shared", "cells_0", "cells_1", "cells_shared")
 raw <- toTable(0, length(colnames), nrow(samples0), colnames)

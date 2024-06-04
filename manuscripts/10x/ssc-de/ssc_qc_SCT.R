@@ -119,10 +119,14 @@ for (s in 1:nrow(samples0.filtered)) {
 	
 	  # Apply sctransform normalization
 	  # https://satijalab.org/seurat/articles/sctransform_vignette.html
-	  #so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
+	  so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
+	  so <- FindVariableFeatures(so)
+	  so <- ScaleData(so)
+	  so <- RunPCA(so)
+
 	  # Normalizing the data
 	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
-	  so <- NormalizeData(so)
+	  #so <- NormalizeData(so)
 	  
 	  normalised[s, 2] <- nrow(so)
 	  normalised[s, 3] <- ncol(so)
@@ -136,12 +140,23 @@ for (s in 1:nrow(samples0.filtered)) {
 		    genes <- rownames(so)
 	  }
 }
-writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised_RNA.txt"), colnames=T, rownames=F, sep="\t")
-save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
+writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised_SCT.txt"), colnames=T, rownames=F, sep="\t")
+save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised_SCT.RData"))
+
+##
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_SCT.RData"))
+
+features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = 5000)
+sct.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
+sct.list <- lapply(X = sct.list, FUN = RunPCA, verbose = FALSE, features = features)
+so.anchors <- FindIntegrationAnchors(object.list = sct.list, anchor.features = features, normalization.method = "SCT", reference=c(1,2,4,5,6), reduction = "rpca") # we create as our standard reference the Di Persio, Sohni and Zhao samples as these contain the greatest number of cells
+so.integrated <- IntegrateData(anchorset = so.anchors, normalization.method = "SCT") # see https://github.com/satijalab/seurat/issues/3930 for discussion of k.weight
+
+save(filtered, normalised, samples0, samples0.filtered, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_SCT_integrated.RData"))
 
 # Merge Based on Normalized Data
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
-so.merged <- merge(x=so.list[[1]], y=so.list[-1], add.cell.ids=ids, project="SSC", merge.data=T)
+#so.merged <- merge(x=so.list[[1]], y=so.list[-1], add.cell.ids=ids, project="SSC", merge.data=T)
 
 ids <- c()
 for (s in 1:nrow(samples0.filtered)) {
@@ -158,130 +173,130 @@ for (s in 1:nrow(samples0.filtered)) {
 	  n2s <- c(n2s, rep(samples0.filtered$V8[s], ncol(so.list[[s]]@assays$RNA$counts)))
 }
 
-so.merged@meta.data$sample.id <- ids
-so.merged@meta.data$age <- ages
-so.merged@meta.data$age <- factor(so.merged@meta.data$age, levels = c("25","37","48","57","60","71"))
-so.merged@meta.data$n2 <- n2s
-head(so.merged@meta.data)
+so.integrated@meta.data$sample.id <- ids
+so.integrated@meta.data$age <- ages
+so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","37","48","57","60","71"))
+so.integrated@meta.data$n2 <- n2s
+head(so.integrated@meta.data)
 
-save(filtered, normalised, samples0, samples0.filtered, so.merged, ids, ages, n2s, file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+save(filtered, normalised, samples0, samples0.filtered, so.integrated, ids, ages, n2s, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT.RData"))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
 # 02_UMAP
 # https://satijalab.org/seurat/articles/multimodal_vignette
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_SCT.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT.RData"))
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP.RData"))
 
 # Note that all operations below are performed on the RNA assay Set and verify that the
 # default assay is RNA
-DefaultAssay(so.merged) <- "RNA"
+DefaultAssay(so.integrated) <- "integrated"
 
 # perform visualization and clustering steps
-so.merged <- NormalizeData(so.merged)
-so.merged <- FindVariableFeatures(so.merged)
-so.merged
+#so.integrated <- FindVariableFeatures(so.integrated, selection.method = "vst", nfeatures = 2000)
+so.integrated
 # An object of class Seurat 
-# 34615 features across 46987 samples within 1 assay 
-# Active assay: RNA (34615 features, 2000 variable features)
-# 26 layers present: counts.PD53621b_2N, counts.PD53623b_2N, counts.PD53623b_4N, counts.PD53624b_2N, counts.PD53625b_2N, counts.PD53626b_2N, counts.PD53621b_M, counts.PD53623b_M, counts.PD53624b_M, counts.PD53625b_M, counts.PD53626b_M, counts.PD40746e_M1, counts.PD40746e_M2, data.PD53621b_2N, data.PD53623b_2N, data.PD53623b_4N, data.PD53624b_2N, data.PD53625b_2N, data.PD53626b_2N, data.PD53621b_M, data.PD53623b_M, data.PD53624b_M, data.PD53625b_M, data.PD53626b_M, data.PD40746e_M1, data.PD40746e_M2
+# 73104 features across 46987 samples within 3 assays 
+# Active assay: integrated (5000 features, 1826 variable features)
+# 2 layers present: data, scale.data
+# 2 other assays present: RNA, SCT
 
 #so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 2000)
-all.genes <- rownames(so.merged)
-so.merged <- ScaleData(so.merged, features = all.genes)
+#all.genes <- rownames(so.integrated)
+#so.integrated <- ScaleData(so.integrated, features = all.genes)
 #so.merged <- ScaleData(so.merged)
 # Centering and scaling data matrix
 # |======================================================================| 100%
-so.merged <- RunPCA(so.merged, features = VariableFeatures(object = so.merged))
-#so.merged <- RunPCA(so.merged, verbose = FALSE)
+#so.merged <- RunPCA(so.merged, features = VariableFeatures(object = so.merged))
+so.integrated <- RunPCA(so.integrated, verbose = FALSE)
 
-pdf(file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_ElbowPlot.pdf"))
+pdf(file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_ElbowPlot.pdf"))
 options(repr.plot.width=9, repr.plot.height=6)
-ElbowPlot(so.merged, ndims = 50)
+ElbowPlot(so.integrated, ndims = 50)
 dev.off()
 
 # quantify content of the elbow plot. implement code from https://hbctraining.github.io/scRNA-seq/lessons/elbow_plot_metric.html
-pct <- so.merged[["pca"]]@stdev / sum(so.merged[["pca"]]@stdev) * 100
+pct <- so.integrated[["pca"]]@stdev / sum(so.integrated[["pca"]]@stdev) * 100
 cumu <- cumsum(pct)
 component1 <- which(cumu > 90 & pct < 5)[1] # determine the point where the principal component contributes < 5% of standard deviation and the principal components so far have cumulatively contributed 90% of the standard deviation.
 component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), decreasing = T)[1] + 1 # identify where the percent change in variation between consecutive PCs is less than 0.1%
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
-save(filtered, normalised, samples0, samples0.filtered, so.merged, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA.RData"))
+write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
+save(filtered, normalised, samples0, samples0.filtered, so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA.RData"))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
 # so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA.RData"))
 resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 
-so.merged <- FindNeighbors(so.merged, reduction = 'pca', dims = 1:18, k.param = 20, verbose = FALSE)
-so.merged <- FindClusters(so.merged, algorithm=3, resolution = resolution.range, verbose = FALSE)
-so.merged <- RunUMAP(so.merged, dims = 1:18, n.neighbors = 20, verbose = FALSE)
-save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_dims=18_k=10_n=10.RData"))
+so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
+so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
+save(filtered, normalised, samples0, samples0.filtered, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_dims=21_k=20_n=20.RData"))
 
 # Find neighbors and clusters
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA.RData"))
 
-so.merged <- FindNeighbors(so.merged, dims = 1:18, k.param = 20)
-so.merged <- FindClusters(so.merged, algorithm=3, resolution = 0.25)
+so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
 
 # Optional: Run UMAP for visualization
-so.merged <- RunUMAP(so.merged, dims = 1:18, n.neighbors = 20)
-save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA_UMAP_dims=18_resolution=0.5_algorithm=3_k=20_n=20.RData"))
+so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
+save(filtered, normalised, samples0, samples0.filtered, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA_UMAP_dims=21_k=20_n=20_algorithm=3_resolution=0.5.RData"))
 
 ##
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.5_all.genes_algorithm=3_k=20_n=20.pdf"))
-DimPlot(so.merged, label = TRUE)
+pdf(file=file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25.pdf"))
+DimPlot(so.integrated, label = TRUE)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_sampleID.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="sample.id")
+pdf(file=file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_sampleID.pdf"))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="sample.id")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_Age.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="age")
+pdf(file=file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_Age.pdf"))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="age")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_2N.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="n2")
+pdf(file=file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_2N.pdf"))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="n2")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
 ##
-feature_plot <- FeaturePlot(so.merged, reduction = "umap", features = c("VIM", "CD14", "CD163", "C1QA", "CXCR4", "VWF", "PECAM1", "NOTCH4", "ACTA2", "DLK1"),	ncol = 5)
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_feature_plot_Marcrophase_Endothelial.pdf"), width = 14, height = 5)
+feature_plot <- FeaturePlot(so.integrated, reduction = "umap", features = c("VIM", "CD14", "CD163", "C1QA", "CXCR4", "VWF", "PECAM1", "NOTCH4", "ACTA2", "DLK1"),	ncol = 5)
+pdf(file = file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_feature_plot_Marcrophase_Endothelial.pdf"), width = 14, height = 5)
 print(feature_plot)
 dev.off()
 
-feature_plot <- FeaturePlot(so.merged, reduction = "umap", features = c("DAZL", "MAGEA4", "UTF1", "ID4", "FGFR3", "KIT", "DMRT1", "DMRTB1", "STRA8"),	ncol = 5)
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_feature_plot_SSC_differentiating.pdf"), width = 14, height = 5)
+feature_plot <- FeaturePlot(so.integrated, reduction = "umap", features = c("DAZL", "MAGEA4", "UTF1", "ID4", "FGFR3", "KIT", "DMRT1", "DMRTB1", "STRA8"),	ncol = 5)
+pdf(file = file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_feature_plot_SSC_differentiating.pdf"), width = 14, height = 5)
 print(feature_plot)
 dev.off()
 
-feature_plot <- FeaturePlot(so.merged, reduction = "umap", features = c("SYCP3", "SPO11", "MLH3", "SPAG6", "CAMK4", "ZPBP", "CREM", "TNP1", "PRM2"),	ncol = 5)
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_feature_plot_Meiosis_Spermatid structure proteins_Nuclear condensation.pdf"), width = 14, height = 5)
+feature_plot <- FeaturePlot(so.integrated, reduction = "umap", features = c("SYCP3", "SPO11", "MLH3", "SPAG6", "CAMK4", "ZPBP", "CREM", "TNP1", "PRM2"),	ncol = 5)
+pdf(file = file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_feature_plot_Meiosis_Spermatid structure proteins_Nuclear condensation.pdf"), width = 14, height = 5)
 print(feature_plot)
 dev.off()
 
 ##
-feature_plot <- FeaturePlot(so.merged, reduction = "umap", features = c("C19orf84", "EGR4", "MAGEA4", "PIWIL4", "TSPAN33", "UTF1", "FGFR3", "NANOS2"),	ncol = 5)
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_ST4_SSC_State0.pdf"), width = 14, height = 5)
+feature_plot <- FeaturePlot(so.integrated, reduction = "umap", features = c("C19orf84", "EGR4", "MAGEA4", "PIWIL4", "TSPAN33", "UTF1", "FGFR3", "NANOS2"),	ncol = 5)
+pdf(file = file.path(wd.de.plots, "SCT_UMAP_dims=21_ST4_resolution=0.25_feature_plot_SSC_State0.pdf"), width = 14, height = 5)
 print(feature_plot)
 dev.off()
 
-feature_plot <- FeaturePlot(so.merged, reduction = "umap", features = c("GFRA1", "NANOS3", "DMRT1", "DNMT1", "KIT", "MKI67", "SOHLH2", "MAGE4", "REC8", "STRA8"),	ncol = 5)
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_ST4_SSC_Stage1+2+3.pdf"), width = 14, height = 5)
+feature_plot <- FeaturePlot(so.integrated, reduction = "umap", features = c("GFRA1", "NANOS3", "DMRT1", "KIT", "MKI67", "SOHLH2", "MAGE4", "REC8", "STRA8"),	ncol = 5)
+pdf(file = file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25_feature_plot_ST4_SSC_Stage1+2+3.pdf"), width = 14, height = 5)
 print(feature_plot)
 dev.off()
 
