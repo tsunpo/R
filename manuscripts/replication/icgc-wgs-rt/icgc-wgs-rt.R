@@ -354,7 +354,7 @@ for (h in 6:1) {
 ###
 ##
 file.name <- "stripchart_ICGC_SCP_n=2612_cor13_SCLC+NB"
-main.text <- expression(bold(~bolditalic('In silico')~"sorting of 2,769 primary tumour samples"))
+main.text <- expression(bold(~bolditalic('In silico')~"SCF estimation of 2,769 primary tumour samples"))
 adjustcolor.gray <- adjustcolor("black", alpha.f=0.25)
 
 pdf(file.path(wd.rt.plots, paste0(file.name, ".pdf")), height=7, width=20)

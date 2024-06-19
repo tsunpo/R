@@ -123,6 +123,7 @@ for (s in 1:nrow(samples0.filtered)) {
 	  # Normalizing the data
 	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
 	  so <- NormalizeData(so)
+	  so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 2000)
 	  
 	  normalised[s, 2] <- nrow(so)
 	  normalised[s, 3] <- ncol(so)
@@ -136,8 +137,8 @@ for (s in 1:nrow(samples0.filtered)) {
 		    genes <- rownames(so)
 	  }
 }
-writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised_RNA.txt"), colnames=T, rownames=F, sep="\t")
-save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
+writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised_vst.txt"), colnames=T, rownames=F, sep="\t")
+save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised_vst.RData"))
 
 # Merge Based on Normalized Data
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
@@ -164,15 +165,15 @@ so.merged@meta.data$age <- factor(so.merged@meta.data$age, levels = c("25","37",
 so.merged@meta.data$n2 <- n2s
 head(so.merged@meta.data)
 
-save(filtered, normalised, samples0, samples0.filtered, so.merged, ids, ages, n2s, file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+save(filtered, normalised, samples0, samples0.filtered, so.merged, ids, ages, n2s, file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged.RData"))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
 # 02_UMAP
 # https://satijalab.org/seurat/articles/multimodal_vignette
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_vst.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged.RData"))
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP.RData"))
 
@@ -182,7 +183,7 @@ DefaultAssay(so.merged) <- "RNA"
 
 # perform visualization and clustering steps
 so.merged <- NormalizeData(so.merged)
-so.merged <- FindVariableFeatures(so.merged)
+so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 2000)
 so.merged
 # An object of class Seurat 
 # 34615 features across 46987 samples within 1 assay 
@@ -198,7 +199,7 @@ so.merged <- ScaleData(so.merged, features = all.genes)
 so.merged <- RunPCA(so.merged, features = VariableFeatures(object = so.merged))
 #so.merged <- RunPCA(so.merged, verbose = FALSE)
 
-pdf(file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_ElbowPlot.pdf"))
+pdf(file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_ElbowPlot_vst.pdf"))
 options(repr.plot.width=9, repr.plot.height=6)
 ElbowPlot(so.merged, ndims = 50)
 dev.off()
@@ -211,32 +212,32 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
-save(filtered, normalised, samples0, samples0.filtered, so.merged, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA.RData"))
+write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged_PCA.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
+save(filtered, normalised, samples0, samples0.filtered, so.merged, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged_PCA.RData"))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
 # so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged_PCA.RData"))
 resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 
 so.merged <- FindNeighbors(so.merged, reduction = 'pca', dims = 1:18, k.param = 20, verbose = FALSE)
 so.merged <- FindClusters(so.merged, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.merged <- RunUMAP(so.merged, dims = 1:18, n.neighbors = 20, verbose = FALSE)
-save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_dims=18_k=10_n=10.RData"))
+save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged_PCA_UMAP_dims=18_k=10_n=10.RData"))
 
 # Find neighbors and clusters
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged_PCA.RData"))
 
-so.merged <- FindNeighbors(so.merged, dims = 1:18, k.param = 20)
+so.merged <- FindNeighbors(so.merged, dims = 1:prin_comp, k.param = 20)
 so.merged <- FindClusters(so.merged, algorithm=3, resolution = 0.25)
 
 # Optional: Run UMAP for visualization
 so.merged <- RunUMAP(so.merged, dims = 1:18, n.neighbors = 20)
-save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA_UMAP_dims=18_resolution=0.5_algorithm=3_k=20_n=20.RData"))
+save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_vst_merged_all.genes_PCA_UMAP_dims=18_resolution=0.5_algorithm=3_k=20_n=20.RData"))
 
 ##
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.5_all.genes_algorithm=3_k=20_n=20.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_algorithm=3_k=20_n=20_vst.pdf"))
 DimPlot(so.merged, label = TRUE)
 dev.off()
 
