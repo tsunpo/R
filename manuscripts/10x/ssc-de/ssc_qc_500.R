@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
+wd.de.data  <- file.path(wd.de, "data_500")
+wd.de.plots <- file.path(wd.de, "plots_500")
 
 samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -85,7 +85,7 @@ for (s in 1:nrow(samples0)) {
 	
   	# QC and selecting cells for further analysis
 	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset=nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
+	  so <- subset(so, subset=nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
 
 	  filtered[s, 2] <- nrow(so)
 	  filtered[s, 3] <- ncol(so)
@@ -119,7 +119,7 @@ for (s in 1:nrow(samples0.filtered)) {
 	
 	  # QC and selecting cells for further analysis
 	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset = nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
+	  so <- subset(so, subset = nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
 
 	  # Apply sctransform normalization
 	  # https://satijalab.org/seurat/articles/sctransform_vignette.html
@@ -194,7 +194,7 @@ so.merged <- NormalizeData(so.merged)
 so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 5000)
 so.merged
 # An object of class Seurat 
-# 34615 features across 46987 samples within 1 assay 
+# 34615 features across 57031 samples within 1 assay 
 # Active assay: RNA (34615 features, 5000 variable features)
 # 26 layers present: counts.PD53621b_2N, counts.PD53623b_2N, counts.PD53623b_4N, counts.PD53624b_2N, counts.PD53625b_2N, counts.PD53626b_2N, counts.PD53621b_M, counts.PD53623b_M, counts.PD53624b_M, counts.PD53625b_M, counts.PD53626b_M, counts.PD40746e_M1, counts.PD40746e_M2, data.PD53621b_2N, data.PD53623b_2N, data.PD53623b_4N, data.PD53624b_2N, data.PD53625b_2N, data.PD53626b_2N, data.PD53621b_M, data.PD53623b_M, data.PD53624b_M, data.PD53625b_M, data.PD53626b_M, data.PD40746e_M1, data.PD40746e_M2
 
@@ -237,36 +237,36 @@ save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.pat
 load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
 
 so.merged <- FindNeighbors(so.merged, dims = 1:prin_comp, k.param = 20)
-so.merged <- FindClusters(so.merged, algorithm=3, resolution = 0.25)
+so.merged <- FindClusters(so.merged, algorithm=3, resolution = 0.3)
 
 # Optional: Run UMAP for visualization
 so.merged <- RunUMAP(so.merged, dims = 1:prin_comp, n.neighbors = 20)
-save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.25.RData"))
+save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.3.RData"))
 
 ##
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.3.pdf"))
 DimPlot(so.merged, label = TRUE)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_SampleID.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.3_SampleID.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="sample.id")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_Age.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.3_Age.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="age")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_2N.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.3_2N.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="n2")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_Batch.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.3_Batch.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="batch")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
@@ -302,19 +302,19 @@ dev.off()
 # -----------------------------------------------------------------------------
 # DotPlot
 # -----------------------------------------------------------------------------
-genes_of_interest <- c("AMH", "WT1", "CD34", "CD163", "CSF1R", "CYP1B1", "ACTA2", "MYH11", "DLK1", "INHBA", "UTF1", "EGR4", "PIWIL4", "TSPAN33", "FGFR3", "NANOS2", "NANOS3", "GFRA1", "DMRT1", "MAGEA4", "KIT", "MKI67", "DPEP3", "GINS2", "MEIOB", "SCML1", "SYCP2", "SYCP3", "TEX101", "SPO11", "STRA8", "MEIOSIN", "SPATA8", "OVOL2", "CLDND2", "FAM24A", "SPACA1", "CCDC168", "SIRT2", "TEX29", "HOOK1", "PRM1", "PRM2")
+genes_of_interest <- c("AMH", "WT1", "CD34", "CD163", "CSF1R", "CYP1B1", "ACTA2", "MYH11", "DLK1", "INHBA", "UTF1", "EGR4", "PIWIL4", "TSPAN33", "FGFR3", "NANOS2", "NANOS3", "GFRA1", "DMRT1", "MAGEA4", "KIT", "MKI67", "DPEP3", "GINS2", "MEIOB", "SCML1", "SYCP2", "SYCP3", "TEX101", "SPO11", "STRA8", "SPATA8", "OVOL2", "CLDND2", "FAM24A", "SPACA1", "CCDC168", "SIRT2", "TEX29", "HOOK1", "PRM1", "PRM2")
 
 dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.25.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.3.pdf"), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 # Apply this custom order
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-new_order <- c("16", "15", "14", "6", "12", "13", "7", "5", "10", "8", "11", "2", "4", "9", "3", "17", "0", "1")
+new_order <- c("17", "19", "8", "16", "10", "15", "7", "4", "2", "18", "9", "12", "13", "5", "6", "11", "3", "0", "14", "1")
 Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
 
 dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
@@ -322,70 +322,48 @@ dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
    scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.25_ordered.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.3_ordered.pdf"), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
 table(Idents(so.merged))
-cluster_to_celltype <- c('1' = 'Undiff. SPG', '0' = 'Undiff. SPG', '17' = 'Undiff. SPG',
+cluster_to_celltype <- c('1' = 'Undiff. SPG', '14' = 'Undiff. SPG', '0' = 'Undiff. SPG', 
 																									'3' = 'Diff. SPG',
-																									'9' = 'Meiosis', '4' = 'Meiosis',
-																									'11' = 'Spermatocyte', '8' = 'Spermatocyte', 
-																									'10' = 'Early spermatid (1)',
-																									'5' = 'Early spermatid (2)',
+																									'11' = 'Meiosis', '6' = 'Meiosis',
+																									'5' = 'Spermatocyte', '13' = 'Spermatocyte', '12' = 'Spermatocyte', 
+																									'9' = 'Early spermatid (1)',
+																									'4' = 'Early spermatid (2)',
 																									'7' = 'Late spermatid',
-																									'12' = 'Myoid & Leydig',
-																									'6' = 'Sertoli',	'14' = 'Sertoli',
-																									'15' = 'Endothelial',
-																									'16' = 'Macrophage')
+																									'10' = 'Myoid & Leydig',
+																									'16' = 'Sertoli',	'8' = 'Sertoli',
+																									'19' = 'Endothelial',
+																									'17' = 'Macrophage')
 
 # Update the identities using this mapping
-new_order <- c("16", "15", "14", "6", "12", "13", "7", "5", "10", "8", "11", "2", "4", "9", "3", "17", "0", "1")
+new_order <- c("17", "19", "8", "16", "10", "15", "2", "18", "7", "4", "9", "12", "13", "5", "6", "11", "3", "0", "14", "1")
 Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
 
 Idents(so.merged) <- plyr::mapvalues(x = Idents(so.merged), from = names(cluster_to_celltype), to = cluster_to_celltype)
 
 dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-   scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
+	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.25_ordered_annotated.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.3_ordered_annotated.pdf"), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 ##
 dim_plot <- DimPlot(so.merged, label = TRUE)
-ggsave(file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_ordered_annotated.png"), plot = dim_plot, width = 10, height = 8, dpi = 300)
+ggsave(file.path(wd.de.plots, "UMAP_dims=18_resolution=0.3_ordered_annotated.png"), plot = dim_plot, width = 10, height = 8, dpi = 300)
 
 
 
 
 
-
-#ggsave(filename = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_DotPlot.png"), plot = dot_plot, width = 10, height = 8, dpi = 300)
-
-##
-# Determine the order of genes based on descending expression
-valid_genes <- genes_of_interest %in% rownames(so.merged)
-# Filter out any invalid genes
-genes_of_interest <- genes_of_interest[valid_genes]
-
-avg_expression <- AverageExpression(so.merged, features = genes_of_interest)$RNA
-ordered_genes <- avg_expression %>%
-	  rowMeans() %>%
-	  sort(decreasing = TRUE) %>%
-	  names()
-
-# Create DotPlot with ordered genes
-dot_plot <- DotPlot(so.merged, features = ordered_genes)
-dot_plot <- dot_plot + scale_y_discrete(limits = ordered_genes)
-
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_DotPlot_ordered.pdf"), width = 10, height = 6)
-print(dot_plot)
-dev.off()
 
 
 

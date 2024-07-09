@@ -28,12 +28,12 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
+wd.de.data  <- file.path(wd.de, "data_ALL")
+wd.de.plots <- file.path(wd.de, "plots_ALL")
 
-samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
-samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
-samples1 <- samples1[rownames(samples0),]
+#samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
+#samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
+#samples1 <- samples1[rownames(samples0),]
 
 # -----------------------------------------------------------------------------
 # Standard Seurat re-processing workflow
@@ -46,103 +46,14 @@ library(patchwork)
 library(ggplot2)
 #library(sctransform)
 
-for (s in 1:nrow(samples0)) {
-	  # Initialize the Seurat object with the raw (non-normalized data).
-	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0$V1[s], "filtered_feature_bc_matrix"))
-	  so <- CreateSeuratObject(counts=data, project=samples0$V3[s], min.cells=3, min.features=200)
-	  
-	  # QC and selecting cells for further analysis
-	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  
-	  file.name <- file.path(wd.de.plots, "01_QC", paste0(samples0$V3[s], "_VlnPlot"))
-	  pdf(paste0(file.name, ".pdf"), width=10)
-	  VlnPlot(so, features=c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol=3)
-	  dev.off()
-	  
-	  plot1 <- FeatureScatter(so, feature1="nCount_RNA", feature2="percent.mt")
-	  plot2 <- FeatureScatter(so, feature1="nCount_RNA", feature2="nFeature_RNA")
-	  file.name <- file.path(wd.de.plots, "01_QC", paste0(samples0$V3[s], "_VlnPlot_plot1+plot2"))
-	  pdf(paste0(file.name, ".pdf"), width=10)
-	  plot1 + plot2
-	  dev.off()
-}
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data",      "ssc_filtered_normalised.RData"))
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26", "ssc_filtered_normalised.1.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26", "ssc_filtered_normalised.2.RData"))
 
-# -----------------------------------------------------------------------------
-# QC and selecting cells for further analysis
-# 01_QC
-# https://satijalab.org/seurat/articles/pbmc3k_tutorial
-# https://satijalab.org/seurat/articles/pbmc3k_tutorial#setup-the-seurat-object
-# -----------------------------------------------------------------------------
-colnames <- c("PD_ID", "genes", "cells")
-filtered <- toTable(0, length(colnames), nrow(samples0), colnames)
-filtered$PD_ID <- rownames(samples0)
-rownames(filtered) <- rownames(samples0)
-
-for (s in 1:nrow(samples0)) {
-	  # Initialize the Seurat object with the raw (non-normalized data).
-  	data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0$V1[s], "filtered_feature_bc_matrix"))
-  	so <- CreateSeuratObject(counts=data, project=samples0$V3[s], min.cells=3, min.features=200)
-	
-  	# QC and selecting cells for further analysis
-	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset=nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
-
-	  filtered[s, 2] <- nrow(so)
-	  filtered[s, 3] <- ncol(so)
-}
-writeTable(filtered, file.path(wd.de.data, "ssc_filtered.txt"), colnames=T, rownames=F, sep="\t")
-save(samples0, filtered, file=file.path(wd.de.data, "ssc_filtered.RData"))
-
-# -----------------------------------------------------------------------------
-# Standard Seurat pre-processing workflow (SCT)
-# https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
-# -----------------------------------------------------------------------------
-#load(file=file.path(wd.de.data, "ssc_filtered.RData"))
-samples0.filtered <- samples0[subset(filtered, cells > 1000)$PD_ID,]
-samples0.filtered$V8 <- mapply(x = 1:nrow(samples0.filtered), function(x) unlist(strsplit(samples0.filtered$V3[x], "_"))[2])
-samples0.filtered$V9 <- 1
-samples0.filtered$V9[grep("M", samples0.filtered$V8)] <- 2
-
-so.list <- c()
-ids = c()
-genes <- c()
-colnames <- c("PD_ID", "genes", "cells")
-normalised <- toTable(0, length(colnames), nrow(samples0.filtered), colnames)
-normalised$PD_ID <- rownames(samples0.filtered)
-rownames(normalised) <- rownames(samples0.filtered)
-
-for (s in 1:nrow(samples0.filtered)) {
-	  # Initialize the Seurat object with the raw (non-normalized data)
-	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial
-	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0.filtered$V1[s], "filtered_feature_bc_matrix"))
-	  so <- CreateSeuratObject(counts=data, project=samples0.filtered$V3[s], min.cells=3, min.features=200)
-	
-	  # QC and selecting cells for further analysis
-	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset = nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
-
-	  # Apply sctransform normalization
-	  # https://satijalab.org/seurat/articles/sctransform_vignette.html
-	  #so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
-	  # Normalizing the data
-	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
-	  so <- NormalizeData(so)
-	  so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 5000)
-	  
-	  normalised[s, 2] <- nrow(so)
-	  normalised[s, 3] <- ncol(so)
-	
-	  so.list <- c(so.list, so)
-	  ids = c(ids, samples0.filtered$V3[s])
-	
-  	if (length(genes) != 0) {
-	    	genes <- intersect(genes, rownames(so))
-	  } else {
-		    genes <- rownames(so)
-	  }
-}
-writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised.txt"), colnames=T, rownames=F, sep="\t")
-save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
+so.list <- c(so.list, so.list.1)
+ids <- c(ids, ids.1)
+samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
+#samples0.filtered <- rbind(samples0.filtered, samples0.2)
 
 # Merge Based on Normalized Data
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
@@ -194,8 +105,8 @@ so.merged <- NormalizeData(so.merged)
 so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 5000)
 so.merged
 # An object of class Seurat 
-# 34615 features across 46987 samples within 1 assay 
-# Active assay: RNA (34615 features, 5000 variable features)
+# 34685 features across 50940 samples within 1 assay 
+# Active assay: RNA (34685 features, 5000 variable features)
 # 26 layers present: counts.PD53621b_2N, counts.PD53623b_2N, counts.PD53623b_4N, counts.PD53624b_2N, counts.PD53625b_2N, counts.PD53626b_2N, counts.PD53621b_M, counts.PD53623b_M, counts.PD53624b_M, counts.PD53625b_M, counts.PD53626b_M, counts.PD40746e_M1, counts.PD40746e_M2, data.PD53621b_2N, data.PD53623b_2N, data.PD53623b_4N, data.PD53624b_2N, data.PD53625b_2N, data.PD53626b_2N, data.PD53621b_M, data.PD53623b_M, data.PD53624b_M, data.PD53625b_M, data.PD53626b_M, data.PD40746e_M1, data.PD40746e_M2
 
 all.genes <- rownames(so.merged)
@@ -244,29 +155,29 @@ so.merged <- RunUMAP(so.merged, dims = 1:prin_comp, n.neighbors = 20)
 save(filtered, normalised, samples0, samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.25.RData"))
 
 ##
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=15_resolution=0.25.pdf"))
 DimPlot(so.merged, label = TRUE)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_SampleID.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=15_resolution=0.25_SampleID.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="sample.id")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_Age.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=15_resolution=0.25_Age.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="age")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_2N.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=15_resolution=0.25_2N.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="n2")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_Batch.pdf"))
+pdf(file=file.path(wd.de.plots, "UMAP_dims=15_resolution=0.25_Batch.pdf"))
 tplot = DimPlot(so.merged, reduction = "umap", group.by="batch")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
@@ -308,13 +219,13 @@ dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.25.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, "DotPlot_dims=15_resolution=0.25.pdf"), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 # Apply this custom order
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-new_order <- c("16", "15", "14", "6", "12", "13", "7", "5", "10", "8", "11", "2", "4", "9", "3", "17", "0", "1")
+new_order <- c("16", "12", "5", "10", "15", "8", "3", "9", "7", "11", "13", "4", "2", "6", "0", "14", "1")
 Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
 
 dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
@@ -329,20 +240,19 @@ dev.off()
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
 table(Idents(so.merged))
-cluster_to_celltype <- c('1' = 'Undiff. SPG', '0' = 'Undiff. SPG', '17' = 'Undiff. SPG',
-																									'3' = 'Diff. SPG',
-																									'9' = 'Meiosis', '4' = 'Meiosis',
-																									'11' = 'Spermatocyte', '8' = 'Spermatocyte', 
-																									'10' = 'Early spermatid (1)',
-																									'5' = 'Early spermatid (2)',
-																									'7' = 'Late spermatid',
-																									'12' = 'Myoid & Leydig',
-																									'6' = 'Sertoli',	'14' = 'Sertoli',
-																									'15' = 'Endothelial',
-																									'16' = 'Macrophage')
+cluster_to_celltype <- c('1' = 'Undiff. SPG', '14' = 'Undiff. SPG', '0' = 'Undiff. SPG',
+																									'6' = 'Diff. SPG',
+																									'2' = 'Meiosis',
+																									'11' = 'Spermatocyte', '7' = 'Spermatocyte', 
+																									'9' = 'Early spermatid (1)',
+																									'3' = 'Early spermatid (2)',
+																									'8' = 'Late spermatid',
+																									'10' = 'Myoid & Leydig',
+																									'5' = 'Sertoli',	'12' = 'Sertoli',
+																									'16' = 'Endothelial')
 
 # Update the identities using this mapping
-new_order <- c("16", "15", "14", "6", "12", "13", "7", "5", "10", "8", "11", "2", "4", "9", "3", "17", "0", "1")
+new_order <- c("16", "12", "5", "10", "15", "8", "3", "9", "7", "11", "4", "13", "2", "6", "0", "14", "1")
 Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
 
 Idents(so.merged) <- plyr::mapvalues(x = Idents(so.merged), from = names(cluster_to_celltype), to = cluster_to_celltype)
@@ -352,13 +262,13 @@ dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
    scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=18_resolution=0.25_ordered_annotated.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, "DotPlot_dims=15_resolution=0.25_ordered_annotated.pdf"), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 ##
 dim_plot <- DimPlot(so.merged, label = TRUE)
-ggsave(file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_ordered_annotated.png"), plot = dim_plot, width = 10, height = 8, dpi = 300)
+ggsave(file.path(wd.de.plots, "UMAP_dims=15_resolution=0.25_ordered_annotated.png"), plot = dim_plot, width = 10, height = 8, dpi = 300)
 
 
 

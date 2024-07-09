@@ -28,12 +28,12 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
+wd.de.data  <- file.path(wd.de, "data_lm26_500")
+wd.de.plots <- file.path(wd.de, "plots_lm26_500")
 
-samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
-samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
-samples1 <- samples1[rownames(samples0),]
+samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020_lm26.list"), header=F, rownames=3, sep="\t")
+#samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
+#samples1 <- samples1[rownames(samples0),]
 
 # -----------------------------------------------------------------------------
 # Standard Seurat re-processing workflow
@@ -48,7 +48,7 @@ library(ggplot2)
 
 for (s in 1:nrow(samples0)) {
 	  # Initialize the Seurat object with the raw (non-normalized data).
-	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0$V1[s], "filtered_feature_bc_matrix"))
+	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/lm26/slide_tag", samples0$V1[s], "filtered_feature_bc_matrix"))
 	  so <- CreateSeuratObject(counts=data, project=samples0$V3[s], min.cells=3, min.features=200)
 	  
 	  # QC and selecting cells for further analysis
@@ -80,12 +80,12 @@ rownames(filtered) <- rownames(samples0)
 
 for (s in 1:nrow(samples0)) {
 	  # Initialize the Seurat object with the raw (non-normalized data).
-  	data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0$V1[s], "filtered_feature_bc_matrix"))
-  	so <- CreateSeuratObject(counts=data, project=samples0$V3[s], min.cells=3, min.features=200)
+	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/lm26/slide_tag", samples0$V1[s], "filtered_feature_bc_matrix"))
+	  so <- CreateSeuratObject(counts=data, project=samples0$V3[s], min.cells=3, min.features=200)
 	
   	# QC and selecting cells for further analysis
 	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset=nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
+	  so <- subset(so, subset=nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
 
 	  filtered[s, 2] <- nrow(so)
 	  filtered[s, 3] <- ncol(so)
@@ -101,7 +101,7 @@ save(samples0, filtered, file=file.path(wd.de.data, "ssc_filtered.RData"))
 samples0.filtered <- samples0[subset(filtered, cells > 1000)$PD_ID,]
 samples0.filtered$V8 <- mapply(x = 1:nrow(samples0.filtered), function(x) unlist(strsplit(samples0.filtered$V3[x], "_"))[2])
 samples0.filtered$V9 <- 1
-samples0.filtered$V9[grep("M", samples0.filtered$V8)] <- 2
+samples0.filtered$V9[grep("L", samples0.filtered$V8)] <- 3
 
 so.list <- c()
 ids = c()
@@ -114,12 +114,12 @@ rownames(normalised) <- rownames(samples0.filtered)
 for (s in 1:nrow(samples0.filtered)) {
 	  # Initialize the Seurat object with the raw (non-normalized data)
 	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial
-	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0.filtered$V1[s], "filtered_feature_bc_matrix"))
+	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/lm26/slide_tag", samples0$V1[s], "filtered_feature_bc_matrix"))
 	  so <- CreateSeuratObject(counts=data, project=samples0.filtered$V3[s], min.cells=3, min.features=200)
 	
 	  # QC and selecting cells for further analysis
 	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset = nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
+	  so <- subset(so, subset = nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
 
 	  # Apply sctransform normalization
 	  # https://satijalab.org/seurat/articles/sctransform_vignette.html
@@ -142,7 +142,59 @@ for (s in 1:nrow(samples0.filtered)) {
 	  }
 }
 writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised.txt"), colnames=T, rownames=F, sep="\t")
-save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
+filtered.1 <- filtered
+normalised.1 <- normalised
+samples0.1 <- samples0
+samples0.filtered.1 <- samples0.filtered
+so.list.1 <- so.list
+ids.1 <- c("PD53623b_L1", "PD53623b_L2")
+genes.1 <- genes
+save(filtered.1, normalised.1, samples0.1, samples0.filtered.1, so.list.1, ids.1, genes.1, file=file.path(wd.de.data, "ssc_filtered_normalised.1.RData"))
+
+# -----------------------------------------------------------------------------
+# QC and selecting cells for further analysis
+# 01_QC
+# https://satijalab.org/seurat/articles/pbmc3k_tutorial
+# https://satijalab.org/seurat/articles/pbmc3k_tutorial#setup-the-seurat-object
+# -----------------------------------------------------------------------------
+library(qs)
+
+samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020_arussell.list"), header=F, rownames=3, sep="\t")
+so <- qread(file.path(wd.de.data, "05_SEURATS_240523_VL00297_289_AAFJN3FM5_SI-TT-B1_seurat.qs"))
+#so <- CreateSeuratObject(counts=data@assays$RNA@layers$counts, project=samples0$V3[1], min.cells=3, min.features=200)
+
+#so[["pca"]] <- NULL
+#so[["umap"]] <- NULL
+so[["spatial"]] <- NULL  # If 'spatial' is an assay or similar slot
+#so[["RNA"]]@layers$scale.data <- NULL
+#so[["RNA"]]@layers$data <- NULL
+
+# QC and selecting cells for further analysis
+so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
+so <- subset(so, subset = nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
+
+# Normalizing the data
+# https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
+so <- NormalizeData(so)
+so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 5000)
+nrow(so)
+# [1] 36601
+ncol(so)
+# [1] 13645
+
+samples0.2 <- samples0
+samples0.2$V8 <- "A"
+samples0.2$V9 <- 4
+so.list.2 <- c(so)
+ids.2 <- c("AMSBIO")
+save(samples0.2, so.list.2, ids.2, file=file.path(wd.de.data, "ssc_filtered_normalised.2.RData"))
+
+
+
+
+
+
+
 
 # Merge Based on Normalized Data
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
@@ -332,7 +384,7 @@ table(Idents(so.merged))
 cluster_to_celltype <- c('1' = 'Undiff. SPG', '0' = 'Undiff. SPG', '17' = 'Undiff. SPG',
 																									'3' = 'Diff. SPG',
 																									'9' = 'Meiosis', '4' = 'Meiosis',
-																									'11' = 'Spermatocyte', '8' = 'Spermatocyte', 
+																									'2' = 'Spermatocyte', '11' = 'Spermatocyte', '8' = 'Spermatocyte', 
 																									'10' = 'Early spermatid (1)',
 																									'5' = 'Early spermatid (2)',
 																									'7' = 'Late spermatid',
