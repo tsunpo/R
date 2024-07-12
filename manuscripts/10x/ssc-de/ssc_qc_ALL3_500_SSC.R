@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_SSC")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SSC")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -76,6 +76,11 @@ so.merged.ssc <- subset(so.merged.ssc, cells = rownames(metadata[metadata$sample
 # Check the result
 table(so.merged.ssc@meta.data$sample.id)
 
+ssc <- as.data.frame(table(so.merged.ssc@meta.data$sample.id))
+write.table(ssc, file=file.path(wd.de.data, "ssc_samples_>100.txt"), row.names=T, col.names=T, quote=F, sep='\t')
+
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_SSC")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SSC")
 save(so.merged.ssc, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged.RData"))
 
 # -----------------------------------------------------------------------------
@@ -91,16 +96,16 @@ save(so.merged.ssc, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merg
 DefaultAssay(so.merged.ssc) <- "RNA"
 
 # perform visualization and clustering steps
-so.merged.ssc <- NormalizeData(so.merged.ssc)
-so.merged.ssc <- FindVariableFeatures(so.merged.ssc, selection.method = "vst", nfeatures = 5000)
+#so.merged.ssc <- NormalizeData(so.merged.ssc)
+#so.merged.ssc <- FindVariableFeatures(so.merged.ssc, selection.method = "vst", nfeatures = 5000)
 so.merged.ssc
 # An object of class Seurat 
 # 36601 features across 35690 samples within 1 assay 
 # Active assay: RNA (36601 features, 5000 variable features)
 # 30 layers present: counts.PD53621b_2N, counts.PD53623b_2N, counts.PD53623b_4N, counts.PD53624b_2N, counts.PD53625b_2N, counts.PD53626b_2N, counts.PD53621b_M, counts.PD53623b_M, counts.PD53624b_M, counts.PD53625b_M, counts.PD53626b_M, counts.PD40746e_M1, counts.PD40746e_M2, counts.SeuratProject, data.PD53621b_2N, data.PD53623b_2N, data.PD53623b_4N, data.PD53624b_2N, data.PD53625b_2N, data.PD53626b_2N, data.PD53621b_M, data.PD53623b_M, data.PD53624b_M, data.PD53625b_M, data.PD53626b_M, data.PD40746e_M1, data.PD40746e_M2, data.SeuratProject, scale.data.SeuratProject, scale.data
 
-all.genes <- rownames(so.merged.ssc)
-so.merged.ssc <- ScaleData(so.merged.ssc, features = all.genes)
+#all.genes <- rownames(so.merged.ssc)
+#so.merged.ssc <- ScaleData(so.merged.ssc, features = all.genes)
 #so.merged <- ScaleData(so.merged)
 # Centering and scaling data matrix
 # |======================================================================| 100%
@@ -138,35 +143,35 @@ save(samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_ssc_filtered_
 load(file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA.RData"))
 
 so.merged.ssc <- FindNeighbors(so.merged.ssc, dims = 1:prin_comp, k.param = 20)
-so.merged.ssc <- FindClusters(so.merged.ssc, algorithm=3, resolution = 0.3)
+so.merged.ssc <- FindClusters(so.merged.ssc, algorithm=3, resolution = 0.25)
 so.merged.ssc <- RunUMAP(so.merged.ssc, dims = 1:prin_comp, n.neighbors = 20)
 save(so.merged.ssc, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.25.RData"))
 
 ##
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.3.pdf"))
+pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=13_resolution=0.25.pdf"))
 DimPlot(so.merged.ssc, label = TRUE)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.3_SampleID.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="sample.id")
+pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_SampleID.pdf"))
+tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="sample.id")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.3_Age.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="age")
+pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_Age.pdf"))
+tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="age")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
 pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_2N.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="n2")
+tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="n2")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.3_Batch.pdf"))
-tplot = DimPlot(so.merged, reduction = "umap", group.by="batch")
+pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_Batch.pdf"))
+tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="batch")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()

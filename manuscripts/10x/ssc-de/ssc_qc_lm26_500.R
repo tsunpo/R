@@ -98,7 +98,7 @@ save(samples0, filtered, file=file.path(wd.de.data, "ssc_filtered.RData"))
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
 # -----------------------------------------------------------------------------
 #load(file=file.path(wd.de.data, "ssc_filtered.RData"))
-samples0.filtered <- samples0[subset(filtered, cells > 1000)$PD_ID,]
+samples0.filtered <- samples0[subset(filtered, cells > 0)$PD_ID,]
 samples0.filtered$V8 <- mapply(x = 1:nrow(samples0.filtered), function(x) unlist(strsplit(samples0.filtered$V3[x], "_"))[2])
 samples0.filtered$V9 <- 1
 samples0.filtered$V9[grep("L", samples0.filtered$V8)] <- 3
@@ -127,7 +127,7 @@ for (s in 1:nrow(samples0.filtered)) {
 	  # Normalizing the data
 	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
 	  so <- NormalizeData(so)
-	  so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 5000)
+	  so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 2000)
 	  
 	  normalised[s, 2] <- nrow(so)
 	  normalised[s, 3] <- ncol(so)
@@ -176,7 +176,7 @@ so <- subset(so, subset = nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA
 # Normalizing the data
 # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
 so <- NormalizeData(so)
-so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 5000)
+so <- FindVariableFeatures(so, selection.method = "vst", nfeatures = 2000)
 nrow(so)
 # [1] 36601
 ncol(so)

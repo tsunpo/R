@@ -1,3 +1,7 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(TRUE)
+s <- as.numeric(args[1])
+
 # =============================================================================
 # Manuscript   :
 # Chapter      :
@@ -55,9 +59,19 @@ ids <- c(ids, ids.1, ids.2)
 samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
 samples0.filtered <- rbind(samples0.filtered, samples0.2)
 
+# -----------------------------------------------------------------------------
+# Perform CCA integration (Seurat 4.3.0; Running CCA)
+# https://satijalab.org/seurat/archive/v4.3/integration_introduction
+# -----------------------------------------------------------------------------
+features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = 2000)
+so.integrated <- FindIntegrationAnchors(object.list = so.list, anchor.features = features)   ##, reduction = "rpca")
+so.integrated <- IntegrateData(anchorset = so.integrated)
+
+save(so.list, samples0.filtered, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated0.RData"))
+
 # Merge Based on Normalized Data
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
-so.merged <- merge(x=so.list[[1]], y=so.list[-1], add.cell.ids=ids, project="SSC", merge.data=T)
+#so.merged <- merge(x=so.list[[1]], y=so.list[-1], add.cell.ids=ids, project="SSC", merge.data=T)
 
 ids <- c()
 for (s in 1:nrow(samples0.filtered)) {
@@ -79,14 +93,14 @@ for (s in 1:nrow(samples0.filtered)) {
 	  batches <- c(batches, rep(samples0.filtered$V9[s], ncol(so.list[[s]]@assays$RNA$counts)))
 }
 
-so.merged@meta.data$sample.id <- ids
-so.merged@meta.data$age <- ages
-so.merged@meta.data$age <- factor(so.merged@meta.data$age, levels = c("25","37","40","48","57","60","71"))
-so.merged@meta.data$n2 <- n2s
-so.merged@meta.data$batch <- batches
-head(so.merged@meta.data)
+so.integrated@meta.data$sample.id <- ids
+so.integrated@meta.data$age <- ages
+so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
+so.integrated@meta.data$n2 <- n2s
+so.integrated@meta.data$batch <- batches
+head(so.integrated@meta.data)
 
-save(samples0.filtered, so.merged, ids, ages, n2s, batches, file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+save(samples0.filtered, so.integrated, ids, ages, n2s, batches, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated.RData"))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -102,7 +116,7 @@ DefaultAssay(so.merged) <- "RNA"
 
 # perform visualization and clustering steps
 so.merged <- NormalizeData(so.merged)
-so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 5000)
+so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 2000)
 so.merged
 # An object of class Seurat 
 # 36601 features across 78102 samples within 1 assay 
