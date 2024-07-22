@@ -248,7 +248,7 @@ so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
 
 # Optional: Run UMAP for visualization
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(filtered, normalised, samples0, samples0.filtered, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA_UMAP_dims=21_k=20_n=20_algorithm=3_resolution=0.5.RData"))
+save(filtered, normalised, samples0, samples0.filtered, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_all.genes_PCA_UMAP_dims=21_k=20_n=20_algorithm=3_resolution=0.25.RData"))
 
 ##
 pdf(file=file.path(wd.de.plots, "SCT_UMAP_dims=21_resolution=0.25.pdf"))
@@ -272,6 +272,12 @@ tplot = DimPlot(so.integrated, reduction = "umap", group.by="n2")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
+
+
+
+
+
+
 
 ##
 feature_plot <- FeaturePlot(so.integrated, reduction = "umap", features = c("VIM", "CD14", "CD163", "C1QA", "CXCR4", "VWF", "PECAM1", "NOTCH4", "ACTA2", "DLK1"),	ncol = 5)

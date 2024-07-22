@@ -32,8 +32,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500")
+wd.de.data  <- file.path(wd.de, "data")
+wd.de.plots <- file.path(wd.de, "plots")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -50,14 +50,14 @@ library(patchwork)
 library(ggplot2)
 library(sctransform)
 
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",      "ssc_filtered_normalised.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2.RData"))
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data",      "ssc_filtered_normalised.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2.RData"))
 
-so.list <- c(so.list, so.list.1, so.list.2)
-ids <- c(ids, ids.1, ids.2)
-samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
-samples0.filtered <- rbind(samples0.filtered, samples0.2)
+#so.list <- c(so.list, so.list.1, so.list.2)
+#ids <- c(ids, ids.1, ids.2)
+#samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
+#samples0.filtered <- rbind(samples0.filtered, samples0.2)
 
 # -----------------------------------------------------------------------------
 # Performing integration on datasets normalized with SCTransform
@@ -185,87 +185,9 @@ print(tplot)
 dev.off()
 
 # -----------------------------------------------------------------------------
-# DotPlot (resolution = 0.25)
-# -----------------------------------------------------------------------------
-nfeatures <- 5000
-
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
-
-genes_of_interest <- c("AMH", "WT1", "CD34", "CD163", "CSF1R", "CYP1B1", "ACTA2", "MYH11", "DLK1", "INHBA", "UTF1", "EGR4", "PIWIL4", "TSPAN33", "FGFR3", "NANOS2", "NANOS3", "GFRA1", "DMRT1", "MAGEA4", "KIT", "MKI67", "DPEP3", "GINS2", "MEIOB", "SCML1", "SYCP2", "SYCP3", "TEX101", "SPO11", "STRA8", "MEIOSIN", "SPATA8", "OVOL2", "CLDND2", "FAM24A", "SPACA1", "CCDC168", "SIRT2", "TEX29", "HOOK1", "PRM1", "PRM2")
-
-DefaultAssay(so.integrated) <- "SCT"
-dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25.pdf")), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-DefaultAssay(so.integrated) <- "RNA"
-dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_RNA_dims=", prin_comp, "_resolution=0.25.pdf")), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-# Apply this custom order
-# Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-DefaultAssay(so.integrated) <- "SCT"
-
-new_order <- c("15", "16", "1", "9", "14", "3", "6", "7", "13", "11", "4", "5", "8", "12", "10", "2", "0")
-Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
-
-dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
-
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-# Create a mapping from cluster ID to cell type name
-# This mapping should be adjusted according to your specific dataset and clustering results
-table(Idents(so.integrated))
-cluster_to_celltype <- c('0' = 'Undiff. SPG', '2' = 'Undiff. SPG',
-																									'10' = 'Diff. SPG',
-																									'12' = 'Meiosis', '8' = 'Meiosis', '5' = 'Meiosis',
-																									'4' = 'Spermatocyte',
-																									'13' = 'Early spermatid (1)', '7' = 'Early spermatid (1)',
-																									'6' = 'Early spermatid (2)',
-																									'3' = 'Late spermatid (2)',
-																									'9' = 'Myoid & Leydig',
-																									'1' = 'Sertoli',	'16' = 'Sertoli',
-																									'15' = 'Endothelial & Macrophage')
-
-# Update the identities using this mapping
-#new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
-Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
-
-Idents(so.integrated) <- plyr::mapvalues(x = Idents(so.integrated), from = names(cluster_to_celltype), to = cluster_to_celltype)
-
-dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-  	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
-
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered_annotated.pdf")), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-##
-dim_plot <- DimPlot(so.integrated, label = TRUE)
-ggsave(file.path(wd.de.plots, paste0("SCT_", nfeatures, "_UMAP_dims=14_resolution=0.25_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
-
-# -----------------------------------------------------------------------------
 # Di Persio et al; DotPlot (resolution = 0.25)
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
-
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
@@ -282,16 +204,14 @@ dev.off()
 
 # Apply this custom order
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-DefaultAssay(so.integrated) <- "SCT"
-
-new_order <- c("16", "1", "14", "9", "15", "3", "6", "7", "13", "11", "4", "5", "8", "12", "10", "2", "0")
+new_order <- c("2", "14", "15", "7", "5", "3", "12", "8", "1", "13", "9", "11", "10", "0", "6", "4")
 new_order <- rev(new_order)
 Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
 dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-  scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
+	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
 pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")), width = 14, height = 5)
 print(dot_plot)
@@ -300,19 +220,17 @@ dev.off()
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
 table(Idents(so.integrated))
-cluster_to_celltype <- c('2' = 'Undiff. SPG',
-																									'10' = 'Diff. SPG',
-																									'12' = 'Leptotene',
-																									'8' = 'Zygotene', '5' = 'Zygotene',
-																									'4' = 'Pachytene', '11' = 'Pachytene',
-																									'13' = 'Diplotene',
-																									'7' = 'Meiotic division',
-																									'6' = 'Early spermatid',
-																									'3' = 'Late spermatid',
-																									'15' = 'Endothelial & Macrophage',
-																									'9' = 'PMC',
-																									'14' = 'Leydig',
-																									'1' = 'Sertoli',	'16' = 'Sertoli')
+cluster_to_celltype <- c('6' = 'Undiff. SPG', '0' = 'Undiff. SPG',
+																									'10' = 'Diff. SPG', '11' = 'Diff. SPG',
+																									'9' = 'Leptotene',
+																									'13' = 'Zygotene', '1' = 'Zygotene',
+																									'12' = 'Pachytene', '8' = 'Pachytene',
+																									'3' = 'Diplotene',
+																									'5' = 'Meiotic division',
+																									'7' = 'Late spermatid',
+																									'15' = 'Macrophage',
+																									'14' = 'Endothelial',
+																									'2' = 'Sertoli')
 
 # Update the identities using this mapping
 #new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
@@ -321,8 +239,8 @@ Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 Idents(so.integrated) <- plyr::mapvalues(x = Idents(so.integrated), from = names(cluster_to_celltype), to = cluster_to_celltype)
 
 dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
 pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered_annotated.pdf")), width = 12, height = 5)
@@ -332,126 +250,3 @@ dev.off()
 ##
 dim_plot <- DimPlot(so.integrated, label = TRUE)
 ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=14_resolution=0.25_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
-
-
-
-
-# -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
-DefaultAssay(so.integrated) <- "RNA"
-
-so.integrated <- JoinLayers(so.integrated, assay = DefaultAssay(so.integrated))
-#names(so.integrated[[DefaultAssay(so.integrated)]]@data)
-
-# Find markers for every cluster compared to all remaining cells, report only the positive ones
-markers <- FindAllMarkers(so.integrated, only.pos = TRUE)
-markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1)
-
-# DoHeatmap() generates an expression heatmap for given cells and features.
-# In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
-top10 <- markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1) %>%
-	  slice_head(n = 10) %>%
-	  ungroup()
-#missing_genes <- setdiff(top10$gene, rownames(so.integrated))
-
-# Re-scale the data including all genes in top10$gene
-so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
-
-# Create the heatmap
-heatmap <- DoHeatmap(so.integrated, features = top10$gene, group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_group.by.png")),
-							plot = heatmap, width = 10, height = 12, dpi = 300)
-
-
-
-
-
-# Create the heatmap
-heatmap <- DoHeatmap(so.integrated, features = top10$gene) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.25.png")),
-							plot = heatmap, width = 10, height = 12, dpi = 300)
-
-# Set the new order
-new_order <- c("15", "16", "1", "9", "14", "3", "6", "7", "13", "11", "4", "5", "8", "12", "10", "2", "0")
-new_cluster_order <- rev(new_order)
-so.integrated <- SetIdent(so.integrated, value = factor(Idents(so.integrated), levels = new_cluster_order))
-
-# Create the heatmap
-heatmap <- DoHeatmap(so.integrated, features = top10$gene) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_new_order.png")),
-							plot = heatmap, width = 10, height = 12, dpi = 300)
-
-
-
-
-
-
-
-
-# Find markers for every cluster compared to all remaining cells, report only the positive ones
-markers <- FindAllMarkers(so.integrated, logfc.threshold = 0.25, test.use = "roc", only.pos = TRUE)
-markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1)
-
-markers.cluster0 <- FindMarkers(so.integrated, ident.1 = 0, logfc.threshold = 0.25, test.use = "roc", only.pos = TRUE)
-
-
-# -----------------------------------------------------------------------------
-# Monocle
-# -----------------------------------------------------------------------------
-library(Monocle3)  # Ensure Monocle 3 is installed
-
-# Checking for a valid number of clusters in Seurat object
-num_clusters <- length(unique(Idents(so.integrated)))
-assertthat::assert_that(num_clusters > 0)
-
-# Extract necessary components from Seurat object
-expression_data <- GetAssayData(so.integrated, slot = "counts")
-cell_metadata <- so.integrated@meta.data
-gene_metadata <- data.frame(gene_short_name = rownames(expression_data), row.names = rownames(expression_data))
-
-# Create Monocle 3 cell_data_set
-cds <- new_cell_data_set(expression_data,
-																									cell_metadata = cell_metadata,
-																									gene_metadata = gene_metadata)
-
-# Preprocess the Data in Monocle 3
-cds <- preprocess_cds(cds, num_dim = 20)
-cds <- reduce_dimension(cds)
-
-# Cluster the cells (this step might be optional depending on your use case)
-cds <- cluster_cells(cds)
-cds <- learn_graph(cds)
-cds <- order_cells(cds)
-
-# Plot cells colored by pseudotime
-pseudotimeplot <- plot_cells(cds, color_cells_by = "pseudotime",
-											label_groups_by_cluster = FALSE,
-											label_leaves = FALSE,
-											label_branch_points = FALSE)
-
-ggsave(filename = file.path(wd.de.plots, paste0("Monocle3_pseudotime_SCT_", nfeatures, "_UMAP_resolution=0.25.png")),
-							plot = pseudotimeplot, width = 10, height = 8, dpi = 300)
-
-# -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
-library(AUCell)
-
-# Assuming 'seurat_object' is your Seurat object
-expression_matrix <- GetAssayData(so.integrated, assay = "SCT", layer = "data")
-
-
-library(SingleR)
-
-vignette("ExperimentHub", package = "ExperimentHub")
-reference_dataset <- celldex::HumanPrimaryCellAtlasData()  # Example reference
-
-annotations <- SingleR(test = so.integrated@assays$SCT@data, ref = reference_dataset, labels = reference_dataset$label.main)
-

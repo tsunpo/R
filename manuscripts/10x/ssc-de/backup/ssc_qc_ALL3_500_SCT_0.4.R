@@ -149,12 +149,12 @@ save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_fi
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
-so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.4)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25")
+file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4")
 	
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE)
@@ -188,9 +188,8 @@ dev.off()
 # DotPlot (resolution = 0.25)
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
-
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
 
 genes_of_interest <- c("AMH", "WT1", "CD34", "CD163", "CSF1R", "CYP1B1", "ACTA2", "MYH11", "DLK1", "INHBA", "UTF1", "EGR4", "PIWIL4", "TSPAN33", "FGFR3", "NANOS2", "NANOS3", "GFRA1", "DMRT1", "MAGEA4", "KIT", "MKI67", "DPEP3", "GINS2", "MEIOB", "SCML1", "SYCP2", "SYCP3", "TEX101", "SPO11", "STRA8", "MEIOSIN", "SPATA8", "OVOL2", "CLDND2", "FAM24A", "SPACA1", "CCDC168", "SIRT2", "TEX29", "HOOK1", "PRM1", "PRM2")
 
@@ -199,16 +198,7 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25.pdf")), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-DefaultAssay(so.integrated) <- "RNA"
-dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_RNA_dims=", prin_comp, "_resolution=0.25.pdf")), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Bush_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4.pdf")), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
@@ -216,7 +206,7 @@ dev.off()
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
 DefaultAssay(so.integrated) <- "SCT"
 
-new_order <- c("15", "16", "1", "9", "14", "3", "6", "7", "13", "11", "4", "5", "8", "12", "10", "2", "0")
+new_order <- c("1", "19", "17", "6", "18", "3", "14", "9", "13", "8", "16", "7", "12", "4", "5", "10", "11", "15", "2", "0")
 Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
 dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
@@ -224,7 +214,7 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Bush_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered.pdf")), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
@@ -264,10 +254,9 @@ ggsave(file.path(wd.de.plots, paste0("SCT_", nfeatures, "_UMAP_dims=14_resolutio
 # -----------------------------------------------------------------------------
 # Di Persio et al; DotPlot (resolution = 0.25)
 # -----------------------------------------------------------------------------
-nfeatures <- 5000
-
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
+#nfeatures <- 5000
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
 genes_of_interest <- c("DDX4", "MAGEA4", "DMRT1", "SOX4", "ID4", "FGFR3", "TCF3", "GFRA1", "NANOS2", "KIT", "MKI67", "NANOS3", "STRA8", "SYCP1", "SYCP3", "MLH3", "SPO11", "MEIOB", "SCML1", "TEX19", "DPH7", "DMC1", "LY6K", "SELENOT", "TDRG1", "PIWIL1", "POU5F2", "OVOL2", "CCDC112", "AURKA", "CCNA1", "C9orf116", "SLC26A3", "SIRPG", "TEX29", "TNP1", "PRM2", "PRM1", "VIM", "CITED1", "SOX9", "FATE1", "HSD17B3", "STAR", "INSL3", "CLEC3B", "CFD", "MYH11", "ACTA2", "PECAM1", "VWF", "CD68", "LYZ", "C1QA", "CD14")
 
@@ -276,7 +265,7 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4.pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
@@ -284,7 +273,7 @@ dev.off()
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
 DefaultAssay(so.integrated) <- "SCT"
 
-new_order <- c("16", "1", "14", "9", "15", "3", "6", "7", "13", "11", "4", "5", "8", "12", "10", "2", "0")
+new_order <- c("1", "19", "17", "6", "18", "3", "14", "9", "13", "8", "16", "7", "12", "4", "5", "10", "11", "15", "2", "0")
 new_order <- rev(new_order)
 Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
@@ -293,7 +282,7 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
   scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered.pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 

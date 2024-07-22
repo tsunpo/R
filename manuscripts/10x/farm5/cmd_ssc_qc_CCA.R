@@ -32,8 +32,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_500")
-wd.de.plots <- file.path(wd.de, "plots_500")
+wd.de.data  <- file.path(wd.de, "data")
+wd.de.plots <- file.path(wd.de, "plots")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -50,7 +50,7 @@ library(patchwork)
 library(ggplot2)
 #library(sctransform)
 
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",      "ssc_filtered_normalised.RData"))
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data",      "ssc_filtered_normalised.RData"))
 #load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1.RData"))
 #load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2.RData"))
 
@@ -153,7 +153,7 @@ so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
 save(filtered, normalised, samples0, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
 ##
-file.name <- paste0("CCA_", nfeatures, "UMAP_dims=", prin_comp, "_resolution=0.25")
+file.name <- paste0("CCA_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE)
