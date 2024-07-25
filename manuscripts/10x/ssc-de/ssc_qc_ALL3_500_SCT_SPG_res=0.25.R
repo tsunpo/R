@@ -3,13 +3,13 @@
 # Chapter      :
 # Name         : 
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 14/03/24
+# Last Modified: 25/07/24
 # =============================================================================
-wd.src <- "/nfs/users/nfs_t/ty2/dev/R"            ## ty2@farm
+wd.src <- "/nfs/users/nfs_t/ty2/dev/R"            ## ty2@farm22
 #wd.src <- "/Users/ty2/Work/dev/R"                ## ty2@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Commons.R", "Graphics.R")
+handbooks  <- c("Commons.R", "Graphics.R", "SingleCellTranscriptomics.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -18,7 +18,7 @@ load(file.path(wd.src.ref, "hg38.RData"))
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## ty2@farm
+wd <- "/lustre/scratch127/casm/team294rr/ty2"    ## ty2@farm22
 #wd <- "/Users/ty2/Work/sanger/ty2"              ## ty2@localhost
 BASE <- "SSC"
 base <- tolower(BASE)
@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500_SSC_notSCT")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SSC_notSCT")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_SPG")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SPG")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -44,14 +44,18 @@ library(dplyr)
 library(Seurat)
 library(patchwork)
 library(ggplot2)
-#library(sctransform)
+library(sctransform)
+library(monocle3)
+library(pheatmap)
 
 # -----------------------------------------------------------------------------
 # To identify six SPG states
 # -----------------------------------------------------------------------------
+nfeatures <- 5000
+
 wd.de.data0 <- "/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL3_500"
-#load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_5000.RData")))
-load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_5000.RData")))
+#load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
 # i.e. retain only cells of states 0-4 (predominantly spermatogonial stem cells to differentiating spermatogonia, although the trajectory ends with some primary spermatocytes)
 #so.integrated <- subset(so.integrated, (seurat_clusters == 0 | seurat_clusters == 2 | seurat_clusters == 10))
@@ -79,7 +83,7 @@ so.integrated <- subset(so.integrated, cells = rownames(metadata[metadata$sample
 ssc <- as.data.frame(table(so.integrated@meta.data$sample.id))
 write.table(ssc, file=file.path(wd.de.data, "ssc_samples_>100.txt"), row.names=T, col.names=T, quote=F, sep='\t')
 
-save(so.integrated, ssc, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_5000_SSC_>100.RData"))
+save(so.integrated, ssc, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_5000_SSC_>100.RData"))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -88,7 +92,7 @@ save(so.integrated, ssc, file=file.path(wd.de.data, "ssc_filtered_normalised_int
 # -----------------------------------------------------------------------------
 so.integrated <- RunPCA(so.integrated, verbose = F)
 
-pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", 5000, ".pdf")))
+pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, ".pdf")))
 options(repr.plot.width=9, repr.plot.height=6)
 ElbowPlot(so.integrated, ndims = 50)
 dev.off()
@@ -113,11 +117,54 @@ resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", 5000, ".RData")))
+save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", 5000, ".RData")))
+
+# -----------------------------------------------------------------------------
+# Methods: Monocle 3
+# Last Modified: 25/07/24
+# -----------------------------------------------------------------------------
+cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
+
+# Cluster cells in Monocle 3 using UMAP embeddings
+cds <- cluster_cells(cds, reduction_method = "UMAP")
+# Perform trajectory analysis using precomputed UMAP
+cds <- learn_graph(cds, use_partition = F)
+# Order cells in pseudotime
+cds <- order_cells(cds)
+
+# Optionally, plot cells colored by Seurat clusters
+monocle3 <- plot_cells(cds, color_cells_by = "cluster",
+																							label_cell_groups=FALSE,
+																							label_leaves=FALSE,
+																							label_branch_points=FALSE,
+																							graph_label_size=1.5)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_res=0.25.png")), plot = monocle3, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Define resolution
+# Last Modified: 25/07/24
+# -----------------------------------------------------------------------------
+resolution.range <- seq(from = 0.25, to = 0.5, by = 0.05)
+
+for (r in 1:length(resolution.range)) {
+	  res <- resolution.range[r]
+	  resolution_name <- paste0("integrated_snn_res.", res)
+	  Idents(so.integrated) <- so.integrated[[resolution_name]][[1]]
+	
+	  ##
+	  file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_res=", res)
+	  pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
+	  DimPlot(so.integrated, label = TRUE)
+	  dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 25/07/24
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", 5000, ".RData")))
 
 # Find neighbors and clusters
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", 5000, ".RData")))
-
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
@@ -159,7 +206,7 @@ dev.off()
 # -----------------------------------------------------------------------------
 #nfeatures <- 5000
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, ".RData")))
 
 genes_of_interest <- c("TAF6", "ST3GAL4", "SH2B2", "MSL3", "PHGDH", "C19orf84", "LIN7B", "FSD1", "TSPAN33", "EGR4", "PIWIL4", "CELF4", "UTF1", "FGFR3", "A2M", "ENO3", "SERPINE2", "SRRT", "BAG6", "DND1", "PELP1", "NANOS2", "C1QBP", "NANOS3", "GFRA2", "GFRA1", "ID2", "ASB9", "L1TD1", "ID4", "MKI67", "PDPN", "KIT", "DMRT1", "DNMT1", "CALR", "SYCP3", "STRA8")
 
@@ -221,46 +268,22 @@ ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=",
 # -----------------------------------------------------------------------------
 library(monocle3)
 
-# Extract SCT data
-data <- as(as.matrix(so.integrated@assays$integrated@data), "sparseMatrix")
-
-# Extract cell metadata
-cell_metadata <- so.integrated@meta.data
-
-# Ensure cell_metadata matches the filtered cells
-cell_metadata <- cell_metadata[colnames(data), ]
-
-# Create the gene annotation
-gene_annotation <- data.frame(gene_short_name = rownames(data))
-rownames(gene_annotation) <- rownames(data)
-
-# Create the Monocle 3 Cell Data Set (CDS)
-cds <- new_cell_data_set(data,
-																									cell_metadata = cell_metadata,
-																									gene_metadata = gene_annotation)
-
-# Extract UMAP embeddings from Seurat
-umap_embeddings <- Embeddings(so.integrated, reduction = "umap")
-
-# Add UMAP embeddings to Monocle 3 object
-reducedDims(cds)$UMAP <- umap_embeddings
+cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
 
 # Cluster cells in Monocle 3 using UMAP embeddings
 cds <- cluster_cells(cds, reduction_method = "UMAP")
-
 # Perform trajectory analysis using precomputed UMAP
-cds <- learn_graph(cds, use_partition = F)
-
+cds <- learn_graph(cds, use_partition = T)
 # Order cells in pseudotime
 cds <- order_cells(cds)
 
 # Optionally, plot cells colored by Seurat clusters
-p1 <- plot_cells(cds, color_cells_by = "cluster",
+monocle3 <- plot_cells(cds, color_cells_by = "cluster",
 																	label_cell_groups=FALSE,
 																	label_leaves=FALSE,
 																	label_branch_points=FALSE,
 																	graph_label_size=1.5)
-ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25_use_partition=F.png")), plot = p1, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25_use_partition.png")), plot = monocle3, dpi = 300)
 
 # -----------------------------------------------------------------------------
 # 
@@ -587,42 +610,17 @@ for (i in seq_along(bar_charts)) {
 # -----------------------------------------------------------------------------
 library("pheatmap")
 
-# Create a list of gene sets for each cluster
-gene_sets <- markers %>% 
-	  group_by(cluster) %>% 
-	  summarise(genes = list(gene))
-
-# Compute Jaccard index for each pair of clusters
-jaccard_index <- function(set1, set2) {
-	  intersection <- length(intersect(set1, set2))
-	  union <- length(union(set1, set2))
-	  return(intersection / union)
-}
-
-# Create a matrix to store Jaccard indices
-n_clusters <- length(unique(markers$cluster))
-jaccard_matrix <- matrix(0, n_clusters, n_clusters, dimnames = list(unique(markers$cluster), unique(markers$cluster)))
-
-for (i in 1:n_clusters) {
-	  for (j in 1:n_clusters) {
-		    if (i != j) {
-			      jaccard_matrix[i, j] <- jaccard_index(gene_sets$genes[[i]], gene_sets$genes[[j]])
-		    }
-	  }
-}
-
+getJaccardIndex(markers)
 # Visualize the Jaccard index matrix
 pheatmap_plot <- pheatmap(jaccard_matrix, main = "Jaccard Index Between Clusters", angle_col = 0)
 
 # Save the plot as a PNG file
-png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT.png"), width = 7, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT_res=0.5.png"), width = 7, height = 7, units = "in", res = 300)
 print(pheatmap_plot)
 dev.off()
 
-# Save the plot as a PDF file
-pdf(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT.pdf"), width = 7, height = 7)
-print(pheatmap_plot)
-dev.off()
+
+
 
 
 

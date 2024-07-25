@@ -69,7 +69,7 @@ so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
-anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features)
+anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:20)
 # Error in FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT",  : 
 # 	Max dimension too large: objects 8 contain fewer than 20 cells. 
 #		Please specify a maximum dimensions that is less than the number of cells in any object (19).
@@ -82,7 +82,7 @@ anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = 
 #   number of items to replace is not a multiple of replacement length
 rm(so.integrated)
 full_gene_list <- Reduce(intersect, lapply(so.list, rownames))
-so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", features.to.integrate = full_gene_list)
+so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", features.to.integrate = full_gene_list, dims = 1:20, k.weight = 90)
 
 save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, ".RData")))
 

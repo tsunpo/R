@@ -3,13 +3,13 @@
 # Chapter      :
 # Name         : 
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 14/03/24
+# Last Modified: 25/07/24; 14/03/24
 # =============================================================================
 wd.src <- "/nfs/users/nfs_t/ty2/dev/R"            ## ty2@farm
 #wd.src <- "/Users/ty2/Work/dev/R"                ## ty2@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
-handbooks  <- c("Commons.R", "Graphics.R")
+handbooks  <- c("Commons.R", "Graphics.R", "SingleCellTranscriptomics.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -60,6 +60,8 @@ samples0.filtered <- rbind(samples0.filtered, samples0.2)
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
 # -----------------------------------------------------------------------------
+nfeatures <- 5000
+
 ## Normalize datasets individually by SCTransform(), instead of NormalizeData() prior to integration
 so.list <- lapply(X = so.list, FUN = SCTransform)
 
@@ -113,7 +115,6 @@ save(samples0.filtered, so.integrated, ids, ages, n2s, batches, file=file.path(w
 # 02_UMAP
 # https://satijalab.org/seurat/articles/multimodal_vignette
 # -----------------------------------------------------------------------------
-nfeatures <- 5000
 so.integrated <- RunPCA(so.integrated, verbose = F)
 
 pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, ".pdf")))
@@ -141,18 +142,21 @@ resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", nfeatures, ".RData")))
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
 
 # -----------------------------------------------------------------------------
 # Methods: Monocle 3
 # Last Modified: 25/07/24
 # -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
+
 cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
 
 # Cluster cells in Monocle 3 using UMAP embeddings
 cds <- cluster_cells(cds, reduction_method = "UMAP")
 # Perform trajectory analysis using precomputed UMAP
-cds <- learn_graph(cds, use_partition = T)
+cds <- learn_graph(cds, use_partition = F)
 # Order cells in pseudotime
 cds <- order_cells(cds)
 
@@ -162,25 +166,26 @@ monocle3 <- plot_cells(cds, color_cells_by = "cluster",
 																      	label_leaves=FALSE,
 																	      label_branch_points=FALSE,
 																	      graph_label_size=1.5)
-ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25_use_partition.png")), plot = monocle3, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_partition.png")), plot = monocle3, dpi = 300)
 
+# -----------------------------------------------------------------------------
+# Define resolution
+# Last Modified: 25/07/24
+# -----------------------------------------------------------------------------
+resolution.range <- seq(from = 0.25, to = 0.5, by = 0.05)
 
-
-
-# Find neighbors and clusters
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-
-so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
-so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.3)
-so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_", nfeatures, ".RData")))
-
-##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.3")
-	
-pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
-DimPlot(so.integrated, label = TRUE)
-dev.off()
+for (r in 1:length(resolution.range)) {
+	  res <- resolution.range[r]
+	  resolution_name <- paste0("integrated_snn_res.", res)
+	  Idents(so.integrated) <- so.integrated[[resolution_name]]
+	  
+	  ##
+	  file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_res=", res)
+	  
+	  pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
+	  DimPlot(so.integrated, label = TRUE)
+	  dev.off()
+}
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, "_SampleID.pdf")))
 tplot = DimPlot(so.integrated, reduction = "umap", group.by="sample.id")
@@ -205,6 +210,16 @@ tplot = DimPlot(so.integrated, reduction = "umap", group.by="batch")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
+
+
+
+	
+
+so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.3)
+so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_", nfeatures, ".RData")))
+
 
 # -----------------------------------------------------------------------------
 # DotPlot (resolution = 0.25)
