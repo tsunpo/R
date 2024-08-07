@@ -32,8 +32,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500")
+wd.de.data  <- file.path(wd.de, "data")
+wd.de.plots <- file.path(wd.de, "plots")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -50,14 +50,14 @@ library(patchwork)
 library(ggplot2)
 library(sctransform)
 
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",      "ssc_filtered_normalised.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2.RData"))
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data",      "ssc_filtered_normalised.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2.RData"))
 
-so.list <- c(so.list, so.list.1, so.list.2)
-ids <- c(ids, ids.1, ids.2)
-samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
-samples0.filtered <- rbind(samples0.filtered, samples0.2)
+#so.list <- c(so.list, so.list.1, so.list.2)
+#ids <- c(ids, ids.1, ids.2)
+#samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
+#samples0.filtered <- rbind(samples0.filtered, samples0.2)
 
 # -----------------------------------------------------------------------------
 # Performing integration on datasets normalized with SCTransform
@@ -131,30 +131,30 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".txt")),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
+write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_3000.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
 save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
 # so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
-resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
+resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", nfeatures, ".RData")))
 
 # Find neighbors and clusters
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
-so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.5)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.45_", nfeatures, ".RData")))
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.45")
+file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25")
 	
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE)
@@ -183,53 +183,3 @@ tplot = DimPlot(so.integrated, reduction = "umap", group.by="batch")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
-
-# -----------------------------------------------------------------------------
-# Di Persio et al; DotPlot (resolution = 0.5)
-# -----------------------------------------------------------------------------
-#nfeatures <- 5000
-
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, ".RData")))
-
-genes_of_interest <- c("DDX4", "MAGEA4", "DMRT1", "SOX4", "ID4", "FGFR3", "TCF3", "GFRA1", "NANOS2", "KIT", "MKI67", "NANOS3", "STRA8", "SYCP1", "SYCP3", "MLH3", "SPO11", "MEIOB", "SCML1", "TEX19", "DPH7", "DMC1", "LY6K", "SELENOT", "TDRG1", "PIWIL1", "POU5F2", "OVOL2", "CCDC112", "AURKA", "CCNA1", "C9orf116", "SLC26A3", "SIRPG", "TEX29", "TNP1", "PRM2", "PRM1", "VIM", "CITED1", "SOX9", "FATE1", "HSD17B3", "STAR", "INSL3", "CLEC3B", "CFD", "MYH11", "ACTA2", "PECAM1", "VWF", "CD68", "LYZ", "C1QA", "CD14")
-
-DefaultAssay(so.integrated) <- "SCT"
-dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.45.pdf")), width = 14, height = 5)
-print(dot_plot)
-dev.off()
-
-# -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
-DefaultAssay(so.integrated) <- "RNA"
-
-so.integrated <- JoinLayers(so.integrated, assay = DefaultAssay(so.integrated))
-#names(so.integrated[[DefaultAssay(so.integrated)]]@data)
-
-# Find markers for every cluster compared to all remaining cells, report only the positive ones
-markers <- FindAllMarkers(so.integrated, only.pos = TRUE)
-markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1)
-
-# DoHeatmap() generates an expression heatmap for given cells and features.
-# In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
-top10 <- markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1) %>%
-	  slice_head(n = 10) %>%
-	  ungroup()
-#missing_genes <- setdiff(top10$gene, rownames(so.integrated))
-
-# Re-scale the data including all genes in top10$gene
-so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
-
-# Create the heatmap
-heatmap <- DoHeatmap(so.integrated, features = top10$gene, group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.45_group.by.png")),
-							plot = heatmap, width = 10, height = 12, dpi = 300)

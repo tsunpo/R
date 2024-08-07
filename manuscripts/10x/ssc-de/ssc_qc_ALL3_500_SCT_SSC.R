@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500_SSC_notSCT")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SSC_notSCT")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_SPG")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SPG")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -215,6 +215,74 @@ dev.off()
 ##
 dim_plot <- DimPlot(so.integrated, label = TRUE)
 ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Sampke ID
+# -----------------------------------------------------------------------------
+# Extract sample IDs and cluster identities
+sample_cluster_data <- FetchData(so.integrated, vars = c("sample.id", "seurat_clusters"))
+
+# Calculate the number of cells in each cluster
+total_cells_per_cluster <- sample_cluster_data %>%
+	group_by(seurat_clusters) %>%
+	summarize(total_cells = n())
+
+# Calculate the number of cells for each sample ID within each cluster
+cells_per_sample_per_cluster <- sample_cluster_data %>%
+	group_by(seurat_clusters, sample.id) %>%
+	summarize(cells = n())
+
+# Merge the data frames to calculate proportions
+proportion_data <- merge(cells_per_sample_per_cluster, total_cells_per_cluster, by = "seurat_clusters")
+
+# Calculate the proportion of each sample ID within each cluster
+proportion_data <- proportion_data %>%
+	mutate(proportion = cells / total_cells) %>%
+	select(seurat_clusters, sample.id, proportion)
+
+# Rename columns for clarity
+colnames(proportion_data) <- c("Cluster", "Sample_ID", "Proportion")
+
+# Calculate the proportion of PD40746e_M2 in each cluster
+pd40746e_m2_proportion <- proportion_data %>%
+	filter(Sample_ID == "PD40746e_M2") %>%
+	arrange(desc(Proportion)) %>%
+	pull(Cluster)
+
+# Set factor levels for Cluster based on the proportion of PD40746e_M2
+proportion_data$Cluster <- factor(proportion_data$Cluster, levels = pd40746e_m2_proportion)
+
+# Create a vector of unique sample IDs
+unique_samples <- unique(proportion_data$Sample_ID)
+
+# Create a vector of random colors
+set.seed(42)  # For reproducibility
+random_colors <- grDevices::colors()[sample(1:length(grDevices::colors()), length(unique_samples))]
+
+# Create a named vector of colors, assigning specific colors to the highlighted samples
+color_vector <- setNames(random_colors, unique_samples)
+color_vector["PD40746e_M2"] <- "red"
+color_vector["PD40746e_M1"] <- "pink"
+color_vector["AMSBIO"] <- "yellow"
+
+# Assign colors to the data
+proportion_data$color <- color_vector[proportion_data$Sample_ID]
+
+# Create a stacked bar chart with custom colors
+bar_chart <- ggplot(proportion_data, aes(x = as.factor(Cluster), y = Proportion, fill = color)) +
+	geom_bar(stat = "identity", color = "black") +  # Add border for better visibility
+	scale_fill_identity() +
+	theme_minimal() +
+	labs(title = "Proportion of Sample IDs in Each Cluster",
+						x = "Cluster",
+						y = "Proportion") +
+	theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Print the bar chart
+print(bar_chart)
+
+
+
 
 # -----------------------------------------------------------------------------
 # Monocle 3

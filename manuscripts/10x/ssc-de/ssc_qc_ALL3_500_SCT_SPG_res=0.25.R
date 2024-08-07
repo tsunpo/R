@@ -45,7 +45,6 @@ library(Seurat)
 library(patchwork)
 library(ggplot2)
 library(sctransform)
-library(monocle3)
 library(pheatmap)
 
 # -----------------------------------------------------------------------------
@@ -71,12 +70,12 @@ cell_counts <- metadata %>%
 	  summarise(cell_count = n()) %>%
 	  ungroup()
 
-# Filter samples with more than 1000 cells
+# Filter samples with more than 100 cells
 samples_to_keep <- cell_counts %>%
 	  filter(cell_count > 100) %>%
 	  pull(sample.id)
 
-# Subset the Seurat object to keep only the samples with more than 1000 cells
+# Subset the Seurat object to keep only the samples with more than 100 cells
 so.integrated <- subset(so.integrated, cells = rownames(metadata[metadata$sample.id %in% samples_to_keep, ]))
 
 # Check the result
@@ -206,7 +205,7 @@ dev.off()
 # -----------------------------------------------------------------------------
 #nfeatures <- 5000
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
 genes_of_interest <- c("TAF6", "ST3GAL4", "SH2B2", "MSL3", "PHGDH", "C19orf84", "LIN7B", "FSD1", "TSPAN33", "EGR4", "PIWIL4", "CELF4", "UTF1", "FGFR3", "A2M", "ENO3", "SERPINE2", "SRRT", "BAG6", "DND1", "PELP1", "NANOS2", "C1QBP", "NANOS3", "GFRA2", "GFRA1", "ID2", "ASB9", "L1TD1", "ID4", "MKI67", "PDPN", "KIT", "DMRT1", "DNMT1", "CALR", "SYCP3", "STRA8")
 
@@ -266,8 +265,6 @@ ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=",
 # -----------------------------------------------------------------------------
 # Monocle 3
 # -----------------------------------------------------------------------------
-library(monocle3)
-
 cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
 
 # Cluster cells in Monocle 3 using UMAP embeddings
@@ -350,34 +347,106 @@ ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nf
 							plot = heatmap, width = 15, height = 15, dpi = 300)
 
 # -----------------------------------------------------------------------------
-# SingleR
+# QC
 # -----------------------------------------------------------------------------
-library(SingleR)
-library(celldex)
+# Part 1: Generate the Box Plot for Read Counts
+# Extract the number of reads (nCount_RNA) and cluster identities
+read_counts <- get_cluster_factor_levels(so.integrated, "nCount_RNA")
+box_plot_reads <- get_box_plot(read_counts, "Read counts", "Number")
 
-# Load the Human Primary Cell Atlas data
-hpca <- celldex::HumanPrimaryCellAtlasData()
+# Part 2: Generate the Box Plot for Global Expression Levels
+# Extract the total expression level (sum of counts) and cluster identities
+expression_data <- get_cluster_factor_levels(so.integrated, "nFeature_RNA")
+box_plot_expression <- get_box_plot(expression_data, "Global expression levels", "Expression")
 
-# Extract the normalized data matrix from Seurat object
-data_matrix <- GetAssayData(so.integrated, slot = "data")
+# Part 3: Generate the Box Plot for Mitochondrial Contents
+# Extract the mitochondrial gene percentage  (percent.mt) and cluster identities
+mt_data <- get_cluster_factor_levels(so.integrated, "percent.mt")
+box_plot_mt <- get_box_plot(mt_data, "Mitochondrial contents", "Percentage")
 
-# Run SingleR
-singleR_results <- SingleR(test = data_matrix, ref = hpca, labels = hpca$label.main, clusters = Idents(so.integrated))
+# Part 4: Combine the Plots
+combined_plot <- box_plot_reads / box_plot_expression / box_plot_mt
 
-# Add SingleR annotations to metadata
-so.integrated$SingleR_labels <- singleR_results$labels[as.character(Idents(so.integrated))]
+# Print the combined plot
+print(combined_plot)
 
-# Set cell type as the default identity class
-Idents(so.integrated) <- so.integrated$SingleR_labels
+# -----------------------------------------------------------------------------
+# Sampke ID
+# -----------------------------------------------------------------------------
+# Extract sample IDs and cluster identities
+sample_cluster_data <- FetchData(so.integrated, vars = c("sample.id", "seurat_clusters"))
 
-# Visualize clusters with cell type annotations
-DefaultAssay(so.integrated) <- "SCT"
+# Calculate the number of cells in each cluster
+total_cells_per_cluster <- sample_cluster_data %>%
+	group_by(seurat_clusters) %>%
+	summarize(total_cells = n())
 
-plot <- DimPlot(so.integrated, group.by = "SingleR_labels", label = TRUE, repel = TRUE)
+# Calculate the number of cells for each sample ID within each cluster
+cells_per_sample_per_cluster <- sample_cluster_data %>%
+	group_by(seurat_clusters, sample.id) %>%
+	summarize(cells = n())
 
-pdf(file = file.path(wd.de.plots, paste0("SingleR_DimPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")))
-print(plot)
-dev.off()
+# Merge the data frames to calculate proportions
+proportion_data <- merge(cells_per_sample_per_cluster, total_cells_per_cluster, by = "seurat_clusters")
+
+# Calculate the proportion of each sample ID within each cluster
+proportion_data <- proportion_data %>%
+	mutate(proportion = cells / total_cells) %>%
+	select(seurat_clusters, sample.id, proportion)
+
+# Rename columns for clarity
+colnames(proportion_data) <- c("Cluster", "Sample_ID", "Proportion")
+
+# Calculate the proportion of PD40746e_M2 in each cluster
+pd40746e_m2_proportion <- proportion_data %>%
+	filter(Sample_ID == "PD40746e_M2") %>%
+	arrange(desc(Proportion)) %>%
+	pull(Cluster)
+
+# Set factor levels for Cluster based on the proportion of PD40746e_M2
+proportion_data$Cluster <- factor(proportion_data$Cluster, levels = pd40746e_m2_proportion)
+
+# Create a vector of unique sample IDs
+unique_samples <- unique(proportion_data$Sample_ID)
+
+# Create a vector of random colors
+set.seed(42)  # For reproducibility
+random_colors <- grDevices::colors()[sample(1:length(grDevices::colors()), length(unique_samples))]
+
+# Create a named vector of colors, assigning specific colors to the highlighted samples
+color_vector <- setNames(random_colors, unique_samples)
+color_vector["PD40746e_M2"] <- "red"
+color_vector["PD40746e_M1"] <- "pink"
+color_vector["AMSBIO"] <- "yellow"
+
+# Assign colors to the data
+proportion_data$color <- color_vector[proportion_data$Sample_ID]
+
+# Create a stacked bar chart with custom colors
+bar_chart <- ggplot(proportion_data, aes(x = as.factor(Cluster), y = Proportion, fill = color)) +
+	geom_bar(stat = "identity", color = "black") +  # Add border for better visibility
+	scale_fill_identity() +
+	theme_minimal() +
+	labs(title = "Proportion of Sample IDs in Each Cluster",
+						x = "Cluster",
+						y = "Proportion") +
+	theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Print the bar chart
+print(bar_chart)
+
+# -----------------------------------------------------------------------------
+# 
+# -----------------------------------------------------------------------------
+# Filter results to get marker genes for cluster 3
+markers_cluster6 <- markers %>% filter(cluster == 6)
+
+# View the first few rows of the marker genes for cluster 3
+head(markers_cluster6)
+
+# Optionally, save the results to a CSV file
+write.csv(markers_cluster6, file = "SPG_markers_cluster6.csv", row.names = FALSE)
+
 
 # -----------------------------------------------------------------------------
 # GSEA
@@ -387,7 +456,7 @@ library(msigdbr)
 library(dplyr)
 
 # Load MSigDB gene sets (Hallmark gene sets as an example)
-msigdb <- msigdbr(species = "Homo sapiens", category = "C5")
+msigdb <- msigdbr(species = "Homo sapiens", category = "H")
 msigdb_list <- split(msigdb$gene_symbol, msigdb$gs_name)
 
 msigdb_df <- bind_rows(
@@ -433,7 +502,7 @@ all_genes <- unique(unlist(msigdb_list))
 print(all_genes)
 
 # Filter simple_gene_list to include only genes present in simple_gene_set
-filtered_gene_list <- gene_list[names(gene_list) %in% all_genes]
+#filtered_gene_list <- gene_list[names(gene_list) %in% all_genes]
 
 # Print the filtered gene list
 #print(filtered_gene_list)
@@ -445,7 +514,7 @@ gsea_results <- lapply(clusters, run_gsea)
 names(gsea_results) <- clusters
 
 gsea_results <- gsea_results[!sapply(gsea_results, is.null)]
-save(markers, gsea_results, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers_gsea_results_C5.RData")))
+save(markers, gsea_results, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers_gsea_results_H.RData")))
 
 ## Function to plot GSEA results for a specific cluster
 #plot_gsea <- function(gsea_result, cluster) {
@@ -478,7 +547,7 @@ save(markers, gsea_results, file=file.path(wd.de.data, paste0("ssc_filtered_norm
 # }
 
 # Extract significant terms from GSEA results
-extract_significant_terms <- function(gsea_result, pvalue_cutoff = 0.001) {
+extract_significant_terms <- function(gsea_result, pvalue_cutoff = 1) {
 	  if (is.null(gsea_result)) return(NULL)
 	  result <- gsea_result@result
 	  significant_terms <- result[result$p.adjust < pvalue_cutoff, ]
@@ -492,6 +561,7 @@ significant_terms_list <- significant_terms_list[!sapply(significant_terms_list,
 # Create a matrix of p-values for significant terms
 term_names <- unique(unlist(lapply(significant_terms_list, function(x) x$Description)))
 cluster_names <- names(significant_terms_list)
+
 pvalue_matrix <- matrix(NA, nrow = length(term_names), ncol = length(cluster_names))
 rownames(pvalue_matrix) <- term_names
 colnames(pvalue_matrix) <- cluster_names
@@ -522,7 +592,7 @@ nes_matrix[is.na(nes_matrix)] <- 0
 # Generate heatmap of p-values
 ht_pvalues <- Heatmap(pvalue_matrix, 
 																						name = "p-value", 
-																						col = colorRamp2(c(0, 0.05, 1), c(red, "white", blue)), 
+																						col = colorRampPalette(c(blue, "white", red))(50),
 																						show_row_names = TRUE, 
 																						show_column_names = TRUE,
 																						cluster_rows = TRUE, 
@@ -530,25 +600,29 @@ ht_pvalues <- Heatmap(pvalue_matrix,
 																						heatmap_legend_param = list(title = "Adjusted P-Value"))
 
 # Save the heatmap to a file
-filename <- file.path(wd.de.plots, paste0("GSEA_C5_Pvalue_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, "_p<0.001.pdf"))
-pdf(file = filename, width = 10, height = 20)
+filename <- file.path(wd.de.plots, paste0("GSEA_H_Pvalue_SCT_", nfeatures, "_UMAP_resolution=0.25_p<1_test.pdf"))
+pdf(file = filename, width = 10, height = 5)
 draw(ht_pvalues)
 dev.off()
 
 # Generate heatmap of NES
 ht_nes <- Heatmap(nes_matrix, 
 																		name = "NES", 
-																		col = colorRamp2(c(-3, 0, 3), c(blue, "white", red)), 
+																		col = colorRampPalette(c(blue, "white", red))(50),
 																		show_row_names = TRUE, 
 																		show_column_names = TRUE,
 																		cluster_rows = TRUE, 
 																		cluster_columns = TRUE,
-																		heatmap_legend_param = list(title = "Normalized Enrichment Score"))
+																		heatmap_legend_param = list(title = "Normalized Enrichment Score"),
+																		column_names_gp = gpar(fontsize = 12),  # Set font size for column names
+																		column_names_rot = 0,  # Rotate column names by 45 degrees
+                  row_names_side = "left")  # Place y-axis labels on the left side
 
 # Save the NES heatmap to a file
-filename <- file.path(wd.de.plots, paste0("GSEA_C5_NES_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, "_p<0.001.pdf"))
-pdf(file = filename, width = 10, height = 20)
-draw(ht_nes)
+filename <- file.path(wd.de.plots, paste0("GSEA_H_NES_SCT_", nfeatures, "_UMAP_resolution=0.25_p<1_test.pdf"))
+pdf(file = filename, width = 10, height = 5)
+draw(ht_nes, annotation_legend_side = "right",  # Move legend to the left
+					padding = unit(c(0.5, 0.5, 0.5, 5), "cm"))
 dev.off()
 
 
@@ -608,59 +682,171 @@ for (i in seq_along(bar_charts)) {
 # -----------------------------------------------------------------------------
 # Jaccard Index for Overlap of Gene Sets
 # -----------------------------------------------------------------------------
-library("pheatmap")
-
-getJaccardIndex(markers)
+jaccard_matrix <- getJaccardIndex(markers)
 # Visualize the Jaccard index matrix
 pheatmap_plot <- pheatmap(jaccard_matrix, main = "Jaccard Index Between Clusters", angle_col = 0)
 
 # Save the plot as a PNG file
-png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT_res=0.5.png"), width = 7, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT_res=0.25.png"), width = 7, height = 7, units = "in", res = 300)
 print(pheatmap_plot)
 dev.off()
 
+# -----------------------------------------------------------------------------
+# Functional enrichment analysis (ClusterProfiler)
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers.RData")))
 
+enrich_results <- perform_clusterprofiler_enrichment(markers)
+save(enrich_results, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers_GO-BP.RData")))
 
-
-
-
-
-
-
-# Apply to all GSEA results
-significant_terms_list <- lapply(gsea_results, extract_significant_terms)
-significant_terms_list <- significant_terms_list[!sapply(significant_terms_list, is.null)]
-
-# Create a matrix of enrichment scores (NES) for significant terms
-term_names <- unique(unlist(lapply(significant_terms_list, function(x) x$Description)))
-cluster_names <- names(significant_terms_list)
-enrichment_matrix <- matrix(NA, nrow = length(term_names), ncol = length(cluster_names))
-rownames(enrichment_matrix) <- term_names
-colnames(enrichment_matrix) <- cluster_names
-
-for (i in seq_along(significant_terms_list)) {
-	  terms <- significant_terms_list[[i]]$Description
-	  nes_scores <- significant_terms_list[[i]]$NES
-	  enrichment_matrix[terms, names(significant_terms_list)[i]] <- nes_scores
+# Loop through each cluster and generate plots
+for (i in 1:length(enrich_results)) {
+	  cluster_name <- paste0("Cluster ", i-1)
+	  
+	  p <- plot_custom_barplot(enrich_results[[i]], cluster_name)
+	  if (!is.null(p)) {
+	    	pdf(file = file.path(wd.de.plots, paste0("barplot_markers_SCT_res=0.25_cluster", i-1, ".pdf")), width = 7, height = 2.5)
+		    print(p)
+		    dev.off()
+	  }
 }
 
-library(ComplexHeatmap)
-library(circlize)
+# Prepare heatmap data
+heatmap_matrix <- prepare_heatmap_data(enrich_results)
+# Create the heatmap
+p <- pheatmap(heatmap_matrix,
+														cluster_rows = TRUE,
+														cluster_cols = TRUE,
+														scale = "row",
+														annotation_legend = TRUE,
+														show_rownames = TRUE,
+														show_colnames = TRUE,
+														fontsize_row = 10,
+														fontsize_col = 10)
+pdf(file = file.path(wd.de.plots, paste0("heatmap_ClusterProfiler_markers_SCT_res=0.25.pdf")), width = 20, height = 40)
+print(p)
+dev.off()
 
-# Plot the heatmap
-p2 <- Heatmap(enrichment_matrix, 
-								name = "NES", 
-								col = colorRamp2(c(-3, 0, 3), c(blue, "white", red)), 
-								show_row_names = TRUE, 
-								show_column_names = TRUE,
-								cluster_rows = TRUE, 
-								cluster_columns = TRUE,
-								heatmap_legend_param = list(title = "Normalized Enrichment Score"))
+# Prepare p-value matrix
+pvalue_matrix <- prepare_pvalue_matrix(enrich_results)
+# Log-transform p-values for better visualization
+log_pvalue_matrix <- -log10(pvalue_matrix)
+# Create the heatmap
+p <- pheatmap(log_pvalue_matrix,
+						     			cluster_rows = TRUE,
+						     			cluster_cols = TRUE,
+														scale = "row",
+														annotation_legend = TRUE,
+														show_rownames = TRUE,
+														show_colnames = TRUE,
+														fontsize_row = 10,
+														fontsize_col = 10)
+pdf(file = file.path(wd.de.plots, paste0("heatmap_ClusterProfiler_markers_SCT_res=0.25_pvalue.pdf")), width = 20, height = 40)
+print(p)
+dev.off()
 
-pdf(file = file.path(wd.de.plots, paste0("GSEA_H_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, ".pdf")))
-draw(p2)
+# -----------------------------------------------------------------------------
+# Spearman's correlation between age and gene expression data in each cluster
+# -----------------------------------------------------------------------------
+# Set the default assay to "RNA"
+DefaultAssay(so.integrated) <- "RNA"
+# Join layers if needed
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+# Ensure age is numeric
+so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
+
+# Extract age and cluster information from the metadata
+age_cluster_data <- so.integrated@meta.data %>%
+	  select(age, seurat_clusters)
+
+# Calculate correlations for each cluster and store results
+cluster_ids <- levels(so.integrated@active.ident)
+correlation_results <- lapply(cluster_ids, calculate_spearman, age_cluster_data = age_cluster_data, so.integrated = so.integrated)
+
+# Combine results from all clusters
+all_significant_genes <- bind_rows(correlation_results, .id = "cluster")
+
+# View the results
+print(all_significant_genes)
+# Optionally, save the results to a CSV file
+write.table(all_significant_genes, file = "significant_genes_age_correlation.txt", row.names = FALSE)
+
+save(correlation_results, all_significant_genes, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_significant_genes_age_correlation.RData")))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Functional Enrichment Analysis (STRINGdb)
+# -----------------------------------------------------------------------------
+# Define your organism. Here, 9606 is the taxonomy ID for Homo sapiens.
+string_db <- STRINGdb$new(version = "11", species = 9606, score_threshold = 400, input_directory = "")
+
+# Prepare heatmap data
+heatmap_matrix <- get_heatmap_matrix(markers) 
+save(heatmap_matrix, , file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers_STRINGdb.RData")))
+
+# Create the heatmap
+p <- pheatmap(heatmap_matrix,
+														cluster_rows = TRUE,
+														cluster_cols = TRUE,
+														scale = "row",
+														annotation_legend = TRUE,
+														show_rownames = TRUE,
+														show_colnames = TRUE,
+														fontsize_row = 10,
+														fontsize_col = 10)
+pdf(file = file.path(wd.de.plots, paste0("heatmap_STRINGdb_markers_SCT_res=0.25.pdf")), width = 20, height = 40)
+print(p)
 dev.off()
 
 
-ggsave(filename = file.path(wd.de.plots, paste0("GSEA_H_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, ".png")),
-							plot = p2, dpi = 300)
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# SingleR
+# -----------------------------------------------------------------------------
+library(SingleR)
+library(celldex)
+
+# Load the Human Primary Cell Atlas data
+hpca <- celldex::HumanPrimaryCellAtlasData()
+
+# Extract the normalized data matrix from Seurat object
+data_matrix <- GetAssayData(so.integrated, slot = "data")
+
+# Run SingleR
+singleR_results <- SingleR(test = data_matrix, ref = hpca, labels = hpca$label.main, clusters = Idents(so.integrated))
+
+# Add SingleR annotations to metadata
+so.integrated$SingleR_labels <- singleR_results$labels[as.character(Idents(so.integrated))]
+
+# Set cell type as the default identity class
+Idents(so.integrated) <- so.integrated$SingleR_labels
+
+# Visualize clusters with cell type annotations
+DefaultAssay(so.integrated) <- "SCT"
+
+plot <- DimPlot(so.integrated, group.by = "SingleR_labels", label = TRUE, repel = TRUE)
+
+pdf(file = file.path(wd.de.plots, paste0("SingleR_DimPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")))
+print(plot)
+dev.off()

@@ -391,21 +391,62 @@ ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nf
 # -----------------------------------------------------------------------------
 # Part 1: Generate the Box Plot for Read Counts
 # Extract the number of reads (nCount_RNA) and cluster identities
-read_counts <- get_cluster_factor_levels(so.integrated, "nCount_RNA")
-box_plot_reads <- get_box_plot(read_counts, "Read counts", "Number")
+read_counts <- FetchData(so.integrated, vars = c("nCount_RNA", "seurat_clusters"))
+
+# Rename columns for clarity
+colnames(read_counts) <- c("read_count", "cluster")
+
+# Convert cluster to factor for ordered plotting
+read_counts$cluster <- factor(read_counts$cluster)
+
+# Calculate the median read count for each cluster
+medians_read <- read_counts %>%
+	  group_by(cluster) %>%
+	  summarize(median_read_count = median(read_count))
+
+# Reorder the cluster factor levels based on median read counts
+read_counts$cluster <- factor(read_counts$cluster, levels = medians_read$cluster[order(medians_read$median_read_count)])
+
+# Generate the box plot for read counts
+box_plot_reads <- ggplot(read_counts, aes(x = cluster, y = read_count)) +
+	  geom_boxplot() +
+	  theme_minimal() +
+	  labs(title = "Read Counts",
+			  			x = "Cluster",
+				  		y = "Number of Reads") +
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+	  						plot.title = element_text(hjust = 0.5))  # Center the title
 
 # Part 2: Generate the Box Plot for Global Expression Levels
 # Extract the total expression level (sum of counts) and cluster identities
-expression_data <- get_cluster_factor_levels(so.integrated, "nFeature_RNA")
-box_plot_expression <- get_box_plot(expression_data, "Global expression levels", "Expression")
+expression_data <- FetchData(so.integrated, vars = c("nFeature_RNA", "seurat_clusters"))
 
-# Part 3: Generate the Box Plot for Mitochondrial Contents
-# Extract the mitochondrial gene percentage  (percent.mt) and cluster identities
-mt_data <- get_cluster_factor_levels(so.integrated, "percent.mt")
-box_plot_mt <- get_box_plot(mt_data, "Mitochondrial contents", "Percentage")
+# Rename columns for clarity
+colnames(expression_data) <- c("total_expression_level", "cluster")
 
-# Part 4: Combine the Plots
-combined_plot <- box_plot_reads / box_plot_expression / box_plot_mt
+# Convert cluster to factor for ordered plotting
+expression_data$cluster <- factor(expression_data$cluster)
+
+# Calculate the median total expression level for each cluster
+medians_expression <- expression_data %>%
+	  group_by(cluster) %>%
+	  summarize(median_total_expression_level = median(total_expression_level))
+
+# Reorder the cluster factor levels based on median total expression levels
+expression_data$cluster <- factor(expression_data$cluster, levels = medians_expression$cluster[order(medians_expression$median_total_expression_level)])
+
+# Generate the box plot for global expression levels
+box_plot_expression <- ggplot(expression_data, aes(x = cluster, y = total_expression_level)) +
+	  geom_boxplot() +
+	  theme_minimal() +
+	  labs(title = "Global Expression Levels",
+			  			x = "Cluster",
+				  		y = "Total Expression Level") +
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+	  						plot.title = element_text(hjust = 0.5))  # Center the title
+
+# Part 3: Combine the Plots
+combined_plot <- box_plot_reads / box_plot_expression
 
 # Print the combined plot
 print(combined_plot)

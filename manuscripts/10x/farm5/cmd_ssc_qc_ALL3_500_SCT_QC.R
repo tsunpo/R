@@ -32,8 +32,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_500")
-wd.de.plots <- file.path(wd.de, "plots_500")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_QC")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_QC")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -50,66 +50,39 @@ library(patchwork)
 library(ggplot2)
 library(sctransform)
 
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",      "ssc_filtered_normalised.RData"))
-#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1.RData"))
-#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2.RData"))
-
-#so.list <- c(so.list, so.list.1, so.list.2)
-#ids <- c(ids, ids.1, ids.2)
-#samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
-#samples0.filtered <- rbind(samples0.filtered, samples0.2)
-
 # -----------------------------------------------------------------------------
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
 # -----------------------------------------------------------------------------
-## Normalize datasets individually by SCTransform(), instead of NormalizeData() prior to integration
-so.list <- lapply(X = so.list, FUN = SCTransform)
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_5000_-12_>0.RData"))
 
 ## As discussed further in our SCTransform vignette, we typically use 3,000 or more features for analysis downstream of sctransform.
 ## Run the PrepSCTIntegration() function prior to identifying anchors
+so.list <- SplitObject(so.integrated, split.by = "orig.ident")
+
+## Normalize datasets individually by SCTransform(), instead of NormalizeData() prior to integration
+so.list <- lapply(X = so.list, FUN = SCTransform)
+
 features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
 so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
 anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:30)
+# Error in FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT",  : 
+# 	Max dimension too large: objects 8 contain fewer than 20 cells. 
+#		Please specify a maximum dimensions that is less than the number of cells in any object (19).
+
+# Warning in irlba(A = mat3, nv = num.cc) :
+# 	You're computing too large a percentage of total singular values, use a standard svd instead.
+# Merging objects
+# Finding neighborhoods
+# Error in idx[i, ] <- res[[i]][[1]] : 
+#   number of items to replace is not a multiple of replacement length
+rm(so.integrated)
 so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:30, k.weight = 90)
 
-save(samples0.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, ".RData")))
-
-# -----------------------------------------------------------------------------
-# Perform CCA integration (Seurat 4.3.0; Running CCA)
-# https://satijalab.org/seurat/archive/v4.3/integration_introduction
-# -----------------------------------------------------------------------------
-ids <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  ids <- c(ids, rep(samples0.filtered$V3[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-ages <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  ages <- c(ages, rep(samples0.filtered$V4[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-n2s <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  n2s <- c(n2s, rep(samples0.filtered$V8[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-batches <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  batches <- c(batches, rep(samples0.filtered$V9[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-so.integrated@meta.data$sample.id <- ids
-so.integrated@meta.data$age <- ages
-so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
-so.integrated@meta.data$n2 <- n2s
-so.integrated@meta.data$batch <- batches
-head(so.integrated@meta.data)
-
-save(samples0.filtered, so.integrated, ids, ages, n2s, batches, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, ".RData")))
+save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, ".RData")))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -131,55 +104,16 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_3000.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
+write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".txt")),row.names=F, col.names=F,quote=F,sep='\t')
 save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
 # so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
-resolution.range <- seq(from = 0.25, to = 1, by = 0.05)
+resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
 save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
-
-# Find neighbors and clusters
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-
-so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
-so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
-so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
-
-##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25")
-	
-pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
-DimPlot(so.integrated, label = TRUE)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, paste0(file.name, "_SampleID.pdf")))
-tplot = DimPlot(so.integrated, reduction = "umap", group.by="sample.id")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, paste0(file.name, "_Age.pdf")))
-tplot = DimPlot(so.integrated, reduction = "umap", group.by="age")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, paste0(file.name, "_2N.pdf")))
-tplot = DimPlot(so.integrated, reduction = "umap", group.by="n2")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf(file=file.path(wd.de.plots,  paste0(file.name, "_Batch.pdf")))
-tplot = DimPlot(so.integrated, reduction = "umap", group.by="batch")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()

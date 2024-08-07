@@ -32,8 +32,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
+wd.de.data  <- file.path(wd.de, "data_500")
+wd.de.plots <- file.path(wd.de, "plots_500")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -138,23 +138,42 @@ save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
 # so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
 #load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
-resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
+resolution.range <- seq(from = 0.25, to = 1, by = 0.05)
 
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", nfeatures, ".RData")))
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
+
+# -----------------------------------------------------------------------------
+# Define resolution
+# Last Modified: 25/07/24
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
+resolution.range <- seq(from = 0.5, to = 0.6, by = 0.05)
+
+for (r in 1:length(resolution.range)) {
+	  res <- resolution.range[r]
+	  resolution_name <- paste0("integrated_snn_res.", res)
+	  Idents(so.integrated) <- so.integrated[[resolution_name]][[1]]
+	
+	  ##
+	  file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_res=", res)
+	  pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
+	  DimPlot(so.integrated, label = TRUE)
+	  dev.off()
+}
 
 # Find neighbors and clusters
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
-so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.4)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.55)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, ".RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4")
+file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.55")
 	
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE)
@@ -185,11 +204,15 @@ print(tplot)
 dev.off()
 
 # -----------------------------------------------------------------------------
-# Di Persio et al; DotPlot (resolution = 0.4)
+# Di Persio et al; DotPlot (resolution = 0.5)
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
+
+res = 0.55
+resolution_name <- paste0("integrated_snn_res.", res)
+Idents(so.integrated) <- so.integrated[[resolution_name]][[1]]
 
 genes_of_interest <- c("DDX4", "MAGEA4", "DMRT1", "SOX4", "ID4", "FGFR3", "TCF3", "GFRA1", "NANOS2", "KIT", "MKI67", "NANOS3", "STRA8", "SYCP1", "SYCP3", "MLH3", "SPO11", "MEIOB", "SCML1", "TEX19", "DPH7", "DMC1", "LY6K", "SELENOT", "TDRG1", "PIWIL1", "POU5F2", "OVOL2", "CCDC112", "AURKA", "CCNA1", "C9orf116", "SLC26A3", "SIRPG", "TEX29", "TNP1", "PRM2", "PRM1", "VIM", "CITED1", "SOX9", "FATE1", "HSD17B3", "STAR", "INSL3", "CLEC3B", "CFD", "MYH11", "ACTA2", "PECAM1", "VWF", "CD68", "LYZ", "C1QA", "CD14")
 
@@ -198,40 +221,40 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, ".pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
 # Apply this custom order
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-new_order <- c("6", "16", "14", "18", "17", "3", "13", "9", "12", "1", "0", "10", "7", "11", "8", "2", "15", "5", "4")
+new_order <- c("2", "20", "12", "23", "19", "22", "14", "21", "5", "17", "18", "8", "16", "9", "15", "1", "3", "6", "11", "10", "4", "13", "7", "0")
 new_order <- rev(new_order)
 Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
 dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered_integrated.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, "_ordered.pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
 table(Idents(so.integrated))
-cluster_to_celltype <- c('5' = 'Undiff. SPG', '15' = 'Undiff. SPG', '2' = 'Undiff. SPG',
-																									'8' = 'Diff. SPG', '11' = 'Diff. SPG',
-																									'7' = 'Leptotene',
-																									'10' = 'Zygotene', '0' = 'Zygotene',
-																									'1' = 'Pachytene', '12' = 'Pachytene',
-																									'9' = 'Diplotene',
-																									'13' = 'Meiotic division',
-																									'3' = 'Early spermatid',
-																									'17' = 'Late spermatid',
-																									'18' = 'Macrophage',
-																									'14' = 'Endothelial',
-																									'6' = 'Sertoli', '16' = 'Sertoli')
+cluster_to_celltype <- c('0' = 'Undiff. SPG', '7' = 'Undiff. SPG', '13' = 'Undiff. SPG', '4' = 'Undiff. SPG',
+																									'10' = 'Diff. SPG', '11' = 'Diff. SPG',
+																									'6' = 'Leptotene',
+																									'3' = 'Zygotene', '1' = 'Zygotene',
+																									'15' = 'Pachytene', '9' = 'Pachytene', '16' = 'Pachytene',
+																									'18' = 'Diplotene', 	'17' = 'Diplotene',
+																									'5' = 'Meiotic division',
+																									'21' = 'Early spermatid',
+																									'14' = 'Late spermatid', '22' = 'Late spermatid', '19' = 'Late spermatid',
+																									'12' = 'Endothelial',
+																									'20' = 'Leydig',
+																									'2' = 'Sertoli')
 
 # Update the identities using this mapping
 #new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
@@ -244,20 +267,20 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered_annotated_integrated.pdf")), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, "_ordered_annotated.pdf")), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 ##
 dim_plot <- DimPlot(so.integrated, label = TRUE)
-ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4_ordered_annotated_integrated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=", res, "_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
 
 # -----------------------------------------------------------------------------
 # Di Persio et al; DotPlot (resolution = 0.4; Six SPG states)
 # -----------------------------------------------------------------------------
 #nfeatures <- 5000
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, ".RData")))
 
 genes_of_interest <- c("TAF6", "ST3GAL4", "SH2B2", "MSL3", "PHGDH", "C19orf84", "LIN7B", "FSD1", "TSPAN33", "EGR4", "PIWIL4", "CELF4", "UTF1", "FGFR3", "A2M", "ENO3", "SERPINE2", "SRRT", "BAG6", "DND1", "PELP1", "NANOS2", "C1QBP", "NANOS3", "GFRA2", "GFRA1", "ID2", "ASB9", "L1TD1", "ID4", "MKI67", "PDPN", "KIT", "DMRT1", "DNMT1", "CALR", "SYCP3", "STRA8")
 
@@ -266,13 +289,13 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, ".pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
 # Apply this custom order
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-new_order <- c("6", "16", "14", "18", "17", "3", "13", "9", "12", "1", "0", "10", "7", "11", "8", "2", "15", "5", "4")
+new_order <- c("2", "20", "12", "23", "19", "22", "14", "21", "5", "17", "18", "8", "16", "9", "15", "1", "3", "6", "11", "10", "4", "13", "7", "0")
 new_order <- rev(new_order)
 Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
@@ -281,28 +304,27 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, "_ordered.pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
 table(Idents(so.integrated))
-write.table(table(Idents(so.integrated)), file=file.path(wd.de.data, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered_annotated.txt")), row.names=T, col.names=T, quote=F, sep='\t')
+write.table(table(Idents(so.integrated)), file=file.path(wd.de.data, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, "_ordered_annotated.txt")), row.names=T, col.names=T, quote=F, sep='\t')
 
-cluster_to_celltype <- c('4' = 'Stage 0',
-	                        '5' = 'Stage 0A', '15' = 'Stage 0B', '2' = 'Stage 1',
-																									'8' = 'Stage 2', '11' = 'Stage 3',
-																									'7' = 'Leptotene',
-																									'10' = 'Zygotene', '0' = 'Zygotene',
-																									'1' = 'Pachytene', '12' = 'Pachytene',
-																									'9' = 'Diplotene',
-																									'13' = 'Meiotic division',
-																									'3' = 'Early spermatid',
-																									'17' = 'Late spermatid',
-																									'18' = 'Macrophage',
-																									'14' = 'Endothelial',
-																									'6' = 'Sertoli', '16' = 'Sertoli')
+cluster_to_celltype <- c('0' = 'Stage 0', '7' = 'Stage 0A', '13' = 'Stage 0B', '4' = 'Stage 1',
+																									'10' = 'Stage 2', '11' = 'Stage 3',
+																									'6' = 'Leptotene',
+																									'3' = 'Zygotene', '1' = 'Zygotene',
+																									'15' = 'Pachytene', '9' = 'Pachytene', '16' = 'Pachytene',
+																									'18' = 'Diplotene', 	'17' = 'Diplotene',
+																									'5' = 'Meiotic division',
+																									'21' = 'Early spermatid',
+																									'14' = 'Late spermatid', '22' = 'Late spermatid', '19' = 'Late spermatid',
+																									'12' = 'Endothelial',
+																									'20' = 'Leydig',
+																									'2' = 'Sertoli')
 
 # Update the identities using this mapping
 #new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
@@ -315,13 +337,13 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered_annotated.pdf")), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_SPG_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=", res, "_ordered_annotated.pdf")), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 ##
 dim_plot <- DimPlot(so.integrated, label = TRUE)
-ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_res=", res, "_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
 
 # -----------------------------------------------------------------------------
 # 
@@ -329,7 +351,7 @@ ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dim
 # DefaultAssay(so.integrated) <- "SCT"
 # Error in UseMethod(generic = "JoinLayers", object = object) : 
 #  	no applicable method for 'JoinLayers' applied to an object of class "c('SCTAssay', 'Assay', 'KeyMixin')"
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, ".RData")))
 DefaultAssay(so.integrated) <- "RNA"
 so.integrated <- JoinLayers(so.integrated, assay = DefaultAssay(so.integrated))
 #names(so.integrated[[DefaultAssay(so.integrated)]]@data)
@@ -340,7 +362,8 @@ markers %>%
 	  group_by(cluster) %>%
 	  dplyr::filter(avg_log2FC > 1)
 
-save(so.integrated, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_markers.RData")))
+save(so.integrated, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, "_markers.RData")))
+save(markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, "_markers_markers.RData")))
 
 # DoHeatmap() generates an expression heatmap for given cells and features.
 # In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
@@ -361,29 +384,7 @@ so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
 
 # Create the heatmap
 heatmap <- DoHeatmap(so.integrated, features = top10$gene) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.4.png")),
-							plot = heatmap, width = 15, height = 15, dpi = 300)
-
-# Set the new order
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_markers.RData")))
-
-new_order <- c("6", "16", "14", "18", "17", "3", "13", "9", "12", "1", "0", "10", "7", "11", "8", "2", "15", "5", "4")
-new_cluster_order <- rev(new_order)
-so.integrated <- SetIdent(so.integrated, value = factor(Idents(so.integrated), levels = new_cluster_order))
-
-top10 <- markers %>%
-	  mutate(cluster = factor(cluster, levels = new_cluster_order)) %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1) %>%
-	  slice_head(n = 10) %>%
-	  ungroup()
-
-# Re-scale the data including all genes in top10$gene
-so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
-
-# Create the heatmap
-heatmap <- DoHeatmap(so.integrated, features = top10$gene) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.4_new_order_cluster.png")),
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.55.png")),
 							plot = heatmap, width = 15, height = 15, dpi = 300)
 
 # -----------------------------------------------------------------------------
@@ -477,14 +478,14 @@ print(bar_chart)
 # -----------------------------------------------------------------------------
 # Jaccard index for overlap of gene sets
 # -----------------------------------------------------------------------------
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_markers.RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_markers_markers.RData")))
 
 jaccard_matrix <- getJaccardIndex(markers)
 # Visualize the Jaccard index matrix
 pheatmap_plot <- pheatmap(jaccard_matrix, main = "Jaccard Index Between Clusters")
 
 # Save the plot as a PNG file
-png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT_res=0.4.png"), width = 7, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT_res=0.55.png"), width = 7, height = 7, units = "in", res = 300)
 print(pheatmap_plot)
 dev.off()
 
@@ -510,7 +511,7 @@ gsea_results <- lapply(clusters, run_gsea)
 names(gsea_results) <- clusters
 
 gsea_results <- gsea_results[!sapply(gsea_results, is.null)]
-save(markers, gsea_results, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_markers_gsea_results_H.RData")))
+save(markers, gsea_results, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, "_markers_gsea_results_H.RData")))
 
 # Apply to all GSEA results
 significant_terms_list <- lapply(gsea_results, extract_significant_terms)
@@ -547,7 +548,7 @@ ht_nes <- Heatmap(nes_matrix,
                   column_names_side = "bottom")  # Place y-axis labels on the left side
 
 # Save the NES heatmap to a file
-filename <- file.path(wd.de.plots, paste0("GSEA_H_NES_SCT_", nfeatures, "_UMAP_resolution=0.4_p<0.01.pdf"))
+filename <- file.path(wd.de.plots, paste0("GSEA_H_NES_SCT_", nfeatures, "_UMAP_resolution=0.55_p<0.01.pdf"))
 pdf(file = filename, width = 10, height = 8)
 draw(ht_nes, annotation_legend_side = "bottom",  # Move legend to the left
 					padding = unit(c(0.5, 0.5, 0.5, 0.5), "cm"))
@@ -556,7 +557,7 @@ dev.off()
 # -----------------------------------------------------------------------------
 # Spearman's correlation between age and gene expression data in each cluster
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.55_", nfeatures, ".RData")))
 
 # Set the default assay to "RNA"
 DefaultAssay(so.integrated) <- "RNA"
