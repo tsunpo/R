@@ -151,7 +151,7 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_P
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.3)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_", nfeatures, ".RData")))
+save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_", nfeatures, ".RData")))
 
 ##
 file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.3")

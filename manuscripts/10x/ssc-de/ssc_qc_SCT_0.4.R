@@ -209,8 +209,8 @@ new_order <- rev(new_order)
 Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
 dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
-	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
 pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.4_ordered_integrated.pdf")), width = 14, height = 5)
@@ -581,4 +581,23 @@ print(all_significant_genes)
 # Optionally, save the results to a CSV file
 write.table(all_significant_genes, file = "significant_genes_age_correlation_cluster.txt", row.names = FALSE)
 
+# -----------------------------------------------------------------------------
+# Matt's postitively selected genes
+# -----------------------------------------------------------------------------
+mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "PTEN", "RIT1", "ROBO1", "DDX3X", "CSNK2B", "KRAS", "FGFR3", "PPM1D", "ARID1A", "BRAF", "HRAS", "KMT2E", "EP300", "SCAF4", "BMPR2", "TCF12", "CCAR2", "DHX9", "NSD1", "LZTR1", "FGFR2", "SEMG1", "ARHGAP35", "CBL", "SSX1", "RBM12", "TRERF1", "FAT1", "FAM222B", "SMAD4", "AR", "KDM5C", "KMT2D", "CTNNB1", "RAF1")
+
+# Set the default assay to "RNA"
+DefaultAssay(so.integrated) <- "RNA"
+# Join layers if needed
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+# Ensure age is numeric
+so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
+
+# Extract age and cluster information from the metadata
+age_cluster_data <- so.integrated@meta.data %>%
+	  select(age, seurat_clusters)
+
+# Calculate correlations for each cluster and store results
+cluster_ids <- levels(so.integrated@active.ident)
+correlation_results <- lapply(cluster_ids, calculate_spearman_mn7, age_cluster_data = age_cluster_data, so.integrated = so.integrated)
 

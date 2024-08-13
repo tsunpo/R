@@ -54,7 +54,7 @@ library(sctransform)
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_5000_-12-15-17_>100.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_5000_-12-15_>100.RData"))
 
 ## As discussed further in our SCTransform vignette, we typically use 3,000 or more features for analysis downstream of sctransform.
 ## Run the PrepSCTIntegration() function prior to identifying anchors
@@ -82,7 +82,7 @@ anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = 
 rm(so.integrated)
 so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:30, k.weight = 90)
 
-save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, "_-12-15-17.RData")))
+save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, "_-12-15.RData")))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -91,7 +91,7 @@ save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_i
 # -----------------------------------------------------------------------------
 so.integrated <- RunPCA(so.integrated, verbose = F)
 
-pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, "_-12-15-17.pdf")))
+pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, "_-12-15.pdf")))
 options(repr.plot.width=9, repr.plot.height=6)
 ElbowPlot(so.integrated, ndims = 50)
 dev.off()
@@ -105,7 +105,7 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
 write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".txt")),row.names=F, col.names=F,quote=F,sep='\t')
-save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, "_-12-15-17.RData")))
+save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, "_-12-15.RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
@@ -116,7 +116,7 @@ resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, "_-12-15-17.RData")))
+save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, "_-12-15.RData")))
 
 # -----------------------------------------------------------------------------
 # Define resolution
@@ -138,14 +138,14 @@ save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_n
 	  so.integrated[["umap"]] <- CreateDimReducObject(embeddings = umap_embeddings, key = "UMAP_", assay = DefaultAssay(so.integrated))
 	
   	##
-	  file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15-17_res=", res)
+	  file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15_res=", res)
 	  pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 	  DimPlot(so.integrated, label = TRUE)
 	  dev.off()
 #}
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15-17_resolution=0.45")
+file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15_resolution=0.45")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE)

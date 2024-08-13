@@ -224,30 +224,30 @@ sample_cluster_data <- FetchData(so.integrated, vars = c("sample.id", "seurat_cl
 
 # Calculate the number of cells in each cluster
 total_cells_per_cluster <- sample_cluster_data %>%
-	group_by(seurat_clusters) %>%
-	summarize(total_cells = n())
+	  group_by(seurat_clusters) %>%
+	  summarize(total_cells = n())
 
 # Calculate the number of cells for each sample ID within each cluster
 cells_per_sample_per_cluster <- sample_cluster_data %>%
-	group_by(seurat_clusters, sample.id) %>%
-	summarize(cells = n())
+	  group_by(seurat_clusters, sample.id) %>%
+	  summarize(cells = n())
 
 # Merge the data frames to calculate proportions
 proportion_data <- merge(cells_per_sample_per_cluster, total_cells_per_cluster, by = "seurat_clusters")
 
 # Calculate the proportion of each sample ID within each cluster
 proportion_data <- proportion_data %>%
-	mutate(proportion = cells / total_cells) %>%
-	select(seurat_clusters, sample.id, proportion)
+	  mutate(proportion = cells / total_cells) %>%
+	  select(seurat_clusters, sample.id, proportion)
 
 # Rename columns for clarity
 colnames(proportion_data) <- c("Cluster", "Sample_ID", "Proportion")
 
 # Calculate the proportion of PD40746e_M2 in each cluster
 pd40746e_m2_proportion <- proportion_data %>%
-	filter(Sample_ID == "PD40746e_M2") %>%
-	arrange(desc(Proportion)) %>%
-	pull(Cluster)
+	  filter(Sample_ID == "PD40746e_M2") %>%
+	  arrange(desc(Proportion)) %>%
+	  pull(Cluster)
 
 # Set factor levels for Cluster based on the proportion of PD40746e_M2
 proportion_data$Cluster <- factor(proportion_data$Cluster, levels = pd40746e_m2_proportion)
@@ -270,16 +270,19 @@ proportion_data$color <- color_vector[proportion_data$Sample_ID]
 
 # Create a stacked bar chart with custom colors
 bar_chart <- ggplot(proportion_data, aes(x = as.factor(Cluster), y = Proportion, fill = color)) +
-	geom_bar(stat = "identity", color = "black") +  # Add border for better visibility
-	scale_fill_identity() +
-	theme_minimal() +
-	labs(title = "Proportion of Sample IDs in Each Cluster",
-						x = "Cluster",
-						y = "Proportion") +
-	theme(axis.text.x = element_text(angle = 45, hjust = 1))
+	  geom_bar(stat = "identity", color = "black") +  # Add border for better visibility
+	  scale_fill_identity() +
+	  theme_minimal() +
+	  labs(title = "Proportion of Sample IDs in Each Cluster",
+			  			x = "Cluster",
+					  	y = "Proportion") +
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Print the bar chart
 print(bar_chart)
+
+
+
 
 
 

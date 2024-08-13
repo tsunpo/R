@@ -379,7 +379,7 @@ extract_significant_terms <- function(gsea_result, pvalue_cutoff = 0.05) {
 # }
 
 # -----------------------------------------------------------------------------
-# Function to calculate Spearman's correlation between age and gene expression for each cluster
+# Spearman's correlation between age and gene expression for each cluster
 # -----------------------------------------------------------------------------
 library(ggrepel)
 
@@ -414,7 +414,7 @@ calculate_spearman <- function(cluster, age_cluster_data, so.integrated) {
  		   filter(p_adj_value < 0.05) %>%
 	  	  arrange(p_adj_value)  # Order by adjusted p-value
 	
-	  p_value_threshold <- max(rbind(subset(significant_genes, cor_coefficient >= 0.1), subset(significant_genes, cor_coefficient <= -0.1))$p_adj_value)
+	  p_value_threshold <- max(rbind(subset(significant_genes, cor_coefficient >= 0.2), subset(significant_genes, cor_coefficient <= -0.2))$p_adj_value)
  
 	  # Create a volcano plot
 	  volcano_plot <- ggplot(significant_genes, aes(x = cor_coefficient, y = -log10(p_adj_value))) +
@@ -422,7 +422,7 @@ calculate_spearman <- function(cluster, age_cluster_data, so.integrated) {
 	  																															ifelse(p_adj_value < p_value_threshold & cor_coefficient > 0, red, "grey")))) +
 	  	  scale_color_manual(values = c(blue, red, "grey")) +
 	  	  theme_minimal() +
-	  	  labs(title = paste0("Cluster ", cluster),
+	  	  labs(title = paste0("", cluster),
 	  			  			x = "Correlation Coefficient",
 	  				  		y = "-log10 Adjusted P-value") +
 	    	theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
@@ -431,28 +431,92 @@ calculate_spearman <- function(cluster, age_cluster_data, so.integrated) {
 	    	geom_text_repel(data = subset(significant_genes, p_adj_value < p_value_threshold),
 	  	  																aes(label = gene), size = 3, max.overlaps = 30)
 	  # Print the volcano plot
-	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.25_cluster", cluster, "_volcano.pdf")), width = 5, height = 5)
+	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.5_", cluster, "_volcano.pdf")), width = 5, height = 5)
 	  print(volcano_plot)
 	  dev.off()
 	  
-	  genes_pos <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient > 0)$gene
-	  genes_neg <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient < 0)$gene
-	  enrich_result_pos <- enrich_result(genes_pos)
-	  enrich_result_neg <- enrich_result(genes_neg)
+	  #genes_pos <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient > 0)$gene
+	  #genes_neg <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient < 0)$gene
+	  #enrich_result_pos <- enrich_result(genes_pos)
+	  #enrich_result_neg <- enrich_result(genes_neg)
 	  
-	  p <- plot_custom_barplot(enrich_result_pos, paste0("Cluster ", cluster, " (Up)"), col = red)
-	  if (!is.null(p)) {
-	  	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.25_cluster", cluster, "_go_pos.pdf")), width = 7, height = 2.5)
-	  	  print(p)
-	  	  dev.off()
-	  }
+	  #p <- plot_custom_barplot(enrich_result_pos, paste0("Cluster ", cluster, " (Up)"), col = red)
+	  #if (!is.null(p)) {
+	  #	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.25_cluster", cluster, "_go_pos.pdf")), width = 7, height = 2.5)
+	  #  print(p)
+	  #	  dev.off()
+	  #}
 
-	  p <- plot_custom_barplot_flip(enrich_result_neg, paste0("Cluster ", cluster, " (Down)"), col = blue)
-	  if (!is.null(p)) {
-	  	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.25_cluster", cluster, "_go_neg.pdf")), width = 7, height = 2.5)
-	  	  print(p)
-	  	  dev.off()
-	  }
+	  #p <- plot_custom_barplot_flip(enrich_result_neg, paste0("", cluster, " (Down)"), col = blue)
+	  #if (!is.null(p)) {
+	  #	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.5_", cluster, "_go_neg.pdf")), width = 7, height = 2.5)
+	  #	  print(p)
+	  #	  dev.off()
+	  #}
 	  
 	  return(significant_genes)
 }
+
+calculate_spearman_mn7 <- function(cluster, age_cluster_data, so.integrated) {
+	  # Subset the data for the specific cluster
+	  cells_in_cluster <- WhichCells(so.integrated, idents = cluster)
+	  age_data <- age_cluster_data[cells_in_cluster, "age"]
+	  gene_expression <- GetAssayData(so.integrated, assay = "RNA", slot = "data")[, cells_in_cluster]
+	
+	  # Calculate Spearman's correlation for each gene
+	  cor_results <- apply(gene_expression, 1, function(gene_expr) {
+	    	cor.test(gene_expr, age_data, method = "spearman")
+	  })
+	
+	  # Extract correlation coefficients and p-values
+	  cor_coefficients <- sapply(cor_results, function(res) res$estimate)
+	  p_values <- sapply(cor_results, function(res) res$p.value)
+	
+	  # Adjust p-values for multiple testing
+	  p_adj_values <- p.adjust(p_values, method = "BH")
+	
+	  # Create a data frame with results
+	  result_df <- data.frame(
+		    gene = rownames(gene_expression),
+	 	   cor_coefficient = cor_coefficients,
+	 	   p_value = p_values,
+	 	   p_adj_value = p_adj_values
+	  )
+	
+	  # Filter for significant correlations (e.g., p_adj_value < 0.05)
+	  significant_genes <- result_df %>%
+	    	filter(p_adj_value < 1) %>%
+		    arrange(p_adj_value)  # Order by adjusted p-value
+	
+	  p_value_threshold <- max(rbind(subset(significant_genes, cor_coefficient >= 0.1), subset(significant_genes, cor_coefficient <= -0.1))$p_adj_value)
+	
+	  significant_genes_mn7 <- subset(significant_genes, gene %in% mn7)
+	  significant_genes_mn7$color <- ifelse(significant_genes_mn7$p_adj_value < p_value_threshold & significant_genes_mn7$cor_coefficient < -0.1, blue,
+	  									ifelse(significant_genes_mn7$p_adj_value < p_value_threshold & significant_genes_mn7$cor_coefficient > 0.1, red, "grey"))
+	  
+  	# Create a volcano plot
+	  volcano_plot <- ggplot(significant_genes_mn7, aes(x = cor_coefficient, y = -log10(p_adj_value))) +
+		    geom_point(aes(color = color)) +
+	  	  scale_color_manual(values = unique(significant_genes_mn7$color)) +
+		    theme_minimal() +
+		    labs(title = paste0(cluster),
+						    	x = "Correlation Coefficient",
+							    y = "-log10 Adjusted P-value") +
+		    theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+	    	geom_vline(xintercept = 0.1, linetype = "dashed", color = red) +
+		    geom_vline(xintercept = -0.1, linetype = "dashed", color = blue) +
+		    #geom_text_repel(data = subset(significant_genes, p_adj_value < p_value_threshold),
+		    #																aes(label = gene), size = 3, max.overlaps = 30)
+		    geom_text_repel(data = subset(significant_genes_mn7, p_adj_value < 1),
+						    												aes(label = gene), size = 3, max.overlaps = 30)
+  	# Print the volcano plot
+	  pdf(file = file.path(wd.de.plots, paste0("mn7_volcano_0.1_SCT_res=0.5_", cluster, "_volcano.pdf")), width = 5, height = 5)
+	  print(volcano_plot)
+	  dev.off()
+	
+	  return(significant_genes)
+}
+
+# -----------------------------------------------------------------------------
+# Spearman's correlation between age and gene expression for each cluster
+# -----------------------------------------------------------------------------
