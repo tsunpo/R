@@ -104,7 +104,7 @@ for (s in 1:nrow(samples0.filtered)) {
 
 so.integrated@meta.data$sample.id <- ids
 so.integrated@meta.data$age <- ages
-so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
+#so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
 so.integrated@meta.data$n2 <- n2s
 so.integrated@meta.data$batch <- batches
 head(so.integrated@meta.data)
@@ -143,7 +143,7 @@ resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", nfeatures, ".RData")))
+save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", nfeatures, ".RData")))
 
 # Find neighbors and clusters
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
@@ -151,7 +151,7 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_P
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.4)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
 
 ##
 file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4")
@@ -188,7 +188,7 @@ dev.off()
 # Di Persio et al; DotPlot (resolution = 0.4)
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
 
 genes_of_interest <- c("DDX4", "MAGEA4", "DMRT1", "SOX4", "ID4", "FGFR3", "TCF3", "GFRA1", "NANOS2", "KIT", "MKI67", "NANOS3", "STRA8", "SYCP1", "SYCP3", "MLH3", "SPO11", "MEIOB", "SCML1", "TEX19", "DPH7", "DMC1", "LY6K", "SELENOT", "TDRG1", "PIWIL1", "POU5F2", "OVOL2", "CCDC112", "AURKA", "CCNA1", "C9orf116", "SLC26A3", "SIRPG", "TEX29", "TNP1", "PRM2", "PRM1", "VIM", "CITED1", "SOX9", "FATE1", "HSD17B3", "STAR", "INSL3", "CLEC3B", "CFD", "MYH11", "ACTA2", "PECAM1", "VWF", "CD68", "LYZ", "C1QA", "CD14")
@@ -300,8 +300,8 @@ cluster_to_celltype <- c('4' = 'Stage 0',
 																									'13' = 'Meiotic division',
 																									'3' = 'Early spermatid',
 																									'17' = 'Late spermatid',
-																									'18' = 'Macrophage',
-																									'14' = 'Endothelial',
+																									'18' = 'Fibrotic PMC',
+																									'14' = 'Endothelial and Macrophage',
 																									'6' = 'Sertoli', '16' = 'Sertoli')
 
 # Update the identities using this mapping
@@ -320,8 +320,10 @@ print(dot_plot)
 dev.off()
 
 ##
-dim_plot <- DimPlot(so.integrated, label = TRUE)
-ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend()
+ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4_ordered_annotated_Fibrotic PMC.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+
+save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_annotated.RData")))
 
 # -----------------------------------------------------------------------------
 # 
@@ -563,7 +565,7 @@ DefaultAssay(so.integrated) <- "RNA"
 # Join layers if needed
 so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 # Ensure age is numeric
-so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
+#so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
 
 # Extract age and cluster information from the metadata
 age_cluster_data <- so.integrated@meta.data %>%
@@ -591,7 +593,7 @@ DefaultAssay(so.integrated) <- "RNA"
 # Join layers if needed
 so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 # Ensure age is numeric
-so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
+#so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
 
 # Extract age and cluster information from the metadata
 age_cluster_data <- so.integrated@meta.data %>%
@@ -601,3 +603,35 @@ age_cluster_data <- so.integrated@meta.data %>%
 cluster_ids <- levels(so.integrated@active.ident)
 correlation_results <- lapply(cluster_ids, calculate_spearman_mn7, age_cluster_data = age_cluster_data, so.integrated = so.integrated)
 
+# -----------------------------------------------------------------------------
+# Spearman's correlation between age and gene expression data in each cluster
+# -----------------------------------------------------------------------------
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, ".RData")))
+
+# Set the default assay to "RNA"
+DefaultAssay(so.integrated) <- "RNA"
+# Join layers if needed
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+# Ensure age is numeric
+so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
+
+# Extract age and cluster information from the metadata
+age_cluster_data <- so.integrated@meta.data %>%
+	  select(age, seurat_clusters)
+
+# Define the age vector
+ages <- c(25, 37, 40, 48, 57, 60, 71)
+# Calculate the median age to use as the threshold
+age_threshold <- median(ages)
+
+# Calculate correlations for each cluster and store results
+cluster_ids <- levels(so.integrated@active.ident)
+correlation_results <- lapply(cluster_ids, calculate_spearman, age_cluster_data = age_cluster_data, so.integrated = so.integrated)
+
+# Combine results from all clusters
+all_significant_genes <- bind_rows(correlation_results, .id = "cluster")
+
+# View the results
+print(all_significant_genes)
+# Optionally, save the results to a CSV file
+write.table(all_significant_genes, file = "significant_genes_age_correlation_cluster.txt", row.names = FALSE)

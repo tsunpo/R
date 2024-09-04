@@ -57,7 +57,7 @@ load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_
 load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_", nfeatures, ".RData")))
 
 # Identify the clusters you want to keep
-clusters_to_remove <- c(12, 15, 17)
+clusters_to_remove <- c(12, 17)
 clusters_to_keep <- setdiff(unique(Idents(so.integrated)), clusters_to_remove)
 # Subset the Seurat object to exclude cluster 1
 so.integrated <- subset(so.integrated, idents = clusters_to_keep)
@@ -73,19 +73,19 @@ cell_counts <- metadata %>%
 	  summarise(cell_count = n()) %>%
 	  ungroup()
 
-# Filter samples with more than 1000 cells
+# Filter samples with more than 100 cells
 samples_to_keep <- cell_counts %>%
 	  filter(cell_count > 100) %>%
 	  pull(sample.id)
 
-# Subset the Seurat object to keep only the samples with more than 1000 cells
+# Subset the Seurat object to keep only the samples with more than 100 cells
 so.integrated <- subset(so.integrated, cells = rownames(metadata[metadata$sample.id %in% samples_to_keep, ]))
 
 # Check the result
 ssc <- as.data.frame(table(so.integrated@meta.data$sample.id))
 write.table(ssc, file=file.path(wd.de.data, "ssc_samples_-12-15-17_>100.txt"), row.names=T, col.names=T, quote=F, sep='\t')
 
-save(ssc0, ssc, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_5000_-12-15-17_>100.RData"))
+save(ssc0, ssc, so.integrated, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_5000_-12-17_>100.RData"))
 
 # -----------------------------------------------------------------------------
 # Define resolution
@@ -122,11 +122,19 @@ so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.5)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
 save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17.RData")))
 
+# Extract the UMAP embeddings
+umap_embeddings <- Embeddings(so.integrated, reduction = "umap")
+# Flip the UMAP 2 (second dimension)
+umap_embeddings[, 1] <- umap_embeddings[, 1] * -1
+umap_embeddings[, 2] <- umap_embeddings[, 2] * -1
+# Re-insert the modified embeddings back into the Seurat object
+so.integrated[["umap"]] <- CreateDimReducObject(embeddings = umap_embeddings, key = "UMAP_", assay = DefaultAssay(so.integrated))
+
 ##
 file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15-17_resolution=0.5")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
-DimPlot(so.integrated, label = TRUE)
+DimPlot(so.integrated, label = TRUE) + NoLegend()
 dev.off()
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, "_SampleID.pdf")))
@@ -382,7 +390,7 @@ dev.off()
 
 ##
 dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend()
-ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15-17_res=", res, "_ordered_annotated_NoLegend.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-15-17_res=", res, "_ordered_annotated_NoLegend_10x10.png")), plot = dim_plot, width = 10, height = 10, dpi = 300)
 
 save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
 
@@ -444,10 +452,7 @@ DefaultAssay(so.integrated) <- "RNA"
 # Join layers if needed
 so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 # Ensure age is numeric
-so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
-
-#save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_joined.RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_joined.RData")))
+#so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
 
 # Extract age and cluster information from the metadata
 age_cluster_data <- so.integrated@meta.data %>%
@@ -465,6 +470,43 @@ print(all_significant_genes)
 # Optionally, save the results to a CSV file
 write.table(all_significant_genes, file = "significant_genes_age_correlation_cluster_-12-15-17.txt", row.names = FALSE)
 
+save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_joined.RData")))
+
+# -----------------------------------------------------------------------------
+# Spearman's correlation between age and gene expression data in each cluster
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
+
+# Set the default assay to "RNA"
+DefaultAssay(so.integrated) <- "RNA"
+# Join layers if needed
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+
+mt <- c("MT-ND5", "MT-CO1", "MT-ND4L", "MT-ND2", "MT-ND4", "MT-CYB", "MT-CO3", "MT-ATP6", "MT-ND1", "AC090403.1", "MT-CO2", "MT-ND1")
+mp29 <- c("AC090403.1", "AC026116.1", "TPRG1", "AC009271.1", "LINC02074", "DANT2", "WSB1", "GNGT1", "TENT2")
+#mp29 <- c("HMGB1", "GCNT2", "KDM2A", "NKAIN2", "TPTE", "SDK1", "CACNA2D3", "FBXL20", "AGAP1", "RUNX1", "LINC01206", "LINC01508", "ANKRD30A", "ANKRD30B", "ANKRD36C", "AP000550.1")
+#mp29 <- intersect(mp29, rownames(so.integrated))
+
+# Extract the expression data for these genes
+expression_data <- GetAssayData(so.integrated, assay = "RNA", layer = "data")[mt, ]
+# Convert to a data frame and transpose for easier manipulation
+expression_data_df <- as.data.frame(t(expression_data))
+# Add batch information from metadata
+expression_data_df$batch <- so.integrated@meta.data$batch
+# Reshape the data for ggplot2
+expression_data_long <- reshape2::melt(expression_data_df, id.vars = "batch", variable.name = "gene", value.name = "expression")
+
+# Plot using ggplot2
+boxplot_expression <- ggplot(expression_data_long, aes(x = factor(batch), y = expression, fill = gene)) +
+	  geom_boxplot(fill = blue) +
+	  facet_wrap(~ gene, scales = "free_y") +  # Create a separate plot for each gene
+	  labs(title = "", x = "Batch", y = "Expression") +
+	  theme_minimal() +
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + NoLegend() 
+
+# Print the plot
+print(boxplot_expression)
+
 # -----------------------------------------------------------------------------
 # Matt's postitively selected genes
 # -----------------------------------------------------------------------------
@@ -475,7 +517,7 @@ DefaultAssay(so.integrated) <- "RNA"
 # Join layers if needed
 so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 # Ensure age is numeric
-so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
+#so.integrated@meta.data$age <- as.numeric(so.integrated@meta.data$age)
 
 # Extract age and cluster information from the metadata
 age_cluster_data <- so.integrated@meta.data %>%
@@ -485,7 +527,219 @@ age_cluster_data <- so.integrated@meta.data %>%
 cluster_ids <- levels(so.integrated@active.ident)
 correlation_results <- lapply(cluster_ids, calculate_spearman_mn7, age_cluster_data = age_cluster_data, so.integrated = so.integrated)
 
+# -----------------------------------------------------------------------------
+# 
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_joined.RData")))
+mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "PTEN", "RIT1", "ROBO1", "DDX3X", "CSNK2B", "KRAS", "FGFR3", "PPM1D", "ARID1A", "BRAF", "HRAS", "KMT2E", "EP300", "SCAF4", "BMPR2", "TCF12", "CCAR2", "DHX9", "NSD1", "LZTR1", "FGFR2", "SEMG1", "ARHGAP35", "CBL", "SSX1", "RBM12", "TRERF1", "FAT1", "FAM222B", "SMAD4", "AR", "KDM5C", "KMT2D", "CTNNB1", "RAF1")
 
+# Step 1: Re-scale the data including all genes in the dataset
+so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
+# Step 2: Extract the scaled data for the genes in mn7
+scaled_data <- GetAssayData(so.integrated, assay = "RNA", layer = "scale.data")[mn7, ]
+
+# Step 3: Calculate the average expression for each gene in each cluster
+average_expression_per_cluster <- sapply(levels(so.integrated), function(cluster) {
+	  # Ensure no NAs by filling missing values
+	  rowMeans(scaled_data[, Idents(so.integrated) == cluster, drop = FALSE], na.rm = TRUE)
+})
+
+# Step 4: Sort the genes sequentially by expression across clusters
+ordered_genes <- rownames(scaled_data)[do.call(order, as.data.frame(-average_expression_per_cluster))]
+scaled_data <- scaled_data[ordered_genes,]
+
+# Step 4: Order the genes based on their expression levels from cluster 1 to the last cluster
+# Sort each cluster's expression and then combine orders without dropping any genes
+#gene_order <- order(rowMeans(average_expression_per_cluster, na.rm = TRUE), decreasing = TRUE)
+#ordered_genes <- rownames(scaled_data)[gene_order]
+#scaled_data <- scaled_data[gene_order,]
+
+# Create the heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend() + theme(axis.text.y = element_text(size = 12))
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.5_group.by_-12-15-17_mn7_ordered_12.png")),
+							plot = heatmap, width = 15, height = 15, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Methods: Monocle 3
+# Last Modified: 30/08/24; 25/07/24
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
+# > dim(so.integrated)
+# [1] 5000 70738
+
+cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
+
+# Cluster cells in Monocle 3 using UMAP embeddings
+cds <- cluster_cells(cds, reduction_method = "UMAP")
+# Perform trajectory analysis using precomputed UMAP
+#cds <- learn_graph(cds, use_partition = F)
+# Order cells in pseudotime
+#cds <- order_cells(cds)
+
+# Identify root cells based on some known marker or cluster
+root_cells <- WhichCells(so.integrated, idents = "Stage 0")  # Replace "early_cluster_name" with your specific cluster
+# Ensure these root cells are present in `cds`
+root_cells_in_cds <- root_cells[root_cells %in% colnames(cds)]
+# Order cells using the root cells
+cds <- order_cells(cds, root_cells = root_cells_in_cds)
+
+# Optionally, plot cells colored by Seurat clusters
+monocle3 <- plot_cells(cds, color_cells_by = "pseudotime",
+																							label_cell_groups=FALSE,
+																							label_leaves=FALSE,
+																							label_branch_points=FALSE,
+																							graph_label_size=0)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime.png")), plot = monocle3, dpi = 300)
+
+# https://biocellgen-public.svi.edu.au/mig_2019_scrnaseq-workshop/trajectory-inference.html#tscan
+library(ggbeeswarm)
+library(colorRamps)
+library(viridisLite)
+
+pdata_cds <- pData(cds)
+pdata_cds$pseudotime_monocle3 <- monocle3::pseudotime(cds)
+pdata_cds$idents <- Idents(so.integrated)
+
+#pseudotime_palette <- colorRampPalette(c("blue", "yellow", "red"))(100)
+#pseudotime_palette <- inferno(100)
+pseudotime_palette <- colorRampPalette(c("darkblue", "red", "yellow"))(100)
+
+ordered <- ggplot(as.data.frame(pdata_cds), 
+							           aes(x = pseudotime_monocle3, 
+										           	y = idents, colour = pseudotime_monocle3)) +  # Use pseudotime as the color
+	  geom_quasirandom(groupOnX = FALSE) +
+	  scale_color_gradientn(colors = pseudotime_palette) +  # Apply the pseudotime gradient
+	  theme_classic() +
+	  xlab("pseudotime") + 
+	  ylab("") +
+	  ggtitle("") +
+	  theme(legend.position = "none")  # Equivalent to NoLegend()
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered.png")), plot = ordered, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# DESeq2
+# Last Modified: 02/09/24
+# -----------------------------------------------------------------------------
+library(DESeq2)
+library(ggplot2)
+library(ggrepel)
+
+# Set the default assay to "RNA"
+DefaultAssay(so.integrated) <- "RNA"
+# Join layers if needed
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+
+# Get the list of unique cell types
+cell_types <- levels(Idents(so.integrated))
+# Initialize a list to store results for each cell type
+results_list <- list()
+
+for (cell_type in cell_types) {
+	  # Step 0: Subset the Seurat object to include only the current cell type
+	  so_subset <- subset(so.integrated, idents = cell_type)
+	
+	  # Step 1: Extract count data and metadata
+	  counts <- GetAssayData(so_subset, layer = "counts")
+	  # Filter out genes with no counts in any samples
+	  non_zero_genes <- rowSums(counts > 0) > 0
+	  counts_filtered <- counts[non_zero_genes, ]
+	  
+	  metadata <- so_subset@meta.data
+	  # Ensure the metadata columns of interest are present
+	  # Assuming 'age' and 'batch' are stored in metadata
+	  metadata$age <- as.numeric(metadata$age)  # Convert age to numeric if it isn't already
+	  #metadata$batch <- as.factor(metadata$batch)  # Ensure batch is a factor
+	  # Center and scale the age variable
+	  #metadata$age_scaled <- scale(metadata$age)
+	  
+	  # Step 2: Create a DESeqDataSet
+	  dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
+					  																										colData = metadata,
+			  																												design = ~ age)
+	  # Use the poscounts method for size factor estimation
+	  dds <- estimateSizeFactors(dds, type = "poscounts")
+	  
+  	# Step 4: Run DESeq2 with the LRT to test for the effect of age
+  	dds <- DESeq(dds)
+	  # Step 5: Extract the results for the age effect
+	  results_age <- results(dds, name = "age")
+	  # View the top results
+	  head(results_age[order(results_age$pvalue), ])
+	  # Store the results in the list with the cell type as the name
+	  results_list[[cell_type]] <- results_age
+	  
+	  # Assume results_age is the DESeq2 results object for the effect of age
+	  # Convert to a data frame for ggplot2
+	  result_df <- as.data.frame(results_age)
+	  result_df$gene <- rownames(result_df)
+	  result_df$color <- ifelse(result_df$log2FoldChange < -0.05, "blue",
+	  																										ifelse(result_df$log2FoldChange > 0.05, "red", "grey"))
+	  
+	  # Create a volcano plot
+	  volcano_plot <- ggplot(result_df, aes(x = log2FoldChange, y = -log10(padj))) +
+	  	  geom_point(aes(color = color)) +
+	  	  scale_color_manual(values = c(blue, "grey", red)) +
+	  	  theme_minimal() +
+	  	  labs(title = paste0(cell_type),
+	  			  			x = "Log2 Fold Change",
+	  				  		y = "-log10 Adjusted P-value") +
+	  	  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+	    	geom_vline(xintercept = 0.05, linetype = "dashed", color = red) +
+	    	geom_vline(xintercept = -0.05, linetype = "dashed", color = blue) +
+	    	geom_text_repel(data = subset(significant_genes, abs(log2FoldChange) > 0.05),
+	  														  			aes(label = gene), size = 3, max.overlaps = 30)
+	  
+	  # Print the volcano plot
+	  pdf(file = file.path(wd.de.plots, paste0("volcano_DeSeq_~age_", cell_type, ".pdf")), width = 5, height = 5)
+	  print(volcano_plot)
+	  dev.off()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ensure the gene list is in your Seurat object
+genes_of_interest <- mn7[mn7 %in% rownames(so.integrated)]
+# Subset the scaled data for these genes
+scaled_data <- GetAssayData(so.integrated, assay = "RNA", layer = "scale.data")[genes_of_interest, ]
+
+library(pheatmap)
+
+summary(is.na(scaled_data))
+summary(is.nan(scaled_data))
+summary(is.infinite(scaled_data))
+
+# Plot the heatmap
+pheatmap(scaled_data, 
+									cluster_rows = TRUE, 
+									cluster_cols = TRUE, 
+									show_rownames = TRUE, 
+									show_colnames = FALSE,
+									scale = "row", 
+									color = colorRampPalette(c("blue", "white", "red"))(50))
+
+
+
+
+
+# Re-scale the data including all genes in top10$gene
+so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
 
 
 

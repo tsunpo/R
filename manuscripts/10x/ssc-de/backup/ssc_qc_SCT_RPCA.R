@@ -96,7 +96,7 @@ save(samples0, filtered, file=file.path(wd.de.data, "ssc_filtered.RData"))
 # https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
 # -----------------------------------------------------------------------------
 load(file=file.path(wd.de.data, "ssc_filtered.RData"))
-samples0.filtered <- samples0[subset(filtered, cells < 100)$PD_ID,]
+samples0.filtered <- samples0[subset(filtered, cells > 0)$PD_ID,]
 samples0.filtered$V8 <- mapply(x = 1:nrow(samples0.filtered), function(x) unlist(strsplit(samples0.filtered$V3[x], "_"))[2])
 samples0.filtered$V9 <- 1
 samples0.filtered$V9[grep("M", samples0.filtered$V8)] <- 2
@@ -121,9 +121,10 @@ for (s in 1:nrow(samples0.filtered)) {
 	
 	  # Apply sctransform normalization
 	  # https://satijalab.org/seurat/articles/sctransform_vignette.html
-	  so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
-	  so <- FindVariableFeatures(so)
-	  so <- ScaleData(so)
+	  #so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
+	  so <- SCTransform(so, verbose=F)
+	  #so <- FindVariableFeatures(so)
+	  #so <- ScaleData(so)
 	  so <- RunPCA(so)
 
 	  # Normalizing the data

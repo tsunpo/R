@@ -56,8 +56,10 @@ library(sctransform)
 wd.de.data0  <- file.path(wd.de, "data")
 
 load(file=file.path(wd.de.data0, "ssc_filtered.RData"))
-samples0.filtered <- samples0[subset(filtered, cells > 0)$PD_ID,]
+samples0.filtered <- samples0[subset(filtered, cells > 10)$PD_ID,]   # remove PD53622b_M1
 samples0.filtered$V8 <- mapply(x = 1:nrow(samples0.filtered), function(x) unlist(strsplit(samples0.filtered$V3[x], "_"))[2])
+samples0.filtered$V9 <- 1
+samples0.filtered$V9[grep("M", samples0.filtered$V8)] <- 2
 
 so.list <- c()
 ids = c()

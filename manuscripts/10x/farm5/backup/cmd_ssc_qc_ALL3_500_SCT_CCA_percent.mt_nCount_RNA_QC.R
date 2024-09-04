@@ -32,8 +32,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500_QC")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500_QC")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_RPCA_percent.mt_nCount_RNA")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_RPCA_percent.mt_nCount_RNA")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -54,21 +54,23 @@ library(sctransform)
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_5000_-12-17_>100.RData"))
+load(file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_CCA_PCA_UMAP_resolution=0.5_5000_-5-21_>100.RData"))
 
 ## As discussed further in our SCTransform vignette, we typically use 3,000 or more features for analysis downstream of sctransform.
 ## Run the PrepSCTIntegration() function prior to identifying anchors
 so.list <- SplitObject(so.integrated, split.by = "orig.ident")
 
 ## Normalize datasets individually by SCTransform(), instead of NormalizeData() prior to integration
-so.list <- lapply(X = so.list, FUN = SCTransform)
+so.list <- lapply(X = so.list, FUN = function(x) {
+	  SCTransform(x, vars.to.regress = c("percent.mt", "nCount_RNA"), verbose = FALSE)
+})
 
 features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
 so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
-anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:30)
+anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:30, reduction = "cca")
 # Error in FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT",  : 
 # 	Max dimension too large: objects 8 contain fewer than 20 cells. 
 #		Please specify a maximum dimensions that is less than the number of cells in any object (19).
@@ -80,11 +82,11 @@ anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = 
 # Error in idx[i, ] <- res[[i]][[1]] : 
 #   number of items to replace is not a multiple of replacement length
 rm(so.integrated)
-so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:30, k.weight = 90)
+so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:30, k.weight = 100)
 # Error in FindWeights(object = merged.obj, integration.name = integration.name,  : 
 # 	 Number of anchor cells is less than k.weight. Consider lowering k.weight to less than [number of cells] or increase k.anchor.
 																					
-save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, "_-12-17.RData")))
+save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_CCA_", nfeatures, "_-5-21.RData")))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -93,7 +95,7 @@ save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_i
 # -----------------------------------------------------------------------------
 so.integrated <- RunPCA(so.integrated, verbose = F)
 
-pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, "_-12-17.pdf")))
+pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_CCA_", nfeatures, "_-5-21.pdf")))
 options(repr.plot.width=9, repr.plot.height=6)
 ElbowPlot(so.integrated, ndims = 50)
 dev.off()
@@ -106,8 +108,8 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".txt")),row.names=F, col.names=F,quote=F,sep='\t')
-save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, "_-12-17.RData")))
+write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_CCA_PCA_", nfeatures, ".txt")),row.names=F, col.names=F,quote=F,sep='\t')
+save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_CCA_PCA_", nfeatures, "_-5-21.RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
@@ -118,7 +120,7 @@ resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, "_-12-17.RData")))
+save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_CCA_PCA_UMAP_", nfeatures, "_-5-21.RData")))
 
 # -----------------------------------------------------------------------------
 # Define resolution
@@ -128,7 +130,7 @@ save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_n
 #resolution.range <- seq(from = 0.5, to = 1, by = 0.05)
 
 #for (r in 1:length(resolution.range)) {
-	  res <- 0.45
+	  res <- 0.5
 	  resolution_name <- paste0("integrated_snn_res.", res)
 	  Idents(so.integrated) <- so.integrated[[resolution_name]][[1]]
 	
@@ -140,14 +142,14 @@ save(so.integrated, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_n
 	  so.integrated[["umap"]] <- CreateDimReducObject(embeddings = umap_embeddings, key = "UMAP_", assay = DefaultAssay(so.integrated))
 	
   	##
-	  #file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-17_res=", res)
-	  #pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
-	  #DimPlot(so.integrated, label = TRUE)
-	  #dev.off()
+	  file.name <- paste0("SCT_CCA_", nfeatures, "_UMAP_dims=", prin_comp, "_-5-21_res=", res)
+	  pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
+	  DimPlot(so.integrated, label = TRUE)
+	  dev.off()
 #}
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_-12-17_resolution=0.45")
+file.name <- paste0("SCT_CCA_", nfeatures, "_UMAP_dims=", prin_comp, "_-5-21_resolution=0.5")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE)

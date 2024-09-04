@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500_SSC")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SSC")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_SPG")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SPG")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -47,17 +47,19 @@ library(ggplot2)
 #library(sctransform)
 
 # -----------------------------------------------------------------------------
-# echo "R --no-save --no-restore" | bsub -I -q yesterday -R 'select[mem>=120000] rusage[mem=120000]' -M120000 -env "all"
+# To identify six SPG states
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.25.RData"))
+wd.de.data0 <- "/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL3_500"
+#load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_5000.RData")))
+load(file=file.path(wd.de.data0, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_5000.RData")))
 
 # i.e. retain only cells of states 0-4 (predominantly spermatogonial stem cells to differentiating spermatogonia, although the trajectory ends with some primary spermatocytes)
-so.merged.ssc <- subset(so.merged, (seurat_clusters == 3 | seurat_clusters == 0 | seurat_clusters == 4 | seurat_clusters == 2 | seurat_clusters == 1))
-
-length(unique(so.merged.ssc@meta.data$sample.id))
+#so.integrated <- subset(so.integrated, (seurat_clusters == 0 | seurat_clusters == 2 | seurat_clusters == 10))
+so.integrated <- subset(so.integrated, idents = c(0, 2, 10))
+length(unique(so.integrated@meta.data$sample.id))
 
 # Access the metadata
-metadata <- so.merged.ssc@meta.data
+metadata <- so.integrated@meta.data
 
 # Count the number of cells per sample
 cell_counts <- metadata %>%
@@ -71,551 +73,213 @@ samples_to_keep <- cell_counts %>%
 	  pull(sample.id)
 
 # Subset the Seurat object to keep only the samples with more than 1000 cells
-so.merged.ssc <- subset(so.merged.ssc, cells = rownames(metadata[metadata$sample.id %in% samples_to_keep, ]))
+so.integrated <- subset(so.integrated, cells = rownames(metadata[metadata$sample.id %in% samples_to_keep, ]))
 
 # Check the result
-table(so.merged.ssc@meta.data$sample.id)
-
-ssc <- as.data.frame(table(so.merged.ssc@meta.data$sample.id))
+ssc <- as.data.frame(table(so.integrated@meta.data$sample.id))
 write.table(ssc, file=file.path(wd.de.data, "ssc_samples_>100.txt"), row.names=T, col.names=T, quote=F, sep='\t')
 
-wd.de.data  <- file.path(wd.de, "data_ALL3_500_SSC")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500_SSC")
-save(so.merged.ssc, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged.RData"))
+save(so.integrated, ssc, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_5000_SSC_>100.RData"))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
 # 02_UMAP
 # https://satijalab.org/seurat/articles/multimodal_vignette
 # -----------------------------------------------------------------------------
-#load(file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
-#load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+so.integrated <- RunPCA(so.integrated, verbose = F)
 
-# Note that all operations below are performed on the RNA assay Set and verify that the
-# default assay is RNA
-DefaultAssay(so.merged.ssc) <- "RNA"
-
-# perform visualization and clustering steps
-#so.merged.ssc <- NormalizeData(so.merged.ssc)
-#so.merged.ssc <- FindVariableFeatures(so.merged.ssc, selection.method = "vst", nfeatures = 5000)
-so.merged.ssc
-# An object of class Seurat 
-# 36601 features across 35690 samples within 1 assay 
-# Active assay: RNA (36601 features, 5000 variable features)
-# 30 layers present: counts.PD53621b_2N, counts.PD53623b_2N, counts.PD53623b_4N, counts.PD53624b_2N, counts.PD53625b_2N, counts.PD53626b_2N, counts.PD53621b_M, counts.PD53623b_M, counts.PD53624b_M, counts.PD53625b_M, counts.PD53626b_M, counts.PD40746e_M1, counts.PD40746e_M2, counts.SeuratProject, data.PD53621b_2N, data.PD53623b_2N, data.PD53623b_4N, data.PD53624b_2N, data.PD53625b_2N, data.PD53626b_2N, data.PD53621b_M, data.PD53623b_M, data.PD53624b_M, data.PD53625b_M, data.PD53626b_M, data.PD40746e_M1, data.PD40746e_M2, data.SeuratProject, scale.data.SeuratProject, scale.data
-
-#all.genes <- rownames(so.merged.ssc)
-#so.merged.ssc <- ScaleData(so.merged.ssc, features = all.genes)
-#so.merged <- ScaleData(so.merged)
-# Centering and scaling data matrix
-# |======================================================================| 100%
-so.merged.ssc <- RunPCA(so.merged.ssc, features = VariableFeatures(object = so.merged.ssc))
-#so.merged <- RunPCA(so.merged, verbose = FALSE)
-
-pdf(file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_ElbowPlot.pdf"))
+pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", 5000, ".pdf")))
 options(repr.plot.width=9, repr.plot.height=6)
-ElbowPlot(so.merged, ndims = 50)
+ElbowPlot(so.integrated, ndims = 50)
 dev.off()
 
 # quantify content of the elbow plot. implement code from https://hbctraining.github.io/scRNA-seq/lessons/elbow_plot_metric.html
-pct <- so.merged.ssc[["pca"]]@stdev / sum(so.merged.ssc[["pca"]]@stdev) * 100
+pct <- so.integrated[["pca"]]@stdev / sum(so.integrated[["pca"]]@stdev) * 100
 cumu <- cumsum(pct)
 component1 <- which(cumu > 90 & pct < 5)[1] # determine the point where the principal component contributes < 5% of standard deviation and the principal components so far have cumulatively contributed 90% of the standard deviation.
 component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), decreasing = T)[1] + 1 # identify where the percent change in variation between consecutive PCs is less than 0.1%
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
-save(so.merged.ssc, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA.RData"))
+write.table(prin_comp, file=file.path(wd.de.data, "ssc_filtered_normalised_integrated_SCT_PCA_5000.txt"),row.names=FALSE,col.names=FALSE,quote=FALSE,sep='\t')
+save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", 5000, ".RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
 # so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
-load(file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA.RData"))
+#load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA.RData"))
 resolution.range <- seq(from = 0.05, to = 0.5, by = 0.05)
 
-so.merged <- FindNeighbors(so.merged, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
-so.merged <- FindClusters(so.merged, algorithm=3, resolution = resolution.range, verbose = FALSE)
-so.merged <- RunUMAP(so.merged, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(samples0.filtered, so.merged, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA_UMAP.RData"))
+so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
+so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_UMAP_", 5000, ".RData")))
 
 # Find neighbors and clusters
-load(file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA.RData"))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", 5000, ".RData")))
 
-so.merged.ssc <- FindNeighbors(so.merged.ssc, dims = 1:prin_comp, k.param = 20)
-so.merged.ssc <- FindClusters(so.merged.ssc, algorithm=3, resolution = 0.25)
-so.merged.ssc <- RunUMAP(so.merged.ssc, dims = 1:prin_comp, n.neighbors = 20)
-save(so.merged.ssc, file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.25.RData"))
-
-##
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=13_resolution=0.25.pdf"))
-DimPlot(so.merged.ssc, label = TRUE)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_SampleID.pdf"))
-tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="sample.id")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_Age.pdf"))
-tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="age")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_2N.pdf"))
-tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="n2")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf(file=file.path(wd.de.plots, "SSC_UMAP_dims=14_resolution=0.25_Batch.pdf"))
-tplot = DimPlot(so.merged.ssc, reduction = "umap", group.by="batch")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-# -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_ssc_filtered_normalised_merged_PCA_UMAP_resolution=0.25.RData"))
-
-length(unique(so.merged.ssc$seurat_clusters))
+so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
+so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.25)
+so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
+save(samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", 5000, ".RData")))
 
 ##
-metadata <- so.merged@meta.data
-metadata$cluster <- so.merged$seurat_clusters
-batch_cluster_counts <- metadata %>%
-	  group_by(cluster, batch) %>%
-	  summarise(count = n()) %>%
-	  ungroup()
+file.name <- paste0("SCT_", 5000, "_UMAP_dims=", prin_comp, "_resolution=0.25")
 
-facs <- toTable(0, 4, 17, c("Cluster", "B1", "B2", "B3"))
-facs$Cluster <- as.numeric(rownames(facs)) - 1
-for (c in 0:16) {
-	  subsets <- subset(batch_cluster_counts, cluster == c)
-	  facs$B1[c+1] <- subset(subsets, batch == 1)$count + subset(subsets, batch == 2)$count
-	  facs$B2[c+1] <- subset(subsets, batch == 3)$count
-	  facs$B3[c+1] <- subset(subsets, batch == 4)$count
-	  
-	  #total <- facs$B1[c+1] + facs$B2[c+1] + facs$B3[c+1]
-	  #facs$B1[c+1] <- facs$B1[c+1] / total * 100
-	  #facs$B2[c+1] <- facs$B2[c+1] / total * 100
-	  #facs$B3[c+1] <- facs$B3[c+1] / total * 100
-}
-write.table(facs, file=file.path(wd.de.data, "batch_cluster_counts.txt"), row.names=F, col.names=F, quote=F, sep='\t')
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 10/10/23
-# -----------------------------------------------------------------------------
-facs <- readTable(file.path(wd.de.data, "batch_cluster_counts.txt"), header=T, rownames=T, sep="")
-facs2 <- t(facs[,-1])
-facs2 <- facs2[, new_order]
-write.table(facs2, file=file.path(wd.de.data, "batch_cluster_counts2.txt"), row.names=T, col.names=T, quote=F, sep='\t')
-
-max <- 0
-for (c in 1:17) {
-	  if (sum(facs2[, c]) > max)
-	  	  max <- sum(facs2[, c])
-}
-
-## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.de.plots, "batch_cluster_counts_new_order")
-main.text <- c("", "")
-xlab.text <- ""
-ylab.text <- "Fraction of cells"
-#blue  <- "blue"   ## adjustcolor("#619CFF", alpha.f=0.9)
-#red   <- "red"   ## adjustcolor("#F8766D", alpha.f=0.9)
-#green <- "darkgray"   ## adjustcolor("#00BA38", alpha.f=0.9)
-#cols <- c(blue, red, green)   ## #59a523 (Alcro wasabi)
-cols <- c(blue, red, yellow)
-sequence <- seq(from = 0.8, by = 1.2, length.out = 17)
-
-pdf(paste0(file.name, ".pdf"), width = 12, height = 6)
-par(mar=c(5.1, 4.6, 4.1, 7), xpd=TRUE)
-barplot(facs2, col=cols, ylim=c(0, 100), ylab=ylab.text, xaxt="n", main="", cex.names=1.7, cex.axis=1.8, cex.lab=1.9, cex.main=2)
-text(labels=new_order, x=sequence, y=par("usr")[3] - 4, srt=45, adj=0.965, xpd=NA, cex=1.9)
-
-legend("right", c("Batch 1", "Batch 2", "Batch 3"), text.col="black", pch=c(15, 15, 15), col=cols, pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-0.16, 0))
-#mtext(ylab.text, side=2, line=2.75, cex=1.8)
+pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
+DimPlot(so.integrated, label = TRUE)
 dev.off()
 
-## https://stackoverflow.com/questions/7588020/how-to-write-labels-in-barplot-on-x-axis-with-duplicated-names
-file.name <- file.path(wd.de.plots, "batch_cluster_counts_new_order_numbers")
-main.text <- c("", "")
-xlab.text <- ""
-ylab.text <- "Number of cells"
-cols <- c(blue, red, yellow)
-sequence <- seq(from = 0.8, by = 1.2, length.out = 17)
+pdf(file=file.path(wd.de.plots, paste0(file.name, "_SampleID.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="sample.id")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
+dev.off()
 
-pdf(paste0(file.name, ".pdf"), width = 12, height = 6)
-par(mar=c(5.1, 4.6, 4.1, 7), xpd=TRUE)
-barplot(facs2, col=cols, ylim=c(0, 9308), ylab=ylab.text, xaxt="n", main="", cex.names=1.7, cex.axis=1.8, cex.lab=1.9, cex.main=2)
-text(labels=new_order, x=sequence, y=par("usr")[3] - 360, srt=45, adj=0.965, xpd=NA, cex=1.9)
+pdf(file=file.path(wd.de.plots, paste0(file.name, "_Age.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="age")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
+dev.off()
 
-legend("right", c("Batch 1", "Batch 2", "Batch 3"), text.col="black", pch=c(15, 15, 15), col=cols, pt.cex=3, cex=1.9, horiz=F, bty="n", inset=c(-0.16, 0))
+pdf(file=file.path(wd.de.plots, paste0(file.name, "_2N.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="n2")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
+dev.off()
+
+pdf(file=file.path(wd.de.plots,  paste0(file.name, "_Batch.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="batch")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
 dev.off()
 
 # -----------------------------------------------------------------------------
-# DotPlot (resolution = 0.25)
+# Di Persio et al; DotPlot (resolution = 0.4; Six SPG states)
 # -----------------------------------------------------------------------------
-genes_of_interest <- c("AMH", "WT1", "CD34", "CD163", "CSF1R", "CYP1B1", "ACTA2", "MYH11", "DLK1", "INHBA", "UTF1", "EGR4", "PIWIL4", "TSPAN33", "FGFR3", "NANOS2", "NANOS3", "GFRA1", "DMRT1", "MAGEA4", "KIT", "MKI67", "DPEP3", "GINS2", "MEIOB", "SCML1", "SYCP2", "SYCP3", "TEX101", "SPO11", "STRA8", "MEIOSIN", "SPATA8", "OVOL2", "CLDND2", "FAM24A", "SPACA1", "CCDC168", "SIRT2", "TEX29", "HOOK1", "PRM1", "PRM2")
+#nfeatures <- 5000
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_", nfeatures, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
-dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
+genes_of_interest <- c("TAF6", "ST3GAL4", "SH2B2", "MSL3", "PHGDH", "C19orf84", "LIN7B", "FSD1", "TSPAN33", "EGR4", "PIWIL4", "CELF4", "UTF1", "FGFR3", "A2M", "ENO3", "SERPINE2", "SRRT", "BAG6", "DND1", "PELP1", "NANOS2", "C1QBP", "NANOS3", "GFRA2", "GFRA1", "ID2", "ASB9", "L1TD1", "ID4", "MKI67", "PDPN", "KIT", "DMRT1", "DNMT1", "CALR", "SYCP3", "STRA8")
+
+DefaultAssay(so.integrated) <- "SCT"
+dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=14_resolution=0.25.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", 5000, "_SCT_dims=", prin_comp, "_resolution=0.25.pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
 # Apply this custom order
 # Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
-Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
+new_order <- c("6", "3", "9", "7", "4", "8", "0", "5", "2", "1")
+new_order <- rev(new_order)
+Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
-dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-   scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
-
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=14_resolution=0.25_ordered.pdf"), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-# Create a mapping from cluster ID to cell type name
-# This mapping should be adjusted according to your specific dataset and clustering results
-table(Idents(so.merged))
-cluster_to_celltype <- c('3' = 'Undiff. SPG', '0' = 'Undiff. SPG',
-																									'4' = 'Diff. SPG',
-																									'2' = 'Meiosis', '1' = 'Meiosis',
-																									'9' = 'Spermatocyte', '15' = 'Spermatocyte',	'12' = 'Spermatocyte', 
-																									'6' = 'Early spermatid (1)',
-																									'5' = 'Late spermatid (1)',
-																									'7' = 'Myoid & Leydig',
-																									'10' = 'Sertoli',	'11' = 'Sertoli',	'13' = 'Sertoli',
-																									'16' = 'Endothelial & Macrophage')
-
-# Update the identities using this mapping
-new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
-Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
-
-Idents(so.merged) <- plyr::mapvalues(x = Idents(so.merged), from = names(cluster_to_celltype), to = cluster_to_celltype)
-
-dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
+dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=14_resolution=0.25_ordered_annotated.pdf"), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-##
-dim_plot <- DimPlot(so.merged, label = TRUE)
-ggsave(file.path(wd.de.plots, "UMAP_dims=14_resolution=0.25_ordered_annotated.png"), plot = dim_plot, width = 10, height = 8, dpi = 300)
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# DotPlot (resolution = 0.2)
-# -----------------------------------------------------------------------------
-genes_of_interest <- c("AMH", "WT1", "CD34", "CD163", "CSF1R", "CYP1B1", "ACTA2", "MYH11", "DLK1", "INHBA", "UTF1", "EGR4", "PIWIL4", "TSPAN33", "FGFR3", "NANOS2", "NANOS3", "GFRA1", "DMRT1", "MAGEA4", "KIT", "MKI67", "DPEP3", "GINS2", "MEIOB", "SCML1", "SYCP2", "SYCP3", "TEX101", "SPO11", "STRA8", "MEIOSIN", "SPATA8", "OVOL2", "CLDND2", "FAM24A", "SPACA1", "CCDC168", "SIRT2", "TEX29", "HOOK1", "PRM1", "PRM2")
-
-dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=14_resolution=0.2.pdf"), width = 12, height = 5)
-print(dot_plot)
-dev.off()
-
-# Apply this custom order
-# Note: Only change levels if 'Idents' are factor. If they are characters, convert them to factors first.
-new_order <- c("13", "11", "3", "14", "7", "12", "6", "5", "9", "10", "8", "2", "1", "4", "0")
-Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
-
-dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
-	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
-	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-   scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
-
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=14_resolution=0.2_ordered.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")), width = 14, height = 5)
 print(dot_plot)
 dev.off()
 
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
-table(Idents(so.merged))
-cluster_to_celltype <- c('0' = 'Undiff. SPG',
-																									'4' = 'Diff. SPG',
-																									'1' = 'Meiosis', '2' = 'Meiosis',
-																									'8' = 'Spermatocyte', '10' = 'Spermatocyte', '9' = 'Spermatocyte',
-																									'5' = 'Early spermatid (1)',
-																									'6' = 'Late spermatid (1)',
-																									'7' = 'Myoid & Leydig',
-																									'14' = 'Sertoli',	'3' = 'Sertoli',
-																									'13' = 'Endothelial & Macrophage')
+table(Idents(so.integrated))
+cluster_to_celltype <- c('1' = 'Stage 0',
+																									'2' = 'Stage 0A',
+																									'5' = 'Stage 0B',
+																									'0' = 'Stage 1', '8' = 'Stage 1',
+																									'4' = 'Stage 2', '7' = 'Stage 2',
+																									'3' = 'Stage 3', '9' = 'Stage 3')
 
 # Update the identities using this mapping
-new_order <- c("13", "11", "3", "14", "7", "12", "6", "5", "9", "10", "8", "2", "1", "4", "0")
-Idents(so.merged) <- factor(Idents(so.merged), levels = new_order)
+#new_order <- c("16", "14", "13", "11", "10", "7", "5", "6", "8", "12", "15", "9", "1", "2", "4", "0", "3")
+Idents(so.integrated) <- factor(Idents(so.integrated), levels = new_order)
 
-Idents(so.merged) <- plyr::mapvalues(x = Idents(so.merged), from = names(cluster_to_celltype), to = cluster_to_celltype)
+Idents(so.integrated) <- plyr::mapvalues(x = Idents(so.integrated), from = names(cluster_to_celltype), to = cluster_to_celltype)
 
-dot_plot <- DotPlot(so.merged, features = genes_of_interest)  +
+dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
-   scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
+scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, "DotPlot_dims=14_resolution=0.2_ordered_annotated.pdf"), width = 12, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered_annotated.pdf")), width = 12, height = 5)
 print(dot_plot)
 dev.off()
 
 ##
-dim_plot <- DimPlot(so.merged, label = TRUE)
-ggsave(file.path(wd.de.plots, "UMAP_dims=14_resolution=0.2_ordered_annotated.png"), plot = dim_plot, width = 10, height = 8, dpi = 300)
-
-
-
-
-
-
-#ggsave(filename = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_DotPlot.png"), plot = dot_plot, width = 10, height = 8, dpi = 300)
-
-##
-# Determine the order of genes based on descending expression
-valid_genes <- genes_of_interest %in% rownames(so.merged)
-# Filter out any invalid genes
-genes_of_interest <- genes_of_interest[valid_genes]
-
-avg_expression <- AverageExpression(so.merged, features = genes_of_interest)$RNA
-ordered_genes <- avg_expression %>%
-	  rowMeans() %>%
-	  sort(decreasing = TRUE) %>%
-	  names()
-
-# Create DotPlot with ordered genes
-dot_plot <- DotPlot(so.merged, features = ordered_genes)
-dot_plot <- dot_plot + scale_y_discrete(limits = ordered_genes)
-
-pdf(file = file.path(wd.de.plots, "UMAP_dims=18_resolution=0.25_DotPlot_ordered.pdf"), width = 10, height = 6)
-print(dot_plot)
-dev.off()
-
-
-
+dim_plot <- DimPlot(so.integrated, label = TRUE)
+ggsave(file.path(wd.de.plots, paste0("Di Persio_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25_ordered_annotated.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
 
 # -----------------------------------------------------------------------------
-# To Andy
+# Sampke ID
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered.RData"))
-samples0   ## From file scRNA_GRCh38-2020.list
-
-so.list <- c()
-for (s in 1:nrow(samples0)) {
-	  # Initialize the Seurat object with the raw (non-normalized data)
-	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial
-	  data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0$V1[s], "filtered_feature_bc_matrix"))
-	  so <- CreateSeuratObject(counts=data, project=samples0$V3[s], min.cells=3, min.features=200)
-	
-	  # QC and selecting cells for further analysis
-	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so.list <- c(so.list, so)
-}
-save(samples0, so.list, file=file.path(wd.de.data, "ty2_so.list_To-Andy.RData"))
-
-# Merge Based on Normalized Data
-# https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
-so.merged <- merge(x=so.list[[1]], y=so.list[-1], add.cell.ids=ids, project="SSC", merge.data=T)
-
-ids <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  ids <- c(ids, rep(samples0.filtered$V3[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-ages <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  ages <- c(ages, rep(samples0.filtered$V4[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-n2s <- c()
-for (s in 1:nrow(samples0.filtered)) {
-	  n2s <- c(n2s, rep(samples0.filtered$V8[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-so.merged@meta.data$sample.id <- ids
-so.merged@meta.data$age <- ages
-so.merged@meta.data$age <- factor(so.merged@meta.data$age, levels = c("25","37","48","57","60","71"))
-so.merged@meta.data$n2 <- n2s
-head(so.merged@meta.data)
-
-save(so.merged, ids, ages, n2s, file=file.path(wd.de.data, "ssc_so.merged_To-Andy.RData"))
-
-
-
-
-
-
-
-
-
-# Find markers for all clusters
-so.merged <- JoinLayers(so.merged, features = "RNA")
-#markers <- FindAllMarkers(so.merged)
-markers <- FindAllMarkers(so.merged, assay="RNA", slot="data", test.use = "wilcox", only.pos = TRUE,	min.pct = 0.25, logfc.threshold = 0.25)
-
-FeaturePlot(pbmc, features = c("MS4A1", "GNLY", "CD3E", "CD14", "FCER1A", "FCGR3A", "LYZ", "PPBP",
-																															"CD8A"))
-
-
-options(repr.plot.width=16, repr.plot.height=5)
-
-feature_plot <- FeaturePlot(so.merged, reduction = "umap", features = c("FGFR3", "KIT", "DMRT1", "SYCP3", "SPO11", "MLH3", "SPAG6", "ZPBP", "CAMK4", "CREM", "TNP1", "PRM2"),	ncol = 3)
-pdf(file = file.path(wd.de.plots, "PCA_UMAP_dims=10_resolution=0.25_feature_plot.pdf"), width = 10, height = 8)
-print(feature_plot)
-dev.off()
-
-# -----------------------------------------------------------------------------
-# 5.integrate_all_whole_testes_datasets.R
-# 03_PCA
-# -----------------------------------------------------------------------------
-library(Seurat)
-library(Matrix)
-library(tidyverse)
-library(patchwork)
-library(sctransform)
-library(sceasy)
-library(reticulate)
-library(clustree)
-
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_JoinLayers_nfeatures=2000_PCA_UMAP_k=20_n=20.RData"))
-load(file=file.path(wd.de.data, "ssc_filtered_normalised_merged_JoinLayers_nfeatures=2000_PCA_UMAP_k=20_n=20_markers.RData"))
-
-so.merged@meta.data$RNA_snn_res.0 <- NULL
-#so.merged@meta.data$RNA_snn_res.0.2<-NULL   ## In our data, only these three have values
-#so.merged@meta.data$RNA_snn_res.0.4<-NULL   ## In our data, only these three have values
-#so.merged@meta.data$RNA_snn_res.0.6<-NULL
-#so.merged@meta.data$RNA_snn_res.0.8<-NULL
-#so.merged@meta.data$RNA_snn_res.1<-NULL
-#so.merged@meta.data$RNA_snn_res.1.2<-NULL
-#so.merged@meta.data$RNA_snn_res.1.4<-NULL
-#so.merged@meta.data$RNA_snn_res.1.6<-NULL
-#so.merged@meta.data$RNA_snn_res.1.8<-NULL
-#so.merged@meta.data$RNA_snn_res.2<-NULL
-#so.merged@meta.data$orig.ident<-NULL       ## In our data, only these three have values
-#so.merged@meta.data$old.ident<-NULL
-#saveRDS(so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_k=20_n=20.rds"))
-
-# convert the Seurat object to an h5ad object for visualisation with cellxgene
-DefaultAssay(so.merged) <- 'RNA'
-so.merged <- JoinLayers(so.merged)               # https://www.biostars.org/p/9581468/
-
-sceasy::convertFormat(so.merged, from="seurat", to="anndata", outFile=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_k=20_n=20.h5ad"))
-
-all.genes <- rownames(so.merged)
-so.merged <- ScaleData(so.merged, features = all.genes)
-
-# https://github.com/satijalab/seurat/issues/8304
-sceasy::convertFormat(so.merged, assay="RNA", from="seurat", to="anndata", outFile=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_k=20_n=20.h5ad"))
-
-# determine cluster markers
-# we will later run enrichment analyses on these gene lists to assign a predicted function to each cluster
-# IMPORTANT: we must set the DefaultAssay to RNA before running differential expression: 
-# "we don't recommend using the integrated matrix for differential expression" and "As a general rule, we always recommend performing DE on originally measured values - instead of on batch-corrected, imputed, etc. values.
-# This ensures that the measurements that enter the DE test are indeed independent from each other, which is a requirement of any statistical DE test."
-# https://github.com/satijalab/seurat/issues/1057
-# https://github.com/satijalab/seurat/issues/1256
-# https://github.com/satijalab/seurat/issues/2136
-DefaultAssay(so.merged) <- 'RNA'
-so.merged <- JoinLayers(so.merged)   # https://www.biostars.org/p/9581468/
-
-markers <- FindAllMarkers(so.merged, test.use="MAST", only.pos=T, min.pct=0.25, logfc.threshold=0.25)
-write.table(markers, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_JoinLayers_nfeatures=2000_PCA_UMAP_k=20_n=20_markers.txt"), row.names=F, col.names=T, quote=F, sep='\t')
-save(markers, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_JoinLayers_nfeatures=2000_PCA_UMAP_k=20_n=20_markers.RData"))
-
-top.markers <- subset(markers, cluster == "0")
-lfcs <- getMarkerEffects(top.markers)
-
-###
-##
-DefaultAssay(so.merged) <- 'RNA'
-so.merged <- JoinLayers(so.merged)   # https://www.biostars.org/p/9581468/
-
-so.merged <- FindVariableFeatures(so.merged, selection.method = "vst", nfeatures = 2000)
-all.genes <- rownames(so.merged)
-so.merged <- ScaleData(so.merged, features = all.genes)
-
-markers.0 <- FindMarkers(so.merged, ident.1=0)
-head(markers.0, n=5)
-
-markers <- FindAllMarkers(so.merged, only.pos=T)
-write.table(markers, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_k=20_n=20_markers_.txt"), row.names=F, col.names=T, quote=F, sep='\t')
-save(markers, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_PCA_UMAP_k=20_n=20_markers_.RData"))
-
-markers %>% group_by(cluster) %>% dplyr::filter(avg_log2FC > 1)
-
-VlnPlot(pbmc, features = c("PRM1", "PRM2"))
-
-
-
-# find all markers of cluster 2
-cluster2.markers <- FindMarkers(pbmc, ident.1 = 2)
-head(cluster2.markers, n = 5)
-
-
-
-
-
-##
-pdf("DimPlot_UMAP_RNA_dim=18_k=10.pdf")
-DimPlot(so.merged, label = TRUE)
-dev.off()
-
-pdf("DimPlot_UMAP_RNA_dim=18_k=10_sampleID.pdf")
-tplot = DimPlot(so.merged, reduction = "umap", group.by="sample.id")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf("DimPlot_UMAP_RNA_dim=18_k=10_age.pdf")
-tplot = DimPlot(so.merged, reduction = "umap", group.by="age")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-pdf("DimPlot_UMAP_RNA_dim=18_k=10_2n.pdf")
-tplot = DimPlot(so.merged, reduction = "umap", group.by="n2")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Extract sample IDs and cluster identities
+sample_cluster_data <- FetchData(so.integrated, vars = c("sample.id", "seurat_clusters"))
+
+# Calculate the number of cells in each cluster
+total_cells_per_cluster <- sample_cluster_data %>%
+	  group_by(seurat_clusters) %>%
+	  summarize(total_cells = n())
+
+# Calculate the number of cells for each sample ID within each cluster
+cells_per_sample_per_cluster <- sample_cluster_data %>%
+	  group_by(seurat_clusters, sample.id) %>%
+	  summarize(cells = n())
+
+# Merge the data frames to calculate proportions
+proportion_data <- merge(cells_per_sample_per_cluster, total_cells_per_cluster, by = "seurat_clusters")
+
+# Calculate the proportion of each sample ID within each cluster
+proportion_data <- proportion_data %>%
+	  mutate(proportion = cells / total_cells) %>%
+	  select(seurat_clusters, sample.id, proportion)
+
+# Rename columns for clarity
+colnames(proportion_data) <- c("Cluster", "Sample_ID", "Proportion")
+
+# Calculate the proportion of PD40746e_M2 in each cluster
+pd40746e_m2_proportion <- proportion_data %>%
+	  filter(Sample_ID == "PD40746e_M2") %>%
+	  arrange(desc(Proportion)) %>%
+	  pull(Cluster)
+
+# Set factor levels for Cluster based on the proportion of PD40746e_M2
+proportion_data$Cluster <- factor(proportion_data$Cluster, levels = pd40746e_m2_proportion)
+
+# Create a vector of unique sample IDs
+unique_samples <- unique(proportion_data$Sample_ID)
+
+# Create a vector of random colors
+set.seed(42)  # For reproducibility
+random_colors <- grDevices::colors()[sample(1:length(grDevices::colors()), length(unique_samples))]
+
+# Create a named vector of colors, assigning specific colors to the highlighted samples
+color_vector <- setNames(random_colors, unique_samples)
+color_vector["PD40746e_M2"] <- "red"
+color_vector["PD40746e_M1"] <- "pink"
+color_vector["AMSBIO"] <- "yellow"
+
+# Assign colors to the data
+proportion_data$color <- color_vector[proportion_data$Sample_ID]
+
+# Create a stacked bar chart with custom colors
+bar_chart <- ggplot(proportion_data, aes(x = as.factor(Cluster), y = Proportion, fill = color)) +
+	  geom_bar(stat = "identity", color = "black") +  # Add border for better visibility
+	  scale_fill_identity() +
+	  theme_minimal() +
+	  labs(title = "Proportion of Sample IDs in Each Cluster",
+			  			x = "Cluster",
+					  	y = "Proportion") +
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Print the bar chart
+print(bar_chart)
 
 
 
@@ -624,256 +288,452 @@ dev.off()
 
 
 # -----------------------------------------------------------------------------
-# Standard Seurat pre-processing workflow (SCT)
-# 01_QC
-# https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
+# Monocle 3
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, "ssc_filtered.RData"))
-library(glmGamPoi)
+library(monocle3)
 
-samples0.filtered <- samples0[subset(filtered, cells > 1000)$PD_ID,]
-so.list <- c()
-ids = c()
-genes <- c()
+# Extract SCT data
+data <- as(as.matrix(so.integrated@assays$integrated@data), "sparseMatrix")
 
-colnames <- c("PD_ID", "genes", "cells")
-normalised <- toTable(0, length(colnames), nrow(samples0.filtered), colnames)
-normalised$PD_ID <- rownames(samples0.filtered)
-rownames(normalised) <- rownames(samples0.filtered)
+# Extract cell metadata
+cell_metadata <- so.integrated@meta.data
 
-for (s in 1:nrow(samples0.filtered)) {
-	# Initialize the Seurat object with the raw (non-normalized data)
-	# https://satijalab.org/seurat/articles/pbmc3k_tutorial
-	data <- Read10X(data.dir=file.path("/lustre/scratch126/casm/team294rr/mp29/scRNA_10x", "GRCh38-2020", samples0.filtered$V1[s], "filtered_feature_bc_matrix"))
-	so <- CreateSeuratObject(counts=data, project=samples0.filtered$V3[s], min.cells=3, min.features=200)
-	
-	# QC and selecting cells for further analysis
-	so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	so <- subset(so, subset=nFeature_RNA > 1000 & nFeature_RNA < 10000 & nCount_RNA > 2000 & nCount_RNA < 50000 & percent.mt < 5)
-	
-	# Apply sctransform normalization
-	# https://satijalab.org/seurat/articles/sctransform_vignette.html
-	so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
-	
-	normalised[s, 2] <- nrow(so)
-	normalised[s, 3] <- ncol(so)
-	
-	so.list <- c(so.list, so)
-	ids = c(ids, samples0.filtered$V3[s])
-	
-	if (length(genes) != 0) {
-		genes <- intersect(genes, rownames(so))
-	} else {
-		genes <- rownames(so)
-	}
-}
-writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised.txt"), colnames=T, rownames=F, sep="\t")
-save(filtered, normalised, samples0, samples0.filtered, so.list, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised.RData"))
+# Ensure cell_metadata matches the filtered cells
+cell_metadata <- cell_metadata[colnames(data), ]
 
-# Merge Based on Normalized Data
-# https://satijalab.org/seurat/archive/v4.3/merge#:~:text=Merge%20Based%20on%20Normalized%20Data,data%20%3D%20TRUE%20
-so.merged <- merge(x=so.list[[1]], y=so.list[-1], add.cell.ids=ids, project="SSC", merge.data=T)
-save(filtered, normalised, samples0, samples0.filtered, so.merged, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised_merged.RData"))
+# Create the gene annotation
+gene_annotation <- data.frame(gene_short_name = rownames(data))
+rownames(gene_annotation) <- rownames(data)
 
+# Create the Monocle 3 Cell Data Set (CDS)
+cds <- new_cell_data_set(data,
+																									cell_metadata = cell_metadata,
+																									gene_metadata = gene_annotation)
 
-so.merged <- FindNeighbors(so.merged, dims = 1:30)
-# Computing nearest neighbor graph
-# Computing SNN
+# Extract UMAP embeddings from Seurat
+umap_embeddings <- Embeddings(so.integrated, reduction = "umap")
 
-so.merged <- FindClusters(so.merged, resolution = 0.8, verbose = FALSE)
-so.merged <- RunUMAP(so.merged, dims = 1:30)
-# Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
-# To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
-# This message will be shown once per session
-# 15:15:04 UMAP embedding parameters a = 0.9922 b = 1.112
-# 15:15:04 Read 46987 rows and found 30 numeric columns
-# 15:15:04 Using Annoy for neighbor search, n_neighbors = 30
-# 15:15:04 Building Annoy index with metric = cosine, n_trees = 50
-# 0%   10   20   30   40   50   60   70   80   90   100%
-# [----|----|----|----|----|----|----|----|----|----|
-# **************************************************|
-# 15:15:15 Writing NN index file to temp file /tmp/RtmpFKq9At/file1e6e714df04e1
-# 15:15:15 Searching Annoy index using 1 thread, search_k = 3000
-# 15:15:46 Annoy recall = 100%
-# 15:15:46 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
-# 15:15:49 Initializing from normalized Laplacian + noise (using RSpectra)
-# 15:15:58 Commencing optimization for 200 epochs, with 2067094 positive edges
-# Using method 'umap'
-# 0%   10   20   30   40   50   60   70   80   90   100%
-# [----|----|----|----|----|----|----|----|----|----|
-# **************************************************|
-# 15:16:24 Optimization finished
-save(so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_RNA_PCA_UMAP.RData"))
+# Add UMAP embeddings to Monocle 3 object
+reducedDims(cds)$UMAP <- umap_embeddings
 
-#pdf('DimPlot_UMAP_RNA_dim=30.pdf')
-#DimPlot(so.merged, label = TRUE)
-#dev.off()
+# Cluster cells in Monocle 3 using UMAP embeddings
+cds <- cluster_cells(cds, reduction_method = "UMAP")
 
-pdf('DimPlot_UMAP_RNA_dim=30_.pdf')
-tplot = DimPlot(so.merged, reduction = "umap", label=TRUE, pt.size = .1)
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
+# Perform trajectory analysis using precomputed UMAP
+cds <- learn_graph(cds, use_partition = F)
 
-pdf('DimPlot_UMAP_RNA_dim=30_grouped_by_sampleID.pdf')
-tplot = DimPlot(so.merged, reduction = "umap", group.by="sample.id")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
+# Order cells in pseudotime
+cds <- order_cells(cds)
 
-pdf('DimPlot_UMAP_RNA_dim=30_grouped_by_age.pdf')
-tplot = DimPlot(so.merged, reduction = "umap", group.by="age")
-tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
-print(tplot)
-dev.off()
-
-
-
+# Optionally, plot cells colored by Seurat clusters
+p1 <- plot_cells(cds, color_cells_by = "cluster",
+																	label_cell_groups=FALSE,
+																	label_leaves=FALSE,
+																	label_branch_points=FALSE,
+																	graph_label_size=1.5)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.25_use_partition=F.png")), plot = p1, dpi = 300)
 
 # -----------------------------------------------------------------------------
-# Perform dimensionality reduction by PCA and UMAP embedding
-# 02_UMAP
-# https://satijalab.org/seurat/articles/sctransform_vignette.html
+# 
 # -----------------------------------------------------------------------------
-Assays(so.merged)
-# [1] "RNA" "SCT"
-DefaultAssay(so.merged)
-# [1] "SCT"
+# DefaultAssay(so.integrated) <- "SCT"
+# Error in UseMethod(generic = "JoinLayers", object = object) : 
+#  	no applicable method for 'JoinLayers' applied to an object of class "c('SCTAssay', 'Assay', 'KeyMixin')"
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, ".RData")))
 
-#features <- FindVariableFeatures(so.merged)     # Error: SCT assay is comprised of multiple SCT models. To change the variable features, please set manually with VariableFeatures<-
-features <- SelectIntegrationFeatures(so.list)   # https://github.com/satijalab/seurat/issues/5761
-so.merged <- RunPCA(so.merged, features = features, verbose = FALSE)
-#so.merged <- RunUMAP(so.merged, dims = 1:20)
-#DimPlot(so.merged, label = TRUE)
+DefaultAssay(so.integrated) <- "RNA"
+so.integrated <- JoinLayers(so.integrated, assay = DefaultAssay(so.integrated))
+#names(so.integrated[[DefaultAssay(so.integrated)]]@data)
 
-pdf('human_adult_firstPass.elbow_plot.pdf')
-options(repr.plot.width=9, repr.plot.height=6)
-ElbowPlot(so.merged, ndims = 50)
-dev.off()
+# Find markers for every cluster compared to all remaining cells, report only the positive ones
+markers <- FindAllMarkers(so.integrated, only.pos = TRUE)
+markers %>%
+	  group_by(cluster) %>%
+	  dplyr::filter(avg_log2FC > 1)
 
-# https://hbctraining.github.io/scRNA-seq_online/lessons/03_SC_quality_control-setup.html
-head(so.merged@meta.data)
-save(so.merged, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_SCT_PCA_UMAP.RData"))
+save(so.integrated, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers.RData")))
 
-pct <- so.merged[["pca"]]@stdev / sum(so.merged[["pca"]]@stdev) * 100
-cumu <- cumsum(pct)
-component1 <- which(cumu > 90 & pct < 5)[1] # determine the point where the principal component contributes < 5% of standard deviation and the principal components so far have cumulatively contributed 90% of the standard deviation.
-component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), decreasing = T)[1] + 1 # identify where the percent change in variation between consecutive PCs is less than 0.1%
+# DoHeatmap() generates an expression heatmap for given cells and features.
+# In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers.RData")))
 
-# let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
-prin_comp <- min(component1, component2)
-write.table(prin_comp, file='human_adult_firstPass.elbow_PC.txt', row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+top10 <- markers %>%
+	  group_by(cluster) %>%
+	  dplyr::filter(avg_log2FC > 1) %>%
+	  slice_head(n = 10) %>%
+	  ungroup()
+#missing_genes <- setdiff(top10$gene, rownames(so.integrated))
 
-# create a UMAP plot for the combined dataset, part 2: the plot itself
-# see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
-# so we'll fix k but vary the resolution range to experiment with clustering. Be mindful of the comments on clustering made by https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-03957-4: "without foreknowledge of cell types, it is hard to address the quality of the chosen clusters, and whether the cells have been under- or over-clustered. In general, under-clustering occurs when clusters are too broad and mask underlying biological structure. Near-optimal clustering is when most clusters relate to known or presumed cell types, with relevant biological distinctions revealed and without noisy, unreliable, or artifactual sub-populations. When cells are slightly over-clustered, non-relevant subdivisions have been introduced; however, these subclusters can still be merged to recover appropriate cell types. Once severe over-clustering occurs, however, some clusters may be shattered, meaning they are segregated based on non-biological variation to the point where iterative re-merging cannot recover the appropriate cell types."
-resolution.range <- seq(from = 0, to = 0.5, by = 0.05)
-
-so.merged <- FindNeighbors(so.merged, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
-so.merged <- FindClusters(so.merged, algorithm=3, resolution = resolution.range, verbose = FALSE)
-so.merged <- RunUMAP(so.merged, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-
-pdf('DimPlot_UMAP.pdf')
-DimPlot(so.merged, label = TRUE)
-dev.off()
-
-
-
-
-
-
-
-
-
-so.merged <- RunPCA(so.merged, features = VariableFeatures(object = so.merged))
-
-
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# Perform dimensionality reduction by PCA and UMAP embedding
-# 02_UMAP
-# https://satijalab.org/seurat/articles/sctransform_vignette.html
-# -----------------------------------------------------------------------------
-features <- SelectIntegrationFeatures(object.list = so.list, normalization.method = "SCT", nfeatures = 5000)
-so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
-
-so.merged <- RunPCA(so.merged, features = features)
-
-
-
-so.anchors <- FindIntegrationAnchors(object.list = so.list, anchor.features = features, reduction = "rpca") # we create as our standard reference the Di Persio, Sohni and Zhao samples as these contain the greatest number of cells
-so.combined <- IntegrateData(anchorset = so.anchors, normalization.method = "SCT") # see https://github.com/satijalab/seurat/issues/3930 for discussion of k.weight
-
-
-
-
-
-
-
-
-
-features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = 5000)
-so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
-testis.anchors <- FindIntegrationAnchors(object.list = so.list, anchor.features = features, normalization.method = "SCT", reference=c(1,2,3,7,8,10,11,12), reduction = "rpca") # we create as our standard reference the Di Persio, Sohni and Zhao samples as these contain the greatest number of cells
-testis.combined <- IntegrateData(anchorset = testis.anchors, normalization.method = "SCT") # see https://github.com/satijalab/seurat/issues/3930 for discussion of k.weight
-
-
-
+# Re-scale the data including all genes in top10$gene
+so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
 # Centering and scaling data matrix
-# https://satijalab.org/seurat/articles/pbmc3k_tutorial#identification-of-highly-variable-features-feature-selection
-#all.genes <- rownames(so.merged)
-so.merged <- ScaleData(so.merged, features = genes)   ## Only using 23246 genes shared across all samples
-so.merged <- RunPCA(so.merged, features = VariableFeatures(object = so.merged))
-so.merged <- RunUMAP(so.merged, dims = 1:30, verbose = FALSE)
+# Warning: Different features in new layer data than already exists for scale.data
+# Warning: Different cells in new layer data than already exists for scale.data
 
-save(filtered, normalised, samples0, samples0.filtered, so.merged, ids, genes, file=file.path(wd.de.data, "ssc_filtered_normalised_merged_scaled_23246.RData"))
+# Create the heatmap
+heatmap <- DoHeatmap(so.integrated, features = top10$gene) + NoLegend()
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.25.png")),
+							plot = heatmap, width = 15, height = 15, dpi = 300)
 
+# Set the new order
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers.RData")))
 
+new_order <- c("6", "3", "9", "7", "4", "8", "0", "5", "2", "1")
+new_cluster_order <- rev(new_order)
+so.integrated <- SetIdent(so.integrated, value = factor(Idents(so.integrated), levels = new_cluster_order))
 
-# These are now standard steps in the Seurat workflow for visualization and clustering
-so.merged <- RunPCA(so.merged, verbose = FALSE)
-so.merged <- RunUMAP(so.merged, dims = 1:30, verbose = FALSE)
+top10 <- markers %>%
+	  mutate(cluster = factor(cluster, levels = new_cluster_order)) %>%
+	  group_by(cluster) %>%
+	  dplyr::filter(avg_log2FC > 1) %>%
+	  slice_head(n = 10) %>%
+	  ungroup()
 
-so.merged <- FindNeighbors(so.merged, dims = 1:30, verbose = FALSE)
-so.merged <- FindClusters(so.merged, verbose = FALSE)
-DimPlot(so.merged, label = TRUE)
+# Re-scale the data including all genes in top10$gene
+so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
 
+# Create the heatmap
+heatmap <- DoHeatmap(so.integrated, features = top10$gene) + NoLegend()
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_new_order_cluster_2.png")),
+							plot = heatmap, width = 15, height = 15, dpi = 300)
 
+# -----------------------------------------------------------------------------
+# SingleR
+# -----------------------------------------------------------------------------
+library(SingleR)
+library(celldex)
 
+# Load the Human Primary Cell Atlas data
+hpca <- celldex::HumanPrimaryCellAtlasData()
 
+# Extract the normalized data matrix from Seurat object
+data_matrix <- GetAssayData(so.integrated, slot = "data")
 
-for (s in 1:nrow(samples0.filtered)) {
-	  nrow(so.list[[1]])
+# Run SingleR
+singleR_results <- SingleR(test = data_matrix, ref = hpca, labels = hpca$label.main, clusters = Idents(so.integrated))
+
+# Add SingleR annotations to metadata
+so.integrated$SingleR_labels <- singleR_results$labels[as.character(Idents(so.integrated))]
+
+# Set cell type as the default identity class
+Idents(so.integrated) <- so.integrated$SingleR_labels
+
+# Visualize clusters with cell type annotations
+DefaultAssay(so.integrated) <- "SCT"
+
+plot <- DimPlot(so.integrated, group.by = "SingleR_labels", label = TRUE, repel = TRUE)
+
+pdf(file = file.path(wd.de.plots, paste0("SingleR_DimPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_resolution=0.25_ordered.pdf")))
+print(plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# GSEA
+# -----------------------------------------------------------------------------
+library(clusterProfiler)
+library(msigdbr)
+library(dplyr)
+
+# Load MSigDB gene sets (Hallmark gene sets as an example)
+msigdb <- msigdbr(species = "Homo sapiens", category = "C5")
+msigdb_list <- split(msigdb$gene_symbol, msigdb$gs_name)
+
+msigdb_df <- bind_rows(
+	  lapply(names(msigdb_list), function(term) {
+		    data.frame(term = term, gene = msigdb_list[[term]], stringsAsFactors = FALSE)
+	  })
+)
+
+# Function to run GSEA for a specific cluster
+run_gsea <- function(cluster) {
+	  # Filter markers for the specific cluster
+	  cluster_markers <- markers %>% filter(cluster == !!cluster)
+	  cat("Running GSEA for cluster", cluster, "with", nrow(cluster_markers), "markers\n")
+	  
+	  # Prepare the gene list for GSEA
+	  gene_list <- cluster_markers$avg_log2FC
+	  names(gene_list) <- cluster_markers$gene
+	  
+	  # Ensure the gene list has unique names
+	  gene_list <- gene_list[!duplicated(names(gene_list))]
+	  
+	  # Sort the gene list
+	  gene_list <- sort(gene_list, decreasing = TRUE)
+	
+	  # Filter gene_list to include only genes present in msigdb_list
+	  all_genes <- unique(unlist(msigdb_list))
+	  filtered_gene_list <- gene_list[names(gene_list) %in% all_genes]
+	  
+	  # Run GSEA
+	  gsea_result <- tryCatch(
+	  	  GSEA(gene = filtered_gene_list, TERM2GENE = msigdb_df),
+	     error = function(e) {
+	  	     warning(paste("GSEA failed for cluster", cluster, "with error:", e$message))
+	  	     return(NULL)
+	     }
+	  )
+	  
+	  return(gsea_result)
 }
 
+# Check if the genes in simple_gene_list are present in the simple_gene_set
+all_genes <- unique(unlist(msigdb_list))
+print(all_genes)
 
+# Filter simple_gene_list to include only genes present in simple_gene_set
+filtered_gene_list <- gene_list[names(gene_list) %in% all_genes]
 
+# Print the filtered gene list
+#print(filtered_gene_list)
 
+# Run GSEA for each cluster and store the results in a list
+clusters <- unique(markers$cluster)
+clusters <- as.numeric(as.vector(clusters))
+gsea_results <- lapply(clusters, run_gsea)
+names(gsea_results) <- clusters
 
-	  # Normalizing the data
-	  so <- NormalizeData(so)
-	  so <- GetAssayData(object=so, layer="counts")
-	  writeTable(as.data.frame(so), gzfile(file.path(wd.de.data, "GRCh38-2020-A", paste0(samples0$V3[s], ".txt.gz"))), colnames=T, rownames=F, sep="\t")
-	
-	  # Scaling the data (required for PCA)
-	  all.genes <- rownames(so)
-	  so <- ScaleData(so, features=all.genes)
-	
-	 # Perform linear dimensional reduction (required for UMAP)
-	 #ssc0.pca <- RunPCA(ssc0, features=VariableFeatures(object=ssc0))
-	
-	# Run non-linear dimensional reduction (UMAP/tSNE)
-	#ssc0.umap <- RunUMAP(ssc0.pca, dims=1:10)
-	
-	#file.name <- file.path(wd.de.plots, "02_UMAP", paste0(samples0$V3[s], "_DimPlot"))
-	#pdf(paste0(file.name, ".pdf"))
-	#DimPlot(ssc0.umap, reduction="umap")
-	#dev.off()
+gsea_results <- gsea_results[!sapply(gsea_results, is.null)]
+save(markers, gsea_results, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.25_", nfeatures, "_markers_gsea_results_C5.RData")))
+
+## Function to plot GSEA results for a specific cluster
+#plot_gsea <- function(gsea_result, cluster) {
+#	  # Check if the result contains any significant enrichment
+#	  if (length(gsea_result@result) > 0) {
+#	    	p1 <- enrichplot::gseaplot2(gsea_result, geneSetID = 1, title = paste("Cluster", cluster))
+#	    	#print(p1)
+#		    
+#		    ggsave(filename = file.path(wd.de.plots, paste0("GSEA_C8_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, ".png")),
+#		    							plot = p1, dpi = 300)
+#	  } else {
+#		    message(paste("No significant enrichment found for cluster", cluster))
+#	  }
+#}
+
+## Inspect the results for a specific cluster
+#for (i in seq_along(gsea_results)) {
+#	  if (!is.null(gsea_results[[i]])) {
+#		    print(paste("Cluster", i))
+#	  	  #print(gsea_results[[i]])
+#		    plot_gsea(gsea_results[[i]], i)
+#	  } else {
+#		    print(paste("No GSEA result for cluster", i))
+#	  }
+#}
+
+# Plot GSEA results for all clusters
+# for (cluster in clusters) {
+#   plot_gsea(gsea_results[[cluster]], cluster)
+# }
+
+# Extract significant terms from GSEA results
+extract_significant_terms <- function(gsea_result, pvalue_cutoff = 0.001) {
+	  if (is.null(gsea_result)) return(NULL)
+	  result <- gsea_result@result
+	  significant_terms <- result[result$p.adjust < pvalue_cutoff, ]
+	  return(significant_terms)
 }
-filtered <- raw
+
+# Apply to all GSEA results
+significant_terms_list <- lapply(gsea_results, extract_significant_terms)
+significant_terms_list <- significant_terms_list[!sapply(significant_terms_list, is.null)]
+
+# Create a matrix of p-values for significant terms
+term_names <- unique(unlist(lapply(significant_terms_list, function(x) x$Description)))
+cluster_names <- names(significant_terms_list)
+pvalue_matrix <- matrix(NA, nrow = length(term_names), ncol = length(cluster_names))
+rownames(pvalue_matrix) <- term_names
+colnames(pvalue_matrix) <- cluster_names
+
+for (i in seq_along(significant_terms_list)) {
+	  terms <- significant_terms_list[[i]]$Description
+	  pvalues <- significant_terms_list[[i]]$p.adjust
+	  pvalue_matrix[terms, names(significant_terms_list)[i]] <- pvalues
+}
+
+# Replace NA values in pvalue_matrix with a suitable value (e.g., maximum p-value)
+pvalue_matrix[is.na(pvalue_matrix)] <- 1
+
+# Create a matrix of enrichment scores (NES) for significant terms
+nes_matrix <- matrix(NA, nrow = length(term_names), ncol = length(cluster_names))
+rownames(nes_matrix) <- term_names
+colnames(nes_matrix) <- cluster_names
+
+for (i in seq_along(significant_terms_list)) {
+	  terms <- significant_terms_list[[i]]$Description
+	  nes_scores <- significant_terms_list[[i]]$NES
+	  nes_matrix[terms, names(significant_terms_list)[i]] <- nes_scores
+}
+
+# Replace NA values in nes_matrix with a suitable value (e.g., 0 for non-significant)
+nes_matrix[is.na(nes_matrix)] <- 0
+
+# Generate heatmap of p-values
+ht_pvalues <- Heatmap(pvalue_matrix, 
+																						name = "p-value", 
+																						col = colorRamp2(c(0, 0.05, 1), c(red, "white", blue)), 
+																						show_row_names = TRUE, 
+																						show_column_names = TRUE,
+																						cluster_rows = TRUE, 
+																						cluster_columns = TRUE,
+																						heatmap_legend_param = list(title = "Adjusted P-Value"))
+
+# Save the heatmap to a file
+filename <- file.path(wd.de.plots, paste0("GSEA_C5_Pvalue_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, "_p<0.001.pdf"))
+pdf(file = filename, width = 10, height = 20)
+draw(ht_pvalues)
+dev.off()
+
+# Generate heatmap of NES
+ht_nes <- Heatmap(nes_matrix, 
+																		name = "NES", 
+																		col = colorRamp2(c(-3, 0, 3), c(blue, "white", red)), 
+																		show_row_names = TRUE, 
+																		show_column_names = TRUE,
+																		cluster_rows = TRUE, 
+																		cluster_columns = TRUE,
+																		heatmap_legend_param = list(title = "Normalized Enrichment Score"))
+
+# Save the NES heatmap to a file
+filename <- file.path(wd.de.plots, paste0("GSEA_C5_NES_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, "_p<0.001.pdf"))
+pdf(file = filename, width = 10, height = 20)
+draw(ht_nes)
+dev.off()
+
+
+
+
+
+
+
+
+
+# Function to create data frame for each cluster
+create_plot_data <- function(cluster_name, significant_terms) {
+	  data <- data.frame(
+		    term = significant_terms$Description,
+		    NES = significant_terms$NES,
+		    pvalue = significant_terms$p.adjust
+	  )
+	  data$cluster <- cluster_name
+	  return(data)
+}
+
+# Combine data frames for all clusters
+plot_data_list <- mapply(create_plot_data, names(significant_terms_list), significant_terms_list, SIMPLIFY = FALSE)
+plot_data <- do.call(rbind, plot_data_list)
+
+# Create bar charts for each cluster
+create_bar_chart <- function(cluster_data) {
+	  cluster_name <- unique(cluster_data$cluster)
+	  p <- ggplot(cluster_data, aes(x = reorder(term, NES), y = NES, fill = pvalue)) +
+		 geom_bar(stat = "identity") +
+		 scale_fill_gradient(low = "red", high = "blue", name = "P-Value") +
+		 coord_flip() +
+		 theme_minimal() +
+		 labs(title = paste("Cluster", cluster_name, "NES and P-Values"),
+							x = "Terms",
+							y = "NES") +
+		 theme(axis.text.x = element_text(angle = 45, hjust = 1),
+								axis.title.x = element_text(size = 12),
+								axis.title.y = element_text(size = 12),
+								plot.title = element_text(size = 14, face = "bold"))
+  	return(p)
+}
+
+# Apply the function to create bar charts for each cluster
+bar_charts <- lapply(split(plot_data, plot_data$cluster), create_bar_chart)
+
+# Save each bar chart to a PDF file
+for (i in seq_along(bar_charts)) {
+	  chart <- bar_charts[[i]]
+
+	  filename <- file.path(wd.de.plots, paste0("GSEA_H_BAR_NES_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", i, ".pdf"))
+	  pdf(file = filename)
+	  draw(chart)
+	  dev.off()
+}
+
+# -----------------------------------------------------------------------------
+# Jaccard Index for Overlap of Gene Sets
+# -----------------------------------------------------------------------------
+library("pheatmap")
+
+# Create a list of gene sets for each cluster
+gene_sets <- markers %>% 
+	  group_by(cluster) %>% 
+	  summarise(genes = list(gene))
+
+# Compute Jaccard index for each pair of clusters
+jaccard_index <- function(set1, set2) {
+	  intersection <- length(intersect(set1, set2))
+	  union <- length(union(set1, set2))
+	  return(intersection / union)
+}
+
+# Create a matrix to store Jaccard indices
+n_clusters <- length(unique(markers$cluster))
+jaccard_matrix <- matrix(0, n_clusters, n_clusters, dimnames = list(unique(markers$cluster), unique(markers$cluster)))
+
+for (i in 1:n_clusters) {
+	  for (j in 1:n_clusters) {
+		    if (i != j) {
+			      jaccard_matrix[i, j] <- jaccard_index(gene_sets$genes[[i]], gene_sets$genes[[j]])
+		    }
+	  }
+}
+
+# Visualize the Jaccard index matrix
+pheatmap_plot <- pheatmap(jaccard_matrix, main = "Jaccard Index Between Clusters", angle_col = 0)
+
+# Save the plot as a PNG file
+png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT.png"), width = 7, height = 7, units = "in", res = 300)
+print(pheatmap_plot)
+dev.off()
+
+# Save the plot as a PDF file
+pdf(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT.pdf"), width = 7, height = 7)
+print(pheatmap_plot)
+dev.off()
+
+
+
+
+
+
+# Apply to all GSEA results
+significant_terms_list <- lapply(gsea_results, extract_significant_terms)
+significant_terms_list <- significant_terms_list[!sapply(significant_terms_list, is.null)]
+
+# Create a matrix of enrichment scores (NES) for significant terms
+term_names <- unique(unlist(lapply(significant_terms_list, function(x) x$Description)))
+cluster_names <- names(significant_terms_list)
+enrichment_matrix <- matrix(NA, nrow = length(term_names), ncol = length(cluster_names))
+rownames(enrichment_matrix) <- term_names
+colnames(enrichment_matrix) <- cluster_names
+
+for (i in seq_along(significant_terms_list)) {
+	  terms <- significant_terms_list[[i]]$Description
+	  nes_scores <- significant_terms_list[[i]]$NES
+	  enrichment_matrix[terms, names(significant_terms_list)[i]] <- nes_scores
+}
+
+library(ComplexHeatmap)
+library(circlize)
+
+# Plot the heatmap
+p2 <- Heatmap(enrichment_matrix, 
+								name = "NES", 
+								col = colorRamp2(c(-3, 0, 3), c(blue, "white", red)), 
+								show_row_names = TRUE, 
+								show_column_names = TRUE,
+								cluster_rows = TRUE, 
+								cluster_columns = TRUE,
+								heatmap_legend_param = list(title = "Normalized Enrichment Score"))
+
+pdf(file = file.path(wd.de.plots, paste0("GSEA_H_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, ".pdf")))
+draw(p2)
+dev.off()
+
+
+ggsave(filename = file.path(wd.de.plots, paste0("GSEA_H_markers_SCT_", nfeatures, "_UMAP_resolution=0.25_cluster", cluster, ".png")),
+							plot = p2, dpi = 300)

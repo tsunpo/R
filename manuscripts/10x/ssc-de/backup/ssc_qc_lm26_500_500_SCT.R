@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_lm26_500")
-wd.de.plots <- file.path(wd.de, "plots_lm26_500")
+wd.de.data  <- file.path(wd.de, "data_lm26_500_500")
+wd.de.plots <- file.path(wd.de, "plots_lm26_500_500")
 
 samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020_lm26.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -100,7 +100,7 @@ save(samples0, filtered, file=file.path(wd.de.data, "ssc_filtered.RData"))
 wd.de.data0  <- file.path(wd.de, "data_lm26")
 
 load(file=file.path(wd.de.data0, "ssc_filtered.RData"))
-samples0.filtered <- samples0[subset(filtered, cells > 0)$PD_ID,]
+samples0.filtered <- samples0[subset(filtered, cells > 100)$PD_ID,]
 samples0.filtered$V8 <- mapply(x = 1:nrow(samples0.filtered), function(x) unlist(strsplit(samples0.filtered$V3[x], "_"))[2])
 samples0.filtered$V9 <- 1
 samples0.filtered$V9[grep("L", samples0.filtered$V8)] <- 3
@@ -121,18 +121,20 @@ for (s in 1:nrow(samples0.filtered)) {
 	
 	  # QC and selecting cells for further analysis
 	  so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-	  so <- subset(so, subset = nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
+	  so <- subset(so, subset = nFeature_RNA > 500 & nCount_RNA > 500 & percent.mt < 5)
 
 	  # Apply sctransform normalization
 	  # https://satijalab.org/seurat/articles/sctransform_vignette.html
-	  so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
-	  so <- FindVariableFeatures(so)
-	  so <- ScaleData(so)
-	  so <- RunPCA(so)
+	  #so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
+	  #so <- FindVariableFeatures(so)
+	  #so <- ScaleData(so)
+	  #so <- RunPCA(so)
 	  
 	  # Normalizing the data
 	  # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
-	  #so <- NormalizeData(so)
+	  so <- NormalizeData(so)
+	  so <- FindVariableFeatures(so)
+	  so <- ScaleData(so)
 	  
 	  normalised[s, 2] <- nrow(so)
 	  normalised[s, 3] <- ncol(so)
@@ -146,7 +148,7 @@ for (s in 1:nrow(samples0.filtered)) {
 		    genes <- rownames(so)
 	  }
 }
-writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised.1_SCT.txt"), colnames=T, rownames=F, sep="\t")
+writeTable(normalised, file.path(wd.de.data, "ssc_filtered_normalised.1.txt"), colnames=T, rownames=F, sep="\t")
 filtered.1 <- filtered
 normalised.1 <- normalised
 samples0.1 <- samples0
@@ -154,7 +156,7 @@ samples0.filtered.1 <- samples0.filtered
 so.list.1 <- so.list
 ids.1 <- c("PD53623b_L1", "PD53623b_L2")
 genes.1 <- genes
-save(filtered.1, normalised.1, samples0.1, samples0.filtered.1, so.list.1, ids.1, genes.1, file=file.path(wd.de.data, "ssc_filtered_normalised.1_SCT.RData"))
+save(filtered.1, normalised.1, samples0.1, samples0.filtered.1, so.list.1, ids.1, genes.1, file=file.path(wd.de.data, "ssc_filtered_normalised.1.RData"))
 
 # -----------------------------------------------------------------------------
 # QC and selecting cells for further analysis
@@ -163,9 +165,10 @@ save(filtered.1, normalised.1, samples0.1, samples0.filtered.1, so.list.1, ids.1
 # https://satijalab.org/seurat/articles/pbmc3k_tutorial#setup-the-seurat-object
 # -----------------------------------------------------------------------------
 library(qs)
-
+wd.de.data0 <- "/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500"
+	
 samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020_arussell.list"), header=F, rownames=3, sep="\t")
-so <- qread(file.path(wd.de.data, "05_SEURATS_240523_VL00297_289_AAFJN3FM5_SI-TT-B1_seurat.qs"))
+so <- qread(file.path(wd.de.data0, "05_SEURATS_240523_VL00297_289_AAFJN3FM5_SI-TT-B1_seurat.qs"))
 #so <- CreateSeuratObject(counts=data@assays$RNA@layers$counts, project=samples0$V3[1], min.cells=3, min.features=200)
 
 #so[["pca"]] <- NULL
@@ -176,18 +179,20 @@ so[["spatial"]] <- NULL  # If 'spatial' is an assay or similar slot
 
 # QC and selecting cells for further analysis
 so[["percent.mt"]] <- PercentageFeatureSet(so, pattern="^MT-")
-so <- subset(so, subset = nFeature_RNA > 500 & nFeature_RNA < 10000 & nCount_RNA > 1000 & nCount_RNA < 50000 & percent.mt < 5)
+so <- subset(so, subset = nFeature_RNA > 500 & nCount_RNA > 500 & percent.mt < 5)
 
 # Apply sctransform normalization
 # https://satijalab.org/seurat/articles/sctransform_vignette.html
-so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
-so <- FindVariableFeatures(so)
-so <- ScaleData(so)
-so <- RunPCA(so)
+#so <- SCTransform(so, vars.to.regress="percent.mt", verbose=F)
+#so <- FindVariableFeatures(so)
+#so <- ScaleData(so)
+#so <- RunPCA(so)
 
 # Normalizing the data
 # https://satijalab.org/seurat/articles/pbmc3k_tutorial#normalizing-the-data
-#so <- NormalizeData(so)
+so <- NormalizeData(so)
+so <- FindVariableFeatures(so)
+so <- ScaleData(so)
 
 nrow(so)
 # [1] 33161
@@ -199,7 +204,7 @@ samples0.2$V8 <- "A"
 samples0.2$V9 <- 4
 so.list.2 <- c(so)
 ids.2 <- c("AMSBIO")
-save(samples0.2, so.list.2, ids.2, file=file.path(wd.de.data, "ssc_filtered_normalised.2_SCT.RData"))
+save(samples0.2, so.list.2, ids.2, file=file.path(wd.de.data, "ssc_filtered_normalised.2.RData"))
 
 
 

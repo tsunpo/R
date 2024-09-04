@@ -435,24 +435,24 @@ calculate_spearman <- function(cluster, age_cluster_data, so.integrated) {
 	  print(volcano_plot)
 	  dev.off()
 	  
-	  #genes_pos <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient > 0)$gene
-	  #genes_neg <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient < 0)$gene
-	  #enrich_result_pos <- enrich_result(genes_pos)
-	  #enrich_result_neg <- enrich_result(genes_neg)
+	  genes_pos <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient > 0)$gene
+	  genes_neg <- subset(subset(significant_genes, p_adj_value <= p_value_threshold), cor_coefficient < 0)$gene
+	  enrich_result_pos <- enrich_result(genes_pos)
+	  enrich_result_neg <- enrich_result(genes_neg)
 	  
-	  #p <- plot_custom_barplot(enrich_result_pos, paste0("Cluster ", cluster, " (Up)"), col = red)
-	  #if (!is.null(p)) {
-	  #	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.25_cluster", cluster, "_go_pos.pdf")), width = 7, height = 2.5)
-	  #  print(p)
-	  #	  dev.off()
-	  #}
+	  p <- plot_custom_barplot(enrich_result_pos, paste0("", cluster, " (Up)"), col = red)
+	  if (!is.null(p)) {
+	  	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.5_", cluster, "_go_pos.pdf")), width = 7, height = 2.5)
+	    print(p)
+	  	  dev.off()
+	  }
 
-	  #p <- plot_custom_barplot_flip(enrich_result_neg, paste0("", cluster, " (Down)"), col = blue)
-	  #if (!is.null(p)) {
-	  #	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.5_", cluster, "_go_neg.pdf")), width = 7, height = 2.5)
-	  #	  print(p)
-	  #	  dev.off()
-	  #}
+	  p <- plot_custom_barplot_flip(enrich_result_neg, paste0("", cluster, " (Down)"), col = blue)
+	  if (!is.null(p)) {
+	  	  pdf(file = file.path(wd.de.plots, paste0("volcano_0.1_SCT_res=0.5_", cluster, "_go_neg.pdf")), width = 7, height = 2.5)
+	  	  print(p)
+	  	  dev.off()
+	  }
 	  
 	  return(significant_genes)
 }
@@ -497,7 +497,8 @@ calculate_spearman_mn7 <- function(cluster, age_cluster_data, so.integrated) {
   	# Create a volcano plot
 	  volcano_plot <- ggplot(significant_genes_mn7, aes(x = cor_coefficient, y = -log10(p_adj_value))) +
 		    geom_point(aes(color = color)) +
-	  	  scale_color_manual(values = unique(significant_genes_mn7$color)) +
+	  	  #scale_color_manual(values = unique(significant_genes_mn7$color)) +
+	  	  scale_color_manual(values = c(blue, red, "grey")) +
 		    theme_minimal() +
 		    labs(title = paste0(cluster),
 						    	x = "Correlation Coefficient",
@@ -518,5 +519,38 @@ calculate_spearman_mn7 <- function(cluster, age_cluster_data, so.integrated) {
 }
 
 # -----------------------------------------------------------------------------
-# Spearman's correlation between age and gene expression for each cluster
+# Wilcoxon test and fold change for each cluster
 # -----------------------------------------------------------------------------
+calculate_fold_change_and_wilcoxon <- function(cluster, so.integrated, age_threshold) {
+	  cells_in_cluster <- WhichCells(so.integrated, idents = cluster)
+	  age_data <- so.integrated@meta.data[cells_in_cluster, "age"]
+	
+	  # Divide cells into young and old groups based on age threshold
+	  young_cells <- cells_in_cluster[age_data < age_threshold]
+	  old_cells <- cells_in_cluster[age_data >= age_threshold]
+	
+	  # Calculate average expression for young and old groups
+	  gene_expression_young <- rowMeans(GetAssayData(so.integrated, assay = "RNA", slot = "data")[, young_cells])
+	  gene_expression_old <- rowMeans(GetAssayData(so.integrated, assay = "RNA", slot = "data")[, old_cells])
+	
+	  # Calculate log2 fold change
+	  fold_change <- gene_expression_old / gene_expression_young
+	  log2_fold_change <- log2(fold_change)
+	
+	  # Perform Wilcoxon test for each gene
+	  wilcoxon_results <- apply(GetAssayData(so.integrated, assay = "RNA", slot = "data"), 1, function(gene_expr) {
+		    wilcox.test(gene_expr[young_cells], gene_expr[old_cells])$p.value
+	  })
+	
+	  # Adjust p-values for multiple testing
+	  p_adj_values <- p.adjust(wilcoxon_results, method = "BH")
+	
+  	# Create a results data frame
+	  result_df <- data.frame(
+		    gene = rownames(GetAssayData(so.integrated, assay = "RNA", slot = "data")),
+		    log2_fold_change = log2_fold_change,
+		    p_adj_value = p_adj_values
+	  )
+	
+	  return(result_df)
+}

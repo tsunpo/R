@@ -50,7 +50,7 @@ library(patchwork)
 library(ggplot2)
 library(sctransform)
 
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",      "ssc_filtered_normalised_SCT.RData"))
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",      "ssc_filtered_normalised_SCT_14.RData"))
 load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.1_SCT.RData"))
 load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500", "ssc_filtered_normalised.2_SCT.RData"))
 
@@ -74,7 +74,7 @@ so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
 anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:30, reduction = "rpca")
-so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:30, k.weight = 90)
+so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:30, k.weight = 100)
 
 save(samples0.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_RPCA_", nfeatures, ".RData")))
 
@@ -104,7 +104,7 @@ for (s in 1:nrow(samples0.filtered)) {
 
 so.integrated@meta.data$sample.id <- ids
 so.integrated@meta.data$age <- ages
-so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
+#so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
 so.integrated@meta.data$n2 <- n2s
 so.integrated@meta.data$batch <- batches
 head(so.integrated@meta.data)
