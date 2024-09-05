@@ -491,6 +491,76 @@ print(pheatmap_plot)
 dev.off()
 
 # -----------------------------------------------------------------------------
+# Methods: Monocle 3
+# Last Modified: 30/08/24; 25/07/24
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_annotated.RData")))
+# > dim(so.integrated)
+# [1] 5000 46987
+
+# Cluster cells in Monocle 3 using UMAP embeddings
+cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
+# Perform trajectory analysis using precomputed UMAP
+cds <- cluster_cells(cds, reduction_method = "UMAP")
+# Learn the principal graph
+cds <- learn_graph(cds, use_partition = F)
+# Order cells in pseudotime
+#cds <- order_cells(cds)
+
+# Identify root cells based on some known marker or cluster
+root_cells <- WhichCells(so.integrated, idents = "Stage 0")  # Replace "early_cluster_name" with your specific cluster
+# Ensure these root cells are present in `cds`
+root_cells_in_cds <- root_cells[root_cells %in% colnames(cds)]
+# Order cells using the root cells
+cds <- order_cells(cds, root_cells = root_cells_in_cds)
+
+# Optionally, plot cells colored by Seurat clusters
+monocle3 <- plot_cells(cds, color_cells_by = "pseudotime",
+																							label_cell_groups=FALSE,
+																							label_leaves=FALSE,
+																							label_branch_points=FALSE,
+																							graph_label_size=0)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime.png")), plot = monocle3, dpi = 300)
+
+# https://biocellgen-public.svi.edu.au/mig_2019_scrnaseq-workshop/trajectory-inference.html#tscan
+library(ggbeeswarm)
+library(colorRamps)
+library(viridisLite)
+
+pdata_cds <- pData(cds)
+pdata_cds$pseudotime_monocle3 <- monocle3::pseudotime(cds)
+pdata_cds$idents <- Idents(so.integrated)
+
+#pseudotime_palette <- colorRampPalette(c("blue", "yellow", "red"))(100)
+#pseudotime_palette <- inferno(100)
+pseudotime_palette <- colorRampPalette(c("darkblue", "red", "yellow"))(100)
+
+ordered <- ggplot(as.data.frame(pdata_cds), 
+																		aes(x = pseudotime_monocle3, 
+																						y = idents, colour = pseudotime_monocle3)) +  # Use pseudotime as the color
+	  geom_quasirandom(groupOnX = FALSE) +
+	  scale_color_gradientn(colors = pseudotime_palette) +  # Apply the pseudotime gradient
+	  theme_classic() +
+	  xlab("pseudotime") + 
+	  ylab("") +
+	  ggtitle("") +
+	  theme(legend.position = "none")  # Equivalent to NoLegend()
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered.png")), plot = ordered, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
 # GSEA
 # -----------------------------------------------------------------------------
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.3_", nfeatures, "_markers.RData")))
