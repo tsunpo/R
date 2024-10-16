@@ -113,6 +113,10 @@ getJaccardIndex <- function(markers) {
 library(clusterProfiler)
 library(org.Hs.eg.db) # for human gene annotations; use org.Mm.eg.db for mouse
 library(tidyr)
+library(dplyr)
+library(simplifyEnrichment)
+library(GOSemSim)  # For semantic similarity
+library(stringr)  # For string manipulation
 
 # Perform GO enrichment for each cluster
 enrich_result <- function(genes) {
@@ -553,4 +557,38 @@ calculate_fold_change_and_wilcoxon <- function(cluster, so.integrated, age_thres
 	  )
 	
 	  return(result_df)
+}
+
+# -----------------------------------------------------------------------------
+# DESeq
+# -----------------------------------------------------------------------------
+process_gene <- function(gene, counts_filtered, metadata) {
+	  # Subset the data to keep only cells with non-zero expression for the current gene
+	  non_zero_cells <- counts_filtered[gene, ] > 0
+	  counts_filtered_gene <- counts_filtered[gene, non_zero_cells]
+	  # Subset metadata to match the filtered cells
+	  metadata_filtered <- metadata[non_zero_cells, ]
+	
+	  counts_filtered_gene <- as.matrix(t(counts_filtered_gene))
+	  rownames(counts_filtered_gene) <- gene
+	
+	  # Step 2: Create a DESeqDataSet for the current gene
+	  dds <- DESeqDataSetFromMatrix(countData = counts_filtered_gene,
+			  																												colData = metadata_filtered,
+					  																										design = ~ batch + pseudotime)
+	  # Run DESeq2
+	  #dds <- DESeq(dds)
+	  # Step 1: Estimate size factors
+	  dds <- estimateSizeFactors(dds)
+	  # Step 2: Estimate dispersions using gene-wise estimates instead of the default curve fitting
+  	dds <- estimateDispersionsGeneEst(dds)
+  	# Step 3: Assign the gene-wise dispersion estimates as final dispersions
+  	dispersions(dds) <- mcols(dds)$dispGeneEst
+	  # Step 4: Continue with testing using nbinomWaldTest (default test)
+	  dds <- nbinomWaldTest(dds)
+	
+	  # You can now extract results for the current gene
+	  results_pseudotime <- results(dds, name = "pseudotime")
+	  # Step 6: Store the results for this gene
+	  results_list2[[gene]] <- results_pseudotime
 }

@@ -321,7 +321,7 @@ dev.off()
 
 ##
 dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend()
-ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4_ordered_annotated_Fibrotic PMC.png")), plot = dim_plot, width = 10, height = 8, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.4_ordered_annotated_Fibrotic PMC_8x8.png")), plot = dim_plot, width = 8, height = 8, dpi = 300)
 
 save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_annotated.RData")))
 
@@ -498,6 +498,16 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_P
 # > dim(so.integrated)
 # [1] 5000 46987
 
+# Identify the clusters you want to keep
+clusters_to_remove <- c("Sertoli", "Fibrotic PMC", "Endothelial and Macrophage")
+clusters_to_keep <- setdiff(unique(Idents(so.integrated)), clusters_to_remove)
+# Subset the Seurat object to exclude cluster 1
+so.integrated <- subset(so.integrated, idents = clusters_to_keep)
+# > dim(so.integrated)
+# [1] 5000 40102
+
+DefaultAssay(so.integrated) <- "RNA"
+
 # Cluster cells in Monocle 3 using UMAP embeddings
 cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
 # Perform trajectory analysis using precomputed UMAP
@@ -520,7 +530,7 @@ monocle3 <- plot_cells(cds, color_cells_by = "pseudotime",
 																							label_leaves=FALSE,
 																							label_branch_points=FALSE,
 																							graph_label_size=0)
-ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime.png")), plot = monocle3, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_Germ.png")), plot = monocle3, dpi = 300)
 
 # https://biocellgen-public.svi.edu.au/mig_2019_scrnaseq-workshop/trajectory-inference.html#tscan
 library(ggbeeswarm)
@@ -545,10 +555,90 @@ ordered <- ggplot(as.data.frame(pdata_cds),
 	  ylab("") +
 	  ggtitle("") +
 	  theme(legend.position = "none")  # Equivalent to NoLegend()
-ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered.png")), plot = ordered, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered_Germ.png")), plot = ordered, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Methods: Slingshot
+# Last Modified: 10/09/24
+# -----------------------------------------------------------------------------
+library(SingleCellExperiment)
+library(slingshot)
+
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_annotated.RData")))
+
+DefaultAssay(so.integrated) <- "RNA"
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+
+# Extract necessary data for SCE conversion
+normalized_matrix <- GetAssayData(so.integrated, assay = "RNA", layer = "data")  # For raw counts
+umap_embeddings <- Embeddings(so.integrated, reduction = "umap")  # UMAP embeddings
+cell_metadata <- so.integrated@meta.data  # Metadata
+
+# Create a SingleCellExperiment object
+sce <- SingleCellExperiment(
+	  assays = list(data = normalized_matrix),
+	  colData = cell_metadata,
+	  reducedDims = list(UMAP = umap_embeddings)
+)
+sce$seurat_clusters <- Idents(so.integrated)
+
+# Running Slingshot using UMAP embeddings and cluster information from Seurat
+#sce <- slingshot(sce, clusterLabels = sce$seurat_clusters, reducedDim = 'UMAP')
+# Add clustering information (from Seurat) to the SCE object as a factor
+sce <- slingshot(sce, clusterLabels = sce$seurat_clusters, reducedDim = 'UMAP', start.clus = c("Stage 0", "Stage 0A", "Stage 0B", "Stage 1"), end.clus = c("Early spermatid", "Late spermatid"))  # '0' is the start cluster
+
+# View pseudotime values
+pseudotime_values <- sce$slingPseudotime_1
+head(pseudotime_values)
+
+# Convert UMAP embeddings to a data frame for ggplot
+umap_df <- as.data.frame(reducedDims(sce)$UMAP)
+umap_df$pseudotime <- pseudotime_values
+
+# Plot the UMAP embeddings with pseudotime overlay
+ggplot(umap_df, aes(x = umap_1, y = umap_2, color = pseudotime)) +
+	  geom_point() +
+	  scale_color_viridis_c() +
+	  labs(title = "Slingshot Pseudotime Trajectory on UMAP", x = "UMAP 1", y = "UMAP 2") +
+	  theme_minimal()
 
 
 
+
+# -----------------------------------------------------------------------------
+# DESeq2
+# Last Modified: 02/09/24
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("DESeq_~age.RData")))
+
+cell_type <- "Sertoli"
+results_age <- results_list[[cell_type]]
+
+# Assume results_age is the DESeq2 results object for the effect of age
+# Convert to a data frame for ggplot2
+result_df <- as.data.frame(results_age)
+result_df$gene <- rownames(result_df)
+result_df$color <- ifelse(result_df$log2FoldChange < -0.05, "blue",
+																										ifelse(result_df$log2FoldChange > 0.05, "red", "grey"))
+
+# Create a volcano plot
+volcano_plot <- ggplot(result_df, aes(x = log2FoldChange, y = -log10(padj))) +
+	  geom_point(aes(color = color)) +
+	  scale_color_manual(values = c(blue, "grey", red)) +
+	  theme_minimal() +
+	  labs(title = paste0(cell_type),
+			  			x = "Log2 Fold Change",
+				  		y = "-log10 Adjusted P-value") +
+  	theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+	  geom_vline(xintercept = 0.05, linetype = "dashed", color = red) +
+	  geom_vline(xintercept = -0.05, linetype = "dashed", color = blue) +
+	  geom_text_repel(data = subset(result_df, abs(log2FoldChange) > 0.05),
+			  														aes(label = gene), size = 3, max.overlaps = 10)
+
+# Print the volcano plot
+pdf(file = file.path(wd.de.plots, paste0("volcano_DeSeq_~age_", cell_type, ".pdf")), width = 5, height = 5)
+print(volcano_plot)
+dev.off()
 
 
 

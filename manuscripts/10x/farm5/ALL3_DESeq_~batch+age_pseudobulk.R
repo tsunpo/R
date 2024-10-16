@@ -31,8 +31,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
+wd.de.data  <- file.path(wd.de, "data_ALL3_500_QC")
+wd.de.plots <- file.path(wd.de, "plots_ALL3_500_QC")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -54,7 +54,7 @@ library(pheatmap)
 # To identify six SPG states
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.4_", nfeatures, "_annotated.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
 
 # -----------------------------------------------------------------------------
 # DESeq2
@@ -73,29 +73,38 @@ so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 cell_types <- levels(Idents(so.integrated))
 # Initialize a list to store results for each cell type
 results_list <- list()
+counts_filtered_list <- list()
 
 for (cell_type in cell_types) {
 	  # Step 0: Subset the Seurat object to include only the current cell type
 	  so_subset <- subset(so.integrated, idents = cell_type)
 	
-	  # Step 1: Extract count data and metadata
-	  counts <- GetAssayData(so_subset, layer = "counts")
+	  # Pseudobulk by sample within this cell type (summing counts across cells per sample)
+	  counts <- AggregateExpression(so_subset, group.by = "sample.id", assays = "RNA", slot = "counts")$RNA
+	  
 	  # Filter out genes with no counts in any samples
 	  non_zero_genes <- rowSums(counts > 0) > 0
 	  counts_filtered <- counts[non_zero_genes, ]
+	  colnames(counts_filtered) <- gsub("-", "_", colnames(counts_filtered))
 	  
 	  metadata <- so_subset@meta.data
+	  metadata <- metadata %>%
+	  	  select(sample.id, age, batch) %>%
+	  	  distinct()
+	  rownames(metadata) <- metadata$sample.id
+	  metadata <- metadata[match(colnames(counts_filtered), metadata$sample.id),]
+	  
 	  # Ensure the metadata columns of interest are present
 	  # Assuming 'age' and 'batch' are stored in metadata
 	  metadata$age <- as.numeric(metadata$age)  # Convert age to numeric if it isn't already
-	  #metadata$batch <- as.factor(metadata$batch)  # Ensure batch is a factor
+	  metadata$batch <- as.factor(metadata$batch)  # Ensure batch is a factor
 	  # Center and scale the age variable
 	  #metadata$age_scaled <- scale(metadata$age)
 	  
 	  # Step 2: Create a DESeqDataSet
 	  dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
 					  																										colData = metadata,
-			  																												design = ~ age)
+			  																												design = ~ batch + age)
 	  # Use the poscounts method for size factor estimation
 	  dds <- estimateSizeFactors(dds, type = "poscounts")
 	  
@@ -103,10 +112,12 @@ for (cell_type in cell_types) {
   	dds <- DESeq(dds)
 	  # Step 5: Extract the results for the age effect
 	  results_age <- results(dds, name = "age")
+	  
 	  # View the top results
-	  head(results_age[order(results_age$pvalue), ])
+	  #head(results_age[order(results_age$pvalue), ])
 	  # Store the results in the list with the cell type as the name
 	  results_list[[cell_type]] <- results_age
+	  counts_filtered_list[[cell_type]] <- counts_filtered
 	  
 	  # Assume results_age is the DESeq2 results object for the effect of age
 	  # Convert to a data frame for ggplot2
@@ -127,11 +138,12 @@ for (cell_type in cell_types) {
 	    	geom_vline(xintercept = 0.05, linetype = "dashed", color = red) +
 	    	geom_vline(xintercept = -0.05, linetype = "dashed", color = blue) +
 	    	geom_text_repel(data = subset(result_df, abs(log2FoldChange) > 0.05),
-	  														  			aes(label = gene), size = 3, max.overlaps = 20)
+	  														  			aes(label = gene), size = 3, max.overlaps = 10)
 	  
 	  # Print the volcano plot
-	  pdf(file = file.path(wd.de.plots, paste0("volcano_DeSeq_~age_", cell_type, ".pdf")), width = 5, height = 5)
+	  pdf(file = file.path(wd.de.plots, paste0("volcano_pseudobulk_DESeq_~batch+age_", cell_type, ".pdf")), width = 5, height = 5)
 	  print(volcano_plot)
 	  dev.off()
 }
-save(results_list, file=file.path(wd.de.data, paste0("DESeq_~age.RData")))
+
+save(results_list, counts_filtered_list, file=file.path(wd.de.data, paste0("DESeq_~batch+age_pseudobulk.RData")))
