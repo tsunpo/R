@@ -500,11 +500,177 @@ Heatmap(ordered_expression_matrix,
 wss <- sapply(1:15, function(k){
 	  kmeans(t(expression_matrix), centers = k, nstart = 10)$tot.withinss
 })
+
 plot(1:15, wss, type = "b", pch = 19, frame = FALSE, 
 					xlab = "Number of clusters K", 
 					ylab = "Total within-clusters sum of squares")
 
 save(kmeans_result, ordered_expression_matrix, wss, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_clustering.RData")))
+
+# -----------------------------------------------------------------------------
+# Methods: DE using MAST
+# Last Modified: 17/10/24
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
+# > dim(so.integrated)
+# [1] 5000 70738
+
+DefaultAssay(so.integrated) <- "RNA"
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+so.integrated$cell_type <- Idents(so.integrated)
+
+# Create age groups ("young" and "old")
+median_age <- median(so.integrated$age)  # Define the threshold for age
+so.integrated$age_group <- ifelse(so.integrated$age <= median_age, "young", "old")
+
+# List of unique cell types
+cell_types <- unique(so.integrated$cell_type)  # Adjust if your metadata column for cell type is named differently
+# Initialize a list to store DE results
+de_results_list <- list()
+
+# Loop over each cell type
+for (ct in cell_types) {
+	  # Subset Seurat object to include only the cells of the current cell type
+	  cells_of_ct <- WhichCells(so.integrated, expression = cell_type == ct)
+	  so_ct <- subset(so.integrated, cells = cells_of_ct)
+	
+	  # Perform differential expression analysis between "young" and "old" using MAST
+	  de_results <- FindMarkers(
+		    so_ct,
+		    ident.1 = "old",
+		    ident.2 = "young",
+		    group.by = "age_group",  # Use age group for ident.1 and ident.2
+		    test.use = "MAST"
+	  )
+	
+	  # Store the results for this cell type
+  	de_results_list[[ct]] <- de_results
+  	
+  	# Define color categories based on q_value and log2_fold_change conditions
+  	de_results$color <- "gray"  # Default color
+  	de_results$color[de_results$p_val_adj < 1E-9 & de_results$avg_log2FC > 1] <- red
+  	de_results$color[de_results$p_val_adj < 1E-9 & de_results$avg_log2FC < -1] <- blue
+  	
+  	# Create a new column for labeling significant genes
+  	de_results$label <- NA
+  	de_results$label[de_results$p_val_adj < 1E-9 & abs(de_results$avg_log2FC) > 1] <- rownames(de_results)
+  	
+  	# Plot the volcano plot
+  	volcano_plot <- ggplot(de_results, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
+  		  geom_point(aes(color = color), alpha = 0.7) +
+  		  scale_color_identity() +  # Use the color column for point colors
+  		  geom_text_repel(aes(label = label), max.overlaps = 20, size = 3) +  # Add gene labels
+  		  geom_vline(xintercept = 1, linetype = "dashed", color = red) +
+  		  geom_vline(xintercept = -1, linetype = "dashed", color = blue) +
+  		  theme_minimal() +
+  		  xlab("Log2 FC") +
+  		  ylab("-log10(P)") +
+  		  ggtitle("Expression vs. Age") +
+  		  theme(legend.position = "none",  # Hide the legend for custom color  theme(legend.position = "none",            # Hide the legend
+         plot.title = element_text(hjust = 0.5))  # Center the title
+  	
+  	# Print the volcano plot
+  	pdf(file = file.path(wd.de.plots, paste0("MAST_volcano_", ct, "_RNA.pdf")), width = 5, height = 5)
+  	print(volcano_plot)
+  	dev.off()
+}
+
+save(de_results_list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_MAST_RNA.RData")))
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Methods: DE using Monocle 3
+# Last Modified: 17/10/24
+# -----------------------------------------------------------------------------
+# Set the default assay to "integrated"
+DefaultAssay(so.integrated) <- "RNA"
+so.integrated <- JoinLayers(so.integrated, assays = "RNA")
+
+# Cluster cells in Monocle 3 using UMAP embeddings
+#cds <- getMonocle3CDS(so.integrated, umap_embeddings=T)
+# Extract expression data from Seurat object
+expression_matrix <- GetAssayData(so.integrated[["RNA"]], slot = "data")
+
+# Create Monocle3 CDS manually
+cds <- new_cell_data_set(
+	  expression_data = expression_matrix,
+	  cell_metadata = as.data.frame(so.integrated@meta.data),
+	  gene_metadata = data.frame(gene_short_name = rownames(expression_matrix), row.names = rownames(expression_matrix))
+)
+cds$idents <- Idents(so.integrated)
+
+# Optionally add UMAP embeddings if available
+reducedDim(cds, "UMAP") <- Embeddings(so.integrated, "umap")
+save(cds, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_RNA_cds.RData")))
+
+# Get unique cell types
+cell_types <- unique(cds$idents)
+# Loop through each cell type and perform differential expression analysis
+for (ct in cell_types) {
+	  # Subset CDS for each cell type
+	  cds_subset <- cds[, cds$idents == ct]
+	
+	  # Fit model using age as a covariate
+	  diff_test_res <- fit_models(cds_subset, model_formula_str = "~ age + batch", cores = 4)
+	
+	  # Extract and save results for each cell type
+	  coefficient_table <- coefficient_table(diff_test_res)
+	  coefficient_table_age <- subset(coefficient_table, term == "age")
+	  significant_genes <- subset(coefficient_table_age, q_value < 1E-3)
+	
+	  # Ensure coefficient_table_age is a tibble
+	  coefficient_table_age <- as.data.frame(coefficient_table_age)
+	  rownames(coefficient_table_age) <- coefficient_table_age$gene_id
+	  
+	  # Add a binary age group: "young" or "old"
+	  median_age <- median(cds$age)  # Adjust to your specific threshold
+	  cds$age_group <- ifelse(cds$age <= median_age, "young", "old")
+	  
+	  # Extract the expression matrix from the CDS object
+	  expression_matrix <- exprs(cds)
+	  
+	  # Split the cells into two groups based on age
+	  young_cells <- colnames(cds)[cds$age_group == "young"]
+	  old_cells <- colnames(cds)[cds$age_group == "old"]
+	  
+	  # Calculate average expression for each gene in young and old groups
+	  avg_expr_young <- rowMeans(expression_matrix[, young_cells])
+	  avg_expr_old <- rowMeans(expression_matrix[, old_cells])
+	  
+	  # Calculate fold change (log2 fold change between old and young)
+	  log2_fold_change <- log2(avg_expr_old / avg_expr_young)
+	  
+	  # Create a data frame with gene names and log2 fold change
+	  fold_change_data <- data.frame(
+	  	  gene_short_name = rownames(expression_matrix),
+	  	  log2_fold_change = log2_fold_change
+	  )
+	  
+	  # Combine fold change data with p-values from Monocle
+	  volcano_data <- merge(fold_change_data, coefficient_table_age[, c("gene_short_name", "p_value", "q_value")], by = "gene_short_name")
+	  
+	  # Calculate -log10(p-value) for y-axis
+	  volcano_data <- volcano_data %>%
+	  	  mutate(log10_pvalue = -log10(p_value))
+	  
+	  ggplot(volcano_data, aes(x = log2_fold_change, y = log10_pvalue)) +
+	  	  geom_point(aes(color = p_value < 1E-3), alpha = 0.7) +  # Highlight significant genes
+	  	  theme_minimal() +
+	  	  xlab("Log2 Fold Change") +
+	  	  ylab("-log10(p-value)") +
+	  	ggtitle("Volcano Plot: Differential Expression vs. Age")
+}
+
+
+
+
+
+
+
 
 
 
