@@ -33,8 +33,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, paste0("data_ALL4_500_", dims, "_", k.weight))
-wd.de.plots <- file.path(wd.de, paste0("plots_ALL4_500_", dims, "_", k.weight))
+wd.de.data  <- file.path(wd.de, paste0("data_ALL4_500"))
+wd.de.plots <- file.path(wd.de, paste0("plots_ALL4_500"))
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -52,23 +52,23 @@ library(ggplot2)
 library(sctransform)
 library(pheatmap)
 
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",           "ssc_filtered_normalised.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.1.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.2.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_June_500", "ssc_filtered_normalised.3.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",           "ssc_filtered_normalised.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.1.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.2.RData"))
+#load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_June_500", "ssc_filtered_normalised.3.RData"))
 
 # Remove items 2 and 8 from the list (where there are only 130 and 92 cells in the samples)
-so.list <- so.list[-c(2, 8)]
+#so.list <- so.list[-c(2, 8)]
 # Remove rows 2 and 8 from the data frame
-samples0.filtered <- samples0.filtered[-c(2, 8), ]
+#samples0.filtered <- samples0.filtered[-c(2, 8), ]
 # Remove elements 2 and 8 from the array
-ids <- ids[-c(2, 8)]
+#ids <- ids[-c(2, 8)]
 
-so.list <- c(so.list, so.list.1, so.list.2, so.list.3)
-ids <- c(ids, ids.1, ids.2, ids.3)
-samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
-samples0.filtered <- rbind(samples0.filtered, samples0.2)
-samples0.filtered <- rbind(samples0.filtered, samples0.filtered.3)
+#so.list <- c(so.list, so.list.1, so.list.2, so.list.3)
+#ids <- c(ids, ids.1, ids.2, ids.3)
+#samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
+#samples0.filtered <- rbind(samples0.filtered, samples0.2)
+#samples0.filtered <- rbind(samples0.filtered, samples0.filtered.3)
 
 # -----------------------------------------------------------------------------
 # Performing integration on datasets normalized with SCTransform
@@ -84,16 +84,16 @@ nfeatures <- 5000
 ## Run the PrepSCTIntegration() function prior to identifying anchors
 #features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
 #so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
-#save(samples0.filtered, features, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL4_500", paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
+#save(samples0.filtered, ids, features, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
 
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
 anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:dims)
-save(samples0.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_anchors.RData")))
+save(samples0.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_anchors_", dims, ".RData")))
 
-so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:dims, k.weight = k.weight)
-save(samples0.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, ".RData")))
+so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:20, k.weight = 100)
+save(samples0.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_", dims, "_", k.weight, ".RData")))
 
 # -----------------------------------------------------------------------------
 # Perform CCA integration (Seurat 4.3.0; Running CCA)
@@ -160,7 +160,7 @@ resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, ".RData")))
+save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_", nfeatures, "_20_100.RData")))
 
 # -----------------------------------------------------------------------------
 # Define resolution
@@ -172,13 +172,13 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_P
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = 0.6)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.6_", nfeatures, ".RData")))
+save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_res=0.6_", nfeatures, "_20_100.RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.6")
+file.name <- paste0("SCT_", nfeatures, "_20_90_UMAP_dims=", prin_comp, "_res=0.6")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
-DimPlot(so.integrated, label = TRUE)
+DimPlot(so.integrated, label = TRUE) + NoLegend()
 dev.off()
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, "_SampleID.pdf")))

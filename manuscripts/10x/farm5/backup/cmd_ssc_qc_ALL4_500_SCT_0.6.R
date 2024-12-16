@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
-args <- commandArgs(TRUE)
+args     <- commandArgs(TRUE)
+dims     <- as.numeric(args[1])
+k.weight <- as.numeric(args[2])
 
 # =============================================================================
 # Manuscript   :
@@ -31,8 +33,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL4_500")
-wd.de.plots <- file.path(wd.de, "plots_ALL4_500")
+wd.de.data  <- file.path(wd.de, paste0("data_ALL4_500_", dims, "_", k.weight))
+wd.de.plots <- file.path(wd.de, paste0("plots_ALL4_500_", dims, "_", k.weight))
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -55,6 +57,13 @@ load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expressi
 load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.2.RData"))
 load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_June_500", "ssc_filtered_normalised.3.RData"))
 
+# Remove items 2 and 8 from the list (where there are only 130 and 92 cells in the samples)
+so.list <- so.list[-c(2, 8)]
+# Remove rows 2 and 8 from the data frame
+samples0.filtered <- samples0.filtered[-c(2, 8), ]
+# Remove elements 2 and 8 from the array
+ids <- ids[-c(2, 8)]
+
 so.list <- c(so.list, so.list.1, so.list.2, so.list.3)
 ids <- c(ids, ids.1, ids.2, ids.3)
 samples0.filtered <- rbind(samples0.filtered, samples0.filtered.1)
@@ -69,20 +78,21 @@ nfeatures <- 5000
 #res <- 0.6
 
 ## Normalize datasets individually by SCTransform(), instead of NormalizeData() prior to integration
-so.list <- lapply(X = so.list, FUN = SCTransform)
+#so.list <- lapply(X = so.list, FUN = SCTransform)
 
 ## As discussed further in our SCTransform vignette, we typically use 3,000 or more features for analysis downstream of sctransform.
 ## Run the PrepSCTIntegration() function prior to identifying anchors
-features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
-so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
-save(samples0.filtered, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
+#features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
+#so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
+#save(samples0.filtered, features, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
+load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL4_500", paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_so.list.RData")))
 
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
-anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:25)
+anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:dims)
 save(samples0.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, "_anchors.RData")))
 
-so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:25, k.weight = 90)
+so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:dims, k.weight = k.weight)
 save(samples0.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_SCT_", nfeatures, ".RData")))
 
 # -----------------------------------------------------------------------------
@@ -168,7 +178,7 @@ save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, pas
 file.name <- paste0("SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_resolution=0.6")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
-DimPlot(so.integrated, label = TRUE) + NoLegend()
+DimPlot(so.integrated, label = TRUE)
 dev.off()
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, "_SampleID.pdf")))

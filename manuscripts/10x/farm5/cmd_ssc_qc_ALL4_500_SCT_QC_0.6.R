@@ -77,7 +77,7 @@ so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
 anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:dims)
-save(anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, "_", dims, "_anchors_-1_>200.RData")))
+save(anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_", nfeatures, "_", dims, "_anchors_-1_>200_", dims, ".RData")))
 
 # Error in FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT",  : 
 # 	Max dimension too large: objects 8 contain fewer than 20 cells. 

@@ -465,7 +465,7 @@ calculate_spearman_mn7 <- function(cluster, age_cluster_data, so.integrated) {
 	  # Subset the data for the specific cluster
 	  cells_in_cluster <- WhichCells(so.integrated, idents = cluster)
 	  age_data <- age_cluster_data[cells_in_cluster, "age"]
-	  gene_expression <- GetAssayData(so.integrated, assay = "RNA", slot = "data")[, cells_in_cluster]
+	  gene_expression <- GetAssayData(so.integrated, assay = "RNA", layer = "data")[, cells_in_cluster]
 	
 	  # Calculate Spearman's correlation for each gene
 	  cor_results <- apply(gene_expression, 1, function(gene_expr) {
@@ -521,6 +521,183 @@ calculate_spearman_mn7 <- function(cluster, age_cluster_data, so.integrated) {
 	
 	  return(significant_genes)
 }
+
+# -----------------------------------------------------------------------------
+# DESeq2's pseudobulk for each cluster
+# -----------------------------------------------------------------------------
+library(DESeq2)
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(Matrix)
+
+plot_volcano <- function(res_df, cell_type) {
+	  # Step 7: Create a volcano plot
+	  volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = log_p_adj, color = significance)) +
+	  	  geom_point() +
+	  	  scale_color_manual(values = c("Upregulated" = red, "Downregulated" = blue, "Not Significant" = "grey")) +
+	  	  labs(title = paste0("", cell_type),
+	  			  			x = "Log2 Fold Change",
+	  				  		y = "-log10 Adjusted P-value") +
+	  	  theme_minimal() +
+	  	  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+	  	  #geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "black")
+	  	  #geom_vline(xintercept = 0.1, linetype = "dashed", color = red) +
+	  	  #geom_vline(xintercept = -0.1, linetype = "dashed", color = blue)
+	  	  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+	  	  geom_text_repel(data = subset(res_df, padj < 0.05),
+	  			  														aes(label = gene), size = 3, max.overlaps = 18)
+	  
+	  # Save the plot
+	  pdf(file.path(wd.de.plots, paste0("pseudobulk_DESeq2_age_volcano_", cell_type, ".pdf")), width = 5, height = 5)
+	  print(volcano_plot)
+	  dev.off()
+}
+
+plot_volcano_mn7 <- function(res_df, cell_type) {
+	  # Check if any significance is "Significance"
+	  if (any(res_df$significance != "Not Significant")) {
+		    hline_layer <- geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black")
+	  } else {
+		    hline_layer <- NULL
+	  }
+	
+	  # Step 7: Create a volcano plot
+	  volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = log_p_adj, color = significance)) +
+		    geom_point() +
+		    scale_color_manual(values = c("Upregulated" = red, "Downregulated" = blue, "Not Significant" = "grey")) +
+		    labs(title = paste0("", cell_type),
+						    	x = "Log2 Fold Change",
+							    y = "-log10 Adjusted P-value") +
+		    theme_minimal() +
+	    	theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+	  	  hline_layer +
+	  	  # Add text labels with custom color based on fold change
+	  	  geom_text_repel(data = res_df,
+	  		    aes(x = log2FoldChange, y = log_p_adj, label = gene, color = log2FoldChange > 0), size = 3, max.overlaps = 20) +
+	  	  # Custom color scale for text (TRUE -> red, FALSE -> blue)
+	  	  scale_color_manual(
+	  		    values = c("Upregulated" = "red", "Downregulated" = "blue", "Not Significant" = "grey",
+	  			              "TRUE" = "red", "FALSE" = "blue"), guide = "none")
+	  
+	  pdf( file.path(wd.de.plots, paste0("pseudobulk_DESeq2_age_volcano_", cell_type, "_mn7.pdf")), width = 5, height = 5)
+	  print(volcano_plot)
+	  dev.off()
+}
+
+calculate_DESeq2_pseudobulk <- function(cell_type, age_cluster_data, so.integrated, mn7) {
+	  # Subset the data for the specific cluster
+	  cells_in_cluster <- WhichCells(so.integrated, idents = cell_type)
+	  meta_data <- so.integrated@meta.data[cells_in_cluster, ]
+	  gene_counts <- GetAssayData(so.integrated, assay = "RNA", layer = "counts")[, cells_in_cluster]
+	  
+	  # Step 2: Aggregate counts by sample (pseudobulk)
+	  #pseudobulk_counts <- t(aggregate.Matrix(as.matrix(gene_counts), groupings = meta_data$sample.id, fun = "sum"))
+	  
+	  # Get non-zero entries of the sparse matrix
+	  sparse_summary <- summary(gene_counts)  # Returns a triplet representation (i, j, x)
+	  # Convert to a data frame
+	  gene_counts_df <- data.frame(
+	  	  gene = rownames(gene_counts)[sparse_summary$i],
+	  	  cell = colnames(gene_counts)[sparse_summary$j],
+	  	  count = sparse_summary$x
+	  )
+	  # Merge the sparse summary with metadata
+	  gene_counts_long <- gene_counts_df %>%
+	  	  left_join(meta_data %>% rownames_to_column("cell"), by = "cell")
+	  # Aggregate counts by sample
+	  pseudobulk_counts <- gene_counts_long %>%
+	  	  group_by(gene, sample.id) %>%
+	  	  summarize(count = sum(count), .groups = "drop")
+	  # Convert the pseudobulk counts to a sparse matrix:
+	  pseudobulk_matrix <- pseudobulk_counts %>%
+	  	  pivot_wider(names_from = sample.id, values_from = count, values_fill = 0) %>%
+	  	  column_to_rownames("gene") %>%
+	  	  as.matrix() %>%
+	  	  Matrix(sparse = TRUE)  # Convert back to sparse matrix
+	  
+	  # Step 3: Prepare metadata for DESeq2
+	  sample_meta <- meta_data %>%
+	  	  distinct(sample.id, age, batch) %>%
+	  	  arrange(sample.id) %>%
+	  	  mutate(age_group = cut(
+	  		    age,
+	  		    breaks = c(20, 30, 40, 50, 60, 70, 80),
+	  		    labels = c("20-30", "30-40", "40-50", "50-60", "60-70", "70-80"),
+	  		    right = FALSE
+	  	  ),
+	  	  batch = factor(batch)  # Convert batch to a factor
+	  )
+	  rownames(sample_meta) <- sample_meta$sample.id
+	  sample_meta <- sample_meta[colnames(pseudobulk_matrix), , drop = FALSE]
+	  
+	  # As age is a continuous numeric variable (e.g., 25, 35, 45),
+	  # centering and scaling to avoid collinearity issues and improve model convergence.
+	  sample_meta$age_scaled <- scale(sample_meta$age)
+	  
+	  # Step 4: Create DESeq2 dataset
+	  dds <- DESeqDataSetFromMatrix(
+	  	  countData = pseudobulk_matrix,
+	  	  colData = sample_meta,
+	  	  design = ~ age
+	  )
+	  # Step 5: Run DESeq2
+	  dds <- DESeq(dds)
+	  res <- results(dds)
+	  # Step 6: Extract results
+	  res_df <- as.data.frame(res) %>%
+	  	  rownames_to_column(var = "gene") %>%
+	  	  mutate(
+	  		    log_p_adj = -log10(padj),
+	  		    significance = case_when(
+	  			      padj < 0.05 & log2FoldChange > 0 ~ "Upregulated",
+	  			      padj < 0.05 & log2FoldChange < 0 ~ "Downregulated",
+	  			      TRUE ~ "Not Significant"
+	  		    )
+	  	  ) %>%
+	    	arrange(padj)  # Order by adjusted p-value (ascending)
+	  
+	  # Step 7: Create a volcano plot
+	  plot_volcano(res_df, cell_type)
+	  # Step 7: Filter for genes in mn7
+	 	res_df_filtered <- res_df %>%
+	 	   filter(gene %in% mn7)  # Keep only genes in the mn7 list
+	 	plot_volcano_mn7(res_df_filtered, cell_type)
+}
+
+	  
+	  
+	  
+	  # Create a volcano plot
+	volcano_plot <- ggplot(significant_genes_mn7, aes(x = cor_coefficient, y = -log10(p_adj_value))) +
+		geom_point(aes(color = color)) +
+		#scale_color_manual(values = unique(significant_genes_mn7$color)) +
+		scale_color_manual(values = c(blue, red, "grey")) +
+		theme_minimal() +
+		labs(title = paste0(cluster),
+							x = "Correlation Coefficient",
+							y = "-log10 Adjusted P-value") +
+		theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+		geom_vline(xintercept = 0.1, linetype = "dashed", color = red) +
+		geom_vline(xintercept = -0.1, linetype = "dashed", color = blue) +
+		#geom_text_repel(data = subset(significant_genes, p_adj_value < p_value_threshold),
+		#																aes(label = gene), size = 3, max.overlaps = 30)
+		geom_text_repel(data = subset(significant_genes_mn7, p_adj_value < 1),
+																		aes(label = gene), size = 3, max.overlaps = 30)
+	# Print the volcano plot
+	pdf(file = file.path(wd.de.plots, paste0("mn7_volcano_0.1_SCT_res=0.5_", cluster, "_volcano.pdf")), width = 5, height = 5)
+	print(volcano_plot)
+	dev.off()
+	
+	return(significant_genes)
+}
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Wilcoxon test and fold change for each cluster
