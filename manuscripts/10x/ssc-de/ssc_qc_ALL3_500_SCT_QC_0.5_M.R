@@ -28,8 +28,8 @@ wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
 wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
-wd.de.data  <- file.path(wd.de, "data_ALL3_500_QC")
-wd.de.plots <- file.path(wd.de, "plots_ALL3_500_QC")
+wd.de.data  <- file.path(wd.de, "data_ALL4_500_QC")
+wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
 
 #samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
@@ -51,17 +51,16 @@ library(pheatmap)
 # To identify six SPG states
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
 
 # -----------------------------------------------------------------------------
 # Methods: Age group
 # Last Modified: 14/11/24
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
-
 # Subset the Seurat object to exclude "2N" and "4N" samples
 so.integrated_no_2N_4N <- subset(
 	  so.integrated, 
-	  cells = rownames(so.integrated@meta.data[!grepl("2N|4N", so.integrated@meta.data$sample.id), ])
+	  cells = rownames(so.integrated@meta.data[!grepl("2N|4N|L1|L2|J1|J2|VL", so.integrated@meta.data$sample.id), ])
 )
 # Verify the result
 unique(so.integrated_no_2N_4N@meta.data$sample.id)
@@ -120,11 +119,11 @@ write.table(proportions, "cell_type_proportions_by_age_group_M.txt", row.names =
 # Plot with age groups on x-axis and cell type proportions
 plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)) +
 	geom_bar(stat = "identity", position = "fill", color = "black") +
-	scale_fill_manual(values = plot_colors, name = "Cell Type") +
+	scale_fill_manual(values = plot_colors, name = "Cell type") +
 	labs(title = "", x = "Age group", y = "Proportion of cell type") +
 	theme_minimal(base_size = 14) +
 	theme(
-		axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
+		axis.text.x = element_text(angle = 45, hjust = 1, size = 11, margin = margin(t = -15)),
 		axis.text.y = element_text(size = 11),
 		axis.title.x = element_text(size = 13),
 		axis.title.y = element_text(size = 13),
@@ -134,7 +133,32 @@ plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)
 	)
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_M.png"), width = 6, height = 7, , units = "in", res = 300)
+png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_M_5.3x7.png"), width = 5.3, height = 7, , units = "in", res = 300)
+print(plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Methods: Plot cell counts
+# Last Modified: 15/01/25
+# -----------------------------------------------------------------------------
+# Plot with age groups on x-axis and cell type proportions
+plot <- ggplot(proportions, aes(x = age_group, y = cell_count, fill = cell_type)) +
+	geom_bar(stat = "identity", position = "stack", color = "black") +  # Use "stack" for actual counts
+	scale_fill_manual(values = plot_colors, name = "Cell type") +
+	labs(title = "", x = "Age group", y = "Number of cells") +
+	theme_minimal(base_size = 14) +
+	theme(
+		axis.text.x = element_text(angle = 45, hjust = 1, size = 11, margin = margin(t = -15)),
+		axis.text.y = element_text(size = 11),
+		axis.title.x = element_text(size = 13),
+		axis.title.y = element_text(size = 13),
+		plot.title = element_text(hjust = 0.5),
+		legend.text = element_text(size = 10),   # Increase legend text size
+		legend.title = element_text(size = 12)  # Increase legend title size
+	)
+
+# Print the plot
+png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_cell_counts_M_5.3x7.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
 
@@ -161,8 +185,8 @@ correlation_results <- proportions %>%
 	)
 
 # Step 3: Display the results, sorted by correlation
-correlation_results <- correlation_results %>%
-	dplyr::arrange(desc(spearman_correlation))
+#correlation_results <- correlation_results %>%
+#	dplyr::arrange(desc(spearman_correlation))
 
 # Print the results
 print(correlation_results)
@@ -184,8 +208,14 @@ correlation_results <- correlation_results %>%
 		TRUE ~ ""
 	))
 
+# Reorder levels so "Stage 0" appears at the top of the y-axis
+correlation_results$cell_type <- factor(
+	correlation_results$cell_type,
+	levels = rev(correlation_results$cell_type)
+)
+
 # Plot the bar plot
-plot <- ggplot(correlation_results, aes(x = reorder(cell_type, spearman_correlation), y = spearman_correlation, fill = spearman_correlation)) +
+plot <- ggplot(correlation_results, aes(x = cell_type, y = spearman_correlation, fill = spearman_correlation)) +
 	geom_bar(stat = "identity") +
 	coord_flip() +
 	scale_fill_gradient2(low = blue, mid = "white", high = red, midpoint = 0, name = "Correlation") +
@@ -208,9 +238,13 @@ plot <- ggplot(correlation_results, aes(x = reorder(cell_type, spearman_correlat
 	scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))  # Add margins to both sides of the y-axis
 
 # Print the plot
-pdf(file = file.path(wd.de.plots, "correlation_results_age_median_M.pdf"), width = 6, height = 6)
+pdf(file = file.path(wd.de.plots, "correlation_results_age_median_M_unsorted.pdf"), width = 6, height = 6)
 print(plot)
 dev.off()
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Positively seleced genes

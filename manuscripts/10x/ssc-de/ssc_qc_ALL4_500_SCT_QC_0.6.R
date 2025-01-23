@@ -55,57 +55,50 @@ nfeatures <- 5000
 #res <- 0.6
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_res=0.6_", nfeatures, "_20_100.RData")))
 
-## Find original raw count data
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_500",           "ssc_filtered_normalised.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.1.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_500",      "ssc_filtered_normalised.2.RData"))
-load(file=file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_lm26_June_500", "ssc_filtered_normalised.3.RData"))
-
-# Remove items 2 and 8 from the list (where there are only 130 and 92 cells in the samples)
-so.list <- so.list[-c(2, 8)]
-so.list <- c(so.list, so.list.1, so.list.2, so.list.3)
-
-# Extract raw counts from so.list and merge them
-# Step 1: Find the union of all gene names
-all_genes <- Reduce(union, lapply(so.list, function(x) rownames(GetAssayData(x, layer = "counts"))))
-
-# Step 2: Standardize the row names of all datasets
-raw_counts_list <- lapply(so.list, function(x) {
-	  counts <- GetAssayData(x, layer = "counts")
-	  missing_genes <- setdiff(all_genes, rownames(counts))
-	  if (length(missing_genes) > 0) {
-		    zero_matrix <- Matrix::sparseMatrix(i = integer(0), j = integer(0), dims = c(length(missing_genes), ncol(counts)))
-		    rownames(zero_matrix) <- missing_genes
-		    counts <- rbind(counts, zero_matrix)
-	  }
-	  counts[all_genes, ]  # Reorder rows
-})
-
-# Step 3: Combine all standardized matrices
-combined_raw_counts <- do.call(cbind, raw_counts_list)
-
-# Step 4: Assign raw counts to so.integrated
-DefaultAssay(so.integrated) <- "RNA"
-so.integrated <- subset(so.integrated, cells = colnames(combined_raw_counts))
-so.integrated[["RNA"]] <- CreateAssayObject(counts = combined_raw_counts)
-
-# Step 5: Verify
-slotNames(GetAssay(so.integrated, assay = "RNA"))
-
-# From so.integrated
-integrated_samples <- colnames(GetAssayData(so.integrated, layer = "counts"))
-# From so.list
-list_samples <- lapply(so.list, function(x) colnames(GetAssayData(x, layer = "counts")))
-combined_list_samples <- unlist(list_samples)  # Flatten the list of samples from so.list
-
-# Check if the sample orders are identical
-identical(integrated_samples, combined_list_samples)
-
 # -----------------------------------------------------------------------------
-# 
-# https://satijalab.org/seurat/archive/v4.3/integration_introduction
+# DoubletFinder
 # -----------------------------------------------------------------------------
 library(DoubletFinder)
+
+samples <- SplitObject(so.integrated, split.by = "sample")
+
+# Pre-processing steps for DoubletFinder
+DefaultAssay(so.integrated) <- "RNA"
+so.integrated <- NormalizeData(so.integrated)
+so.integrated <- FindVariableFeatures(so.integrated)
+so.integrated <- ScaleData(so.integrated)
+so.integrated <- RunPCA(so.integrated)
+
+# Find optimal pK value (sweep parameter)
+sweep_res <- paramSweep_v3(so.integrated, PCs = 1:10, sct = FALSE)
+sweep_stats <- summarizeSweep(sweep_res, GT = FALSE)
+optimal_pK <- find.pK(sweep_stats)$pK
+
+# Estimate homotypic doublets (if clustering information is available)
+homotypic_prop <- modelHomotypic(Idents(so.integrated))
+
+# Define expected doublet rate and number of artificial doublets
+nExp <- round(0.075 * ncol(so.integrated))  # Example: 7.5% doublet rate
+nExp_adj <- round(nExp * (1 - homotypic_prop))
+
+# Run DoubletFinder
+so.integrated <- doubletFinder_v3(
+	  so.integrated,
+	  PCs = 1:10,
+	  pN = 0.25,
+	  pK = optimal_pK,
+	  nExp = nExp_adj,
+	  reuse.pANN = FALSE,
+	  sct = FALSE
+)
+
+# Label doublets
+Idents(so.integrated) <- "DF.classifications_0.25_0.01_50"
+
+
+
+
+
 
 # Use clustering information to estimate the proportion of homotypic doublets.
 homotypic_prop <- modelHomotypic(Idents(so.integrated))

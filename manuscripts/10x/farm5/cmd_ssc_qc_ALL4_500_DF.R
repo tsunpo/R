@@ -117,4 +117,4 @@ for (i in seq_along(so.list)) {
 	  so.list[[i]] <- sample
 }
 
-save(samples0.filtered, ids, so.list, so.list.df, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF.RData")))
+save(samples0.filtered, ids, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF.RData")))
