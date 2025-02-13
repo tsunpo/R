@@ -66,6 +66,10 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.l
 # -----------------------------------------------------------------------------
 library(DoubletFinder)
 
+# Initialize vector to store classification column names
+classification_cols <- c()
+original_classifications <- list()  # Store classification data per sample
+
 for (i in seq_along(so.list)) {
 	  sample <- so.list[[i]]
 	  raw_counts <- GetAssayData(sample, layer = "counts", assay = "RNA")
@@ -113,8 +117,13 @@ for (i in seq_along(so.list)) {
 	  classification_col <- paste0("DF.classifications_0.25_", optimal_pK, "_", nExp_adj)
 	  Idents(sample) <- sample@meta.data[[classification_col]]
 	  
+	  # Store the original classification values
+	  original_classifications[[samples0.filtered$V3[i]]] <- sample@meta.data[, classification_col]
+	  # Store classification column name
+	  classification_cols <- c(classification_cols, classification_col)
+	  
 	  # Update sample
 	  so.list[[i]] <- sample
 }
 
-save(samples0.filtered, ids, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF.RData")))
+save(samples0.filtered, ids, so.list, classification_cols, original_classifications, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF_classification_cols.RData")))

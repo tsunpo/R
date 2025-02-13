@@ -66,6 +66,7 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.l
 # -----------------------------------------------------------------------------
 library(DoubletFinder)
 
+classification_cols <- list()
 for (i in seq_along(so.list)) {
 	  sample <- so.list[[i]]
 	  raw_counts <- GetAssayData(sample, layer = "counts", assay = "RNA")
@@ -112,6 +113,9 @@ for (i in seq_along(so.list)) {
 	  optimal_pK <- pK_stats$pK[which.max(pK_stats$BCmetric)]
 	  classification_col <- paste0("DF.classifications_0.25_", optimal_pK, "_", nExp_adj)
 	  Idents(sample) <- sample@meta.data[[classification_col]]
+	  
+	  # Store sample ID and classification column
+	  classification_cols[[samples0.filtered$V3[i]]] <- classification_col
 	  
 	  so.list[[i]] <- sample
 }
@@ -195,3 +199,49 @@ so.list <- lapply(X = so.list, FUN = SCTransform)
 features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
 so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 save(samples0.filtered, ids, features, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_so.list.RData")))
+
+# =============================================================================
+# Manuscript   :
+# Chapter      :
+# Name         : 
+# Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
+# Last Modified: 25/07/24; 14/03/24
+# =============================================================================
+wd.src <- "/nfs/users/nfs_t/ty2/dev/R"            ## ty2@farm
+#wd.src <- "/Users/ty2/Work/dev/R"                ## ty2@localhost
+
+wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for the manuscript
+handbooks  <- c("Commons.R", "Graphics.R", "SingleCellTranscriptomics.R")
+invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
+
+wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
+load(file.path(wd.src.ref, "hg38.RData"))
+
+# -----------------------------------------------------------------------------
+# Set working directory
+# -----------------------------------------------------------------------------
+wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## ty2@farm
+#wd <- "/Users/ty2/Work/sanger/ty2"              ## ty2@localhost
+BASE <- "SSC"
+base <- tolower(BASE)
+
+wd.rna <- file.path(wd, BASE, "ngs/scRNA")
+wd.rna.raw <- file.path(wd.rna, "10x")
+
+wd.anlys <- file.path(wd, BASE, "analysis")
+wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
+wd.de.data  <- file.path(wd.de, "data_ALL4_500_QC")
+wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
+
+#samples0 <- readTable(file.path(wd.rna.raw, "scRNA_GRCh38-2020.list"), header=F, rownames=3, sep="\t")
+#samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
+#samples1 <- samples1[rownames(samples0),]
+
+# -----------------------------------------------------------------------------
+# Performing integration on datasets normalized with SCTransform
+# https://satijalab.org/seurat/archive/v4.3/integration_introduction
+# -----------------------------------------------------------------------------
+nfeatures <- 5000
+res <- 0.5
+load("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL4_500/ssc_filtered_normalised_integrated0_so.list_DF_classification_cols.RData")
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_-2_", 25, "_", 100, ".RData")))

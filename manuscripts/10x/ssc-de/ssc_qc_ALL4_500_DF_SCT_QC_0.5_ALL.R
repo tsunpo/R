@@ -47,7 +47,8 @@ library(pheatmap)
 # To identify six SPG states
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
 
 # -----------------------------------------------------------------------------
 # Di Persio et al; DotPlot (resolution = 0.25)
@@ -375,7 +376,7 @@ total_cells <- sum(summary_table$Cells)
 summary_table <- bind_rows(summary_table, data.frame(
 	  sample.id = "Total", Age = "", Genes = "", Cells = total_cells
 ))
-writeTable(summary_table, file.path(wd.de.data, "summary_table.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(summary_table, file.path(wd.de.data, "summary_table_19-23-6_Pseudotime+Phasae.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Methods: Age group (order by age)
@@ -395,7 +396,7 @@ summary_table <- so.integrated@meta.data %>%
 total_cells <- sum(summary_table$Cells)
 
 # Add the total row
-writeTable(summary_table, file.path(wd.de.data, "summary_table_age.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(summary_table, file.path(wd.de.data, "summary_table_age_19-23-6.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Methods: Age group and cell types
@@ -409,7 +410,15 @@ library(tidyr)
 cell_type_colors <- Idents(so.integrated)  # Extract the colors used for each cell type
 
 # Check the colors assigned to each identity
-DimPlot(so.integrated)  # This shows the DimPlot with the current colors
+dot_plot <- DimPlot(so.integrated) +
+	  labs(x = "UMAP 1", y = "UMAP 2") +  # Set x-axis and y-axis labels
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.text = element_text(size = 16),  # Increase legend text size
+		    legend.title = element_text(size = 16)  # Increase legend title size
+	  )# This shows the DimPlot with the current colors
 
 # Extract the colors for each identity (cell type) programmatically
 plot_colors <- scales::hue_pal()(length(unique(cell_type_colors)))
@@ -417,6 +426,11 @@ names(plot_colors) <- levels(cell_type_colors)
 
 # Display the color assignments for reference
 plot_colors
+
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_7x6_Pseudotime+Phase.pdf")), width = 7, height = 6)
+print(dot_plot)
+dev.off()
+
 
 # -----------------------------------------------------------------------------
 # Methods: 
@@ -466,7 +480,7 @@ proportions$age_median <- as.numeric(sapply(proportions$age_group, function(x) a
 # Display the resulting table
 print(proportions)
 # Optionally, save the table to a file
-write.table(proportions, "cell_type_proportions_by_age_group.txt", row.names = FALSE)
+write.table(proportions, "cell_type_proportions_by_age_group_Pseudotime+Phase.txt", row.names = FALSE)
 
 # Plot with age groups on x-axis and cell type proportions
 plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)) +
@@ -485,7 +499,7 @@ plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)
 	  )
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_5.3x7.png"), width = 5.3, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_5.3x7_19-23-6_Pseudotime+Phase.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
 
@@ -510,10 +524,9 @@ plot <- ggplot(proportions, aes(x = age_group, y = cell_count, fill = cell_type)
 	  )
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_cell_counts_5.3x7.png"), width = 5.3, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_cell_counts_5.3x9_19-23-6_Pseudotime+Phase.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
-
 
 # -----------------------------------------------------------------------------
 # Methods: Correlation 1, 2, 3, 4, 5, 6 OR 25, 35, 45, 55, 65, 75
@@ -543,7 +556,7 @@ correlation_results <- proportions %>%
 
 # Print the results
 print(correlation_results)
-writeTable(correlation_results, file.path(wd.de.data, "summary_table_correlation_results_age_median_unsorted.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(correlation_results, file.path(wd.de.data, "summary_table_correlation_results_age_median_unsorted_Pseudotime+Phase.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Methods: Age group and cell types
@@ -593,7 +606,7 @@ plot <- ggplot(correlation_results, aes(x = cell_type, y = spearman_correlation,
 	  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))  # Add margins to both sides of the y-axis
    
 # Print the plot
-pdf(file = file.path(wd.de.plots, "correlation_results_age_median_unsorted.pdf"), width = 6, height = 6)
+pdf(file = file.path(wd.de.plots, "correlation_results_age_median_unsorted_Pseudotime+Phase.pdf"), width = 6, height = 6)
 print(plot)
 dev.off()
 
@@ -642,7 +655,7 @@ ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12.png")),
 # [1] 35742 84822
 
 # Identify the clusters you want to keep
-clusters_to_remove <- c("Sertoli", "Fibrotic PMC", "PMC", "Leydig", "Endothelial", "Macrophage", "23", "6")
+clusters_to_remove <- c("Sertoli", "Fibrotic PMC", "PMC", "Leydig", "Endothelial", "Macrophage", "19", "6", "23")
 clusters_to_keep <- setdiff(unique(Idents(so.integrated)), clusters_to_remove)
 #clusters_to_keep <- c("Stage 0", "Stage 0A", "Stage 0B", "Stage 1", "Stage 2", "Stage 3", "Unknown")
 # Subset the Seurat object to exclude cluster 1
@@ -685,8 +698,17 @@ monocle3 <- plot_cells(cds, color_cells_by = "pseudotime",
 																							label_cell_groups=FALSE,
 																							label_leaves=FALSE,
 																							label_branch_points=FALSE,
-																							graph_label_size=0)
-ggsave(file.path(wd.de.plots, paste0("pseudotime_23_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_integrated_23-6.png")), plot = monocle3, dpi = 300)
+																							graph_label_size=0) +
+	  guides(color = guide_colorbar(title = "Pseudotime")) +  # Force rename legend title
+	  theme_classic() +
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.text = element_text(size = 16),  # Increase legend text size
+		    legend.title = element_text(size = 16)  # Increase legend title size
+	  )
+ggsave(file.path(wd.de.plots, paste0("pseudotime_23_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_integrated_19-23-6_6.5x6.png")), plot = monocle3, dpi = 300, width = 6.5, height = 6)
 
 # https://biocellgen-public.svi.edu.au/mig_2019_scrnaseq-workshop/trajectory-inference.html#tscan
 library(ggbeeswarm)
@@ -696,6 +718,7 @@ library(viridisLite)
 pdata_cds <- pData(cds)
 pdata_cds$pseudotime_monocle3 <- monocle3::pseudotime(cds)
 pdata_cds$idents <- Idents(so.integrated)
+pdata_cds$Phase <- colData(cds)$Phase  # Ensure Phase is included
 
 #pseudotime_palette <- colorRampPalette(c("blue", "yellow", "red"))(100)
 #pseudotime_palette <- inferno(100)
@@ -706,12 +729,125 @@ ordered <- ggplot(as.data.frame(pdata_cds),
 																						y = idents, colour = pseudotime_monocle3)) +  # Use pseudotime as the color
 	  geom_quasirandom(groupOnX = FALSE) +
 	  scale_color_gradientn(colors = pseudotime_palette) +  # Apply the pseudotime gradient
+	  scale_y_discrete(limits = rev(levels(pdata_cds$idents))) +  # Reverse y-axis order
 	  theme_classic() +
-	  xlab("pseudotime") + 
+  	xlab("Pseudotime") +
+   ylab("") +
+	  theme(plot.title = element_blank(),  # Remove title
+			  				axis.text = element_text(size = 16),  # Increase axis text size
+				  			axis.title = element_text(size = 18), # Increase axis title size
+						  	legend.position = "none")  # Remove legend
+ggsave(file.path(wd.de.plots, paste0("pseudotime_23_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered_integrated_19-23-6_7x6_rev.png")), plot = ordered, dpi = 300, width = 7, height = 6)
+
+##
+ordered <- ggplot(as.data.frame(pdata_cds), 
+																		aes(x = pseudotime_monocle3, 
+																						y = idents, colour = Phase)) +  # Use pseudotime as the color
+	  geom_quasirandom(groupOnX = FALSE) +
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply the same Phase colours as DimPlot
+	  scale_y_discrete(limits = rev(levels(pdata_cds$idents))) +  # Reverse y-axis order
+	  theme_classic() +
+	  xlab("Pseudotime") +
 	  ylab("") +
-	  ggtitle("") +
-	  theme(legend.position = "none")  # Equivalent to NoLegend()
-ggsave(file.path(wd.de.plots, paste0("pseudotime_23_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered_integrated_23-6.png")), plot = ordered, dpi = 300)
+	  guides(color = guide_legend(override.aes = list(size = 5))) +  # Increase legend dot size
+	  theme(plot.title = element_blank(),  # Remove title
+			  				axis.text = element_text(size = 16),  # Increase axis text size
+						  	axis.title = element_text(size = 18), # Increase axis title size
+	  						legend.position = c(1, 1),  # Move legend to top-right
+	  						legend.justification = c(1, 1),  # Align legend correctly
+	  						legend.text = element_text(size = 16),  # Increase legend text size
+	  						legend.title = element_text(size = 16))
+ggsave(file.path(wd.de.plots, paste0("pseudotime_23_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_ordered_integrated_19-23-6_7x6_rev_phase_legend.png")), plot = ordered, dpi = 300, width = 7, height = 6)
+
+# -----------------------------------------------------------------------------
+# Cell cycle analysis
+# Last Modified: 05/02/25
+# -----------------------------------------------------------------------------
+nfeatures <- 5000
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
+
+cc.genes <- Seurat::cc.genes.updated.2019  # Updated gene lists
+s.genes <- cc.genes$s.genes  # S phase markers
+g2m.genes <- cc.genes$g2m.genes  # G2/M phase markers
+
+so.integrated <- CellCycleScoring(so.integrated, 
+																																		s.features = s.genes, 
+																																		g2m.features = g2m.genes, 
+																																		set.ident = F)  # Updates the cell identities (Idents(seurat_obj)) with the assigned cell cycle phases if set.ident = TRUE.
+
+# Ensure Phase is a factor and ordered correctly
+so.integrated@meta.data$Phase <- factor(so.integrated@meta.data$Phase, levels = c("G1", "S", "G2M"))
+# Define consistent Phase colors (matching your figure)
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+# Now plot the UMAP with the correct legend order and custom colors
+dim_plot <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap") + 
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply custom colors & legend order
+  	labs(x = "UMAP 1", y = "UMAP 2") +  # Set x-axis and y-axis labels
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.text = element_text(size = 16),  # Increase legend text size
+		    legend.title = element_text(size = 16)  # Increase legend title size
+	  )
+ggsave(file.path(wd.de.plots, paste0("Cell-cycle_annotated_19-6-23_DimPlot_no-title_8*8_new-color_16.png")), plot = dim_plot, width = 8, height = 8, dpi = 300)
+
+VlnPlot(so.integrated, group.by = "Phase", cols= phase_colors, features = c("S.Score", "G2M.Score"), pt.size = 0)
+
+# -----------------------------------------------------------------------------
+# After running Monocle3
+# -----------------------------------------------------------------------------
+# Optionally, plot cells colored by Seurat clusters
+monocle3 <- plot_cells(cds, color_cells_by = "Phase",
+																							label_cell_groups=FALSE,
+																							label_leaves=FALSE,
+																							label_branch_points=FALSE,
+																							graph_label_size=0) +
+	  theme_classic() +
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) + # Apply new color
+		 theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.text = element_text(size = 16),  # Increase legend text size
+		    legend.title = element_text(size = 16)  # Increase legend title size
+	  )
+ggsave(file.path(wd.de.plots, paste0("Cell-cycle_Phase_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_integrated_new-color_6.5x6_16.png")), plot = monocle3, width = 6.5, height = 6, dpi = 300)
+
+library(ggbeeswarm)
+library(colorRamps)
+library(viridisLite)
+library(ggplot2)
+
+# Extract metadata
+pdata_cds <- pData(cds)
+pdata_cds$pseudotime_monocle3 <- monocle3::pseudotime(cds)
+pdata_cds$Phase <- factor(so.integrated@meta.data$Phase, levels = c("G2M", "S", "G1"))  # Use cell cycle phase
+
+# Define the Seurat default cell cycle colours (modify if needed)
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+
+# Plot pseudotime ordered by Phase
+ordered <- ggplot(as.data.frame(pdata_cds), 
+																		aes(x = pseudotime_monocle3, 
+																						y = Phase, 
+																						colour = Phase)) +  # Use Phase for colour
+	  geom_quasirandom(groupOnX = FALSE) +
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply the same Phase colours as DimPlot
+	  scale_y_discrete(labels = c("G1" = "G1", "S" = "S", "G2M" = "G2/M")) +  # Rename y-axis labels
+	  theme_classic() +
+	  xlab("Pseudotime") + 
+	  ylab("Phase") +
+	  theme(plot.title = element_blank(),  # Remove title
+	  	   axis.text = element_text(size = 16),  # Increase axis text size
+							axis.title = element_text(size = 18), # Increase axis title size
+							legend.position = "none")  # Remove legend
+
+# Save the plot
+ggsave(file.path(wd.de.plots, paste0("cell_cycle_phase_pseudotime_by_phase_new-color_16_6x6.png")),	plot = ordered, dpi = 300, width = 6, height = 6)
+
+save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
 
 
 
@@ -722,9 +858,10 @@ ggsave(file.path(wd.de.plots, paste0("pseudotime_23_", nfeatures, "_UMAP_dims=",
 
 
 
-
-
-
+# -----------------------------------------------------------------------------
+# Identify G1-Arrested Cells
+# -----------------------------------------------------------------------------
+g1_cells <- subset(so.integrated, subset = Phase == "G1")
 
 
 

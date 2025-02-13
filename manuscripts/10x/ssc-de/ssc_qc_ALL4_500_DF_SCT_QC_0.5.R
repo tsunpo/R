@@ -253,9 +253,131 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
    scale_y_discrete(limits = new_order) # Ensure the new order is used in plotting
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_ordered.pdf")), width = 14, height = 5)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_ordered_14x7.pdf")), width = 14, height = 7)
 print(dot_plot)
 dev.off()
+
+##
+dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend() +
+	  labs(x = "UMAP 1", y = "UMAP 2") +  # Set x-axis and y-axis labels
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+	  )
+ggsave(file.path(wd.de.plots, paste0("DimPlot_no-title_6*6_new-color_16.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Cell cycle analysis
+# Last Modified: 10/02/25
+# -----------------------------------------------------------------------------
+cc.genes <- Seurat::cc.genes.updated.2019  # Updated gene lists
+s.genes <- cc.genes$s.genes  # S phase markers
+g2m.genes <- cc.genes$g2m.genes  # G2/M phase markers
+
+so.integrated <- CellCycleScoring(so.integrated, 
+																																		s.features = s.genes, 
+																																		g2m.features = g2m.genes, 
+																																		set.ident = F)  # Updates the cell identities (Idents(seurat_obj)) with the assigned cell cycle phases if set.ident = TRUE.
+
+# Ensure Phase is a factor and ordered correctly
+so.integrated@meta.data$Phase <- factor(so.integrated@meta.data$Phase, levels = c("G1", "S", "G2M"))
+
+# Define consistent Phase colors (matching your figure)
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+# Plot the UMAP with Phase colors
+dim_plot <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap", label = FALSE) + 
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply custom colors & legend order
+	  labs(x = "UMAP 1", y = "UMAP 2") +  # Set x-axis and y-axis labels
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.text = element_text(size = 16),  # Increase legend text size
+		    legend.title = element_text(size = 16)  # Increase legend title size
+	  )
+# **Extract cluster positions separately**
+cluster_positions <- DimPlot(so.integrated, group.by = "seurat_clusters", reduction = "umap", label = TRUE, repel = TRUE)
+# **Overlay cluster labels on the same plot**
+dim_plot <- LabelClusters(plot = dim_plot, id = "seurat_clusters", text = cluster_positions$data$seurat_clusters, repel = TRUE, size = 6, color = "black")
+ggsave(file.path(wd.de.plots, paste0("Cell-cycle_annotated_19-6-23-29_DimPlot_no-title_7.1*6_new-color_16.png")), plot = dim_plot, width = 7.1, height = 6, dpi = 300)
+
+VlnPlot(so.integrated, group.by = "Phase", cols= phase_colors, features = c("S.Score", "G2M.Score"), pt.size = 0)
+VlnPlot(so.integrated, group.by = "seurat_clusters", features = c("S.Score"), pt.size = 0) + NoLegend()
+VlnPlot(so.integrated, group.by = "seurat_clusters", features = c("G2M.Score"), pt.size = 0) + NoLegend()
+
+library(ggplot2)
+library(Seurat)
+library(dplyr)
+library(ggrepel)
+
+# Ensure `seurat_clusters` exists
+so.integrated$seurat_clusters <- Idents(so.integrated)
+
+# Define consistent Phase colors
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+
+####
+# Extract UMAP embeddings
+umap_data <- as.data.frame(Embeddings(so.integrated, reduction = "umap"))
+umap_data$seurat_clusters <- as.factor(so.integrated$seurat_clusters)  # Ensure clusters are factors
+
+# Compute cluster centroids
+cluster_centers <- umap_data %>%
+	group_by(seurat_clusters) %>%
+	summarise(UMAP_1 = median(umap_1), UMAP_2 = median(umap_2))  # Use median to find label position
+
+# Create UMAP plot colored by Phase
+dim_plot <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap", label = FALSE) + 
+	scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  
+	labs(x = "UMAP 1", y = "UMAP 2") +  
+	theme(
+		plot.title = element_blank(),  
+		axis.title = element_text(size = 18),  
+		axis.text = element_text(size = 16),  
+		legend.text = element_text(size = 16),  
+		legend.title = element_text(size = 16)  
+	)
+# Overlay cluster labels at computed centroids using `geom_text_repel()`
+dim_plot <- dim_plot + 
+	geom_text_repel(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = seurat_clusters), 
+																	size = 4, color = "black")
+# Save the final plot
+ggsave(file.path(wd.de.plots, paste0("Cell-cycle_annotated_UMAP_with_clusters_7.1x6.png")), 
+							plot = dim_plot, width = 7.1, height = 6, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Identify G1-Arrested Cells
+# Last Modified: 11/02/25
+# -----------------------------------------------------------------------------
+g1_cells <- subset(so.integrated, subset = Phase == "G1")
+
+# Visualize cell cycle phase distribution
+DimPlot(so.integrated, group.by = "Phase", reduction = "umap")
+
+FeaturePlot(so.integrated, features = c("CDKN1C", "BMP4", "LIF", "ID4"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Create a mapping from cluster ID to cell type name
 # This mapping should be adjusted according to your specific dataset and clustering results
@@ -367,6 +489,8 @@ dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend()
 ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dims=", prin_comp, "_res=", res, "_ordered_annotated_NoLegend_8x8_19-6-23.png")), plot = dim_plot, width = 8, height = 8, dpi = 300)
 
 save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
+
+
 
 
 
