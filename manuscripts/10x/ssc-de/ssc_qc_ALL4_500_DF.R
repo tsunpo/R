@@ -238,10 +238,230 @@ wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
 #samples1 <- samples1[rownames(samples0),]
 
 # -----------------------------------------------------------------------------
-# Performing integration on datasets normalized with SCTransform
-# https://satijalab.org/seurat/archive/v4.3/integration_introduction
+# Last Modified: 14/02/25
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
 res <- 0.5
-load("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL4_500/ssc_filtered_normalised_integrated0_so.list_DF_classification_cols.RData")
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_-2_", 25, "_", 100, ".RData")))
+
+load("/lustre/scratch127/casm/team294rr/ty2/SSC/analysis/expression/ssc-de/data_ALL4_500/ssc_filtered_normalised_integrated0_so.list_DF_classification_cols.RData")
+so.list <- so.list[-c(2, 8)]
+classification_cols <- classification_cols[-c(2, 8)]
+
+# Check where "PD53621b_2N" appears in sample_ids
+#sample_index <- which(sample_ids == "PD53621b_2N")
+# Find the corresponding classification column using the same index
+#classification_col <- classification_cols[sample_index]
+#pANN_col <- gsub("DF.classifications_", "pANN_", classification_col)
+
+# Subset the sample
+#sample_cells <- so.integrated@meta.data[so.integrated@meta.data$orig.ident == "PD53621b_2N", ]
+# Get classification values for these 10 cells
+#original_scores <- sample_cells[1:10, pANN_col]
+
+# Initialize a dataframe to store mapping information
+mapping_table <- data.frame(Sample_ID = character(), pANN_Column = character(), stringsAsFactors = FALSE)
+sample_ids <- unique(so.integrated@meta.data$sample.id)
+
+# Iterate through each sample
+for (i in seq_along(sample_ids)) {
+	  sample_id <- sample_ids[i]
+	
+	  # Get the corresponding classification column
+	  classification_col <- classification_cols[i]
+	  pANN_col <- gsub("DF.classifications_", "pANN_", classification_col)
+	
+	  # Append to mapping table
+	  mapping_table <- rbind(mapping_table, data.frame(Sample_ID = sample_id, pANN_Column = pANN_col))
+}
+# Print the mapping table
+print(mapping_table)
+
+# -----------------------------------------------------------------------------
+# Last Modified: 03/03/25
+# -----------------------------------------------------------------------------
+library(ggplot2)
+library(Seurat)
+
+# Step 1: Assign the correct pANN values to each cell in `so.integrated`
+so.integrated@meta.data$pANN_score <- NA  # Initialize a column for pANN scores
+
+# Iterate through each sample to assign the correct pANN column values
+for (i in seq_along(mapping_table$Sample_ID)) {
+	  sample_id <- mapping_table$Sample_ID[i]
+	  pANN_col <- mapping_table$pANN_Column[i]
+	
+	  # Subset cells from the corresponding sample and assign the correct pANN values
+	  so.integrated@meta.data$pANN_score[so.integrated@meta.data$sample.id == sample_id] <- 
+		    so.integrated@meta.data[so.integrated@meta.data$sample.id == sample_id, pANN_col]
+}
+
+# Step 2: Generate a UMAP plot colored by pANN values using FeaturePlot()
+umap_plot <- FeaturePlot(so.integrated, features = "pANN_score", reduction = "umap") + NoLegend() +
+  	scale_color_viridis_c(option = "magma", name = "pANN score") +  # Use a color scale that emphasizes high values
+	  labs(x = "UMAP 1", y = "UMAP 2") +  # Set x-axis and y-axis labels
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.position = c(0.05, 0.95),  # Move legend to top-left corner
+		    legend.justification = c(0, 1),  # Anchor legend at top-left
+		    legend.key.size = unit(0.5, "cm"),  # Adjust legend size
+		    legend.text = element_text(size = 12)  # Adjust legend text size
+	  )
+
+# Save the UMAP plot
+ggsave(file.path(wd.de.plots, "UMAP_pANN_colored_legend_.png"), plot = umap_plot, width = 6, height = 6, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Top sample per cluster
+# Last Modified: 03/03/25
+# -----------------------------------------------------------------------------
+library(dplyr)
+
+# Get Seurat metadata containing cluster and sample ID information
+metadata <- so.integrated@meta.data
+
+# Count the number of cells per (Cluster, Sample_ID) combination
+cluster_sample_counts <- metadata %>%
+	  group_by(seurat_clusters, sample.id) %>%
+	  summarise(Cell_Count = n(), .groups = "drop")
+
+# Calculate the total number of cells in each cluster
+total_cells_per_cluster <- cluster_sample_counts %>%
+	  group_by(seurat_clusters) %>%
+	  summarise(Total_Cells = sum(Cell_Count))
+
+# Merge the total cell counts into the cluster-sample counts
+cluster_sample_counts <- merge(cluster_sample_counts, total_cells_per_cluster, by = "seurat_clusters")
+
+# Calculate the percentage of each sample within the cluster
+cluster_sample_counts <- cluster_sample_counts %>%
+	  mutate(Percentage = (Cell_Count / Total_Cells) * 100)
+
+# Find the sample with the highest percentage for each cluster
+top_sample_per_cluster <- cluster_sample_counts %>%
+	  group_by(seurat_clusters) %>%
+	  slice_max(order_by = Percentage, n = 1) %>%
+	  arrange(desc(Percentage))  # Sort clusters numerically
+
+# Rename columns for clarity
+colnames(top_sample_per_cluster) <- c("Cluster", "Top_Sample_ID", "Cell_Count", "Total_Cells", "Percentage")
+
+# Print the summary table
+print(top_sample_per_cluster)
+
+# -----------------------------------------------------------------------------
+# Top sample per cluster
+# Last Modified: 03/03/25
+# -----------------------------------------------------------------------------
+# Identify columns to remove
+columns_to_remove <- grep("^pANN_0.25|^DF.classifications_0.25|^integrated_snn_res", colnames(so.integrated@meta.data), value = TRUE)
+
+# Remove the identified columns
+so.integrated@meta.data <- so.integrated@meta.data[, !colnames(so.integrated@meta.data) %in% columns_to_remove]
+
+# Verify removal
+print(colnames(so.integrated@meta.data))
+
+# Identify the clusters you want to keep
+clusters_to_remove <- c(23)
+clusters_to_keep <- setdiff(unique(Idents(so.integrated)), clusters_to_remove)
+# Subset the Seurat object to exclude cluster 23
+so.integrated <- subset(so.integrated, idents = clusters_to_keep)
+
+# Save the updated Seurat object (optional)
+#saveRDS(so.integrated, file = file.path(wd.de.data, "ssc_filtered_normalised_integrated0_so.list_cleaned.RDS"))
+save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_-2_", 25, "_", 100, "-23.RData")))
+
+
+
+
+
+
+
+
+
+
+
+##
+##
+library(ggplot2)
+
+# Initialize dataframe to store all scores
+density_data <- data.frame()
+# Get unique cluster identities
+clusters <- unique(so.integrated@meta.data$seurat_clusters)
+
+# Iterate through each cluster
+for (cluster in clusters) {
+	  # Subset the Seurat object to get cells in this cluster
+	  cluster_cells <- subset(so.integrated, idents = cluster)
+	  # Get unique sample IDs in this cluster
+	  sample_ids_in_cluster <- unique(cluster_cells@meta.data$sample.id)
+	
+  	# Iterate through each sample in this cluster
+	  for (sample_id in sample_ids_in_cluster) {
+		    # Lookup pANN column from mapping_table
+		    pANN_col <- mapping_table$pANN_Column[mapping_table$Sample_ID == sample_id]
+		
+		    # Extract cells belonging to this sample
+		    sample_cells <- cluster_cells@meta.data[cluster_cells@meta.data$sample.id == sample_id, ]
+		
+		    # Extract original pANN scores for this sample
+		    if (pANN_col %in% colnames(sample_cells)) {  # Ensure column exists
+			      original_scores <- sample_cells[[pANN_col]]
+			
+			      # Store in dataframe
+			      density_data <- rbind(density_data, data.frame(
+				        Cluster = cluster,
+				        Sample = sample_id,
+				        Doublet_Score = original_scores
+			      ))
+		    }
+	  }
+}
+
+library(ggplot2)
+
+# Define output directory for individual plots
+output_dir <- file.path(wd.de.plots, "density_plots_per_cluster")
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)  # Create directory if it doesn't exist
+
+# Generate a color palette with enough colors
+num_samples <- length(sample_ids)
+sample_colors <- colorRampPalette(brewer.pal(9, "Set1"))(num_samples)  # Expand Set1 to required number
+
+# Assign sample colors as a named vector
+names(sample_colors) <- sample_ids
+# Iterate through each unique cluster and generate a separate plot
+for (cluster in unique(density_data$Cluster)) {
+	  # Subset data for the current cluster
+  	cluster_data <- subset(density_data, Cluster == cluster)
+	
+  	# Generate density plot
+  	p <- ggplot(cluster_data, aes(x = Doublet_Score, color = Sample)) +
+		    geom_density(alpha = 1, size = 1.1) +  # Increase line thickness
+		    theme_classic() +
+		    xlab("Doublet probability score (pANN)") +
+		    ylab("Density") +
+		    ggtitle(paste("Cluster", cluster)) +
+		    scale_color_manual(values = sample_colors) +  # Assign colors to samples
+		    theme(
+			      legend.title = element_blank(),  # Remove legend title
+			      legend.text = element_text(size = 12),
+			      legend.position = "right",  # Move legend to the right of the plot
+			      plot.title = element_text(hjust = 0.5, size = 14, face = "bold")  # Center title
+		    ) +
+		    guides(color = guide_legend(ncol = 1))  # Force legend to one line
+	
+	     # Save each plot as a PNG file
+	     ggsave(filename = file.path(output_dir, paste0("density_plot_cluster_", cluster, ".png")),
+			 					plot = p, width = 6, height = 6, dpi = 300)
+}
+
+
+
+
+
+

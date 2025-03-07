@@ -35,6 +35,11 @@ wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
 #samples1 <- samples1[rownames(samples0),]
 
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
@@ -42,6 +47,11 @@ wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
 nfeatures <- 5000
 res <- 0.5
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_-2_", 25, "_", 100, ".RData")))
+
+
+
+
+
 
 # Load necessary library
 library(dplyr)

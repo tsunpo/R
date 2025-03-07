@@ -3,7 +3,7 @@
 # Chapter      :
 # Name         : 
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 25/07/24; 14/03/24
+# Last Modified: 20/02/25; 25/07/24; 14/03/24
 # =============================================================================
 wd.src <- "/nfs/users/nfs_t/ty2/dev/R"            ## ty2@farm
 #wd.src <- "/Users/ty2/Work/dev/R"                ## ty2@localhost
@@ -48,7 +48,9 @@ library(pheatmap)
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_scaled_data.RData")))
 
 # -----------------------------------------------------------------------------
 # Di Persio et al; DotPlot (resolution = 0.25)
@@ -70,7 +72,7 @@ cluster_to_celltype <- c('2' = 'Stage 0', '5' = 'Stage 0A', '22' = 'Stage 0B', '
 																									'10' = 'Zygotene', '9' = 'Zygotene', '3' = 'Zygotene', '6' = '',
 																									'7' = 'Pachytene', '14' = 'Pachytene', 
 																									'24' = 'Diplotene', '30' = 'Diplotene',
-																									'20' = 'Meiotic division', '17' = 'Meiotic division', '29' = '',
+																									'20' = 'Meiotic division', '17' = 'Meiotic division', '29' = 'Meiotic division',
 																									'13' = 'Early spermatid',
 																									'4' = 'Late spermatid', '8' = 'Late spermatid', '23' = '',
 																									'31' = 'Macrophage',
@@ -93,228 +95,17 @@ dot_plot <- DotPlot(so.integrated, features = genes_of_interest)  +
 	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
 	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_14x6_unknown.pdf")), width = 14, height = 6)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_14x6_19-6-23.pdf")), width = 14, height = 6)
 print(dot_plot)
 dev.off()
 
-save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_unknown.RData")))
-
-# -----------------------------------------------------------------------------
-# Outputs for PacBio
-# -----------------------------------------------------------------------------
-#samples <- c("PD53624b_M", "PD53623b_2N", "PD53623b_4N", "PD53623b_J2")  ## PacBio_B1
-samples <- c("PD53624b_J2", "PD53623b_M", "PD53621b_M", "PD53626b_J1")  ## PacBio_B2
-
-# Extract metadata from the Seurat object
-metadata <- so.integrated@meta.data
-# Filter metadata for the specified samples
-filtered_metadata <- metadata[metadata$sample.id %in% samples, ]
-# Extract cell barcodes (rownames are typically cell barcodes in Seurat metadata)
-filtered_metadata$Cell_barcode <- rownames(filtered_metadata)
-
-# Select the desired columns
-output_table <- filtered_metadata[, c("sample.id", "cell_barcode", "cell_type", "age", "age_group")]
-# Save the table to a CSV file
-writeTable(output_table, file=file.path(wd.de.plots, "PacBio_B1.txt"), rownames=F, colnames=T, sep="\t")
-
-# Ensure the 'Sample ID' column respects the specified order
-output_table$`sample.id` <- factor(output_table$`sample.id`, levels = samples)
-# Summarise the number of cells per sample ID
-cell_counts <- output_table %>%
-	  dplyr::group_by(`sample.id`) %>%
-	  dplyr::summarise(cell_count = n())
-
-# Save the table to a CSV file
-writeTable(cell_counts, file=file.path(wd.de.plots, "PacBio_B1_counts.txt"), rownames=F, colnames=T, sep="\t")
-
-# -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
-DefaultAssay(so.integrated) <- "RNA"
-
-so.integrated <- JoinLayers(so.integrated, assay = DefaultAssay(so.integrated))
-#names(so.integrated[[DefaultAssay(so.integrated)]]@data)
-
-# Find markers for every cluster compared to all remaining cells, report only the positive ones
-markers <- FindAllMarkers(so.integrated, only.pos = TRUE)
-markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1)
-de_gene_list <- unique(markers$gene)
-
-save(so.integrated, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_markers_-12-15-17.RData")))
-save(markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_markers_markers_-12-15-17.RData")))
-
-# DoHeatmap() generates an expression heatmap for given cells and features.
-# In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
-top10 <- markers %>%
-	  group_by(cluster) %>%
-	  dplyr::filter(avg_log2FC > 1) %>%
-	  slice_head(n = 10) %>%
-	  ungroup()
-#missing_genes <- setdiff(top10$gene, rownames(so.integrated))
-
-# Re-scale the data including all genes in top10$gene
-so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
-
-# Create the heatmap
-heatmap <- DoHeatmap(so.integrated, features = top10$gene, group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend()
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_top10_markers_SCT_", nfeatures, "_UMAP_resolution=0.6_group.by_-12-15-17.png")),
-							plot = heatmap, width = 15, height = 17, dpi = 300)
-
-# -----------------------------------------------------------------------------
-# Jaccard index for overlap of gene sets
-# -----------------------------------------------------------------------------
-#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_markers_markers.RData")))
-
-jaccard_matrix <- getJaccardIndex(markers)
-# Visualize the Jaccard index matrix
-pheatmap_plot <- pheatmap(jaccard_matrix, main = "Jaccard Index Between Clusters")
-
-# Save the plot as a PNG file
-png(file = file.path(wd.de.plots, "heatmap_jaccard_markers_SCT_res=0.6_-12-15-17.png"), width = 7, height = 7, units = "in", res = 300)
-print(pheatmap_plot)
-dev.off()
-
-# -----------------------------------------------------------------------------
-# K-means Clustering of Genes
-# -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
-# > dim(so.integrated)
-# [1] 5000 70738
-
-# Identify the clusters you want to keep
-clusters_to_remove <- c("Sertoli", "Fibrotic PMC", "Endothelial and Macrophage", "Leydig")
-clusters_to_keep <- setdiff(unique(Idents(so.integrated)), clusters_to_remove)
-# Subset the Seurat object to exclude cluster 1
-so.integrated <- subset(so.integrated, idents = clusters_to_keep)
-# > dim(so.integrated)
-# [1]  5000 56396
-
-# Extract expression data from Seurat object
-DefaultAssay(so.integrated) <- "RNA"
-so.integrated <- JoinLayers(so.integrated, assays = "RNA")
-expression_matrix <- GetAssayData(so.integrated[["RNA"]], layer = "data")
-expression_matrix <- as.matrix(expression_matrix)
-
-# Set the number of clusters (k)
-k <- 5  # You can adjust this based on your needs
-# Perform K-means clustering on genes (rows)
-set.seed(123)  # For reproducibility
-kmeans_result <- kmeans(t(expression_matrix), centers = k)
-# Assign cluster labels to the genes
-gene_clusters <- kmeans_result$cluster
-
-save(gene_clusters, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_clustering0.RData")))
-
-# Order cells by their assigned cell types
-cell_metadata <- so.integrated@meta.data
-ordered_cells <- cell_metadata[order(cell_metadata$cell_type), ]
-# Reorder the expression matrix by cell types
-ordered_expression_matrix <- expression_matrix[, rownames(ordered_cells)]
-
-# Load necessary libraries for heatmap
-library(ComplexHeatmap)
-library(circlize)
-# Define color palette
-col_fun <- colorRamp2(c(-2, 0, 2), c(blue, "white", red))
-# Create heatmap with clustered genes and ordered cells
-Heatmap(ordered_expression_matrix, 
-								name = "Expression", 
-								show_row_names = FALSE, 
-								show_column_names = FALSE, 
-								cluster_rows = TRUE, 
-								cluster_columns = FALSE,  # Keep columns ordered by cell type
-								row_split = gene_clusters, # Split rows by k-means clusters
-								col = col_fun, 
-								heatmap_legend_param = list(title = "Z-score"))
-
-# Determine optimal number of clusters (Elbow Method)
-wss <- sapply(1:15, function(k){
-	  kmeans(t(expression_matrix), centers = k, nstart = 10)$tot.withinss
-})
-
-plot(1:15, wss, type = "b", pch = 19, frame = FALSE, 
-					xlab = "Number of clusters K", 
-					ylab = "Total within-clusters sum of squares")
-
-save(kmeans_result, ordered_expression_matrix, wss, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_clustering.RData")))
-
-# -----------------------------------------------------------------------------
-# Methods: DE using MAST
-# Last Modified: 17/10/24
-# -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated.RData")))
-# > dim(so.integrated)
-# [1] 5000 70738
-
-DefaultAssay(so.integrated) <- "RNA"
-so.integrated <- JoinLayers(so.integrated, assays = "RNA")
-so.integrated$cell_type <- Idents(so.integrated)
-
-# Create age groups ("young" and "old")
-median_age <- median(so.integrated$age)  # Define the threshold for age
-so.integrated$age_group <- ifelse(so.integrated$age <= median_age, "young", "old")
-
-# List of unique cell types
-cell_types <- unique(so.integrated$cell_type)  # Adjust if your metadata column for cell type is named differently
-# Initialize a list to store DE results
-de_results_list <- list()
-
-# Loop over each cell type
-for (ct in cell_types) {
-	  # Subset Seurat object to include only the cells of the current cell type
-	  cells_of_ct <- WhichCells(so.integrated, expression = cell_type == ct)
-	  so_ct <- subset(so.integrated, cells = cells_of_ct)
-	
-	  # Perform differential expression analysis between "young" and "old" using MAST
-	  de_results <- FindMarkers(
-		    so_ct,
-		    ident.1 = "old",
-		    ident.2 = "young",
-		    group.by = "age_group",  # Use age group for ident.1 and ident.2
-		    test.use = "MAST"
-	  )
-	
-	  # Store the results for this cell type
-  	de_results_list[[ct]] <- de_results
-  	
-  	# Define color categories based on q_value and log2_fold_change conditions
-  	de_results$color <- "gray"  # Default color
-  	de_results$color[de_results$p_val_adj < 1E-9 & de_results$avg_log2FC > 1] <- red
-  	de_results$color[de_results$p_val_adj < 1E-9 & de_results$avg_log2FC < -1] <- blue
-  	
-  	# Create a new column for labeling significant genes
-  	de_results$label <- NA
-  	de_results$label[de_results$p_val_adj < 1E-9 & abs(de_results$avg_log2FC) > 1] <- rownames(de_results)
-  	
-  	# Plot the volcano plot
-  	volcano_plot <- ggplot(de_results, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
-  		  geom_point(aes(color = color), alpha = 0.7) +
-  		  scale_color_identity() +  # Use the color column for point colors
-  		  geom_text_repel(aes(label = label), max.overlaps = 20, size = 3) +  # Add gene labels
-  		  geom_vline(xintercept = 1, linetype = "dashed", color = red) +
-  		  geom_vline(xintercept = -1, linetype = "dashed", color = blue) +
-  		  theme_minimal() +
-  		  xlab("Log2 FC") +
-  		  ylab("-log10(P)") +
-  		  ggtitle("Expression vs. Age") +
-  		  theme(legend.position = "none",  # Hide the legend for custom color  theme(legend.position = "none",            # Hide the legend
-         plot.title = element_text(hjust = 0.5))  # Center the title
-  	
-  	# Print the volcano plot
-  	pdf(file = file.path(wd.de.plots, paste0("MAST_volcano_", ct, "_RNA.pdf")), width = 5, height = 5)
-  	print(volcano_plot)
-  	dev.off()
-}
-
-save(de_results_list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_MAST_RNA.RData")))
+save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
 
 # -----------------------------------------------------------------------------
 # Methods: Age group
 # Last Modified: 15/01/25; 14/11/24
 # -----------------------------------------------------------------------------
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
 
 age_info <- so.integrated@meta.data %>%
    dplyr::mutate(sample_id_clean = sub("_.*", "", sample.id)) %>%
@@ -368,35 +159,12 @@ summary_table <- so.integrated@meta.data %>%
 		    Cells = n()  # Number of cells per sample
 	  ) %>%
 	  arrange(sample.id)
+   #arrange(Age)
 
 # Calculate total cells
-total_cells <- sum(summary_table$Cells)
+#total_cells <- sum(summary_table$Cells)
 
-# Add the total row
-summary_table <- bind_rows(summary_table, data.frame(
-	  sample.id = "Total", Age = "", Genes = "", Cells = total_cells
-))
-writeTable(summary_table, file.path(wd.de.data, "summary_table_19-23-6_Pseudotime+Phasae.txt"), colnames=T, rownames=T, sep="\t")
-
-# -----------------------------------------------------------------------------
-# Methods: Age group (order by age)
-# Last Modified: 14/11/24
-# -----------------------------------------------------------------------------
-# Create a summary table with the data
-summary_table <- so.integrated@meta.data %>%
-	  group_by(sample.id) %>%
-	  summarize(
-		    Age = unique(age),  # Assuming `age` is a column with age data
-		    Genes = sum(nFeature_RNA),  # `nFeature_RNA` is typically gene count per cell
-		    Cells = n()  # Number of cells per sample
-	  ) %>%
-	  arrange(Age)
-
-# Calculate total cells
-total_cells <- sum(summary_table$Cells)
-
-# Add the total row
-writeTable(summary_table, file.path(wd.de.data, "summary_table_age_19-23-6.txt"), colnames=T, rownames=T, sep="\t")
+writeTable(summary_table, file.path(wd.de.plots, "summary_table_Germ.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Methods: Age group and cell types
@@ -410,7 +178,7 @@ library(tidyr)
 cell_type_colors <- Idents(so.integrated)  # Extract the colors used for each cell type
 
 # Check the colors assigned to each identity
-dot_plot <- DimPlot(so.integrated) +
+dot_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend() +
 	  labs(x = "UMAP 1", y = "UMAP 2") +  # Set x-axis and y-axis labels
 	  theme(
 		    plot.title = element_blank(),  # Remove title
@@ -425,12 +193,11 @@ plot_colors <- scales::hue_pal()(length(unique(cell_type_colors)))
 names(plot_colors) <- levels(cell_type_colors)
 
 # Display the color assignments for reference
-plot_colors
+#plot_colors
 
-pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_7x6_Pseudotime+Phase.pdf")), width = 7, height = 6)
+pdf(file = file.path(wd.de.plots, paste0("Di Persio_DotPlot_SCT_", nfeatures, "_SCT_dims=", prin_comp, "_res=0.5_6x6_seurat_clusters.pdf")), width = 6, height = 6)
 print(dot_plot)
 dev.off()
-
 
 # -----------------------------------------------------------------------------
 # Methods: 
@@ -466,7 +233,10 @@ age_group_totals <- cell_type_counts %>%
 		    .groups = "drop"
   	)
 
-# Merge totals and calculate proportions
+# Proportions sum to one, which transforms the data from the Euclidean space into a simplex space.
+# Canonical statistical tests such as t-test may not be reliable, as these are not designed for relative proportion data
+# But Spearman’s correlation measures the monotonic relationship between two variables by ranking the values rather than using their absolute differences. 
+# This makes it more robust to non-normality and scale transformations
 proportions <- cell_type_counts %>%
 	  left_join(age_group_totals, by = "age_group") %>%
   	mutate(proportion = cell_count / total_cells)
@@ -476,11 +246,6 @@ age_group_to_median <- c("20-30" = 25, "30-40" = 35, "40-50" = 45,
 																									"50-60" = 55, "60-70" = 65, "70-80" = 75)
 # Add the `age_median` column
 proportions$age_median <- as.numeric(sapply(proportions$age_group, function(x) age_group_to_median[x]))
-
-# Display the resulting table
-print(proportions)
-# Optionally, save the table to a file
-write.table(proportions, "cell_type_proportions_by_age_group_Pseudotime+Phase.txt", row.names = FALSE)
 
 # Plot with age groups on x-axis and cell type proportions
 plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)) +
@@ -496,10 +261,11 @@ plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)
 		    plot.title = element_text(hjust = 0.5),
 		    legend.text = element_text(size = 10),   # Increase legend text size
 		    legend.title = element_text(size = 12)  # Increase legend title size
-	  )
+	  ) +
+  	guides(fill = guide_legend(ncol = 1))       # Force single-row legend
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_5.3x7_19-23-6_Pseudotime+Phase_2.png"), width = 5.3, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_5.3x7_seurat_clusters.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
 
@@ -521,15 +287,17 @@ plot <- ggplot(proportions, aes(x = age_group, y = cell_count, fill = cell_type)
 		    plot.title = element_text(hjust = 0.5),
 		    legend.text = element_text(size = 10),   # Increase legend text size
 		    legend.title = element_text(size = 12)  # Increase legend title size
-	  )
+	  )  +
+	  guides(fill = guide_legend(ncol = 1))       # Force single-row legend
+
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_cell_counts_5.3x7_19-23-6_Pseudotime+Phase.png"), width = 5.3, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_cell_counts_5.3x7_seurat_clusters.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
 
 # -----------------------------------------------------------------------------
-# Methods: Correlation 1, 2, 3, 4, 5, 6 OR 25, 35, 45, 55, 65, 75
+# Methods: Correlation
 # Last Modified: 14/11/24
 # -----------------------------------------------------------------------------
 # Step 2: Perform Spearman's correlation and get p-value for each cell type
@@ -541,22 +309,13 @@ correlation_results <- proportions %>%
     		.groups = "drop"
   	)
 
-# Step 2: Perform Spearman's correlation and get p-value for each cell type
-correlation_results <- proportions %>%
-	  dplyr::group_by(cell_type) %>%
-	  dplyr::summarize(
-		    p_value = cor.test(age_median, proportion, method = "spearman")$p.value,
-		    spearman_correlation = cor(age_median, proportion, method = "spearman"),
-		    .groups = "drop"
-	  )
-
 # Step 3: Display the results, sorted by correlation
 #correlation_results <- correlation_results %>%
 #	  dplyr::arrange(desc(spearman_correlation))
 
 # Print the results
-print(correlation_results)
-writeTable(correlation_results, file.path(wd.de.data, "summary_table_correlation_results_age_median_unsorted_Pseudotime+Phase.txt"), colnames=T, rownames=T, sep="\t")
+#print(correlation_results)
+#writeTable(correlation_results, file.path(wd.de.plots, "summary_table_correlation_results_age_median_19-6-23.txt"), colnames=T, rownames=T, sep="\t")
 
 # -----------------------------------------------------------------------------
 # Methods: Age group and cell types
@@ -606,15 +365,106 @@ plot <- ggplot(correlation_results, aes(x = cell_type, y = spearman_correlation,
 	  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))  # Add margins to both sides of the y-axis
    
 # Print the plot
-pdf(file = file.path(wd.de.plots, "correlation_results_age_median_unsorted_Pseudotime+Phase.pdf"), width = 6, height = 6)
+pdf(file = file.path(wd.de.plots, "barplot_correlation_results_age_median_unsorted_seurat_clusters.pdf"), width = 6, height = 6)
 print(plot)
 dev.off()
 
 # -----------------------------------------------------------------------------
-# Positively seleced genes
+# Methods: Centered Log-Ratio (CLR) Transformation
+# Last Modified: 20/02/25
+# -----------------------------------------------------------------------------
+library(dplyr)
+library(tidyr)
+library(compositions)
+
+# Reshape data: wide format with cell types as columns
+proportions_wide <- proportions %>%
+  	select(age_group, cell_type, proportion) %>%
+	  pivot_wider(names_from = cell_type, values_from = proportion, values_fill = list(proportion = 0))
+
+# Extract age groups separately to keep track
+age_groups <- proportions_wide$age_group
+
+# Apply CLR transformation to the proportion values (excluding age_group)
+clr_transformed <- clr(proportions_wide %>% select(-age_group))
+
+# Convert back to a tibble and restore age_group
+clr_transformed_df <- as_tibble(clr_transformed)
+clr_transformed_df$age_group <- age_groups
+
+# Reshape back to long format
+proportions_clr <- clr_transformed_df %>%
+	  pivot_longer(cols = -age_group, names_to = "cell_type", values_to = "clr_proportion")
+
+# Merge CLR-transformed data back into original proportions table
+proportions <- proportions %>%
+	  left_join(proportions_clr, by = c("age_group", "cell_type"))
+
+# Print to check results
+print(proportions)
+
+# Step 2: Perform Spearman's correlation and get p-value for each cell type
+correlation_results <- proportions %>%
+  	dplyr::group_by(cell_type) %>%
+	  dplyr::summarize(
+	    	p_value = cor.test(as.numeric(as.factor(age_group)), clr_proportion, method = "spearman")$p.value,
+		    spearman_correlation = cor(as.numeric(as.factor(age_group)), clr_proportion, method = "spearman"),
+		    .groups = "drop"
+	  )
+correlation_results <- correlation_results %>%
+	  dplyr::arrange(match(cell_type, unique(proportions$cell_type)))
+
+# Assuming correlation_results from the previous step contains the correlation and p-value for each cell type
+# Add a column to indicate significance level based on p-value (optional)
+correlation_results <- correlation_results %>%
+	  dplyr::mutate(significance = dplyr::case_when(
+	  	  p_value < 0.001 ~ "***",
+		    p_value < 0.01 ~ "**",
+		    p_value < 0.05 ~ "*",
+		    TRUE ~ ""
+	  ))
+
+# Reorder levels so "Stage 0" appears at the top of the y-axis
+correlation_results$cell_type <- factor(
+	  correlation_results$cell_type,
+	  levels = rev(correlation_results$cell_type)
+)
+
+# Plot the bar plot
+#plot <- ggplot(correlation_results, aes(x = reorder(cell_type, spearman_correlation), y = spearman_correlation, fill = spearman_correlation)) +
+# Plot the bar plot (without sorting)
+plot <- ggplot(correlation_results, aes(x = cell_type, y = spearman_correlation, fill = spearman_correlation)) +
+	  geom_bar(stat = "identity") +
+	  coord_flip() +
+  	scale_fill_gradient2(low = blue, mid = "white", high = red, midpoint = 0, name = "Correlation") +
+	  geom_text(aes(label = significance, hjust = ifelse(spearman_correlation < 0, 1.5, -0.5)),  # Adjust hjust for more space
+			  								vjust = 0.5, color = "black", size = 6) + 
+	  labs(
+		    title = "",
+		    x = "",
+		    y = "Spearmans' rho (CLR-transformed)"
+	  ) +
+	  theme_minimal() +
+	  theme(
+		    axis.text.x = element_text(size = 11),   # Adjust y-axis text size
+		    axis.text.y = element_text(size = 11),
+		    axis.title.x = element_text(size = 12, margin = margin(t = 10)),  # Adjust x-axis title size and position
+		    plot.title = element_text(hjust = 0.5),
+		    legend.text = element_text(size = 11),   # Increase legend text size
+		    legend.title = element_text(size = 12)  # Increase legend title size
+	  ) +
+	  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))  # Add margins to both sides of the y-axis
+
+# Print the plot
+pdf(file = file.path(wd.de.plots, "barplot_correlation_results_age_median_unsorted_seurat_clusters_CLR.pdf"), width = 6, height = 6)
+print(plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Heat map for positively selected genes
 # -----------------------------------------------------------------------------
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_joined.RData")))
-mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "PTEN", "RIT1", "ROBO1", "DDX3X", "CSNK2B", "KRAS", "FGFR3", "PPM1D", "ARID1A", "BRAF", "HRAS", "KMT2E", "EP300", "SCAF4", "BMPR2", "TCF12", "CCAR2", "DHX9", "NSD1", "LZTR1", "FGFR2", "SEMG1", "ARHGAP35", "CBL", "SSX1", "RBM12", "TRERF1", "FAT1", "FAM222B", "SMAD4", "AR", "KDM5C", "KMT2D", "CTNNB1", "RAF1")
+mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "PTEN", "RIT1", "ROBO1", "DDX3X", "CSNK2B", "KRAS", "FGFR3", "PPM1D", "ARID1A", "BRAF", "HRAS", "KMT2E", "EP300", "SCAF4", "BMPR2", "TCF12", "CCAR2", "DHX9", "NSD1", "LZTR1", "FGFR2", "ARHGAP35", "CBL", "SSX1", "RBM12", "FAM222B", "SMAD4", "AR", "KDM5C", "KMT2D", "CTNNB1", "RAF1")
 
 # Set the default assay to "RNA"
 DefaultAssay(so.integrated) <- "RNA"
@@ -622,9 +472,11 @@ DefaultAssay(so.integrated) <- "RNA"
 #so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 # Step 1: Re-scale the data including all genes in the dataset
 so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
+
 # Step 2: Extract the scaled data for the genes in mn7
 matched_genes <- mn7[mn7 %in% rownames(so.integrated)]
 scaled_data <- GetAssayData(so.integrated, assay = "RNA", layer = "scale.data")[matched_genes, ]
+#save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_scaled_data.RData")))
 
 # Step 3: Calculate the average expression for each gene in each cluster
 average_expression_per_cluster <- sapply(levels(so.integrated), function(cluster) {
@@ -636,16 +488,388 @@ average_expression_per_cluster <- sapply(levels(so.integrated), function(cluster
 ordered_genes <- rownames(scaled_data)[do.call(order, as.data.frame(-average_expression_per_cluster))]
 scaled_data <- scaled_data[ordered_genes,]
 
-# Step 4: Order the genes based on their expression levels from cluster 1 to the last cluster
-# Sort each cluster's expression and then combine orders without dropping any genes
-#gene_order <- order(rowMeans(average_expression_per_cluster, na.rm = TRUE), decreasing = TRUE)
-#ordered_genes <- rownames(scaled_data)[gene_order]
-#scaled_data <- scaled_data[gene_order,]
+# Create the heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend() + theme(axis.text.y = element_text(size = 12))
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12_monocle3+phase_2_scaled_data.png")),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+# Reorder clusters so Cluster 1 appears at the top
+#so.integrated@active.ident <- factor(Idents(so.integrated), levels = rev(levels(Idents(so.integrated))))
+
+dot_plot <- DotPlot(so.integrated, features = ordered_genes)  +
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+
+pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_mn7_ordered_genes_scaled_rev.pdf")), width = 14, height = 6)
+print(dot_plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Last Modified: 23/02/25
+# -----------------------------------------------------------------------------
+# Step 2: Extract the scaled data for the genes in mn7
+matched_genes <- mn7[mn7 %in% rownames(so.integrated)]
+scaled_data <- GetAssayData(so.integrated, assay = "RNA", layer = "scale.data")[matched_genes, ]
+
+# Step 4: Extract Pseudotime Values from Monocle3
+pseudotime_values <- cds@principal_graph_aux$UMAP$pseudotime  # Extract Monocle3 pseudotime
+pseudotime_values <- pseudotime_values[match(colnames(scaled_data), names(pseudotime_values))]  # Match order
+
+# Step 5: Compute Correlation Between Gene Expression and Pseudotime
+correlation_values <- apply(scaled_data, 1, function(gene_expression) {
+	  cor(gene_expression, pseudotime_values, method = "spearman", use = "pairwise.complete.obs")
+})
+
+# Step 6: Sort Genes by Pseudotime Correlation (High Positive Correlation First)
+ordered_genes <- names(sort(correlation_values, decreasing = FALSE))
+# Step 7: Apply New Sorting to Scaled Data
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 8: Generate the Heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident",	disp.min = -2.5, disp.max = 2.5) + NoLegend() + 
+	  theme(axis.text.y = element_text(size = 12))
+# Step 9: Save the Heatmap
+ggsave(filename = file.path(wd.de.plots, "heatmap_sorted_by_pseudotime_FALSE.png"),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+# Reorder clusters so Cluster 1 appears at the top
+#so.integrated@active.ident <- factor(Idents(so.integrated), levels = rev(levels(Idents(so.integrated))))
+
+dot_plot <- DotPlot(so.integrated, features = ordered_genes)  +
+  	scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+
+pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_mn7_ordered_genes_pseudotime_FALSE.pdf")), width = 14, height = 6)
+print(dot_plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Smooth Expression Trends (on pseudotime)
+# Last Modified: 24/02/25
+# -----------------------------------------------------------------------------
+library(mgcv)  # For GAM-based smoothing
+library(reshape2)
+
+# Step 2: Extract scaled data for genes of interest
+matched_genes <- mn7[mn7 %in% rownames(so.integrated)]
+gene_expression <- GetAssayData(so.integrated, assay = "RNA", layer = "data")[matched_genes, ]  # Use log-normalized expression
+scaled_data <- GetAssayData(so.integrated, assay = "RNA", layer = "scale.data")[matched_genes, ]
+
+# Step 3: Extract Pseudotime Values from Monocle3
+pseudotime_values <- cds@principal_graph_aux$UMAP$pseudotime  # Extract pseudotime
+pseudotime_values <- pseudotime_values[match(colnames(scaled_data), names(pseudotime_values))]  # Match order
+
+# Step 4: Fit a Smooth Trend Line for Each Gene Using Generalized Additive Model (GAM)
+smoothed_trends <- sapply(rownames(gene_expression), function(gene) {
+	  fit <- gam(gene_expression[gene, ] ~ s(pseudotime_values, bs="cs"), method="REML")  # Use cubic smoothing spline
+	  predict(fit)  # Get predicted smooth values
+})
+
+# Convert to matrix format
+smoothed_trends <- as.matrix(smoothed_trends)
+# Step 5: Compute Peak Pseudotime for Each Gene (First Max Expression in Smoothed Data)
+peak_pseudotime <- apply(smoothed_trends, 2, function(x) which.max(x))
+# Step 6: Order Genes by Peak Activation Time in Pseudotime
+ordered_genes <- names(sort(peak_pseudotime, decreasing = FALSE))  # Earlier peak = higher rank
+# Step 7: Apply New Sorting to Scaled Data
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 8: Generate the Heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident",	
+																					disp.min = -2.5, disp.max = 2.5) + NoLegend() + 
+	  theme(axis.text.y = element_text(size = 12))
+
+# Step 9: Save the Heatmap
+ggsave(filename = file.path(wd.de.plots, "heatmap_sorted_by_smoothed_pseudotime_.png"),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+# Reorder clusters so Cluster 1 appears at the top
+so.integrated@active.ident <- factor(Idents(so.integrated), levels = rev(levels(Idents(so.integrated))))
+
+dot_plot <- DotPlot(so.integrated, features = ordered_genes)  +
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+
+pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_mn7_ordered_genes_smoothed_pseudotime.pdf")), width = 14, height = 6)
+print(dot_plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Smooth Expression Trends (on clusters)
+# Last Modified: 24/02/25
+# -----------------------------------------------------------------------------
+# Step 2: Extract cluster identities
+cluster_ids <- Idents(so.integrated)  # Get cluster identities per cell
+# Ensure cluster_ids follow the correct order
+desired_order <- c("Stage 0", "Stage 0A", "Stage 0B", "Stage 1", "Stage 2", "Stage 3", "Leptotene", "Zygotene", "Pachytene", "Diplotene", "Meiotic division", "Early spermatid", "Late spermatid")
+cluster_ids <- factor(cluster_ids, levels = desired_order)
+
+# Step 3: Fit GAM smoothing per gene per cluster
+smoothed_trends <- sapply(rownames(gene_expression), function(gene) {
+	  cluster_means <- tapply(gene_expression[gene, ], cluster_ids, mean, na.rm = TRUE)  # Mean per cluster
+	  #cluster_order <- as.numeric(as.factor(names(cluster_means)))  # Convert cluster names to numeric order
+	  cluster_order <- match(names(cluster_means), desired_order)  # Correct biological order
+	  
+	  # Fit GAM model for smoothing within clusters
+	  fit <- gam(cluster_means ~ s(cluster_order, bs="cs"), method="REML")
+	  predict(fit)  # Get smoothed expression values per cluster
+})
+
+# Convert to matrix format
+smoothed_trends <- as.matrix(smoothed_trends)
+# Step 4: Compute Peak Cluster (Where Gene Expression Peaks)
+peak_cluster <- apply(smoothed_trends, 2, function(x) which.max(x))  # Find the cluster with highest expression
+# Step 5: Order Genes by Peak Expression in Clusters
+ordered_genes <- names(sort(peak_cluster, decreasing = FALSE))  # Sort genes by earliest peak expression
+# Step 6: Apply New Sorting to Scaled Data for Heatmap Visualization
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 7: Generate the Heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", 
+																					disp.min = -2.5, disp.max = 2.5) + NoLegend() + 
+	  theme(axis.text.y = element_text(size = 12))
+
+# Step 8: Save the Heatmap
+ggsave(filename = file.path(wd.de.plots, "heatmap_sorted_by_smoothed_clusters_desired_order.png"),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+# Reorder clusters so Cluster 1 appears at the top
+so.integrated@active.ident <- factor(Idents(so.integrated), levels = rev(levels(Idents(so.integrated))))
+
+dot_plot <- DotPlot(so.integrated, features = ordered_genes)  +
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+
+pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_mn7_ordered_genes_smoothed_clusters_desired_order.pdf")), width = 14, height = 6)
+print(dot_plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Smooth Expression Trends (on clusters; using smoothed trends)
+# Last Modified: 26/02/25
+# -----------------------------------------------------------------------------
+# Step 7: Generate the Heatmap Using `smoothed_trends`
+heatmap <- DoHeatmap(
+	  object = NULL,  # Remove Seurat object to use a custom matrix
+	  features = rownames(smoothed_trends),  # Use smoothed expression trends
+	  assay = NULL,  # Not required since we're using custom data
+	  slot = NULL  # Not needed as `smoothed_trends` is precomputed
+) + 
+	  scale_fill_gradientn(colors = c("blue", "white", "red")) +  # Adjust heatmap colors
+	  theme(axis.text.y = element_text(size = 12)) +
+	  NoLegend()
+
+# Save Heatmap
+ggsave(filename = file.path(wd.de.plots, "heatmap_sorted_by_smoothed_clusters_desired_order_smoothed.png"), plot = heatmap, width = 10, height = 8, dpi = 300)
+
+
+
+
+# -----------------------------------------------------------------------------
+# Lamian for Pseudotime Analysis
+# Last Modified: 26/02/25
+# -----------------------------------------------------------------------------
+# Step 4: Prepare Data for Lamian
+lamian_data <- list(
+	  expr = as.matrix(gene_expression),  # Expression matrix (genes x cells)
+	  pseudotime = pseudotime_values,     # Pseudotime per cell
+	  cluster = cluster_ids               # Sample ID per cell
+)
+# Ensure pseudotime matches expression matrix order
+lamian_data$pseudotime <- lamian_data$pseudotime[match(colnames(lamian_data$expr), names(lamian_data$pseudotime))]
+
+# Create `cellanno` (Cell Barcode → Cluster ID)
+cellanno <- data.frame(
+	  Cell = colnames(lamian_data$expr),
+	  Cluster = lamian_data$cluster[colnames(lamian_data$expr)]
+)
+
+# Create `design` matrix for modeling cluster-specific effects
+design <- scale(model.matrix(~ 0 + factor(lamian_data$cluster, levels = unique(lamian_data$cluster))))
+
+# Fit the pseudotime-dependent model
+fit_results <- Lamian::fitpt(
+	  expr = lamian_data$expr, 
+	  pseudotime = lamian_data$pseudotime, 
+	  cellanno = cellanno, 
+	  design = design
+)
+
+# Run differential pseudotime analysis
+lamian_results <- Lamian::lamian_test(fit_results)
+
+# Extract ordered genes based on statistical significance
+ordered_genes <- rownames(lamian_results)[order(lamian_results$FDR, decreasing = FALSE)]  # Sort by adjusted p-value
+# Step 7: Apply New Sorting to Scaled Data for Heatmap Visualization
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 8: Generate the Heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", 
+																					disp.min = -2.5, disp.max = 2.5) + NoLegend() + 
+	  theme(axis.text.y = element_text(size = 12))
+
+# Step 9: Save the Heatmap
+ggsave(filename = file.path(wd.de.plots, "heatmap_sorted_by_Lamian_pseudotime.png"),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# tradeSeq for Pseudotime Analysis
+# Last Modified: 25/02/25
+# -----------------------------------------------------------------------------
+# Load necessary libraries
+library(Seurat)
+library(ggplot2)
+library(Lamian)  # Load Lamian for differential pseudotime analysis
+library(tradeSeq)
+library(dplyr)
+
+# Convert cluster identities to numeric values for tradeSeq
+pseudotime_numeric <- as.numeric(lamian_data$cluster)
+# Ensure pseudotime is a matrix matching the number of cells & trajectories
+pseudotime_matrix <- matrix(rep(pseudotime_numeric, times = 13), nrow = length(pseudotime_numeric), ncol = 13)
+
+# Ensure pseudotime matches cell order in expression matrix
+lamian_data$pseudotime <- lamian_data$pseudotime[match(colnames(lamian_data$expr), names(lamian_data$pseudotime))]
+
+# Prepare data for tradeSeq
+sce <- SingleCellExperiment(assays = list(counts = as.matrix(lamian_data$expr)))
+# Convert cluster identities to a numeric trajectory order for pseudotime
+pseudotime_matrix <- matrix(lamian_data$pseudotime, ncol = 1)
+# Assign cell weights based on cluster identity
+#cell_weights <- matrix(1, nrow = length(lamian_data$pseudotime), ncol = 1)
+cell_weights <- model.matrix(~ 0 + lamian_data$cluster)  # One-hot encoding of clusters
+
+# Fit tradeSeq GAM model
+fit <- fitGAM(counts = counts(sce), pseudotime = pseudotime_matrix, cellWeights = cell_weights)
+# Perform differential expression analysis over pseudotime
+de_res <- associationTest(fit)
+# Identify genes with significant differences between early and late clusters
+de_clusters <- startVsEndTest(fit)
+
+# Extract ordered genes based on significance
+ordered_genes <- rownames(de_clusters)[order(de_clusters$waldStat, decreasing = TRUE)]
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 8: Generate the Heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", 
+																					disp.min = -2.5, disp.max = 2.5) + NoLegend() + 
+	theme(axis.text.y = element_text(size = 12))
+
+# Step 9: Save the Heatmap
+ggsave(filename = file.path(wd.de.plots, "heatmap_sorted_by_tradeSeq_pseudotime_desired_order_de_clusters.png"),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+
+
+
+
+
+
+
+gene_fits <- graph_test(cds, neighbor_graph = "principal_graph")
+ordered_genes <- rownames(gene_fits)[order(gene_fits$q_value)]
+scaled_data <- scaled_data[ordered_genes,]
 
 # Create the heatmap
 heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend() + theme(axis.text.y = element_text(size = 12))
-ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12.png")),
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12_monocle3+phase_3_pseudotime.png")),
 							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Last Modified: 23/02/25
+# -----------------------------------------------------------------------------
+# Define an expression threshold for "detection" (adjust as needed)
+expression_threshold <- -2  # Adjust for scaled data, or use a raw count threshold if necessary
+
+# Find the first cluster where the gene is detectable
+first_detected <- apply(average_expression_per_cluster, 1, function(x) {
+	detected_clusters <- which(x > expression_threshold)
+	if (length(detected_clusters) > 0) {
+		return(min(detected_clusters))  # Earliest cluster where expression exceeds the threshold
+	} else {
+		return(Inf)  # Never detected
+	}
+})
+
+# Get peak expression level per gene
+peak_expression <- apply(average_expression_per_cluster, 1, max)
+
+# Sort genes: First by early detection, then by peak expression (descending)
+gene_order <- order(first_detected, -peak_expression)
+ordered_genes <- rownames(average_expression_per_cluster)[gene_order]
+
+# Apply new sorting to scaled data
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 5: Create and save the heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", disp.min = -2.5, disp.max = 2.5) + 
+	NoLegend() + 
+	theme(axis.text.y = element_text(size = 12))
+
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12_sorted_by_first_detected.png")),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Last Modified: 23/02/25
+# -----------------------------------------------------------------------------
+gene_fits <- graph_test(cds, neighbor_graph = "principal_graph")
+ordered_genes <- rownames(gene_fits)[order(gene_fits$q_value)]
+scaled_data <- scaled_data[ordered_genes,]
+
+# Create the heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", disp.min = -2.5, disp.max = 2.5) + NoLegend() + theme(axis.text.y = element_text(size = 12))
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12_monocle3+phase_3_pseudotime.png")),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# Last Modified: 23/02/25
+# -----------------------------------------------------------------------------
+mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "PTEN", "RIT1", "ROBO1", 
+									"DDX3X", "CSNK2B", "KRAS", "FGFR3", "PPM1D", "ARID1A", "BRAF", "HRAS", "KMT2E", "EP300", "SCAF4", 
+									"BMPR2", "TCF12", "CCAR2", "DHX9", "NSD1", "LZTR1", "FGFR2", "ARHGAP35", "CBL", "SSX1", "RBM12", 
+									"FAM222B", "SMAD4", "AR", "KDM5C", "KMT2D", "CTNNB1", "RAF1")
+
+# Set the default assay to "RNA"
+DefaultAssay(so.integrated) <- "RNA"
+
+# Step 1: Extract the scaled expression data for the genes in mn7
+matched_genes <- mn7[mn7 %in% rownames(so.integrated)]
+scaled_data <- GetAssayData(so.integrated, assay = "RNA", layer = "scale.data")[matched_genes, ]
+
+# Step 2: Get pseudotime values for each cell
+pseudotime_values <- cds@principal_graph_aux$UMAP$pseudotime  # Extract pseudotime from Monocle3
+pseudotime_values <- pseudotime_values[match(colnames(scaled_data), names(pseudotime_values))]  # Match cell order
+
+# Step 3: Compute the correlation of each gene with pseudotime
+correlation_values <- apply(scaled_data, 1, function(gene_expression) {
+	  cor(gene_expression, pseudotime_values, method = "spearman", use = "pairwise.complete.obs")
+})
+
+# Step 4: Sort genes by increasing correlation with pseudotime
+ordered_genes <- names(sort(correlation_values, decreasing = TRUE))  # High positive correlation first
+
+# Step 5: Apply sorting to scaled data
+scaled_data <- scaled_data[ordered_genes, ]
+
+# Step 6: Create the heatmap
+heatmap <- DoHeatmap(so.integrated, features = rownames(scaled_data), group.by = "ident", 
+																					disp.min = -2.5, disp.max = 2.5) + 
+	NoLegend() + 
+	theme(axis.text.y = element_text(size = 12))
+
+# Save heatmap
+ggsave(filename = file.path(wd.de.plots, paste0("heatmap_mn7_20x12_sorted_by_pseudotime_correlation.png")),
+							plot = heatmap, width = 20, height = 12, dpi = 300)
+
 
 # -----------------------------------------------------------------------------
 # Methods: Monocle 3
@@ -671,7 +895,7 @@ dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend() +
 		    axis.title = element_text(size = 18),  # Increase axis title size
 		    axis.text = element_text(size = 16),  # Increase axis tick label size
 	  )
-ggsave(file.path(wd.de.plots, paste0("DimPlot_no-title_6*6_new-color_16_annotated_19-6-23.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("DimPlot_no-title_6*6_new-color_16_Spermatogenesis_19-6-23.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
 
 
 
@@ -861,8 +1085,95 @@ ggsave(file.path(wd.de.plots, paste0("cell_cycle_phase_pseudotime_by_phase_new-c
 
 save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
 
+# -----------------------------------------------------------------------------
+# Outputs for PacBio
+# Last Modified: 20/02/25
+# -----------------------------------------------------------------------------
+#samples <- c("PD53624b_M", "PD53623b_2N", "PD53623b_4N", "PD53623b_J2")  ## PacBio_B1
+#samples <- c("PD53624b_J2", "PD53623b_M", "PD53621b_M", "PD53626b_J1")  ## PacBio_B2
+samples <- c("PD53624b_M", "PD53623b_2N", "PD53623b_4N", "PD53623b_J2", "PD53624b_J2", "PD53623b_M", "PD53621b_M", "PD53626b_J1")  ## PacBio_B2
 
+# Extract metadata from the Seurat object
+metadata <- so.integrated@meta.data
+# Filter metadata for the specified samples
+filtered_metadata <- metadata[metadata$sample.id %in% samples, ]
+# Extract cell barcodes (rownames are typically cell barcodes in Seurat metadata)
+filtered_metadata$cell_barcode <- rownames(filtered_metadata)
 
+# Select the desired columns
+output_table <- filtered_metadata[, c("sample.id", "cell_barcode", "cell_type", "age", "age_group")]
+# Save the table to a CSV file
+writeTable(output_table, file=file.path(wd.de.plots, "PacBio_B1+B2_cell_barcode.txt"), rownames=F, colnames=T, sep="\t")
+
+# Ensure the 'Sample ID' column respects the specified order
+output_table$`sample.id` <- factor(output_table$`sample.id`, levels = samples)
+# Summarise the number of cells per sample ID
+cell_counts <- output_table %>%
+	  dplyr::group_by(`sample.id`) %>%
+	  dplyr::summarise(cell_count = n())
+
+# Save the table to a CSV file
+writeTable(cell_counts, file=file.path(wd.de.plots, "PacBio_B1+B2_cell_counts.txt"), rownames=F, colnames=T, sep="\t")
+
+# -----------------------------------------------------------------------------
+# New 40 genes
+# -----------------------------------------------------------------------------
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_-12-15-17_annotated_joined.RData")))
+mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "PTEN", "RIT1", "ROBO1", "DDX3X", "CSNK2B", "KRAS", "FGFR3", "PPM1D", "ARID1A", "BRAF", "HRAS", "KMT2E", "EP300", "SCAF4", "BMPR2", "TCF12", "CCAR2", "DHX9", "NSD1", "LZTR1", "FGFR2", "ARHGAP35", "CBL", "SSX1", "RBM12", "FAM222B", "SMAD4", "AR", "KDM5C", "KMT2D", "CTNNB1", "RAF1")
+
+# Extract DotPlot data
+DefaultAssay(so.integrated) <- "SCT"
+
+# Identify the clusters you want to keep
+clusters_to_remove <- c("Sertoli", "Fibrotic PMC", "PMC", "Leydig", "Endothelial", "Macrophage", "19", "6", "23")
+clusters_to_keep <- setdiff(unique(Idents(so.integrated)), clusters_to_remove)
+#clusters_to_keep <- c("Stage 0", "Stage 0A", "Stage 0B", "Stage 1", "Stage 2", "Stage 3", "Unknown")
+# Subset the Seurat object to exclude cluster 1
+so.integrated <- subset(so.integrated, idents = clusters_to_keep)
+
+dot_data <- DotPlot(so.integrated, features = mn7)$data 
+
+# Compute average expression per gene across clusters
+sorted_genes <- dot_data %>%
+	  group_by(features.plot) %>%
+	  summarize(avg_expression = mean(avg.exp)) %>%
+	  arrange(desc(avg_expression)) %>%  # Sort genes by highest avg expression
+	  pull(features.plot)  # Extract sorted gene names
+
+# Generate DotPlot with dynamically sorted genes
+dot_plot <- DotPlot(so.integrated, features = ordered_genes) +
+	  scale_x_discrete(limits = ordered_genes) +  # Apply sorted order
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate labels for clarity
+
+pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_mn7_ordered_genes_raw.pdf")), width = 14, height = 6)
+print(dot_plot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# New 40 genes (Scaled)
+# -----------------------------------------------------------------------------
+# Step 1: Scale Data (if not already scaled)
+so.integrated <- ScaleData(so.integrated, features = rownames(so.integrated))
+
+# Step 2: Extract scaled expression data for genes of interest
+matched_genes <- mn7[mn7 %in% rownames(so.integrated)]  # Ensure genes exist in dataset
+scaled_data <- GetAssayData(so.integrated, assay = "RNA", slot = "scale.data")[matched_genes, ]
+
+# Step 3: Calculate average scaled expression per gene across clusters
+average_expression_per_cluster <- sapply(levels(so.integrated), function(cluster) {
+	  rowMeans(scaled_data[, Idents(so.integrated) == cluster, drop = FALSE], na.rm = TRUE)
+})
+
+# Step 4: Sort genes dynamically by expression across clusters
+ordered_genes <- rownames(scaled_data)[do.call(order, as.data.frame(-average_expression_per_cluster))]
+
+dot_plot <- DotPlot(so.integrated, features = ordered_genes)  +
+	  scale_color_gradientn(colors = c("blue", "white", "red")) + # Change color gradient
+	  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels
+
+pdf(file = file.path(wd.de.plots, paste0("DotPlot_SCT_mn7_ordered_genes_scaled.pdf")), width = 14, height = 6)print(dot_plot)
+dev.off()
 
 
 

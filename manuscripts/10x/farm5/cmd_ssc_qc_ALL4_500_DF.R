@@ -118,7 +118,9 @@ for (i in seq_along(so.list)) {
 	  Idents(sample) <- sample@meta.data[[classification_col]]
 	  
 	  # Store the original classification values
-	  original_classifications[[samples0.filtered$V3[i]]] <- sample@meta.data[, classification_col]
+	  pANN_col <- paste0("pANN_0.25_", optimal_pK, "_", nExp_adj)  # pANN score column
+	  # Store the original pANN scores before thresholding
+	  original_scores[[samples0.filtered$V3[i]]] <- sample@meta.data[, pANN_col]
 	  # Store classification column name
 	  classification_cols <- c(classification_cols, classification_col)
 	  
@@ -126,4 +128,4 @@ for (i in seq_along(so.list)) {
 	  so.list[[i]] <- sample
 }
 
-save(samples0.filtered, ids, so.list, classification_cols, original_classifications, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF_classification_cols.RData")))
+save(samples0.filtered, ids, so.list, classification_cols, original_scores, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF_classification_cols.RData")))
