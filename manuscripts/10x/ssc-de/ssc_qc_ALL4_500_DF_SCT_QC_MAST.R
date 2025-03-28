@@ -675,11 +675,6 @@ h5Seurat <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/10x/", "ssc
 SaveH5Seurat(so.integrated, filename = h5Seurat)
 Convert(h5Seurat, dest = "h5ad")
 
-
-
-
-
-
 # -----------------------------------------------------------------------------
 # Lamian for Pseudotime Analysis
 # Last Modified: 26/02/25

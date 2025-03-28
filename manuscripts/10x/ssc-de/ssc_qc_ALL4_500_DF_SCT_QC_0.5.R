@@ -35,11 +35,6 @@ wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
 #samples1 <- readTable(file.path(wd.rna.raw, "scRNA_homemade_ref.list"), header=F, rownames=3, sep="\t")
 #samples1 <- samples1[rownames(samples0),]
 
-
-
-
-
-
 # -----------------------------------------------------------------------------
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
@@ -47,11 +42,6 @@ wd.de.plots <- file.path(wd.de, "plots_ALL4_500_QC")
 nfeatures <- 5000
 res <- 0.5
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_-2_", 25, "_", 100, ".RData")))
-
-
-
-
-
 
 # Load necessary library
 library(dplyr)
@@ -500,43 +490,24 @@ ggsave(file.path(wd.de.plots, paste0("Di Persio_SPG_SCT_", nfeatures, "_UMAP_dim
 
 save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# -----------------------------------------------------------------------------
+# Pathway analysis
 
 # -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
+
 DefaultAssay(so.integrated) <- "RNA"
-
-so.integrated <- JoinLayers(so.integrated, assay = DefaultAssay(so.integrated))
+so.integrated <- JoinLayers(so.integrated, assay = "RNA")
 #names(so.integrated[[DefaultAssay(so.integrated)]]@data)
 
 # Find markers for every cluster compared to all remaining cells, report only the positive ones
-markers <- FindAllMarkers(so.integrated, only.pos = TRUE)
+markers <- FindAllMarkers(so.integrated, test.use = "MAST", only.pos = FALSE, min.pct = 0.1, logfc.threshold = 0.25)
 markers %>%
   	group_by(cluster) %>%
 	  dplyr::filter(avg_log2FC > 1)
 
-save(so.integrated, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_25_100_markers.RData")))
-save(markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_25_100_markers_markers.RData")))
+save(so.integrated, markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_annotated_19-6-23_markers_MAST.RData")))
+save(markers, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_SCT_PCA_UMAP_resolution=0.5_", nfeatures, "_annotated_19-6-23_markers_markers_MAST.RData")))
 
 # DoHeatmap() generates an expression heatmap for given cells and features.
 # In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
