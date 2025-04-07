@@ -460,3 +460,76 @@ dim_plot <- dim_plot +
 # Save the final plot
 ggsave(file.path(wd.de.plots, paste0("Cell-cycle_annotated_UMAP_with_clusters_7.1x6.png")), 
 							plot = dim_plot, width = 7.1, height = 6, dpi = 300)
+
+# -----------------------------------------------------------------------------
+# After running Monocle3
+# -----------------------------------------------------------------------------
+# Optionally, plot cells colored by Seurat clusters
+monocle3 <- plot_cells(cds, color_cells_by = "Phase",
+																							label_cell_groups=FALSE,
+																							label_leaves=FALSE,
+																							label_branch_points=FALSE,
+																							graph_label_size=0) +
+	  theme_classic() +
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) + # Apply new color
+	  theme(
+		    plot.title = element_blank(),  # Remove title
+		    axis.title = element_text(size = 18),  # Increase axis title size
+		    axis.text = element_text(size = 16),  # Increase axis tick label size
+		    legend.text = element_text(size = 16),  # Increase legend text size
+		    legend.title = element_text(size = 16)  # Increase legend title size
+	  )
+ggsave(file.path(wd.de.plots, paste0("Cell-cycle_Phase_", nfeatures, "_UMAP_dims=", prin_comp, "_umap_embeddings_use_pseudotime_integrated_new-color_6.5x6_16.png")), plot = monocle3, width = 6.5, height = 6, dpi = 300)
+
+library(ggbeeswarm)
+library(colorRamps)
+library(viridisLite)
+library(ggplot2)
+
+# Extract metadata
+pdata_cds <- pData(cds)
+pdata_cds$pseudotime_monocle3 <- monocle3::pseudotime(cds)
+pdata_cds$Phase <- factor(so.integrated@meta.data$Phase, levels = c("G2M", "S", "G1"))  # Use cell cycle phase
+
+# Define the Seurat default cell cycle colours (modify if needed)
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+
+# Plot pseudotime ordered by Phase
+ordered <- ggplot(as.data.frame(pdata_cds), 
+																		aes(x = pseudotime_monocle3, 
+																						y = Phase, 
+																						colour = Phase)) +  # Use Phase for colour
+	  geom_quasirandom(groupOnX = FALSE) +
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply the same Phase colours as DimPlot
+	  scale_y_discrete(labels = c("G1" = "G1", "S" = "S", "G2M" = "G2/M")) +  # Rename y-axis labels
+	  theme_classic() +
+	  xlab("Pseudotime") + 
+	  ylab("Phase") +
+	  theme(plot.title = element_blank(),  # Remove title
+			  				axis.text = element_text(size = 16),  # Increase axis text size
+					  		axis.title = element_text(size = 18), # Increase axis title size
+						  	legend.position = "none")  # Remove legend
+
+# Save the plot
+ggsave(file.path(wd.de.plots, paste0("cell_cycle_phase_pseudotime_by_phase_new-color_16_6x6.png")),	plot = ordered, dpi = 300, width = 6, height = 6)
+
+save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
+
+# -----------------------------------------------------------------------------
+# Top sample per cluster
+# Last Modified: 03/03/25
+# -----------------------------------------------------------------------------
+# Identify columns to remove
+columns_to_remove <- grep("^pANN_0.25|^DF.classifications_0.25|^integrated_snn_res", colnames(so.integrated@meta.data), value = TRUE)
+
+# Remove the identified columns
+so.integrated@meta.data <- so.integrated@meta.data[, !colnames(so.integrated@meta.data) %in% columns_to_remove]
+print(colnames(so.integrated@meta.data))
+
+# Add pseudotime to Seurat object's metadata
+pseudotime_values <- monocle3::pseudotime(cds)
+pseudotime_values <- pseudotime_values[colnames(so.integrated)]
+so.integrated$pseudotime <- pseudotime_values
+
+save(cds, so.integrated, phase_colors, plot_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_clean.RData")))
+

@@ -45,9 +45,10 @@ library(pheatmap)
 # -----------------------------------------------------------------------------
 nfeatures <- 5000
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated.RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23.RData")))
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_scaled_data.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_clean.RData")))
 
 # -----------------------------------------------------------------------------
 # Output an .h5ad file from a Seurat object 
@@ -55,7 +56,7 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SC
 # -----------------------------------------------------------------------------
 library(SeuratDisk)
 
-h5Seurat <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/10x/", "ssc_annotated_monocle3+phase.h5Seurat")
+h5Seurat <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/10x/", "ssc_annotated_monocle3+phase_clean.h5Seurat")
 SaveH5Seurat(so.integrated, filename = h5Seurat)
 Convert(h5Seurat, dest = "h5ad")
 

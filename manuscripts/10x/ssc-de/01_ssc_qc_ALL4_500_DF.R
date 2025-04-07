@@ -350,17 +350,3 @@ colnames(top_sample_per_cluster) <- c("Cluster", "Top_Sample_ID", "Cell_Count", 
 
 # Print the summary table
 print(top_sample_per_cluster)
-
-# -----------------------------------------------------------------------------
-# Top sample per cluster
-# Last Modified: 03/03/25
-# -----------------------------------------------------------------------------
-# Identify columns to remove
-columns_to_remove <- grep("^pANN_0.25|^DF.classifications_0.25|^integrated_snn_res", colnames(so.integrated@meta.data), value = TRUE)
-
-# Remove the identified columns
-so.integrated@meta.data <- so.integrated@meta.data[, !colnames(so.integrated@meta.data) %in% columns_to_remove]
-
-# Verify removal
-print(colnames(so.integrated@meta.data))
-save(so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_-2_", 25, "_", 100, ".RData")))

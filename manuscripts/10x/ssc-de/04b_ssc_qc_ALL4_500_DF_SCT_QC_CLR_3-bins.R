@@ -209,8 +209,8 @@ so.integrated@meta.data$cell_type <- Idents(so.integrated)
 so.integrated@meta.data <- so.integrated@meta.data %>%
 	  mutate(age_group = cut(
 		    age,
-		    breaks = c(20, 30, 40, 50, 60, 70, 80),
-		    labels = c("20-30", "30-40", "40-50", "50-60", "60-70", "70-80"),
+		    breaks = c(20, 40, 60, 80),
+		    labels = c("20-40", "40-60", "60-80"),
 		    right = FALSE
 	   ))
 
@@ -239,8 +239,8 @@ proportions <- cell_type_counts %>%
   	mutate(proportion = cell_count / total_cells)
 
 # Define the median age for each age group
-age_group_to_median <- c("20-30" = 25, "30-40" = 35, "40-50" = 45, 
-																									"50-60" = 55, "60-70" = 65, "70-80" = 75)
+age_group_to_median <- c("20-40" = 30, "40-60" = 50, "60-80" = 70)
+
 # Add the `age_median` column
 proportions$age_median <- as.numeric(sapply(proportions$age_group, function(x) age_group_to_median[x]))
 
@@ -262,7 +262,7 @@ plot <- ggplot(proportions, aes(x = age_group, y = proportion, fill = cell_type)
   	guides(fill = guide_legend(ncol = 1))       # Force single-row legend
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_5.3x7_seurat_clusters.png"), width = 5.3, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "3-bins_barplot_age_group_cell_type_DimPlot_5.3x7_seurat_clusters.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
 
@@ -289,7 +289,7 @@ plot <- ggplot(proportions, aes(x = age_group, y = cell_count, fill = cell_type)
 
 
 # Print the plot
-png(file = file.path(wd.de.plots, "barplot_age_group_cell_type_DimPlot_cell_counts_5.3x7_seurat_clusters.png"), width = 5.3, height = 7, units = "in", res = 300)
+png(file = file.path(wd.de.plots, "3-bins_barplot_age_group_cell_type_DimPlot_cell_counts_5.3x7_seurat_clusters.png"), width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
 
@@ -362,7 +362,7 @@ plot <- ggplot(correlation_results, aes(x = cell_type, y = spearman_correlation,
 	  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))  # Add margins to both sides of the y-axis
    
 # Print the plot
-pdf(file = file.path(wd.de.plots, "barplot_correlation_results_age_median_unsorted_seurat_clusters.pdf"), width = 6, height = 6)
+pdf(file = file.path(wd.de.plots, "3-bins_barplot_correlation_results_age_median_unsorted_seurat_clusters.pdf"), width = 6, height = 6)
 print(plot)
 dev.off()
 
@@ -453,7 +453,7 @@ plot <- ggplot(correlation_results, aes(x = cell_type, y = spearman_correlation,
 	  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))  # Add margins to both sides of the y-axis
 
 # Print the plot
-pdf(file = file.path(wd.de.plots, "barplot_correlation_results_age_median_unsorted_seurat_clusters_CLR.pdf"), width = 6, height = 6)
+pdf(file = file.path(wd.de.plots, "3-bins_barplot_correlation_results_age_median_unsorted_seurat_clusters_CLR.pdf"), width = 6, height = 6)
 print(plot)
 dev.off()
 
