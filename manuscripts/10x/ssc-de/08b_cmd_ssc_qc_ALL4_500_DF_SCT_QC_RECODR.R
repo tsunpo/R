@@ -1,6 +1,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 age <- as.character(args[1])
-ctype <- as.character(args[2])
+cell_type <- as.character(args[2])
 
 # =============================================================================
 # Manuscript   :
@@ -75,14 +75,14 @@ output_dir <- file.path(wd.de.data, "gene_embeddings")
 dir.create(output_dir, showWarnings = FALSE)
 
 # Store embeddings in a list
-embedding_list <- list()
+#embedding_list <- list()
 
 # Loop through all graphs and run Node2Vec
 #for (age in age_groups) {
-#	  for (ctype in cell_types) {
+#	  for (cell_type in cell_types) {
 	  	  age_chr <- as.character(age)
-	  	  ctype_chr <- as.character(ctype)
-		    key <- paste(age_chr, gsub(" ", "_", ctype_chr), sep = "_")
+	  	  cell_type_chr <- as.character(cell_type)
+		    key <- paste(age_chr, gsub(" ", "_", cell_type_chr), sep = "_")
 		    message(paste("Running Node2Vec for:", key))
 		
 		    # Load the graph
@@ -93,18 +93,56 @@ embedding_list <- list()
 		    }
 		    g <- readRDS(graph_file)
 		
-    		# Run Node2Vec (parameters can be adjusted)
-		    embedding <- node2vecR(
-		    	  igraph::as_data_frame(g, what = "edges")[, c("from", "to", "weight")],
-		    	  p = 1, q = 1,
-		    	  num_walks = 10,
-		    	  walk_length = 80,
-		    	  dim = 128
-		    )
-		
-		    # Save embedding to file and to list
-		    embed_path <- file.path(output_dir, paste0("embedding_", key, ".rds"))
-		    saveRDS(embedding, embed_path)
-		    embedding_list[[key]] <- embedding
+		    # Extract all nodes
+      nodes <- V(g)$name
+      # Ensure graph has all nodes in edge list (some libraries drop isolated nodes)
+      edges_df <- igraph::as_data_frame(g, what = "edges") %>%
+         dplyr::select(from, to, weight)
+      # Add isolated nodes explicitly (if needed)
+      # Or better: re-build the graph from scratch with full node list
+      g2 <- graph_from_data_frame(edges_df, directed = FALSE, vertices = data.frame(name = nodes))
+		    
+      # Identify isolated nodes
+      all_nodes <- V(g2)$name
+      connected_nodes <- unique(c(edges_df$from, edges_df$to))
+      isolated_nodes <- base::setdiff(all_nodes, connected_nodes)
+
+      # Add self-loops
+      if (length(isolated_nodes) > 0) {
+         isolated_edges <- data.frame(
+            from = isolated_nodes,
+            to = isolated_nodes,
+            weight = 1e-6  # very small weight
+         )
+         edges_augmented <- dplyr::bind_rows(edges_df, isolated_edges)
+      } else {
+         edges_augmented <- edges_df
+      }
+      # Rebuild graph with full vertex list
+      g3 <- igraph::graph_from_data_frame(edges_augmented, directed = FALSE, vertices = data.frame(name = all_nodes))
+
+      # Run Node2Vec again
+      embedding <- node2vecR(
+         edges_augmented,
+         p = 1, q = 1,
+         num_walks = 10,
+         walk_length = 80,
+         dim = 128
+      )
+      save(embedding, g3, file=file.path(output_dir, paste0("embedding_", key, ".RData")))
+      
+      # ✅ Ensure correct gene names (not lost during coercion)
+      if (nrow(embedding) == length(V(g3))) {
+         rownames(embedding) <- V(g3)$name
+      } else {
+         stop("Mismatch: Number of rows in embedding != number of nodes in graph")
+      }
+      # Check that result has rownames (node names)
+      #if (!is.null(rownames(embedding)) && all(rownames(embedding) %in% V(g3)$name)) {
+         #embedding_list[[key]] <- embedding
+         saveRDS(embedding, file.path(output_dir, paste0("embedding_", key, ".rds")))
+      #} else {
+      #   warning("Embedding rownames mismatch for: ", key)
+      #}
 #	  }
 #}

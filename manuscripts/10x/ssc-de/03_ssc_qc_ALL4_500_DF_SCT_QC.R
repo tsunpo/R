@@ -519,6 +519,8 @@ save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_fi
 # Top sample per cluster
 # Last Modified: 03/03/25
 # -----------------------------------------------------------------------------
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
+
 # Identify columns to remove
 columns_to_remove <- grep("^pANN_0.25|^DF.classifications_0.25|^integrated_snn_res", colnames(so.integrated@meta.data), value = TRUE)
 
@@ -531,5 +533,14 @@ pseudotime_values <- monocle3::pseudotime(cds)
 pseudotime_values <- pseudotime_values[colnames(so.integrated)]
 so.integrated$pseudotime <- pseudotime_values
 
-save(cds, so.integrated, phase_colors, plot_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_clean.RData")))
+# Add cell types
+so.integrated@meta.data$cell_type <- Idents(so.integrated)
 
+# Fix incorrect patient ID in meta.data
+so.integrated@meta.data$orig.ident <- ifelse(
+   so.integrated@meta.data$orig.ident == "SeuratProject",
+   "VL00297",
+   so.integrated@meta.data$orig.ident
+)
+
+save(cds, so.integrated, phase_colors, plot_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_clean.RData")))

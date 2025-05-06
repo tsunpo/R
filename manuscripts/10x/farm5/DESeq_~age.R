@@ -71,8 +71,6 @@ so.integrated <- JoinLayers(so.integrated, assays = "RNA")
 
 # Get the list of unique cell types
 cell_types <- levels(Idents(so.integrated))
-# Initialize a list to store results for each cell type
-results_list <- list()
 
 for (cell_type in cell_types) {
 	  # Step 0: Subset the Seurat object to include only the current cell type

@@ -31,7 +31,6 @@ nfeatures <- 5000
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase.RData")))
 #load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_scaled_data.RData")))
 load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_clean.RData")))
-so.integrated@meta.data$cell_type <- Idents(so.integrated)
 
 library(lme4)
 library(dplyr)
@@ -48,7 +47,7 @@ blue <- "#105bd8"
 # -----------------------------------------------------------------------------
 # 1. Summarize cell counts per sample × cell type
 cell_counts <- so.integrated@meta.data %>%
-   group_by(orig.ident, cell_type = cell_type, age, nCount_RNA) %>%
+   group_by(orig.ident, cell_type = cell_type, age) %>%
    summarise(n_cells = n(), .groups = "drop") %>%
    mutate(patient_id = str_extract(orig.ident, "^[^_]+"))
 
@@ -57,11 +56,11 @@ cell_types <- unique(cell_counts$cell_type)
 
 # 3. Fit a GLMM per cell type
 models <- map(cell_types, function(ct) {
-   df_ct <- filter(cell_counts, cell_type == ct)
+   df_ct <- filter(cell_counts_merged, cell_type == ct)
    
    if (n_distinct(df_ct$n_cells) > 1) {
       tryCatch({
-         model <- glmer(n_cells ~ age + (1 | patient_id),
+         model <- glmer(n_cells ~ age + total_cells + (1 | patient_id),
                         data = df_ct,
                         family = poisson())
          summary(model)
@@ -100,17 +99,16 @@ print(results_df)
 # -----------------------------------------------------------------------------
 # 1. Total cells per sample
 total_cells <- so.integrated@meta.data %>%
-   group_by(orig.ident) %>%
+   group_by(patient_id) %>%
    summarise(total_cells = n(), .groups = "drop")
 
 # 2. Cell counts per sample × cell type
 cell_counts <- so.integrated@meta.data %>%
-   group_by(orig.ident, cell_type = cell_type, age) %>%
-   summarise(n_cells = n(), .groups = "drop") %>%
-   mutate(patient_id = str_extract(orig.ident, "^[^_]+"))
+   group_by(patient_id, cell_type = cell_type, age) %>%
+   summarise(n_cells = n(), .groups = "drop")
 
 # 3. Merge total cells into cell_counts
-cell_counts <- left_join(cell_counts, total_cells, by = "orig.ident")
+cell_counts <- left_join(cell_counts, total_cells, by = "patient_id")
 
 # 4. Get list of unique cell types
 cell_types <- unique(cell_counts$cell_type)
@@ -208,16 +206,12 @@ plot <- ggplot(results_df, aes(x = cell_type, y = estimate, fill = estimate)) +
    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
 
 # Save to PDF
-pdf(file = file.path(wd.de.plots, "barplot_age_effect_by_cell_type_GLMM_counts_poisson.pdf"), width = 6, height = 6)
+pdf(file = file.path(wd.de.plots, "barplot_age_effect_by_cell_type_GLMM_cell_counts_merged_age+total_cells_poisson.pdf"), width = 6, height = 6)
 print(plot)
 dev.off()
 
 # -----------------------------------------------------------------------------
 # Methods: Plot cell counts by patient ID
-# Last Modified: 15/01/25
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# Methods: Plot cell counts
 # Last Modified: 15/01/25
 # -----------------------------------------------------------------------------
 # Add patient_label and order by age
@@ -228,8 +222,19 @@ patient_age_map <- cell_counts %>%
 cell_counts <- left_join(cell_counts, patient_age_map, by = c("patient_id", "age"))
 cell_counts$patient_label <- factor(cell_counts$patient_label, levels = patient_age_map %>% arrange(age) %>% pull(patient_label))
 
+# Merge n_cells across samples with the same patient_id + cell_type
+library(dplyr)
+cell_counts_merged <- cell_counts %>%
+   group_by(patient_id, cell_type, age, patient_label) %>%
+   summarise(n_cells = sum(n_cells), .groups = "drop")
+
+cell_counts_merged <- cell_counts_merged %>%
+   group_by(patient_id) %>%
+   mutate(total_cells = sum(n_cells)) %>%
+   ungroup()
+
 # Plot: One stacked bar per patient, colored by cell type
-plot <- ggplot(cell_counts, aes(x = patient_label, y = n_cells, fill = cell_type)) +
+plot <- ggplot(cell_counts_merged, aes(x = patient_label, y = n_cells, fill = cell_type)) +
    geom_bar(stat = "identity", position = "stack", color = "black") +
    scale_fill_manual(values = plot_colors, name = "Cell type") +
    labs(title = "", x = "Patient (Age)", y = "Number of cells") +
@@ -250,3 +255,54 @@ png(file = file.path(wd.de.plots, "barplot_patient_cell_type_composition.png"),
     width = 5.3, height = 7, units = "in", res = 300)
 print(plot)
 dev.off()
+
+# -----------------------------------------------------------------------------
+# Proportion of cell type ~ age + (1 | patient_id), per cell type
+# -----------------------------------------------------------------------------
+totals <- cell_counts_merged %>%
+   group_by(patient_id) %>%
+   summarise(total_cells = sum(n_cells), .groups = "drop")
+
+# Merge back into cell_counts_merged
+cell_counts_binomial <- cell_counts_merged %>%
+   left_join(totals, by = "patient_id") %>%
+   mutate(other_cells = total_cells - n_cells)
+
+cell_types <- unique(cell_counts_binomial$cell_type)
+
+binom_models <- map(cell_types, function(ct) {
+   df_ct <- filter(cell_counts_binomial, cell_type == ct)
+ 
+   # Need at least 3 patients and variation in n_cells
+   if (n_distinct(df_ct$patient_id) >= 3 && var(df_ct$n_cells) > 0) {
+      tryCatch({
+         model <- glmer(cbind(n_cells, other_cells) ~ age + (1 | patient_id),
+                        data = df_ct,
+                       family = binomial())
+         model
+      }, error = function(e) {
+         message(paste("Model failed for", ct, ":", e$message))
+         NULL
+      })
+   } else {
+      message(paste("Skipped", ct, "due to insufficient variation."))
+      NULL
+   }
+})
+names(binom_models) <- cell_types
+
+results_binom <- map_dfr(cell_types, function(ct) {
+   model <- binom_models[[ct]]
+   if (!is.null(model)) {
+      coef_summary <- coef(summary(model))
+      tibble(
+         cell_type = ct,
+         estimate = coef_summary["age", "Estimate"],
+         std_error = coef_summary["age", "Std. Error"],
+         p_value = coef_summary["age", "Pr(>|z|)"]
+      )
+   }
+})
+
+results_binom
+results_df <- results_binom
