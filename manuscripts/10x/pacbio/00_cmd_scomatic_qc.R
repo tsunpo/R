@@ -14,7 +14,7 @@ library(dplyr)
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd.de.data  <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/pacbio/out", pd_id)
+wd.de.data  <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/pacbio/out_max13", pd_id)
 wd.de.plots <- file.path(wd.de.data, "00_QC")
 dir.create(wd.de.plots, showWarnings = FALSE)
 
@@ -61,6 +61,11 @@ inList <- length(intersect(unique(merged$SYMBOL), mn7))
 notInList <- length(unique(merged$SYMBOL)) - inList
 inList.txt <- paste0("In (n=", inList, ")")
 notInList.txt <- paste0("Not in (n=", notInList, ")")
+
+##
+table <- as.data.frame(sort(table(merged$Cell_types), decreasing=T))
+write.table(table, file = file.path(wd.de.data, paste0(pd_id, "_table.txt")), sep = "\t", quote = FALSE, row.names = FALSE)
+
 
 # -----------------------------------------------------------------------------
 # 
