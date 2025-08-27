@@ -125,7 +125,7 @@ resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_", dims, "_", k.weight, "_rpca.RData")))
+save(prin_comp, samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_", dims, "_", k.weight, "_rpca.RData")))
 
 # -----------------------------------------------------------------------------
 # Define resolution
@@ -137,10 +137,10 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SC
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = res)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_", dims, "_", k.weight, "_rpca.RData")))
+save(prin_comp, samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_", dims, "_", k.weight, "_rpca.RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_", dims, "_", k.weight, "_UMAP_dims=", prin_comp, "_res=0.5")
+file.name <- paste0("SCT_", nfeatures, "_", dims, "_", k.weight, "_UMAP_dims=", prin_comp, "_res=0.5_rpca")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE) + NoLegend()

@@ -55,15 +55,15 @@ res <- 0.5
 #features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
 #so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
 #save(samples0.filtered, ids, features, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_so.list.RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_so.list.RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_so.list_Cui.RData")))
 
 ## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
 anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:dims)
-save(samples.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_anchors_", dims, ".RData")))
+save(samples.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_anchors_", dims, "_Cui.RData")))
 
 so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:dims, k.weight = k.weight)
-save(samples.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+save(samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_", dims, "_", k.weight, "_Cui.RData")))
 
 # -----------------------------------------------------------------------------
 # Perform CCA integration (Seurat 4.3.0; Running CCA)
@@ -91,7 +91,7 @@ so.integrated@meta.data$age <- ages
 so.integrated@meta.data$batch <- batches
 head(so.integrated@meta.data)
 
-save(samples.filtered, so.integrated, ids, ages, batches, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+save(samples.filtered, so.integrated, ids, ages, batches, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_", nfeatures, "_Cui.RData")))
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -100,7 +100,7 @@ save(samples.filtered, so.integrated, ids, ages, batches, file=file.path(wd.de.d
 # -----------------------------------------------------------------------------
 so.integrated <- RunPCA(so.integrated, verbose = F)
 
-pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, "_", dims, "_", k.weight, ".pdf")))
+pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, "_", dims, "_", k.weight, "_Cui.pdf")))
 options(repr.plot.width=9, repr.plot.height=6)
 ElbowPlot(so.integrated, ndims = 50)
 dev.off()
@@ -114,7 +114,7 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
 write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".txt")), row.names=F, col.names=F, quote=F, sep='\t')
-save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, "_Cui.RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
@@ -125,22 +125,22 @@ resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(prin_comp, samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_", dims, "_", k.weight, "_Cui.RData")))
 
 # -----------------------------------------------------------------------------
 # Define resolution
 # Last Modified: 25/07/24
 # -----------------------------------------------------------------------------
 # Find neighbors and clusters
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, "_Cui.RData")))
 
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = res)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(prin_comp, samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+save(prin_comp, samples0.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_", dims, "_", k.weight, "_Cui.RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_", dims, "_", k.weight, "_UMAP_dims=", prin_comp, "_res=0.5")
+file.name <- paste0("SCT_", nfeatures, "_", dims, "_", k.weight, "_UMAP_dims=", prin_comp, "_res=0.5_Cui")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE) + NoLegend()

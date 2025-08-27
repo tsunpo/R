@@ -1,8 +1,6 @@
 #!/usr/bin/env Rscript
 args     <- commandArgs(TRUE)
-nfeatures <- as.numeric(args[1]) 
-dims     <- as.numeric(args[2])
-k.weight <- as.numeric(args[3])
+cell_type <- as.character(args[1])
 
 # =============================================================================
 # Manuscript   :
@@ -20,13 +18,13 @@ wd <- "/lustre/scratch127/casm/team294rr/ty2"   ## ty2@farm
 BASE <- "SSC"
 base <- tolower(BASE)
 
-wd.rna <- file.path(wd, BASE, "ngs/10x")
-wd.rna.raw <- file.path(wd.rna, "atlas")
+wd.rna <- file.path(wd, BASE, "ngs/scRNA")
+wd.rna.raw <- file.path(wd.rna, "10x")
 
 wd.anlys <- file.path(wd, BASE, "analysis")
-wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-atlas"))
-wd.de.data  <- file.path(wd.de, "data_500")
-wd.de.plots <- file.path(wd.de, "plots_500")
+wd.de    <- file.path(wd.anlys, "expression", paste0(base, "-de"))
+wd.de.data  <- file.path(wd.de, paste0("data_ALL4_500_QC"))
+wd.de.plots <- file.path(wd.de, paste0("plots_ALL4_500_QC"))
 
 # -----------------------------------------------------------------------------
 # Standard Seurat re-processing workflow
@@ -44,54 +42,42 @@ library(pheatmap)
 # Performing integration on datasets normalized with SCTransform
 # https://satijalab.org/seurat/archive/v4.3/integration_introduction
 # -----------------------------------------------------------------------------
-#nfeatures <- 2000
+nfeatures <- 5000
 res <- 0.5
+dims <- 20
+k.weight <- 100
 
-## Normalize datasets individually by SCTransform(), instead of NormalizeData() prior to integration
-#so.list <- lapply(X = so.list, FUN = SCTransform)
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_annotated_19-6-23_monocle3+phase_clean.RData")))
+so.integrated$patient.id <- sub("_.*", "", so.integrated@meta.data$sample.id)
 
-## As discussed further in our SCTransform vignette, we typically use 3,000 or more features for analysis downstream of sctransform.
-## Run the PrepSCTIntegration() function prior to identifying anchors
-#features <- SelectIntegrationFeatures(object.list = so.list, nfeatures = nfeatures)
-#so.list <- PrepSCTIntegration(object.list = so.list, anchor.features = features)
-#save(samples0.filtered, ids, features, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_so.list.RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_so.list.RData")))
+# Assign updated metadata back
+batch <- read.table(file.path(wd.de.data, paste0("Batch.txt")), header=T)
+meta <- so.integrated@meta.data %>%
+   mutate(cell_barcode = rownames(.)) %>%
+   left_join(batch[, c("Sample", "Batch")], by = c("sample.id" = "Sample")) %>%
+   column_to_rownames("cell_barcode")
+so.integrated@meta.data <- meta
 
-## When running FindIntegrationAnchors(), and IntegrateData(), set the normalization.method parameter to the value SCT.
-## When running sctransform-based workflows, including integration, do not run the ScaleData() function
-anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:dims)
-save(samples.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_anchors_", dims, ".RData")))
+# Ensure age groups are defined in your metadata
+so.integrated@meta.data <- so.integrated@meta.data %>%
+   mutate(age_group = cut(
+      age,
+      breaks = c(-Inf, 50, Inf),
+      labels = c("20-50", "50-80"),
+      right = FALSE
+   ))
 
-so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:dims, k.weight = k.weight)
-save(samples.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+cell_type <- "Stage 0"
+so.integrated <- subset(so.integrated, idents = gsub("_", " ", cell_type))
+wd.de.plots <- file.path(wd.de.plots, paste0(cell_type, "_RNA"))
+dir.create(wd.de.plots, showWarnings = FALSE)
 
-# -----------------------------------------------------------------------------
-# Perform CCA integration (Seurat 4.3.0; Running CCA)
-# https://satijalab.org/seurat/archive/v4.3/integration_introduction
-# -----------------------------------------------------------------------------
-ids <- c()
-for (s in 1:nrow(samples.filtered)) {
-	  ids <- c(ids, rep(samples.filtered$Sample[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-ages <- c()
-for (s in 1:nrow(samples.filtered)) {
-	  ages <- c(ages, rep(samples.filtered$Age[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-batches <- c()
-for (s in 1:nrow(samples.filtered)) {
-	  batches <- c(batches, rep(samples.filtered$Batch[s], ncol(so.list[[s]]@assays$RNA$counts)))
-}
-
-so.integrated@meta.data$sample.id <- ids
-so.integrated@meta.data$age <- ages
-#so.integrated@meta.data$age <- factor(so.integrated@meta.data$age, levels = c("25","27","37","40","48","57","60","71"))
-#so.integrated@meta.data$n2 <- n2s
-so.integrated@meta.data$batch <- batches
-head(so.integrated@meta.data)
-
-save(samples.filtered, so.integrated, ids, ages, batches, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+# Step 1: Switch to the uncorrected data
+DefaultAssay(so.integrated) <- "RNA"
+# Step 2: Normalize and scale (log-normalization)
+so.integrated <- NormalizeData(so.integrated)
+so.integrated <- FindVariableFeatures(so.integrated)
+so.integrated <- ScaleData(so.integrated)
 
 # -----------------------------------------------------------------------------
 # Cluster cells on the basis of their scRNA-seq profiles
@@ -100,7 +86,7 @@ save(samples.filtered, so.integrated, ids, ages, batches, file=file.path(wd.de.d
 # -----------------------------------------------------------------------------
 so.integrated <- RunPCA(so.integrated, verbose = F)
 
-pdf(file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, "_", dims, "_", k.weight, ".pdf")))
+pdf(file.path(wd.de.plots, paste0("ssc_filtered_normalised_integrated_ElbowPlot_SCT_", nfeatures, ".pdf")))
 options(repr.plot.width=9, repr.plot.height=6)
 ElbowPlot(so.integrated, ndims = 50)
 dev.off()
@@ -113,8 +99,8 @@ component2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), d
 
 # let's take the minimum of these two metrics and conclude that at this point the PCs cover the majority of the variation in the data
 prin_comp <- min(component1, component2)
-write.table(prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".txt")), row.names=F, col.names=F, quote=F, sep='\t')
-save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+#write.table(prin_comp, file=file.path(wd.de.plots, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".txt")), row.names=F, col.names=F, quote=F, sep='\t')
+#save(so.integrated, pct, cumu, component1, component2, prin_comp, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".RData")))
 
 # create a UMAP plot for the combined dataset, part 2: the plot itself
 # see https://github.com/satijalab/seurat/issues/3953: "we recommend the default k=20 for most datasets. As a rule of thumb you do not want to have a higher k than the number of cells in your least populated cell type"
@@ -125,22 +111,22 @@ resolution.range <- seq(from = 0.05, to = 1, by = 0.05)
 so.integrated <- FindNeighbors(so.integrated, reduction = 'pca', dims = 1:prin_comp, k.param = 20, verbose = FALSE)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = resolution.range, verbose = FALSE)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20, verbose = FALSE)
-save(prin_comp, samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+#save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_", nfeatures, "_", dims, "_", k.weight, ".RData")))
 
 # -----------------------------------------------------------------------------
 # Define resolution
 # Last Modified: 25/07/24
 # -----------------------------------------------------------------------------
 # Find neighbors and clusters
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_", nfeatures, "_", dims, "_", k.weight, ".RData")))
 
 so.integrated <- FindNeighbors(so.integrated, dims = 1:prin_comp, k.param = 20)
 so.integrated <- FindClusters(so.integrated, algorithm=3, resolution = res)
 so.integrated <- RunUMAP(so.integrated, dims = 1:prin_comp, n.neighbors = 20)
-save(prin_comp, samples.filtered, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+#save(prin_comp, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_res=0.5_", nfeatures, "_", dims, "_", k.weight, ".RData")))
 
 ##
-file.name <- paste0("SCT_", nfeatures, "_", dims, "_", k.weight, "_UMAP_dims=", prin_comp, "_res=0.5")
+file.name <- paste0("SCT_", nfeatures, "_", 20, "_", 100, "_UMAP_dims=", prin_comp, "_res=0.5")
 
 pdf(file=file.path(wd.de.plots, paste0(file.name, ".pdf")))
 DimPlot(so.integrated, label = TRUE) + NoLegend()
@@ -158,9 +144,63 @@ tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
 dev.off()
 
-
-pdf(file=file.path(wd.de.plots,  paste0(file.name, "_Batch.pdf")))
-tplot = DimPlot(so.integrated, reduction = "umap", group.by="batch")
+pdf(file=file.path(wd.de.plots, paste0(file.name, "_Age_Group.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="age_group")
 tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
 print(tplot)
+dev.off()
+
+pdf(file=file.path(wd.de.plots,  paste0(file.name, "_Batch.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="Batch")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
+dev.off()
+
+pdf(file=file.path(wd.de.plots,  paste0(file.name, "_Phase.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="Phase")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
+dev.off()
+
+pdf(file=file.path(wd.de.plots,  paste0(file.name, "_Patient.pdf")))
+tplot = DimPlot(so.integrated, reduction = "umap", group.by="patient.id")
+tplot[[1]]$layers[[1]]$aes_params$alpha = 0.5
+print(tplot)
+dev.off()
+
+# -----------------------------------------------------------------------------
+# Define resolution
+# Last Modified: 19/05/25
+# -----------------------------------------------------------------------------
+library(GGally)
+library(ggplot2)
+
+# Extract PCA embeddings PC1–PC5
+pcs <- Embeddings(so.integrated, reduction = "pca")[, 1:5]
+pcs_df <- as.data.frame(pcs)
+pcs_df$Batch <- so.integrated$Batch  # for coloring
+
+# Rename columns for readability
+colnames(pcs_df)[1:5] <- paste0("PC", 1:5)
+
+# Plot only lower triangle of 5 PCs (4 x 4 grid of comparisons)
+pdf(file = file.path(wd.de.plots, paste0(file.name, "_PC1to5_LowerTriangle_10x10", "_Batch", ".pdf")), width = 10, height = 10)
+
+ggpairs(
+   pcs_df,
+   columns = 1:5,
+   mapping = aes(color = Batch, alpha = 0.6),
+   upper = list(continuous = wrap("blank")),       # hide upper triangle
+   diag = list(continuous = wrap("blankDiag")),    # hide diagonal
+   lower = list(continuous = wrap("points", size = 0.5))
+   ) +
+   theme_minimal() +
+      theme(
+      axis.text.x = element_text(size = 10),
+      axis.text.y = element_text(size = 10),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      legend.position = "bottom"
+      )
+
 dev.off()

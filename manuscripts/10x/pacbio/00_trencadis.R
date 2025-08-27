@@ -3,13 +3,13 @@
 # Chapter      :
 # Name         : 
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 15/04/25
+# Last Modified: 23/07/25; 15/04/25
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd.de.data  <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/pacbio")
+wd.de.data  <- file.path("/lustre/scratch125/casm/staging/team294/ty2/SSC/ngs/pacbio")
 
 # -----------------------------------------------------------------------------
 # 
@@ -35,10 +35,10 @@ samplesheet_new <- data.frame(
 for (pd_id in pd_ids) {
    new_row <- data.frame(
       id = paste0(pd_id),
-      bam = file.path(wd.de.data, "out", pd_id, paste0(pd_id, "_trencadis.bam")),
-      cell_barcodes = file.path(wd.de.data, "out", pd_id, paste0(pd_id, "_trencadis_cell_barcodes.txt")),
-      celltypes = file.path(wd.de.data, "out", pd_id, paste0(pd_id, "_trencadis_celltypes.csv")),
-      mutations = file.path(wd.de.data, "out", pd_id, paste0(pd_id, "_trencadis_mutations.tsv")),
+      bam = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, ".bam")),
+      cell_barcodes = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, "_trencadis_cell_barcodes.txt")),
+      celltypes = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, "_trencadis_celltypes.csv")),
+      mutations = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, "_trencadis_mutations.tsv")),
       stringsAsFactors = FALSE
    )
    
@@ -49,14 +49,33 @@ for (pd_id in pd_ids) {
 # Now, save it to CSV
 write.table(
    samplesheet_new,
-   file = file.path(wd.de.data, "samplesheet_trencadis.csv"),
+   file = file.path(wd.de.data, "nf-trencadis-seq", "samplesheet_trencadis.csv"),
    sep = ",",
    row.names = FALSE,
    quote = FALSE
 )
 
 # -----------------------------------------------------------------------------
-# *_trencadis_mutations.tsv
+# *_trencadis_mutations.tsv (from mn7)
+# -----------------------------------------------------------------------------
+for (pd_id in pd_ids) {
+   vcf <- read.delim(file.path(wd.de.data, "mn7", "mn7.hg38.bed.40.coding.unique.vcf.bed"), header=F)
+ 
+   mutations <- vcf[, c(1, 3, 4, 5)]
+   colnames(mutations) <- c("chr", "pos", "ref", "alt")
+ 
+   write.table(
+      mutations,
+      file = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, "_trencadis_mutations.tsv")),
+      sep = "\t",
+      col.names = TRUE,
+      row.names = FALSE,
+      quote = FALSE
+   )
+}
+
+# -----------------------------------------------------------------------------
+# *_trencadis_mutations.tsv (from Scomatic)
 # -----------------------------------------------------------------------------
 for (pd_id in pd_ids) {
    lines <- readLines(file.path(wd.de.data, "out", pd_id, paste0(pd_id, ".calling.step2.pass.tsv")))
@@ -89,7 +108,7 @@ for (pd_id in pd_ids) {
 # -----------------------------------------------------------------------------
 for (pd_id in pd_ids) {
    celltypes <- read.table(
-      file = file.path(wd.de.data, paste0("celltypes.tsv")),
+      file = file.path(wd.de.data, paste0("celltypes_progenitor.tsv")),
       sep = "\t",
       header = TRUE
    )
@@ -99,7 +118,7 @@ for (pd_id in pd_ids) {
  
    write.table(
       celltypes_new[, -1],
-      file = file.path(wd.de.data, "out", pd_id, paste0(pd_id, "_trencadis_celltypes.csv")),
+      file = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, "_trencadis_celltypes.csv")),
       sep = ",",
       col.names = TRUE,
       row.names = FALSE,
@@ -108,7 +127,7 @@ for (pd_id in pd_ids) {
    
    write.table(
       celltypes_new[, 2],
-      file = file.path(wd.de.data, "out", pd_id, paste0(pd_id, "_trencadis_cell_barcodes.txt")),
+      file = file.path(wd.de.data, "mn7", pd_id, paste0(pd_id, "_trencadis_cell_barcodes.txt")),
       col.names = FALSE,
       row.names = FALSE,
       quote = FALSE

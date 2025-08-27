@@ -1,34 +1,32 @@
-args <- commandArgs(trailingOnly = TRUE)
-pd_id <- as.character(args[1])
-
 # =============================================================================
 # Manuscript   :
 # Chapter      :
 # Name         : 
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
-# Last Modified: 15/04/25
+# Last Modified: 26/06/25
 # =============================================================================
-library(ggplot2)
-library(dplyr)
+
+all <- readTable(file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio", "unique_genes.txt"), sep = "", header = F, rownames=F)
 
 # -----------------------------------------------------------------------------
 # Pe-processing
 # -----------------------------------------------------------------------------
 # VCF file
-ref <- read.table(file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio", "hgncIDs2.txt"), sep = "\t", header = T, comment.char = "#", quote = "", fill = TRUE)
+nano <- read.table(file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio", "out_filteredTargVars.vcf.txt"), sep = "\t", header = T, comment.char = "#", quote = "", fill = TRUE)
 
-ref.mn7 <- subset(ref, Approved_symbol %in% mn7)
-mn7.ensg <- unique(ref.mn7$Ensembl_gene_ID)
+nano.mn7 <- subset(nano, SYMBOL %in% mn7)
+nano.mn7.soma <- subset(nano.mn7, !grepl("rs[0-9]+", Existing_variation))
 
-merged$Ensembl_Class <- ifelse(merged$Gene %in% mn7.ensg, "In List", "Not in List")
-# Set factor levels to control plotting order
-merged$Ensembl_Class <- factor(merged$Ensembl_Class, levels = c("Not in List", "In List"))
+nano.mn7.soma.coding <- nano.mn7.soma[sapply(
+   strsplit(nano.mn7.soma$Consequence, ","),
+   function(x) any(x %in% bold_these)
+), ]
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
 #wd.de.data  <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/pacbio/out_max13", pd_id)
-wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/nf-scomatic_progenitor/out", pd_id)
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/out_max13", pd_id)
 wd.de.plots <- file.path(wd.de.data, "00_QC")
 dir.create(wd.de.plots, showWarnings = FALSE)
 
@@ -64,14 +62,11 @@ mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "
 merged$Gene_Class <- ifelse(merged$Hugo_Symbol %in% mn7, "In List", "Not in List")
 # Set factor levels to control plotting order
 merged$Gene_Class <- factor(merged$Gene_Class, levels = c("Not in List", "In List"))
-write.table(merged, file = file.path(wd.de.data, paste0(pd_id, ".calling.step2.pass.nochr.vep.maf.vcf")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Filter
-#merged <- merged[merged$dbSNP_RS == "" | merged$dbSNP_RS == "novel", ]
-merged <- subset(merged, gnomAD_AF < 0.001 | is.na(gnomAD_AF))
-
-write.table(merged, file = file.path(wd.de.data, paste0(pd_id, ".calling.step2.pass.nochr.vep.maf.vcf.gnomAD")), sep = "\t", quote = FALSE, row.names = FALSE)
-prefix <- "gnomAD_"
+merged <- merged[merged$dbSNP_RS == "" | merged$dbSNP_RS == "novel", ]
+write.table(merged, file = file.path(wd.de.data, paste0(pd_id, ".calling.step2.pass.nochr.vep.maf.vcf")), sep = "\t", quote = FALSE, row.names = FALSE)
+prefix <- "novel+COSV_"
 #prefix <- ""
 
 inList <- length(intersect(unique(merged$SYMBOL), mn7))
@@ -117,6 +112,42 @@ write.table(inlist_subset, file = file.path(wd.de.plots, paste0(pd_id, "_VCF.txt
 # 
 # Last Modified: 16/06/25
 # -----------------------------------------------------------------------------
+on_target <- merged[merged$Gene_Class == "In List", ]
+off_target <- merged[merged$Gene_Class == "Not in List", ]
+
+extract_main_consequence <- function(x) {
+   # pick the most impactful from multi-annotation strings
+   primary <- unlist(strsplit(x, ","))[1]
+   return(primary)
+}
+
+on_target$Main_Consequence <- sapply(on_target$Consequence, extract_main_consequence)
+off_target$Main_Consequence <- sapply(off_target$Consequence, extract_main_consequence)
+
+# Compare distributions
+table(on_target$Main_Consequence)
+table(off_target$Main_Consequence)
+
+# Or normalized
+prop.table(table(on_target$Main_Consequence))
+prop.table(table(off_target$Main_Consequence))
+
+# Visualize
+library(ggplot2)
+combined <- rbind(
+   data.frame(Consequence = on_target$Main_Consequence, Group = "On-target"),
+   data.frame(Consequence = off_target$Main_Consequence, Group = "Off-target")
+)
+
+ggplot(combined, aes(x = Consequence, fill = Group)) +
+   geom_bar(position = "fill") + coord_flip() +
+   ylab("Proportion") + xlab("Consequence") +
+   ggtitle("Relative Consequence Distribution: On-target vs Off-target")
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 16/06/25
+# -----------------------------------------------------------------------------
 df <- merged
 
 df$Effect_Class <- case_when(
@@ -146,9 +177,7 @@ merged$n_celltypes <- mapply(function(dp) {
    }
 }, merged$Cell_types)
 
-## IMPORTANT !!
-#dp_single_celltype <- subset(merged, n_celltypes == 1)
-dp_single_celltype <- merged
+dp_single_celltype <- subset(merged, n_celltypes == 1)
 
 on_target <- dp_single_celltype %>% filter(Gene_Class == "In List")
 off_target <- dp_single_celltype %>% filter(Gene_Class == "Not in List")
@@ -331,52 +360,38 @@ dp_single_celltype$Main_Consequence_label <- factor(
 )
 
 # Plot with transcript_ablation on top
-plot <- ggplot(
+ggplot(
    subset(dp_single_celltype, Target_Group == "On-target"),
    aes(x = Main_Consequence_label)
 ) +
    geom_bar(fill = "#00BFC4") +
    scale_x_discrete(drop = FALSE) +
    coord_flip() +
-   theme_minimal(base_size = 12) +
+   theme_minimal() +
    theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 17),
-      axis.text.y = ggtext::element_markdown(size = 11.5),
-      axis.text.x = element_text(size = 12),
-      axis.title = element_text(size = 15)
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      axis.text.y = ggtext::element_markdown()  # Enables bold text on y-axis
    ) +
    ylab("Count") +
    xlab("Consequence") +
    ggtitle("On-target")
 
-# Save the plot as a PNG file
-png(file.path(wd.de.plots, "gnomAD_on_target.png"), width = 400, height = 600)
-print(plot)  # necessary to render the saved plot
-dev.off()
-
 # Plot with transcript_ablation on top
-plot <- ggplot(
+ggplot(
    subset(dp_single_celltype, Target_Group == "Off-target"),
    aes(x = Main_Consequence_label)
 ) +
    geom_bar(fill = "#F8766D") +
    scale_x_discrete(drop = FALSE) +
    coord_flip() +
-   theme_minimal(base_size = 12) +
+   theme_minimal() +
    theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 17),
-      axis.text.y = ggtext::element_markdown(size = 11.5),
-      axis.text.x = element_text(size = 12),
-      axis.title = element_text(size = 15)
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      axis.text.y = ggtext::element_markdown()  # Enables bold text on y-axis
    ) +
    ylab("Count") +
    xlab("Consequence") +
    ggtitle("Off-target")
-
-# Save the plot as a PNG file
-png(file.path(wd.de.plots, "gnomAD_off_target.png"), width = 400, height = 600)
-print(plot)  # necessary to render the saved plot
-dev.off()
 
 # -----------------------------------------------------------------------------
 # 
@@ -460,53 +475,6 @@ info <- c("DP", "NC", "BC", "CC")
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 16/06/25
-# -----------------------------------------------------------------------------
-on_target <- merged[merged$Gene_Class == "In List", ]
-off_target <- merged[merged$Gene_Class == "Not in List", ]
-
-extract_main_consequence <- function(x) {
- # pick the most impactful from multi-annotation strings
- primary <- unlist(strsplit(x, ","))[1]
- return(primary)
-}
-
-on_target$Main_Consequence <- sapply(on_target$Consequence, extract_main_consequence)
-off_target$Main_Consequence <- sapply(off_target$Consequence, extract_main_consequence)
-
-# Compare distributions
-table(on_target$Main_Consequence)
-table(off_target$Main_Consequence)
-
-# Or normalized
-prop.table(table(on_target$Main_Consequence))
-prop.table(table(off_target$Main_Consequence))
-
-# Visualize
-library(ggplot2)
-combined <- rbind(
- data.frame(Consequence = on_target$Main_Consequence, Group = "On-target"),
- data.frame(Consequence = off_target$Main_Consequence, Group = "Off-target")
-)
-
-ggplot(combined, aes(x = Consequence, fill = Group)) +
- geom_bar(position = "fill") + coord_flip() +
- ylab("Proportion") + xlab("Consequence") +
- ggtitle("Relative Consequence Distribution: On-target vs Off-target")
 
 
 # -----------------------------------------------------------------------------

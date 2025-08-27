@@ -3,15 +3,14 @@
 # Chapter      : 
 # Name         : manuscripts/replication/icgc-wgs-rt/icgc-wgs.R
 # Author       : Tsun-Po Yang (tyang2@uni-koeln.de)
-# Last Modified: 19/02/22
+# Last Modified: 03/06/25; 19/02/22
 # =============================================================================
 #wd.src <- "/projects/cangen/tyang2/dev/R"   ## tyang2@cheops
 #wd.src <- "/ngs/cangen/tyang2/dev/R"        ## tyang2@gauss
 wd.src <- "/Users/ty2/Work/dev/R"            ## tpyang@localhost
 
 wd.src.lib <- file.path(wd.src, "handbook-of")    ## Required handbooks/libraries for this manuscript
-#handbooks  <- c("Commons.R", "Survival.R", "Transcription.R", "survminer/ggforest.R")
-handbooks  <- c("Commons.R", "Survival.R", "Transcription.R")
+handbooks  <- c("Commons.R", "Graphics.R", "Survival.R", "Transcription.R")
 invisible(sapply(handbooks, function(x) source(file.path(wd.src.lib, x))))
 
 wd.src.ref <- file.path(wd.src, "guide-to-the")   ## The Bioinformatician's Guide to the Genome
@@ -34,177 +33,216 @@ wd.meta  <- file.path(wd, BASE, "metadata")
 wd.anlys  <- file.path(wd, BASE, "analysis")
 wd.rt <- file.path(wd.anlys, "replication", paste0(base, "-wgs-rt"))
 wd.rt.data  <- file.path(wd.rt, "data")
-#wd.rt.plots <- file.path(wd.rt, "plots", "PanImmune_2024")
 wd.rt.plots <- file.path(wd.rt, "plots")
 
 # -----------------------------------------------------------------------------
-# 
-# Last Modified: 29/03/22
+# Step 0: Set working directory
+# Last Modified: 18/02/22
 # -----------------------------------------------------------------------------
-raws <- readTable(file.path(wd.meta, "PCAWG.raw.data.copy_number.converted_data.list"), header=F, rownames=F, sep="\t")
-length(raws)
-# [1] 2951
-segs <- readTable(file.path(wd.meta, "PCAWG.raw.data.copy_number.sclust_final_copy_number_analysis_files.list"), header=F, rownames=F, sep="\t")
-length(segs)
-# [1] 2778
-overlaps <- intersect(segs, gsub("_CONVERTED", "", raws))
-length(overlaps)
-# [1] 2777
+load(file=file.path(wd.rt.data, paste0("icgc_wgs.RData")))
 
-totals <- readTable(file.path(wd.meta, "PCAWG.wgs_id_histology_appreviations.txt"), header=T, rownames=T, sep="\t")
-nrow(totals)
-# [1] 2883
-
-overlaps.2 <- intersect(rownames(totals), overlaps)
-totals <- totals[overlaps.2,]
-totals$project_code <- ""
-nrow(totals)
-# [1] 2747
-
-mappings <- readTable(file.path(wd.meta, "PCAWG.wgs_id_histology_table_mached.txt"), header=T, rownames=F, sep="\t")
-nrow(mappings)
-# [1] 3911
-idx <- which(totals$wgs_id %in% mappings$pcawg_wgs_id)
-totals <- totals[idx,]
-nrow(totals)
-# [1] 2744
-
-idx <- which(mappings$pcawg_wgs_id %in% totals$wgs_id)
-mappings <- mappings[idx,]
-nrow(mappings)
-# [1] 3744
-mappings <- subset(mappings, specimen_library_strategy != "RNA-Seq")
-nrow(mappings)
-# [1] 2744
-rownames(mappings) <- mappings$pcawg_wgs_id
-mappings <- mappings[rownames(totals),]
-
-dim(subset(as.data.frame(table(samples$icgc_donor_id)), Freq > 1))
-# [1] 53  2
-sum(subset(as.data.frame(table(samples$icgc_donor_id)), Freq > 1)$Freq)
-# [1] 163
-dim(subset(as.data.frame(table(samples.surv$icgc_donor_id)), Freq > 1))
-# [1] 38  2
-sum(subset(as.data.frame(table(samples.surv$icgc_donor_id)), Freq > 1)$Freq)
-# [1] 131
-dim(subset(as.data.frame(table(samples.surv.h$icgc_donor_id)), Freq > 1))
-# [1] 33  2
-sum(subset(as.data.frame(table(samples.surv.h$icgc_donor_id)), Freq > 1)$Freq)
-# [1] 120
-                
-###
-## CAUTION: There are multiple tumor_wgs_aliquot_ids
-release <- readTable(file.path(wd.meta, "data_release", "release_may2016.v1.4.tsv"), header=T, rownames=F, sep="")
-rownames(release) <- release$tumor_wgs_aliquot_id
-nrow(release)
-# [1] 2834
-#idx <- which(table$wgs_id %in% release$tumor_wgs_aliquot_id)   ## f942b732-7c0b-7ec6-e040-11ac0c483f86,f8f024e5-7096-3047-e040-11ac0d481c0f,f8e61a02-6e5e-c8e2-e040-11ac0d481b70
-#table <- table[idx,]
-#rownames(table) <- table$specimen_id
-#nrow(table)
-# [1] 2566
-
-for (s in 1:nrow(totals)) {
-   codes <- mappings[which(mappings$pcawg_wgs_id == totals$wgs_id[s]),]$project_code
-   if (length(codes) > 1) {
-      if (codes[1] != codes[2])
-         print(codes)
-      totals$project_code[s] <- codes[1]
-   } else {
-      totals$project_code[s] <- codes
-   }
-}
-#sort(table(totals$project_code), decreasing=T)
-sort(table(totals$histology_abbreviation), decreasing=T)
-
-###
-##
-clinicals <- readTable(file.path("/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DATA_RELEASE", "pcawg_donor_clinical_August2016_v9.txt"), header=T, rownames=F, sep="\t")
-nrow(clinicals)
-# [1] 2834
-idx2 <- which(clinicals$icgc_donor_id %in% mapping$icgc_donor_id)
-clinicals <- clinicals[idx2,]
-nrow(clinicals)
-# [1] 2757
-
-clinicals$icgc_specimen_id <- NA
-for (s in 1:nrow(clinicals)) {
-   ids <- mapping[which(mapping$icgc_donor_id == clinicals$icgc_donor_id[s]),]$icgc_specimen_id
-   if (length(ids) > 1) {
-      clinicals$icgc_specimen_id[s] <- paste0(paste(unique(ids), collapse=","), ",")
-   } else {
-      clinicals$icgc_specimen_id[s] <- paste0(ids, ",")
-   }
-}
-rownames(clinicals) <- clinicals$icgc_donor_id
-writeTable(clinicals, "/Users/tpyang/Work/uni-koeln/tyang2/ICGC/metadata/DCC_DATA_RELEASE/pcawg_donor_clinical_August2016_v9_tyang2.txt", colnames=T, rownames=F, sep="\t")
-
-save(raws, segs, totals, mappings, clinicals, release, file=file.path(wd.rt.data, paste0("icgc_wgs.RData")), version=2)
-
-# -----------------------------------------------------------------------------
-# samples
-# Last Modified: 03/06/25; 06/02/24 (re-run); 21/04/19
-# -----------------------------------------------------------------------------
 hists <- as.vector(subset(as.data.frame(sort(table(totals$histology_abbreviation))), Freq >= 20)$Var1)
-totals.hist <- subset(totals, histology_abbreviation %in% hists)
+load(file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor22.RData"))
 
-icgc <- toTable(0, 2, length(hists), c("MEDIAN", "N"))
-rownames(icgc) <- hists
-for (h in 1:length(hists)) {
-	  samples.hist <- subset(totals.hist, histology_abbreviation == hists[h])
-	  icgc$N[h] <- nrow(samples.hist)
-	
-	  sum <- c()
-	  for (s in 1:nrow(samples.hist)) {
-		    sample <- samples.hist$specimen_id[s]
-		    load(paste0("/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
-		
-		    #sum <- c(sum, as.numeric(cor))
-		    sum <- c(sum, as.numeric(cors$cor[22]))
-	  }
-	  icgc$MEDIAN[h] <- median(sum)
-}
-icgc <- icgc[order(icgc$MEDIAN, decreasing=T),]
-writeTable(icgc, "/Users/ty2/Work/uni-koeln/tyang2/ICGC/analysis/replication/icgc-wgs-rt/data/icgc_histology_abbreviation>20_cor22.txt", colnames=T, rownames=T, sep="\t")
+# -----------------------------------------------------------------------------
+# Thorsson 2018
+# Last Modified: 06/10/23; 16/03/23
+# -----------------------------------------------------------------------------
+immunes <- readTable(file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/Thorsson 2018", "PanImmune.txt"), header=T, rownames=T, sep="\t")
+nrow(immunes)
+# [1] 11080
 
-###
+tcgas <- intersect(rownames(immunes), mappings$submitted_donor_id)
+length(tcgas)
+# [1] 860
+
+mappings.tcga <- subset(mappings, submitted_donor_id %in% tcgas)
+mappings.tcga.rna <- subset(mappings.tcga, specimen_library_strategy == "RNA-Seq")
+mappings.tcga.wgs <- subset(mappings.tcga, specimen_library_strategy == "WGS")
+nrow(mappings.tcga.rna)
+# [1] 792
+nrow(mappings.tcga.wgs)
+# [1] 860
+overlaps <- intersect(mappings.tcga.wgs$icgc_specimen_id, mappings.tcga.rna$icgc_specimen_id)
+length(overlaps)
+# [1] 792
+
+rownames(mappings.tcga.rna) <- mappings.tcga.rna$submitted_specimen_id
+rownames(mappings.tcga.wgs) <- mappings.tcga.wgs$submitted_specimen_id
+overlaps.2 <- intersect(rownames(immunes), mappings.tcga.wgs$submitted_donor_id)
+length(overlaps.2)
+# [1] 860
+
+immunes.tcga <- cbind(immunes[overlaps.2,], mappings.tcga.wgs[overlaps.2,])
+rownames(immunes.tcga) <- immunes.tcga$icgc_specimen_id
+
 ##
-donors <- c("project_code", "icgc_donor_id", "donor_sex", "donor_vital_status", "donor_age_at_diagnosis", "donor_survival_time")
-samples <- toTable(0, 12, sum(icgc$N), c("CANCER", "COR", "Q4", "M2", "icgc_specimen_id", "histology_abbreviation", donors))
-idx.cor    <- 0
-idx.sample <- 0
-for (h in 1:nrow(icgc)) {
-	  samples.hist <- subset(totals.hist, histology_abbreviation == rownames(icgc)[h])
-  	q4 <- setSamplesM2(wd.rt.data, samples.hist$specimen_id, c=13)
-	
-	  for (s in 1:nrow(samples.hist)) {
-		    sample <- samples.hist$specimen_id[s]
-		    load(paste0(wd.rt.data, "/samples/rd-vs-rt_", sample, "-vs-lcl_spearman.RData"))
-		
-		    samples$COR[idx.sample + s] <- as.numeric(cors$cor[13])
-		    samples$icgc_specimen_id[idx.sample + s] <- sample
-		    samples$histology_abbreviation[idx.sample + s] <- rownames(icgc)[h]
-		
-		    samples[idx.sample + s, c(donors)] <- clinicals[grep(paste0(sample, ","), clinicals$icgc_specimen_id), c(donors)]
-	  }
-	
-	  samples$CANCER[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- idx.cor
-	  samples$Q4[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q4
-	  samples$M2[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$M2
-  	#samples$Q35[(idx.sample+1):(idx.sample+nrow(samples.hist))] <- q4$Q35
-	
-	  idx.cor <- idx.cor + 1
-	  idx.sample <- idx.sample + nrow(samples.hist)
+load(file=file.path(wd.rt.data, "icgc_wgs_samples_n2542.RData"))
+
+overlaps.3 <- intersect(rownames(samples), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
+samples.mut.tcga <- cbind(samples[overlaps.3,], immunes.tcga[overlaps.3,])
+nrow(samples.mut.tcga)
+# [1] 736
+
+#overlaps.3 <- intersect(rownames(samples.mut), rownames(immunes.tcga))   ## n=2542 (Total samples with SNVs)
+#samples.mut.tcga <- cbind(samples.mut[overlaps.3,], immunes.tcga[overlaps.3,])
+#nrow(samples.mut.tcga)
+# [1] 710
+
+# -----------------------------------------------------------------------------
+# Thorsson 2018
+# -----------------------------------------------------------------------------
+# Define features to test against COR
+features <- colnames(immunes)[-c(1:4)]
+features <- setdiff(features, c("Neutrophils.1", "Eosinophils.1"))
+
+# Initialize result storage
+cor_results <- data.frame(
+   Feature = character(),
+   SpearmanRho = numeric(),
+   PValue = numeric(),
+   stringsAsFactors = FALSE
+)
+
+for (feature in features) {
+   valid_rows <- complete.cases(samples.mut.tcga[, c("COR", feature)])
+   if (sum(valid_rows) >= 3) {
+      test_result <- cor.test(samples.mut.tcga$COR[valid_rows], samples.mut.tcga[[feature]][valid_rows], method = "spearman")
+  
+      rho <- as.numeric(test_result$estimate)  # Extract scalar value
+      pval <- test_result$p.value
+  
+      cor_results <- rbind(cor_results, data.frame(
+         Feature = gsub("\\.", " ", feature),
+         SpearmanRho = rho,
+         PValue = pval
+      ))
+  
+      # Optional: plot correlation
+      file.name <- file.path(wd.rt.plots, "Thorsson 2018_cor22", paste0("Cor_SCF-vs-", feature))
+      main.text <- c("", "")
+      xlab.text <- gsub("\\.", " ", feature)
+      ylab.text <- "SCF index"
+      plotCorrelation(file.name, main.text, xlab.text, ylab.text,
+                  x = samples.mut.tcga[[feature]][valid_rows],
+                  y = samples.mut.tcga$COR[valid_rows],
+                  pos = "topright",
+                  cols = c("darkgray", "black"),
+                  size = 5)
+   }
 }
-rownames(samples) <- samples$icgc_specimen_id
-#samples.h <- samples
-samples.v <- samples
 
-samples.tmp <- samples.mut
-samples.mut <- samples[intersect(rownames(samples), rownames(samples.mut)),]
-samples.mut$tumor_wgs_aliquot_id <- samples.tmp[rownames(samples.mut),]$tumor_wgs_aliquot_id
+# Sort results by absolute correlation
+cor_results <- cor_results[order(-abs(cor_results$SpearmanRho)), ]
+print(cor_results)
 
-save(icgc, samples, samples.v, samples.mut, file=file.path(wd.rt.data, "icgc_wgs_samples_n2612_re-run_cor13.RData"))
+# -----------------------------------------------------------------------------
+# Bar plot
+# -----------------------------------------------------------------------------
+library(dplyr)
+library(ggplot2)
+
+# Add FDR correction and clean labels
+cor_results <- cor_results %>%
+   mutate(FDR = p.adjust(PValue, method = "fdr"))
+
+write.table(cor_results, file.path(wd.rt.plots, "Thorsson 2018_cor22", "correlation_results.txt"),
+            row.names = FALSE, sep = "\t", quote = FALSE)
+
+# Filter for significant results
+cor_sig <- cor_results %>%
+   filter(FDR < 0.05) %>%
+   arrange(SpearmanRho)
+
+# Plot with no legend and uniform bar color
+ggplot(cor_sig, aes(x = SpearmanRho, y = reorder(FeatureTitle, SpearmanRho))) +
+   geom_col(fill = "gray40") +
+   theme_minimal(base_size = 13) +
+   labs(
+      title = "",
+      x = "Spearman correlation (rho)",
+      y = NULL
+   ) +
+   theme(legend.position = "none")
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# Using PanImmune (Global) to find chrs
+# Last Modified: 27/04/24
+# -----------------------------------------------------------------------------
+insilico <- toTable(0, 4, 22, c("CHR", "Proliferation", "Wound.Healing", "Th17.Cells"))
+insilico$CHR <- sprs.order$chr
+
+for (chr in 1:nrow(sprs.order)) {
+ for (c in c(22:23,45)) {
+  col <- colnames(samples.mut.tcga)[c]
+  
+  samples.mut.tcga.col <- samples.mut.tcga[!is.na(samples.mut.tcga[, c]),]
+  x=samples.mut.tcga.col[, c]
+  
+  for (s in 1:nrow(samples.mut.tcga.col)) {
+   sample <- rownames(samples.mut.tcga.col)[s]
+   load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
+   
+   samples.mut.tcga.col$COR[s] <- cors$cor[chr]
+  }
+  y=samples.mut.tcga.col$COR
+  
+  cor <- cor.test(y, x, method="spearman", exact=F)
+  if (c == 45)
+   insilico[chr, 4] <- cor[[4]]
+  else
+   insilico[chr, c-20] <- cor[[4]]
+ }
+}
+
+##
+ylim <- c(0.1, 0.35)  #, dns.u$Freq)))
+file.name <- file.path(wd.rt.plots, paste0("DNS_ICGC_COR_Proliferation+Th17.Cells_n=710_lwd=4"))
+#main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
+main.text <- c("PCAWG SCF correlation", "")
+ylab.text <- "Correlation to PanImmune"
+xlab.text <- "Chromosome"
+legends <- c("Proliferation", "Wound Healing", "Th17 Cells (Inverted)")
+#cols <- c(red, blue, "dimgray")
+cols <- c("gray", "dimgray", "black")
+
+pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
+par(mar=c(5.1, 4.6, 4.1, 1.5))
+plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
+
+points(insilico$Proliferation ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Proliferation, lty=5, lwd=2.5, col=cols[1])
+
+points(insilico$Wound.Healing ~ rownames(insilico), col=cols[2], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Wound.Healing, lty=5, lwd=2.5, col=cols[2])
+
+points(insilico$Th17.Cells*-1 ~ rownames(insilico), col=cols[3], pch=15, cex=2.5)
+lines(rownames(insilico), y=insilico$Th17.Cells*-1, lty=5, lwd=2.5, col=cols[3])
+
+abline(v=13, lty=3, lwd=4, col=red)
+
+axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
+axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
+legend("bottomright", legend=legends[3:1], col=cols[3:1], pch=15, lty=5, lwd=3, pt.cex=3, cex=1.9)
+dev.off()
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Stripchart (black; Resting to proliferating)
@@ -383,111 +421,6 @@ dev.off()
 
 
 
-# -----------------------------------------------------------------------------
-# PanImmune
-# Last Modified: 06/10/23; 16/03/23
-# -----------------------------------------------------------------------------
-immunes <- readTable(file.path("/Users/ty2/Work/uni-koeln/tyang2/ICGC/metadata/Thorsson 2018", "PanImmune.txt"), header=T, rownames=T, sep="\t")
-nrow(immunes)
-# [1] 11080
-
-tcgas <- intersect(rownames(immunes), mappings$submitted_donor_id)
-length(tcgas)
-# [1] 860
-
-mappings.tcga <- subset(mappings, submitted_donor_id %in% tcgas)
-mappings.tcga.rna <- subset(mappings.tcga, specimen_library_strategy == "RNA-Seq")
-mappings.tcga.wgs <- subset(mappings.tcga, specimen_library_strategy == "WGS")
-nrow(mappings.tcga.rna)
-# [1] 792
-nrow(mappings.tcga.wgs)
-# [1] 860
-overlaps <- intersect(mappings.tcga.wgs$icgc_specimen_id, mappings.tcga.rna$icgc_specimen_id)
-length(overlaps)
-# [1] 792
-
-rownames(mappings.tcga.rna) <- mappings.tcga.rna$submitted_specimen_id
-rownames(mappings.tcga.wgs) <- mappings.tcga.wgs$submitted_specimen_id
-overlaps.2 <- intersect(rownames(immunes), mappings.tcga.wgs$submitted_donor_id)
-length(overlaps.2)
-# [1] 860
-
-immunes.tcga <- cbind(immunes[overlaps.2,], mappings.tcga.wgs[overlaps.2,])
-rownames(immunes.tcga) <- immunes.tcga$icgc_specimen_id
-
-##
-load(file=file.path(wd.driver.data, "icgc_wgs_samples_n2542.RData"))
-
-#overlaps.3 <- intersect(rownames(samples), rownames(immunes.tcga))   ## n=2612 (Total samples with WGSs)
-#samples.mut.tcga <- cbind(samples[overlaps.3,], immunes.tcga[overlaps.3,])
-#nrow(samples.mut.tcga)
-# [1] 736
-
-overlaps.3 <- intersect(rownames(samples.mut), rownames(immunes.tcga))   ## n=2542 (Total samples with SNVs)
-samples.mut.tcga <- cbind(samples.mut[overlaps.3,], immunes.tcga[overlaps.3,])
-nrow(samples.mut.tcga)
-# [1] 710
-
-# -----------------------------------------------------------------------------
-# Using PanImmune (Global) to find chrs
-# Last Modified: 27/04/24
-# -----------------------------------------------------------------------------
-insilico <- toTable(0, 4, 22, c("CHR", "Proliferation", "Wound.Healing", "Th17.Cells"))
-insilico$CHR <- sprs.order$chr
-
-for (chr in 1:nrow(sprs.order)) {
-	  for (c in c(22:23,45)) {
-		    col <- colnames(samples.mut.tcga)[c]
-		
-		    samples.mut.tcga.col <- samples.mut.tcga[!is.na(samples.mut.tcga[, c]),]
-		    x=samples.mut.tcga.col[, c]
-		    
-		    for (s in 1:nrow(samples.mut.tcga.col)) {
-		    	  sample <- rownames(samples.mut.tcga.col)[s]
-		    	  load(file.path(wd.rt.data, "samples", paste0("rd-vs-rt_", sample, "-vs-lcl_spearman.RData")))
-		    	
-		    	  samples.mut.tcga.col$COR[s] <- cors$cor[chr]
-		    }
-		    y=samples.mut.tcga.col$COR
-		    
-		    cor <- cor.test(y, x, method="spearman", exact=F)
-		    if (c == 45)
-		    	  insilico[chr, 4] <- cor[[4]]
-		    else
-		       insilico[chr, c-20] <- cor[[4]]
-	  }
-}
-
-##
-ylim <- c(0.1, 0.35)  #, dns.u$Freq)))
-file.name <- file.path(wd.rt.plots, paste0("DNS_ICGC_COR_Proliferation+Th17.Cells_n=710_lwd=4"))
-#main.text <- c(expression(bold("NB-CL")~bolditalic('in silico')~bold("SCF estimation")), "")
-main.text <- c("PCAWG SCF correlation", "")
-ylab.text <- "Correlation to PanImmune"
-xlab.text <- "Chromosome"
-legends <- c("Proliferation", "Wound Healing", "Th17 Cells (Inverted)")
-#cols <- c(red, blue, "dimgray")
-cols <- c("gray", "dimgray", "black")
-
-pdf(paste0(file.name, ".pdf"), height=4.5, width=9.8)
-par(mar=c(5.1, 4.6, 4.1, 1.5))
-plot(NULL, xlim=c(1, 22), ylim=ylim, xlab=xlab.text, ylab=ylab.text, main=main.text, xaxt="n", pch=19, cex.axis=1.8, cex.lab=1.9, cex.main=2)
-
-points(insilico$Proliferation ~ rownames(insilico), col=cols[1], pch=15, cex=2.5)
-lines(rownames(insilico), y=insilico$Proliferation, lty=5, lwd=2.5, col=cols[1])
-
-points(insilico$Wound.Healing ~ rownames(insilico), col=cols[2], pch=15, cex=2.5)
-lines(rownames(insilico), y=insilico$Wound.Healing, lty=5, lwd=2.5, col=cols[2])
-
-points(insilico$Th17.Cells*-1 ~ rownames(insilico), col=cols[3], pch=15, cex=2.5)
-lines(rownames(insilico), y=insilico$Th17.Cells*-1, lty=5, lwd=2.5, col=cols[3])
-
-abline(v=13, lty=3, lwd=4, col=red)
-
-axis(side=1, at=seq(1, 22, by=2), labels=insilico$CHR[seq(1, 22, by=2)], cex.axis=1.8)
-axis(side=1, at=seq(2, 22, by=2), labels=insilico$CHR[seq(2, 22, by=2)], cex.axis=1.8)
-legend("bottomright", legend=legends[3:1], col=cols[3:1], pch=15, lty=5, lwd=3, pt.cex=3, cex=1.9)
-dev.off()
 
 # -----------------------------------------------------------------------------
 # Bentham 2025

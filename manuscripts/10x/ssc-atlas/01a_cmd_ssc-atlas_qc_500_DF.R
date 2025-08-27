@@ -95,14 +95,7 @@ for (i in seq_along(so.list)) {
 	  so.list[[i]] <- sample
 }
 
-save(samples.filtered, ids, so.list, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF.RData")))
-
-
-
-
-
-
-
+save(samples.filtered, ids, so.list, classification_cols, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_so.list_DF.RData")))
 
 # -----------------------------------------------------------------------------
 # Last Modified: 14/02/25
@@ -161,3 +154,4 @@ columns_to_remove <- grep("^pANN_0.25|^DF.classifications_0.25|^integrated_snn_r
 # Remove the identified columns
 so.integrated@meta.data <- so.integrated@meta.data[, !colnames(so.integrated@meta.data) %in% columns_to_remove]
 print(colnames(so.integrated@meta.data))
+

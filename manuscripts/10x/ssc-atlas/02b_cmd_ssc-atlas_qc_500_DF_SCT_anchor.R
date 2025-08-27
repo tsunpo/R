@@ -81,10 +81,10 @@ load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_S
 ## When running sctransform-based workflows, including integration, do not run the ScaleData() function
 #anchors <- FindIntegrationAnchors(object.list = so.list, normalization.method = "SCT", anchor.features = features, dims = 1:dims)
 #save(samples0.filtered, anchors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_anchors_", dims, ".RData")))
-load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_anchors_", dims, ".RData")))
+load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_anchors_", dims, "_rpca.RData")))
 
 so.integrated <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:dims, k.weight = k.weight)
-save(samples.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_", dims, "_", k.weight, ".RData")))
+save(samples.filtered, so.list, so.integrated, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated0_DF_SCT_", nfeatures, "_", dims, "_", k.weight, "_rpca.RData")))
 
 # -----------------------------------------------------------------------------
 # Perform CCA integration (Seurat 4.3.0; Running CCA)

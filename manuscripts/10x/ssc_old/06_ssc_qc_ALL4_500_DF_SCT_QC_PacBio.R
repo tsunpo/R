@@ -95,6 +95,7 @@ barcode_table <- data.frame(
 #samples <- c("PD53624b_M", "PD53623b_2N", "PD53623b_4N", "PD53623b_J2")  ## PacBio_B1
 #samples <- c("PD53624b_J2", "PD53623b_M", "PD53621b_M", "PD53626b_J1")  ## PacBio_B2
 samples <- c("PD53624b_M", "PD53623b_2N", "PD53623b_4N", "PD53623b_J2", "PD53624b_J2", "PD53623b_M", "PD53621b_M", "PD53626b_J1")  ## PacBio_B2
+samples <- c("PD53623b_J1", "PD53623b_J2", "PD53624b_J1", "PD53624b_J2", "PD53626b_J1")
 
 # Extract metadata from the Seurat object
 metadata <- so.integrated@meta.data
