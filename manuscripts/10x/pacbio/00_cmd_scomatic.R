@@ -11,24 +11,12 @@ pd_id <- as.character(args[1])
 library(ggplot2)
 library(dplyr)
 
-# -----------------------------------------------------------------------------
-# Pe-processing
-# -----------------------------------------------------------------------------
-# VCF file
-ref <- read.table(file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio", "hgncIDs2.txt"), sep = "\t", header = T, comment.char = "#", quote = "", fill = TRUE)
-
-ref.mn7 <- subset(ref, Approved_symbol %in% mn7)
-mn7.ensg <- unique(ref.mn7$Ensembl_gene_ID)
-
-merged$Ensembl_Class <- ifelse(merged$Gene %in% mn7.ensg, "In List", "Not in List")
-# Set factor levels to control plotting order
-merged$Ensembl_Class <- factor(merged$Ensembl_Class, levels = c("Not in List", "In List"))
+pd_id <- "PD53621b"
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-#wd.de.data  <- file.path("/lustre/scratch127/casm/team294rr/ty2/SSC/ngs/pacbio/out_max13", pd_id)
-wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/nf-scomatic_progenitor/out", pd_id)
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/nf-scomatic/out", pd_id)
 wd.de.plots <- file.path(wd.de.data, "00_QC")
 dir.create(wd.de.plots, showWarnings = FALSE)
 
@@ -64,20 +52,9 @@ mn7 <- c("KDM5B", "PTPN11", "NF1", "SMAD6", "CUL3", "MIB1", "RASA2", "PRRC2A", "
 merged$Gene_Class <- ifelse(merged$Hugo_Symbol %in% mn7, "In List", "Not in List")
 # Set factor levels to control plotting order
 merged$Gene_Class <- factor(merged$Gene_Class, levels = c("Not in List", "In List"))
+
+merged <- subset(merged, Cell_types == "germ")
 write.table(merged, file = file.path(wd.de.data, paste0(pd_id, ".calling.step2.pass.nochr.vep.maf.vcf")), sep = "\t", quote = FALSE, row.names = FALSE)
-
-# Filter
-#merged <- merged[merged$dbSNP_RS == "" | merged$dbSNP_RS == "novel", ]
-merged <- subset(merged, gnomAD_AF < 0.001 | is.na(gnomAD_AF))
-
-write.table(merged, file = file.path(wd.de.data, paste0(pd_id, ".calling.step2.pass.nochr.vep.maf.vcf.gnomAD")), sep = "\t", quote = FALSE, row.names = FALSE)
-prefix <- "gnomAD_"
-#prefix <- ""
-
-inList <- length(intersect(unique(merged$SYMBOL), mn7))
-notInList <- length(unique(merged$SYMBOL)) - inList
-inList.txt <- paste0("In (n=", inList, ")")
-notInList.txt <- paste0("Not in (n=", notInList, ")")
 
 ##
 table <- as.data.frame(sort(table(merged$Cell_types), decreasing=T))
@@ -111,163 +88,15 @@ celltype_counts$In_List[is.na(celltype_counts$In_List)] <- 0
 # Step 5 (optional): Order by Total
 celltype_counts <- celltype_counts[order(celltype_counts$In_List, decreasing = TRUE), ]
 write.table(celltype_counts, file = file.path(wd.de.plots, paste0(pd_id, "_celltype_mutation_counts.txt")), sep = "\t", quote = FALSE, row.names = FALSE)
-write.table(inlist_subset, file = file.path(wd.de.plots, paste0(pd_id, "_VCF.txt")), sep = "\t", quote = FALSE, row.names = FALSE)
-
-# -----------------------------------------------------------------------------
-# 
-# Last Modified: 16/06/25
-# -----------------------------------------------------------------------------
-df <- merged
-
-df$Effect_Class <- case_when(
-   df$Variant_Classification %in% c("Silent", "Synonymous") ~ "syn",
-   df$Variant_Classification %in% c("Missense_Mutation", "Nonsense_Mutation", "Splice_Site", "Frame_Shift", "Nonstop_Mutation") ~ "non-syn",
-   TRUE ~ "non-coding"
-)
-table(df$Effect_Class, df$Gene_Class)
-
-table(df$Consequence, df$Effect_Class)
-table(df$Consequence, df$Gene_Class)
-table(df$Consequence, df$Effect_Class, df$Gene_Class)  # for 3-way view
-
-# -----------------------------------------------------------------------------
-# Check exon coverage
-# Last Modified: 16/06/25
-# -----------------------------------------------------------------------------
-# Count how many cell types each mutation was seen in
-library(dplyr)
-
-merged$n_celltypes <- mapply(function(dp) {
-   # Handle NA safely
-   if (is.na(dp) || dp == "") {
-      return(0)
-   } else {
-      return(length(strsplit(dp, ",")[[1]]))
-   }
-}, merged$Cell_types)
-
-## IMPORTANT !!
-#dp_single_celltype <- subset(merged, n_celltypes == 1)
-dp_single_celltype <- merged
-
-on_target <- dp_single_celltype %>% filter(Gene_Class == "In List")
-off_target <- dp_single_celltype %>% filter(Gene_Class == "Not in List")
-
-on_dp <- as.numeric(on_target$Dp)
-off_dp <- as.numeric(off_target$Dp)
-
-on_dp <- on_dp[!is.na(on_dp)]
-off_dp <- off_dp[!is.na(off_dp)]
-
-# Wilcoxon test
-wilcox.test(on_dp, off_dp)
-
-# -----------------------------------------------------------------------------
-# 
-# -----------------------------------------------------------------------------
-# Boxplot
-dp_data <- rbind(
-   data.frame(Dp = as.numeric(on_target$Dp), Group = "On-target"),
-   data.frame(Dp = as.numeric(off_target$Dp), Group = "Off-target")
-)
-
-# Compute Wilcoxon p-value
-wilcox_res <- wilcox.test(Dp ~ Group, data = dp_data)
-pval <- wilcox_res$p.value
-
-# Create the plot with scientific notation for p-value
-ggplot(dp_data, aes(x = Group, y = Dp, fill = Group)) +
-   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-   geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
-   theme_minimal() +
-   theme(legend.position = "none") +
-   ylab("Read Depth") +
-   xlab("") +
-   annotate("text",
-          x = 1.5,
-          y = max(dp_data$Dp, na.rm = TRUE) * 1.05,
-          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
-          size = 5,
-          fontface = "italic")
-
-# Boxplot
-dp_data <- rbind(
-   data.frame(Nc = as.numeric(on_target$Nc), Group = "On-target"),
-   data.frame(Nc = as.numeric(off_target$Nc), Group = "Off-target")
-)
-
-# Compute Wilcoxon p-value
-wilcox_res <- wilcox.test(Nc ~ Group, data = dp_data)
-pval <- wilcox_res$p.value
-
-# Create the plot with scientific notation for p-value
-ggplot(dp_data, aes(x = Group, y = Nc, fill = Group)) +
-   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-   geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
-   theme_minimal() +
-   theme(legend.position = "none") +
-   ylab("Number of Cells") +
-   xlab("") +
-   annotate("text",
-          x = 1.5,
-          y = max(dp_data$Nc, na.rm = TRUE) * 1.05,
-          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
-          size = 5,
-          fontface = "italic")
-
-# Boxplot
-dp_data <- rbind(
-   data.frame(Nc = as.numeric(on_target$VAF), Group = "On-target"),
-   data.frame(Nc = as.numeric(off_target$VAF), Group = "Off-target")
-)
-
-# Compute Wilcoxon p-value
-wilcox_res <- wilcox.test(Nc ~ Group, data = dp_data)
-pval <- wilcox_res$p.value
-
-# Create the plot with scientific notation for p-value
-ggplot(dp_data, aes(x = Group, y = Nc, fill = Group)) +
-   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-   geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
-   theme_minimal() +
-   theme(legend.position = "none") +
-   ylab("VAF") +
-   xlab("") +
-   annotate("text",
-          x = 1.5,
-          y = max(dp_data$Nc, na.rm = TRUE) * 1.05,
-          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
-          size = 5,
-          fontface = "italic")
-
-# Boxplot
-dp_data <- rbind(
-   data.frame(Nc = as.numeric(on_target$Bc), Group = "On-target"),
-   data.frame(Nc = as.numeric(off_target$Bc), Group = "Off-target")
-)
-
-# Compute Wilcoxon p-value
-wilcox_res <- wilcox.test(Nc ~ Group, data = dp_data)
-pval <- wilcox_res$p.value
-
-# Create the plot with scientific notation for p-value
-ggplot(dp_data, aes(x = Group, y = Nc, fill = Group)) +
-   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-   geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
-   theme_minimal() +
-   theme(legend.position = "none") +
-   ylab("Number of ALT reads") +
-   xlab("") +
-   annotate("text",
-          x = 1.5,
-          y = max(dp_data$Nc, na.rm = TRUE) * 1.05,
-          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
-          size = 5,
-          fontface = "italic")
+write.table(inlist_subset, file = file.path(wd.de.plots, paste0(pd_id, "_on-target.txt")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # -----------------------------------------------------------------------------
 # Ensembl's consequence severity ranking
 # -----------------------------------------------------------------------------
+## IMPORTANT !!
+#dp_single_celltype <- subset(merged, n_celltypes == 1)
+dp_single_celltype <- merged
+
 # Ensembl canonical severity order
 vep_severity <- c(
    "transcript_ablation", "splice_acceptor_variant", "splice_donor_variant",
@@ -350,7 +179,7 @@ plot <- ggplot(
    ggtitle("On-target")
 
 # Save the plot as a PNG file
-png(file.path(wd.de.plots, "gnomAD_on_target.png"), width = 400, height = 600)
+png(file.path(wd.de.plots, "nf-scomatic_on_target.png"), width = 400, height = 600)
 print(plot)  # necessary to render the saved plot
 dev.off()
 
@@ -374,9 +203,248 @@ plot <- ggplot(
    ggtitle("Off-target")
 
 # Save the plot as a PNG file
-png(file.path(wd.de.plots, "gnomAD_off_target.png"), width = 400, height = 600)
+png(file.path(wd.de.plots, "nf-scomatic_off_target.png"), width = 400, height = 600)
 print(plot)  # necessary to render the saved plot
 dev.off()
+
+# -----------------------------------------------------------------------------
+# Prepare for running SComatic genotyping
+# Last Modified: 17/09/25
+# -----------------------------------------------------------------------------
+#out <- subset(subset(dp_single_celltype, Target_Group == "On-target"), Main_Consequence %in% bold_these)
+out <- subset(subset(inlist_subset, Consequence %in% bold_these), FILTER.y == "germ")
+
+write.table(out, file = file.path(wd.de.data, paste0("scomatics_", pd_id, ".txt")), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# -----------------------------------------------------------------------------
+# After running SComatic genotyping
+# # Last Modified: 17/09/25
+# -----------------------------------------------------------------------------
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/nf-scomatic")
+barcodes <- read.table(
+   file = file.path(wd.de.data, "scomatics_PD53626b.tsv"),
+   sep = "\t",
+   header = T,
+   stringsAsFactors = FALSE
+)
+
+meta <- read.table(
+   file = file.path(wd.de.data, "celltypes.tsv"),
+   sep = "\t",
+   header = T,
+   stringsAsFactors = FALSE
+)
+
+barcodes.PRRC2A <- subset(subset(barcodes, CHROM == "chr6"), Base_observed == "G")
+meta.PRRC2A <- subset(meta, Index %in% barcodes.PRRC2A$CB)
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# -----------------------------------------------------------------------------
+# Step 1: Full counts for all Cell_types
+celltype_counts <- as.data.frame(table(merged$Cell_types))
+colnames(celltype_counts) <- c("Cell_type", "Total")
+
+# Step 2: Subset counts for "In List" genes
+inlist_subset <- subset(merged, Gene_Class == "In List")
+
+inlist_counts <- as.data.frame(table(inlist_subset$Cell_types))
+colnames(inlist_counts) <- c("Cell_type", "In_List")
+
+inlist_symbols <- inlist_subset %>%
+ dplyr::group_by(Cell_types) %>%
+ dplyr::summarise(Hugo_Symbols = paste(unique(Hugo_Symbol), collapse = ", ")) %>%
+ dplyr::rename(Cell_type = Cell_types)
+
+# Merge Hugo symbols
+inlist_counts <- merge(inlist_counts, inlist_symbols, by = "Cell_type", all.x = TRUE)
+
+# Step 3: Merge the two
+celltype_counts <- merge(celltype_counts, inlist_counts, by = "Cell_type", all.x = TRUE)
+celltype_counts$In_List[is.na(celltype_counts$In_List)] <- 0
+
+# Step 5 (optional): Order by Total
+celltype_counts <- celltype_counts[order(celltype_counts$In_List, decreasing = TRUE), ]
+write.table(celltype_counts, file = file.path(wd.de.plots, paste0(pd_id, "_celltype_mutation_counts.txt")), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(inlist_subset, file = file.path(wd.de.plots, paste0(pd_id, "_VCF.txt")), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# -----------------------------------------------------------------------------
+# 
+# Last Modified: 16/06/25
+# -----------------------------------------------------------------------------
+df <- merged
+
+df$Effect_Class <- case_when(
+ df$Variant_Classification %in% c("Silent", "Synonymous") ~ "syn",
+ df$Variant_Classification %in% c("Missense_Mutation", "Nonsense_Mutation", "Splice_Site", "Frame_Shift", "Nonstop_Mutation") ~ "non-syn",
+ TRUE ~ "non-coding"
+)
+table(df$Effect_Class, df$Gene_Class)
+
+table(df$Consequence, df$Effect_Class)
+table(df$Consequence, df$Gene_Class)
+table(df$Consequence, df$Effect_Class, df$Gene_Class)  # for 3-way view
+
+# -----------------------------------------------------------------------------
+# Check exon coverage
+# Last Modified: 16/06/25
+# -----------------------------------------------------------------------------
+# Count how many cell types each mutation was seen in
+library(dplyr)
+
+merged$n_celltypes <- mapply(function(dp) {
+ # Handle NA safely
+ if (is.na(dp) || dp == "") {
+  return(0)
+ } else {
+  return(length(strsplit(dp, ",")[[1]]))
+ }
+}, merged$Cell_types)
+
+## IMPORTANT !!
+#dp_single_celltype <- subset(merged, n_celltypes == 1)
+dp_single_celltype <- merged
+
+on_target <- dp_single_celltype %>% filter(Gene_Class == "In List")
+off_target <- dp_single_celltype %>% filter(Gene_Class == "Not in List")
+
+on_dp <- as.numeric(on_target$Dp)
+off_dp <- as.numeric(off_target$Dp)
+
+on_dp <- on_dp[!is.na(on_dp)]
+off_dp <- off_dp[!is.na(off_dp)]
+
+# Wilcoxon test
+wilcox.test(on_dp, off_dp)
+
+# -----------------------------------------------------------------------------
+# 
+# -----------------------------------------------------------------------------
+# Boxplot
+dp_data <- rbind(
+ data.frame(Dp = as.numeric(on_target$Dp), Group = "On-target"),
+ data.frame(Dp = as.numeric(off_target$Dp), Group = "Off-target")
+)
+
+# Compute Wilcoxon p-value
+wilcox_res <- wilcox.test(Dp ~ Group, data = dp_data)
+pval <- wilcox_res$p.value
+
+# Create the plot with scientific notation for p-value
+ggplot(dp_data, aes(x = Group, y = Dp, fill = Group)) +
+ geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+ geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
+ theme_minimal() +
+ theme(legend.position = "none") +
+ ylab("Read Depth") +
+ xlab("") +
+ annotate("text",
+          x = 1.5,
+          y = max(dp_data$Dp, na.rm = TRUE) * 1.05,
+          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
+          size = 5,
+          fontface = "italic")
+
+# Boxplot
+dp_data <- rbind(
+ data.frame(Nc = as.numeric(on_target$Nc), Group = "On-target"),
+ data.frame(Nc = as.numeric(off_target$Nc), Group = "Off-target")
+)
+
+# Compute Wilcoxon p-value
+wilcox_res <- wilcox.test(Nc ~ Group, data = dp_data)
+pval <- wilcox_res$p.value
+
+# Create the plot with scientific notation for p-value
+ggplot(dp_data, aes(x = Group, y = Nc, fill = Group)) +
+ geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+ geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
+ theme_minimal() +
+ theme(legend.position = "none") +
+ ylab("Number of Cells") +
+ xlab("") +
+ annotate("text",
+          x = 1.5,
+          y = max(dp_data$Nc, na.rm = TRUE) * 1.05,
+          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
+          size = 5,
+          fontface = "italic")
+
+# Boxplot
+dp_data <- rbind(
+ data.frame(Nc = as.numeric(on_target$VAF), Group = "On-target"),
+ data.frame(Nc = as.numeric(off_target$VAF), Group = "Off-target")
+)
+
+# Compute Wilcoxon p-value
+wilcox_res <- wilcox.test(Nc ~ Group, data = dp_data)
+pval <- wilcox_res$p.value
+
+# Create the plot with scientific notation for p-value
+ggplot(dp_data, aes(x = Group, y = Nc, fill = Group)) +
+ geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+ geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
+ theme_minimal() +
+ theme(legend.position = "none") +
+ ylab("VAF") +
+ xlab("") +
+ annotate("text",
+          x = 1.5,
+          y = max(dp_data$Nc, na.rm = TRUE) * 1.05,
+          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
+          size = 5,
+          fontface = "italic")
+
+# Boxplot
+dp_data <- rbind(
+ data.frame(Nc = as.numeric(on_target$Bc), Group = "On-target"),
+ data.frame(Nc = as.numeric(off_target$Bc), Group = "Off-target")
+)
+
+# Compute Wilcoxon p-value
+wilcox_res <- wilcox.test(Nc ~ Group, data = dp_data)
+pval <- wilcox_res$p.value
+
+# Create the plot with scientific notation for p-value
+ggplot(dp_data, aes(x = Group, y = Nc, fill = Group)) +
+ geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+ geom_jitter(width = 0.2, alpha = 0.4, size = 1) +
+ theme_minimal() +
+ theme(legend.position = "none") +
+ ylab("Number of ALT reads") +
+ xlab("") +
+ annotate("text",
+          x = 1.5,
+          y = max(dp_data$Nc, na.rm = TRUE) * 1.05,
+          label = paste0("Wilcoxon p = ", format(pval, scientific = TRUE, digits = 3)),
+          size = 5,
+          fontface = "italic")
+
+
+
+
+
+
+
+# Filter
+#merged <- merged[merged$dbSNP_RS == "" | merged$dbSNP_RS == "novel", ]
+merged <- subset(merged, gnomAD_AF < 0.001 | is.na(gnomAD_AF))
+
+write.table(merged, file = file.path(wd.de.data, paste0(pd_id, ".calling.step2.pass.nochr.vep.maf.vcf.gnomAD")), sep = "\t", quote = FALSE, row.names = FALSE)
+prefix <- "gnomAD_"
+#prefix <- ""
+
+inList <- length(intersect(unique(merged$SYMBOL), mn7))
+notInList <- length(unique(merged$SYMBOL)) - inList
+inList.txt <- paste0("In (n=", inList, ")")
+notInList.txt <- paste0("Not in (n=", notInList, ")")
+
+
 
 # -----------------------------------------------------------------------------
 # 
@@ -459,6 +527,18 @@ info <- c("DP", "NC", "BC", "CC")
 
 
 
+# -----------------------------------------------------------------------------
+# Pe-processing
+# -----------------------------------------------------------------------------
+# VCF file
+ref <- read.table(file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio", "hgncIDs2.txt"), sep = "\t", header = T, comment.char = "#", quote = "", fill = TRUE)
+
+ref.mn7 <- subset(ref, Approved_symbol %in% mn7)
+mn7.ensg <- unique(ref.mn7$Ensembl_gene_ID)
+
+merged$Ensembl_Class <- ifelse(merged$Gene %in% mn7.ensg, "In List", "Not in List")
+# Set factor levels to control plotting order
+merged$Ensembl_Class <- factor(merged$Ensembl_Class, levels = c("Not in List", "In List"))
 
 
 

@@ -230,7 +230,7 @@ so.integrated@meta.data$Phase <- factor(so.integrated@meta.data$Phase, levels = 
 phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
 # Plot the UMAP with Phase colors
 dim_plot <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap", label = FALSE) + 
-	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply custom colors & legend order
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G0/G1", "S", "G2/M")) +  # Apply custom colors & legend order
 	  labs(x = "UMAP 1", y = "UMAP 2", color = "Phase") +  # Set x-axis and y-axis labels
 	  theme(
 		    plot.title = element_blank(),  # Remove title
@@ -265,6 +265,7 @@ phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
 
 # Extract UMAP embeddings
 umap_data <- as.data.frame(Embeddings(so.integrated, reduction = "umap"))
+umap_data$Phase <- so.integrated$Phase  # Add this line!
 umap_data$seurat_clusters <- as.factor(so.integrated$seurat_clusters)  # Ensure clusters are factors
 
 # Compute cluster centroids
@@ -272,26 +273,37 @@ cluster_centers <- umap_data %>%
 	  group_by(seurat_clusters) %>%
 	  summarise(UMAP_1 = median(umap_1), UMAP_2 = median(umap_2))  # Use median to find label position
 
-# Create UMAP plot colored by Phase
-dim_plot <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap", label = FALSE) + 
-	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  
-	  labs(x = "UMAP 1", y = "UMAP 2", color = "Phase") +  
-	  theme(
-		    plot.title = element_blank(),  
-		    axis.title = element_text(size = 18),  
-		    axis.text = element_text(size = 16),  
-		    legend.text = element_text(size = 16),  
-		    legend.title = element_text(size = 16),
-		    legend.position = c(0.95, 0.95),        # bottom-right corner
-		    legend.justification = c("right", "top")  # anchor to that corner
-	  )
-# Overlay cluster labels at computed centroids using `geom_text_repel()`
-dim_plot <- dim_plot + 
-	  geom_text_repel(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = seurat_clusters), 
-				  													size = 4, color = "black")
+# Create UMAP plot with manual ggplot (same style as your loop code)
+dim_plot <- ggplot() +
+ # Plot all cells with their respective phase colors
+ geom_point(data = umap_data, 
+            aes(x = umap_1, y = umap_2, color = Phase), 
+            size = 0.5, alpha = 0.8) +
+ # Add cluster labels
+ geom_text_repel(data = cluster_centers, 
+                 aes(x = UMAP_1, y = UMAP_2, label = seurat_clusters), 
+                 size = 4, color = "black") +
+ # Manual color scale
+ scale_color_manual(values = phase_colors, 
+                    breaks = c("G1", "S", "G2M"), 
+                    labels = c("G0/G1", "S", "G2/M"),
+                    name = "Phase") +
+ labs(x = "UMAP 1", y = "UMAP 2") +
+ theme_classic() +
+ theme(
+  plot.title = element_blank(),  
+  axis.title = element_text(size = 18),  
+  axis.text = element_text(size = 16),  
+  legend.text = element_text(size = 16),  
+  legend.title = element_text(size = 16),
+  legend.position = c(0.95, 0.95),
+  legend.justification = c("right", "top")
+ ) +
+ guides(color = guide_legend(override.aes = list(size = 3)))
+
 # Save the final plot
 ggsave(file.path(wd.de.plots, paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6.png")), 
-							plot = dim_plot, width = 6, height = 6, dpi = 300)
+       plot = dim_plot, width = 6, height = 6, dpi = 300)
 
 # -----------------------------------------------------------------------------
 # After running Monocle3
@@ -303,7 +315,7 @@ monocle3 <- plot_cells(cds, color_cells_by = "Phase",
 																							label_branch_points=FALSE,
 																							graph_label_size=0) +
 	  theme_classic() +
-	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) + # Apply new color
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G0/G1", "S", "G2/M")) + # Apply new color
 	  theme(
 		    plot.title = element_blank(),  # Remove title
 		    axis.title = element_text(size = 18),  # Increase axis title size
@@ -332,7 +344,7 @@ ordered <- ggplot(as.data.frame(pdata_cds),
 																						y = Phase, 
 																						colour = Phase)) +  # Use Phase for colour
 	  geom_quasirandom(groupOnX = FALSE) +
-	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G1", "S", "G2/M")) +  # Apply the same Phase colours as DimPlot
+	  scale_color_manual(values = phase_colors, breaks = c("G1", "S", "G2M"), labels = c("G0/G1", "S", "G2/M")) +  # Apply the same Phase colours as DimPlot
 	  scale_y_discrete(labels = c("G1" = "G1", "S" = "S", "G2M" = "G2/M")) +  # Rename y-axis labels
 	  theme_classic() +
 	  xlab("Pseudotime") + 
@@ -343,7 +355,7 @@ ordered <- ggplot(as.data.frame(pdata_cds),
 						  	legend.position = "none")  # Remove legend
 
 # Save the plot
-ggsave(file.path(wd.de.plots, paste0("Cycle_pseudotime_new-color_-C0_-C4C20_6x6.png")),	plot = ordered, dpi = 300, width = 6, height = 6)
+ggsave(file.path(wd.de.plots, paste0("Cycle_pseudotime_new-color_-C0_6x6.png")),	plot = ordered, dpi = 300, width = 6, height = 6)
 
 #save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
 
@@ -372,4 +384,154 @@ so.integrated@meta.data$orig.ident <- ifelse(
    so.integrated@meta.data$orig.ident
 )
 
-save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
+save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
+
+# -----------------------------------------------------------------------------
+# Plot phase-by-phase - Each phase highlighted separately in a loop
+# Last Modified: 15/09/25
+# -----------------------------------------------------------------------------
+library(ggplot2)
+library(Seurat)
+library(dplyr)
+library(ggrepel)
+
+# Ensure `seurat_clusters` exists
+so.integrated$seurat_clusters <- Idents(so.integrated)
+
+# Extract UMAP embeddings and phase information
+umap_data <- as.data.frame(Embeddings(so.integrated, reduction = "umap"))
+umap_data$Phase <- so.integrated$Phase
+umap_data$seurat_clusters <- as.factor(so.integrated$seurat_clusters)
+
+# Compute cluster centroids (same for all plots)
+cluster_centers <- umap_data %>%
+ group_by(seurat_clusters) %>%
+ summarise(UMAP_1 = median(umap_1), UMAP_2 = median(umap_2))
+
+# Define phases to plot and their colors
+phases_to_plot <- c("G1", "S", "G2M")
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+phase_labels <- c("G1" = "G0/G1", "S" = "S", "G2M" = "G2/M")
+
+# Loop through each phase
+for (phase in phases_to_plot) {
+  # Separate target phase cells from others
+  target_cells <- umap_data %>% filter(Phase == phase)
+  other_cells <- umap_data %>% filter(Phase != phase)
+ 
+  # Create plot with target phase highlighted
+  dim_plot <- ggplot() +
+  # Plot other cells first (background) in light gray
+  geom_point(data = other_cells, 
+             aes(x = umap_1, y = umap_2), 
+             color = "#D3D3D3", size = 0.5, alpha = 0.8) +
+  # Plot target phase cells on top (highlighted)
+  geom_point(data = target_cells, 
+             aes(x = umap_1, y = umap_2, color = phase_labels[[phase]]), 
+             size = 0.5, alpha = 0.8) +
+  # Add cluster labels
+  geom_text_repel(data = cluster_centers, 
+                  aes(x = UMAP_1, y = UMAP_2, label = seurat_clusters), 
+                  size = 4, color = "black") +
+  # Manual color scale for target phase only
+  scale_color_manual(values = setNames(phase_colors[[phase]], phase_labels[[phase]]),
+                     name = "Phase") +
+  labs(x = "UMAP 1", y = "UMAP 2") +
+  theme_classic() +
+  theme(
+   plot.title = element_blank(),  
+   axis.title = element_text(size = 18),  
+   axis.text = element_text(size = 16),  
+   legend.text = element_text(size = 16),  
+   legend.title = element_text(size = 16),
+   legend.position = c(0.95, 0.95),
+   legend.justification = c("right", "top")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3)))
+ 
+ # Create filename for each phase
+ filename <- paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_", 
+                    phase, "_highlighted_6x6.png")
+ 
+ # Save the plot
+ ggsave(file.path(wd.de.plots, filename), 
+        plot = dim_plot, width = 6, height = 6, dpi = 300)
+ 
+ # Optional: print progress
+ cat("Saved plot for", phase_labels[[phase]], "phase\n")
+}
+
+# -----------------------------------------------------------------------------
+# Bar chart: Cell cycle phase proportions by cell type
+# Cell types on y-axis, proportions on x-axis
+# Phase order: G1, S, G2/M from left to right
+# No percentage labels on bars
+# Last Modified: 15/09/25
+# -----------------------------------------------------------------------------
+library(ggplot2)
+library(Seurat)
+library(dplyr)
+
+# Extract cell type and phase information
+cell_data <- data.frame(
+ cell_type = so.integrated$seurat_clusters,
+ phase = so.integrated$Phase
+)
+
+# Calculate proportions of each phase within each cell type
+phase_proportions <- cell_data %>%
+ group_by(cell_type, phase) %>%
+ summarise(count = n(), .groups = "drop") %>%
+ group_by(cell_type) %>%
+ mutate(
+  total = sum(count),
+  proportion = count / total
+ ) %>%
+ ungroup()
+
+# Reorder levels so "Stage 0" appears at the top of the y-axis
+phase_proportions$cell_type <- factor(
+ phase_proportions$cell_type,
+ levels = rev(levels(factor(phase_proportions$cell_type)))
+)
+
+# Reorder phase levels to show G1, S, G2/M from left to right
+# Need to specify in reverse order for stacked bars
+phase_proportions$phase <- factor(
+ phase_proportions$phase,
+ levels = c("G2M", "S", "G1")
+)
+
+# Define phase colors
+phase_colors <- c("G1" = "#619CFF", "S" = "#F8766D", "G2M" = "#00BA38")
+
+# Create stacked bar chart without percentage labels
+bar_plot <- ggplot(phase_proportions, aes(x = proportion, y = cell_type, fill = phase)) +
+ geom_bar(stat = "identity", width = 0.7) +
+ scale_fill_manual(values = phase_colors, 
+                   breaks = c("G1", "S", "G2M"), 
+                   labels = c("G0/G1", "S", "G2/M")) +
+ scale_x_continuous(labels = scales::percent_format(), 
+                    expand = c(0, 0)) +
+ labs(
+  x = "Proportion", 
+  y = "Cell type", 
+  fill = "Phase"
+ ) +
+ theme_classic() +
+ theme(
+  axis.title = element_text(size = 18),
+  axis.text = element_text(size = 16),
+  legend.text = element_text(size = 16),
+  legend.title = element_text(size = 16),
+  legend.position = "right",
+  panel.grid.major.x = element_line(color = "grey90", size = 0.5),
+  panel.grid.minor.x = element_line(color = "grey95", size = 0.25)
+ )
+
+# Save the plot
+ggsave(file.path(wd.de.plots, "cell_cycle_proportions_by_cell_typ_6x14.png"), 
+       plot = bar_plot, width = 14, height = 6, dpi = 300)
+
+# Print the proportions table
+print(phase_proportions)
