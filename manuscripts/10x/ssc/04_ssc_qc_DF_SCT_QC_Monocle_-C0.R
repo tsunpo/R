@@ -54,7 +54,7 @@ dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend() +
       axis.title = element_text(size = 18),  # Increase axis title size
       axis.text = element_text(size = 16),  # Increase axis tick label size
    )
-ggsave(file.path(wd.de.plots, paste0("DimPlot_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6*6_SSC.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("DimPlot_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6*6_SSC_PD53626b_ST1.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
 
 Idents(so.integrated) <- plyr::mapvalues(
    Idents(so.integrated),
@@ -384,7 +384,7 @@ so.integrated@meta.data$orig.ident <- ifelse(
    so.integrated@meta.data$orig.ident
 )
 
-save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
+save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
 
 # -----------------------------------------------------------------------------
 # Plot phase-by-phase - Each phase highlighted separately in a loop

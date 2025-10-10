@@ -19,15 +19,14 @@ wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots/ARID1A")
 dir.create(wd.de.plots, showWarnings = FALSE)
 
+load(file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated.RData")))
+
+so.integrated$cell_type <- Idents(so.integrated)
+
 # -----------------------------------------------------------------------------
 # After running SComatic genotyping
 # # Last Modified: 17/09/25
 # -----------------------------------------------------------------------------
-library(Seurat)
-
-load(file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated.RData")))
-so.integrated$cell_type <- Idents(so.integrated)
-
 wd.nf.data  <- file.path(wd.rna, "ngs/pacbio/SComatic/results/Step4_VariantCalling/new_beta")
 barcodes <- read.table(
    file = file.path(wd.nf.data, "scomatics_PD53626b.tsv"),
@@ -52,8 +51,8 @@ meta.st <- subset(meta, Index %in% barcodes.st$CB)
 # 01_QC
 # https://satijalab.org/seurat/articles/pbmc3k_tutorial
 # -----------------------------------------------------------------------------
+library(Seurat)
 library(qs)
-library(ggplot2) 
 
 so <- qread(file.path(wd.rna, "ngs/slide-tag/pipeline_outputs/PD53626B/Positions/seurat.qs"))
 so.integrated.st <- subset(so.integrated, sample.id == "PD53626b_ST1")

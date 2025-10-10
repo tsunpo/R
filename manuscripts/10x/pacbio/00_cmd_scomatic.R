@@ -17,7 +17,8 @@ pd_id <- "PD53621b"
 # Set working directory
 # -----------------------------------------------------------------------------
 wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/nf-scomatic/out", pd_id)
-wd.de.plots <- file.path(wd.de.data, "00_QC")
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/SComatic/results/Step4_VariantCalling/new_beta")
+wd.de.plots <- file.path(wd.de.data, pd_id)
 dir.create(wd.de.plots, showWarnings = FALSE)
 
 # -----------------------------------------------------------------------------
@@ -206,6 +207,11 @@ plot <- ggplot(
 png(file.path(wd.de.plots, "nf-scomatic_off_target.png"), width = 400, height = 600)
 print(plot)  # necessary to render the saved plot
 dev.off()
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Prepare for running SComatic genotyping
