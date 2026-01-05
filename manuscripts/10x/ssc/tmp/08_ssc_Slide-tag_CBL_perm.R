@@ -36,7 +36,7 @@ if (!dir.exists(dest)) {
 # -----------------------------------------------------------------------------
 library(dplyr)
 
-load(file=file.path(wd.de.plots, "origUM", paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_meta_cells_only_", GENE, ".RData")))
+load(file=file.path(wd.de.plots, "origUM", paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_meta_cells_only_", GENE, "_RNA.RData")))
 
 cor_results_obs <- phase_dist %>%
 	dplyr::group_by(phase) %>%
@@ -114,9 +114,9 @@ perm_cor_rho_wide <- tidyr::pivot_wider(perm_cor_long, id_cols = b, names_from =
 perm_cor_p_wide   <- tidyr::pivot_wider(perm_cor_long, id_cols = b, names_from = phase, values_from = pval)
 
 # write to disk
-readr::write_tsv(perm_cor_long, file.path(wd.de.plots, "origUM", "perm_cor_by_phase_long.tsv"))
-readr::write_tsv(perm_cor_rho_wide, file.path(wd.de.plots, "origUM", "perm_cor_rho_wide.tsv"))
-readr::write_tsv(perm_cor_p_wide,   file.path(wd.de.plots, "origUM", "perm_cor_p_wide.tsv"))
+readr::write_tsv(perm_cor_long, file.path(wd.de.plots, "origUM", "perm_cor_by_phase_long_RNA.tsv"))
+readr::write_tsv(perm_cor_rho_wide, file.path(wd.de.plots, "origUM", "perm_cor_rho_wide_RNA.tsv"))
+readr::write_tsv(perm_cor_p_wide,   file.path(wd.de.plots, "origUM", "perm_cor_p_wide_RNA.tsv"))
 
 # -----------------------------------------------
 # Example: empirical p
@@ -163,9 +163,9 @@ emp_dir <- bind_rows(lapply(phases, function(ph) {
 	)
 
 print(emp_dir)
-readr::write_tsv(emp_dir, file.path(wd.de.plots, "origUM", "phase_empirical_pvalues_directional.tsv"))
+readr::write_tsv(emp_dir, file.path(wd.de.plots, "origUM", "phase_empirical_pvalues_directional_RNA.tsv"))
 
-save(phase_colors, stage_labels, res_list, perm_cor_long, perm_cor_rho_wide, perm_cor_p_wide, phase_direction, emp_dir, file=file.path(wd.de.plots, "origUM", paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_meta_cells_only_", GENE, "_perm.RData")))
+save(phase_colors, stage_labels, res_list, perm_cor_long, perm_cor_rho_wide, perm_cor_p_wide, phase_direction, emp_dir, file=file.path(wd.de.plots, "origUM", paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated_meta_cells_only_", GENE, "_RNA_perm.RData")))
 
 # -----------------------------------------------------------------------------
 # To test correlation between distances (dist_to_next) and cell cycle phase proportions (G1/S/G2M)
@@ -176,7 +176,7 @@ trunc_dec <- function(x, k) trunc(x * 10^k) / 10^k
 
 # Helper to make & save one phase plot to a specific directory with a clear filename
 save_phase_plot_perm <- function(df, phase_text, phase_label, color_hex, outdir, emp_dir,
-									 prefix = "Spatial_ST_META_CBL_permutation_trunc_dec") {
+									 prefix = "Spatial_ST_META_CBL_permutation_trunc_dec_RNA") {
 	sub <- df %>% dplyr::filter(.data$phase == phase_text, is.finite(.data$dist_to_next))
 	if (nrow(sub) < 3 || all(is.na(sub$dist_to_next))) {
 		warning(sprintf("Not enough data to plot/correlate for phase %s", phase_text))
@@ -225,6 +225,21 @@ save_phase_plot_perm <- function(df, phase_text, phase_label, color_hex, outdir,
 save_phase_plot_perm(phase_dist, "G1",  "G0/G1", phase_colors[["G1"]],  file.path(wd.de.plots, "origUM"), emp_dir)
 save_phase_plot_perm(phase_dist, "S",   "S",     phase_colors[["S"]],   file.path(wd.de.plots, "origUM"), emp_dir)
 save_phase_plot_perm(phase_dist, "G2M", "G2/M",  phase_colors[["G2M"]], file.path(wd.de.plots, "origUM"), emp_dir)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # WT-matched resampling (N times)
@@ -275,7 +290,7 @@ wt_pool_targeted <- wt_pool %>%
 # Resampling loop
 # -----------------------------------------------
 B <- 1000L  # number of permutations
-res_list <- vector("list", B)  # each element will be a tibble with 3 rows (phases)
+res_list_resampling <- vector("list", B)  # each element will be a tibble with 3 rows (phases)
 
 for (b in seq_len(B)) {
 	# 5) Sample per stage using group_modify (per-group scalar n)
@@ -322,22 +337,23 @@ for (b in seq_len(B)) {
 			.groups = "drop"
 		)
 	
-	res_list[[b]] <- cor_results
+	res_list_resampling[[b]] <- cor_results
 }
+
+save(res_list_resampling, file=file.path(wd.de.plots, "origUM", paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_meta_cells_only_", GENE, "_perm_resampling.RData")))
 
 # =============================================================================
 # Compare WT-matched resampling with observed mutant result (S phase)
 # =============================================================================
-suppressPackageStartupMessages({library(dplyr); library(tidyr); library(ggplot2); library(readr)})
 
 # 1) Combine the 1,000 resamples into one long tibble with permutation index b
-perm_cor_long <- dplyr::bind_rows(res_list, .id = "b") %>%
+perm_cor_long_resampling <- dplyr::bind_rows(res_list_resampling, .id = "b") %>%
 	dplyr::mutate(b = as.integer(b),
 					  phase = as.character(phase))
 
-save_hist_plot <- function(perm_cor_long, phase_text, phase_label, color_hex, outdir)  {
+save_hist_plot <- function(df, phase_text, phase_label, color_hex, outdir)  {
 	# 2) Extract the WT null for S-phase (ρ per resample)
-	rhos_wt_S <- perm_cor_long %>%
+	rhos_wt_S <- df %>%
 		dplyr::filter(phase == phase_text) %>%
 		dplyr::pull(rho)
 	
@@ -370,19 +386,24 @@ save_hist_plot <- function(perm_cor_long, phase_text, phase_label, color_hex, ou
 		geom_histogram(bins = 40) +
 		geom_vline(xintercept = rho_mut_S, linewidth = 1) +
 		labs(
-			title = "WT-matched resamples (S-phase)",
-			subtitle = sprintf("empirical p = %.4f (N = %d resamples)",
-									 rho_mut_S, emp_p_wt_vs_mut, N),
-			x = "Spearman ρ (S-phase) from WT-matched resamples",
+			title = "WT-matched resamples",
+			subtitle = sprintf("empirical p = %.4f", emp_p_wt_vs_mut),
+			x = "Spearman ρ (S-phase)",
 			y = "Count"
 		) +
-		theme_bw(base_size = 12)
+		theme_bw(base_size = 12) +
+		ggplot2::theme(
+			legend.position = "none",
+			plot.title = ggplot2::element_text(face = "bold", size = 20, hjust = 0.5),
+			axis.title = ggplot2::element_text(size = 18),
+			axis.text  = ggplot2::element_text(size = 16)
+		)
 	ggsave(out_png, p_hist, width = 6, height = 4.5, dpi = 300)
 	message("Saved: ", out_png)	
 }
 
 # Save each phase plot with different file names in the same directory
-save_hist_plot(perm_cor_long, "G1",  "G0/G1", phase_colors[["G1"]])
-save_hist_plot(perm_cor_long, "S",   "S",     phase_colors[["S"]])
-save_hist_plot(perm_cor_long, "G2M", "G2/M",  phase_colors[["G2M"]])
+save_hist_plot(perm_cor_long_resampling, "G1",  "G0/G1", phase_colors[["G1"]])
+save_hist_plot(perm_cor_long_resampling, "S",   "S",     phase_colors[["S"]])
+save_hist_plot(perm_cor_long_resampling, "G2M", "G2/M",  phase_colors[["G2M"]])
 

@@ -54,7 +54,7 @@ dim_plot <- DimPlot(so.integrated, label = TRUE) + NoLegend() +
       axis.title = element_text(size = 18),  # Increase axis title size
       axis.text = element_text(size = 16),  # Increase axis tick label size
    )
-ggsave(file.path(wd.de.plots, paste0("DimPlot_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6*6_SSC_PD53626b_ST1.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("DimPlot_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6*6_SSC.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
 
 Idents(so.integrated) <- plyr::mapvalues(
    Idents(so.integrated),
@@ -155,7 +155,7 @@ monocle3 <- plot_cells(cds, color_cells_by = "pseudotime_rev",
       legend.position = c(0.95, 0.95),       # top-right corner
       legend.justification = c("right", "top")  # anchor to that corner
    )
-ggsave(file.path(wd.de.plots, paste0("pseudotime_rev_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6_test.png")), plot = monocle3, dpi = 300, width = 6, height = 6)
+ggsave(file.path(wd.de.plots, paste0("pseudotime_rev_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6.png")), plot = monocle3, dpi = 300, width = 6, height = 6)
 
 # -----------------------------------------------------------------------------
 # Methods: ggbeeswarm
@@ -212,16 +212,18 @@ ggsave(file.path(wd.de.plots, paste0("pseudotime_rev_ggbeeswarm_cycle_SSC_DF_SCT
 
 # -----------------------------------------------------------------------------
 # Cell cycle analysis
-# Last Modified: 10/02/25
+# Last Modified: 20/10/25; 10/02/25
 # -----------------------------------------------------------------------------
+DefaultAssay(so.integrated) <- "RNA" # Very important!
+
 cc.genes <- Seurat::cc.genes.updated.2019  # Updated gene lists
 s.genes <- cc.genes$s.genes  # S phase markers
 g2m.genes <- cc.genes$g2m.genes  # G2/M phase markers
 
 so.integrated <- CellCycleScoring(so.integrated, 
-																																		s.features = s.genes, 
-																																		g2m.features = g2m.genes, 
-																																		set.ident = F)  # Updates the cell identities (Idents(seurat_obj)) with the assigned cell cycle phases if set.ident = TRUE.
+											 s.features = s.genes, 
+											 g2m.features = g2m.genes, 
+											 set.ident = F)  # Updates the cell identities (Idents(seurat_obj)) with the assigned cell cycle phases if set.ident = TRUE.
 
 # Ensure Phase is a factor and ordered correctly
 so.integrated@meta.data$Phase <- factor(so.integrated@meta.data$Phase, levels = c("G1", "S", "G2M"))
@@ -245,7 +247,7 @@ dim_plot <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap", label
 cluster_positions <- DimPlot(so.integrated, group.by = "Phase", reduction = "umap", label = TRUE, repel = TRUE)
 # **Overlay cluster labels on the same plot**
 dim_plot <- LabelClusters(plot = dim_plot, id = "Phase", text = cluster_positions$data$Phase, repel = TRUE, size = 6, color = "black")
-ggsave(file.path(wd.de.plots, paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6_00.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6_RNA_00.png")), plot = dim_plot, width = 6, height = 6, dpi = 300)
 
 VlnPlot(so.integrated, group.by = "Phase", cols= phase_colors, features = c("S.Score", "G2M.Score"), pt.size = 0)
 VlnPlot(so.integrated, group.by = "seurat_clusters", features = c("S.Score"), pt.size = 0) + NoLegend()
@@ -282,7 +284,7 @@ dim_plot <- ggplot() +
  # Add cluster labels
  geom_text_repel(data = cluster_centers, 
                  aes(x = UMAP_1, y = UMAP_2, label = seurat_clusters), 
-                 size = 4, color = "black") +
+                 size = 5, color = "black") +
  # Manual color scale
  scale_color_manual(values = phase_colors, 
                     breaks = c("G1", "S", "G2M"), 
@@ -302,7 +304,7 @@ dim_plot <- ggplot() +
  guides(color = guide_legend(override.aes = list(size = 3)))
 
 # Save the final plot
-ggsave(file.path(wd.de.plots, paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6.png")), 
+ggsave(file.path(wd.de.plots, paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6_RNA.png")), 
        plot = dim_plot, width = 6, height = 6, dpi = 300)
 
 # -----------------------------------------------------------------------------
@@ -323,7 +325,7 @@ monocle3 <- plot_cells(cds, color_cells_by = "Phase",
 		    legend.text = element_text(size = 16),  # Increase legend text size
 		    legend.title = element_text(size = 16)  # Increase legend title size
 	  )
-ggsave(file.path(wd.de.plots, paste0("Cycle_pseudotime_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6.png")), plot = monocle3, width = 6, height = 6, dpi = 300)
+ggsave(file.path(wd.de.plots, paste0("Cycle_pseudotime_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_6x6_RNA.png")), plot = monocle3, width = 6, height = 6, dpi = 300)
 
 library(ggbeeswarm)
 library(colorRamps)
@@ -355,7 +357,7 @@ ordered <- ggplot(as.data.frame(pdata_cds),
 						  	legend.position = "none")  # Remove legend
 
 # Save the plot
-ggsave(file.path(wd.de.plots, paste0("Cycle_pseudotime_new-color_-C0_6x6.png")),	plot = ordered, dpi = 300, width = 6, height = 6)
+ggsave(file.path(wd.de.plots, paste0("Cycle_pseudotime_new-color_-C0_6x6_RNA.png")),	plot = ordered, dpi = 300, width = 6, height = 6)
 
 #save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
 
@@ -384,7 +386,7 @@ so.integrated@meta.data$orig.ident <- ifelse(
    so.integrated@meta.data$orig.ident
 )
 
-save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
+save(cds, so.integrated, phase_colors, file=file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated_monocle3+phase_RNA.RData")))
 
 # -----------------------------------------------------------------------------
 # Plot phase-by-phase - Each phase highlighted separately in a loop
@@ -451,7 +453,7 @@ for (phase in phases_to_plot) {
  
  # Create filename for each phase
  filename <- paste0("Cycle_SSC_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_", 
-                    phase, "_highlighted_6x6.png")
+                    phase, "_highlighted_6x6_RNA.png")
  
  # Save the plot
  ggsave(file.path(wd.de.plots, filename), 
@@ -530,7 +532,7 @@ bar_plot <- ggplot(phase_proportions, aes(x = proportion, y = cell_type, fill = 
  )
 
 # Save the plot
-ggsave(file.path(wd.de.plots, "cell_cycle_proportions_by_cell_typ_6x14.png"), 
+ggsave(file.path(wd.de.plots, "cell_cycle_proportions_by_cell_typ_6x14_RNA.png"), 
        plot = bar_plot, width = 14, height = 6, dpi = 300)
 
 # Print the proportions table

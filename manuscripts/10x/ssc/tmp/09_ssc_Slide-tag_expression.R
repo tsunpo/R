@@ -3,6 +3,12 @@
 # Author       : Tsun-Po Yang (ty2@sanger.ac.uk)
 # Last Modified: 15/09/25
 # =============================================================================
+CHR  <- "chr11"
+POS  <- 119284966          # if your table has Start column
+REF  <- "T"
+ALT  <- "A"
+GENE <- "CBL"
+MUT <- paste0(gsub("chr", "", CHR), "_", POS, "_", REF, "_", ALT)
 
 # -----------------------------------------------------------------------------
 # Set working directory
@@ -16,33 +22,40 @@ wd.rna <- file.path(wd, BASE)
 
 wd.de    <- file.path(wd.rna, "analysis", paste0(base, ""))
 wd.de.data  <- file.path(wd.de, "data")
-wd.de.plots <- file.path(wd.de, "plots")
-
-load(file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated.RData")))
-
-so.integrated$cell_type <- Idents(so.integrated)
+wd.de.plots <- file.path(wd.de, "plots", GENE, MUT)
+#dir.create(file.path(wd.de.plots, "origUM"), showWarnings = FALSE)
+dest <- file.path(wd.de.plots, "origUM")
+if (!dir.exists(dest)) {
+	ok <- base::dir.create(dest, recursive = TRUE, showWarnings = FALSE, mode = "0775")
+	if (!ok && !dir.exists(dest)) stop("Failed to create: ", dest)
+}
 
 # -----------------------------------------------------------------------------
 # After running SComatic genotyping
 # # Last Modified: 17/09/25
 # -----------------------------------------------------------------------------
+library(Seurat)
+
+load(file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated.RData")))
+so.integrated$cell_type <- Idents(so.integrated)
+
 wd.nf.data  <- file.path(wd.rna, "ngs/pacbio/SComatic/results/Step4_VariantCalling/new_beta")
 barcodes <- read.table(
-   file = file.path(wd.nf.data, "scomatics_PD53626b.tsv"),
-   sep = "\t",
-   header = T,
-   stringsAsFactors = FALSE
+	file = file.path(wd.nf.data, "scomatics_PD53626b.tsv"),
+	sep = "\t",
+	header = T,
+	stringsAsFactors = FALSE
 )
 barcodes <- subset(barcodes, Cell_type_observed == "germ")
 
 meta <- read.table(
-   file = file.path(wd.nf.data, "celltypes.tsv"),
-   sep = "\t",
-   header = T,
-   stringsAsFactors = FALSE
+	file = file.path(wd.nf.data, "celltypes.tsv"),
+	sep = "\t",
+	header = T,
+	stringsAsFactors = FALSE
 )
 
-barcodes.st <- subset(subset(barcodes, CHROM == "chr11"), Base_observed == "A")
+barcodes.st <- subset(subset(subset(barcodes, CHROM == CHR), Start == POS), Base_observed == ALT)
 meta.st <- subset(meta, Index %in% barcodes.st$CB)
 
 # -----------------------------------------------------------------------------
@@ -58,22 +71,16 @@ so.integrated.st <- subset(so.integrated, sample.id == "PD53626b_ST1")
 # MAST
 # Last Modified: 19/09/25
 # -----------------------------------------------------------------------------
-suppressPackageStartupMessages({
-	library(Seurat)
-	library(dplyr)
-	library(ggplot2)
-	library(readr)
-})
 
 # -----------------------------
 # Inputs
 # -----------------------------
 obj  <- so.integrated.st
-gene <- "CBL"
+DefaultAssay(obj) <- "RNA"
 
 # Your variant calls (exact cell IDs; no suffix changes here)
-barcodes.ref <- subset(subset(barcodes, CHROM == "chr11"), Base_observed == "T")
-barcodes.alt <- subset(subset(barcodes, CHROM == "chr11"), Base_observed == "A")
+barcodes.ref <- subset(subset(barcodes, CHROM == CHR), Base_observed == REF)
+barcodes.alt <- subset(subset(barcodes, CHROM == CHR), Base_observed == ALT)
 
 # -----------------------------------------------------------------------------
 # To quantify per-cell allelic imbalance (AI) at chr6:31631400 (per cell type)
@@ -86,17 +93,6 @@ suppressPackageStartupMessages({
 	library(Seurat)
 	library(grid) # not strictly needed here, but harmless if already attached elsewhere
 })
-
-# -----------------------------
-# CONFIG
-# -----------------------------
-locus_chr <- "chr11"
-locus_pos <- 119284966          # if your table has Start column
-gene      <- "CBL"
-
-# choose the Seurat object you’re using
-obj <- if (exists("so.integrated.st")) so.integrated.st else so.st
-DefaultAssay(obj) <- "RNA"
 
 # Helpers
 get_cb <- function(df){
@@ -124,8 +120,8 @@ if (!"CB" %in% names(bar_raw) && "Index" %in% names(bar_raw)) {
 
 # filter to locus (CHR + Start if present) and only the ALT cells of interest
 bar_loc <- bar_raw %>%
-	dplyr::filter(.data$CHROM == !!locus_chr) %>%
-	{ if (has_col(., "Start")) dplyr::filter(., .data$Start == !!locus_pos) else . } %>%
+	dplyr::filter(.data$CHROM == !!CHR) %>%
+	{ if (has_col(., "Start")) dplyr::filter(., .data$Start == !!POS) else . } %>%
 	dplyr::filter(.data$CB %in% alt_cells_use) %>%
 	dplyr::mutate(Base_observed = toupper(.data$Base_observed))
 
@@ -133,8 +129,8 @@ bar_loc <- bar_raw %>%
 alt_ai <- bar_loc %>%
 	dplyr::group_by(.data$CB) %>%
 	dplyr::summarise(
-		REF_reads   = sum(Num_reads[Base_observed == "T"], na.rm = TRUE),
-		ALT_reads   = sum(Num_reads[Base_observed == "A"], na.rm = TRUE),
+		REF_reads   = sum(Num_reads[Base_observed == REF], na.rm = TRUE),
+		ALT_reads   = sum(Num_reads[Base_observed == ALT], na.rm = TRUE),
 		total_reads = REF_reads + ALT_reads,
 		.groups = "drop"
 	) %>%

@@ -23,21 +23,22 @@ wd.rna <- file.path(wd, BASE)
 wd.de    <- file.path(wd.rna, "analysis", paste0(base, ""))
 wd.de.data  <- file.path(wd.de, "data")
 wd.de.plots <- file.path(wd.de, "plots", GENE, MUT)
+
 #dir.create(file.path(wd.de.plots, "origUM"), showWarnings = FALSE)
-dest <- file.path(wd.de.plots, "origUM")
-if (!dir.exists(dest)) {
-	ok <- base::dir.create(dest, recursive = TRUE, showWarnings = FALSE, mode = "0775")
-	if (!ok && !dir.exists(dest)) stop("Failed to create: ", dest)
+wd.de.plots <- file.path(wd.de.plots, "CCF")
+if (!dir.exists(wd.de.plots)) {
+	ok <- base::dir.create(wd.de.plots, recursive = TRUE, showWarnings = FALSE, mode = "0775")
+	if (!ok && !dir.exists(wd.de.plots)) stop("Failed to create: ", dest)
 }
 
 # -----------------------------------------------------------------------------
 # After running SComatic genotyping
 # # Last Modified: 17/09/25
 # -----------------------------------------------------------------------------
-library(Seurat)
-
-load(file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated.RData")))
-so.integrated$cell_type <- Idents(so.integrated)
+#library(Seurat)
+#
+#load(file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated.RData")))
+#so.integrated$cell_type <- Idents(so.integrated)
 
 wd.nf.data  <- file.path(wd.rna, "ngs/pacbio/SComatic/results/Step4_VariantCalling/new_beta")
 barcodes <- read.table(
@@ -55,8 +56,959 @@ meta <- read.table(
    stringsAsFactors = FALSE
 )
 
-barcodes.st <- subset(subset(subset(barcodes, CHROM == CHR), Start == POS), Base_observed == ALT)
-meta.st <- subset(meta, Index %in% barcodes.st$CB)
+#barcodes.st <- subset(subset(subset(barcodes, CHROM == CHR), Start == POS), Base_observed == ALT)
+#meta.st <- subset(meta, Index %in% barcodes.st$CB)
+
+# -----------------------------------------------------------------------------
+# Standard Seurat re-processing workflow
+# 01_QC
+# https://satijalab.org/seurat/articles/pbmc3k_tutorial
+# -----------------------------------------------------------------------------
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(Seurat)
+library(ggplot2)
+library(scales)
+
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_monocle3+phase.RData")))
+#load(file=file.path(wd.de.data, paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated_monocle3+phase_RNA.RData")))
+#so.integrated.st <- subset(so.integrated, sample.id == "PD53626b_ST1")
+
+# -----------------------------------------------------------------------------
+# Get so.st
+# Last Modified: 17/09/25
+# -----------------------------------------------------------------------------
+load(file=file.path(wd.de, "plots", GENE, MUT, "origUM", paste0("ssc_filtered_normalised_DF_SCT_5000_25_100_integrated_PCA_UMAP_23_0.5_-C0_ordered_annotated_meta_cells_only_", GENE, "_RNA_so.st.RData")))
+
+# -----------------------------------------------------------------------------
+# Clonal expansion across 12 stages
+# Prevalence p_i with misclassification (s_i, fpr_i)
+# Posterior by grid, trend tests, ribbon plot
+# 
+# # Last Modified: 13/10/25
+# -----------------------------------------------------------------------------
+library(dplyr)
+if (requireNamespace("conflicted", quietly = TRUE)) {
+	conflicted::conflict_prefer("select",   "dplyr", quiet = TRUE)
+	conflicted::conflict_prefer("filter",   "dplyr", quiet = TRUE)
+	conflicted::conflict_prefer("summarise","dplyr", quiet = TRUE)
+	conflicted::conflict_prefer("mutate",   "dplyr", quiet = TRUE)
+	conflicted::conflict_prefer("rename",   "dplyr", quiet = TRUE)
+}
+
+stage_order <- c(
+	"Stage 0", "Stage 0A", "Stage 0B", "Stage 1", "Stage 2", "Stage 3", "Leptotene", "Zygotene", "Pachytene", "Diplotene", "Meiotic division", "Early spermatid","Late spermatid"
+)
+
+# --- 0) Build per-cell call table (union of REF & ALT) ------------------------
+# barcodes already restricted to Cell_type_observed == "germ"
+ref_calls <- subset(subset(barcodes, CHROM == CHR), Base_observed == REF) %>%
+	dplyr::select(CB, Num_reads) %>%
+	group_by(CB) %>%
+	summarise(ref_reads = sum(Num_reads), .groups = "drop")
+
+alt_calls <- subset(subset(barcodes, CHROM == CHR), Base_observed == ALT) %>%
+	dplyr::select(CB, Num_reads) %>%
+	group_by(CB) %>%
+	summarise(alt_reads = sum(Num_reads), .groups = "drop")
+
+calls <- full_join(ref_calls, alt_calls, by = "CB") %>%
+	mutate(
+		call = dplyr::case_when(
+			!is.na(alt_reads) ~ "ALT",     # prefer ALT if seen at least once
+			!is.na(ref_reads) ~ "REF",
+			TRUE ~ NA_character_
+		)
+	)
+
+# 1) Get stage labels from Seurat (PD53626b_ST1) and meta as fallback
+seu_stage <- FetchData(so.st, vars = "cell_type") %>%
+	tibble::rownames_to_column("CB") %>%
+	dplyr::rename(stage_seu = cell_type)
+
+meta_stage <- meta %>%
+	dplyr::select(Index, Cell_type) %>%
+	dplyr::rename(CB = Index, stage_meta = Cell_type)
+
+# 2) Join labels (prefer Seurat), clean whitespace
+calls2 <- calls %>%
+	left_join(seu_stage, by = "CB") %>%
+	left_join(meta_stage, by = "CB") %>%
+	mutate(stage_raw = if_else(!is.na(stage_seu), stage_seu, stage_meta),
+			 stage_raw = str_squish(as.character(stage_raw)))
+
+# 3) Keep only your 12 germ stages EXACTLY as given
+calls2 <- calls2 %>%
+	mutate(stage = if_else(stage_raw %in% stage_order, stage_raw, NA_character_)) %>%
+	filter(!is.na(stage)) %>%
+	mutate(stage = factor(stage, levels = stage_order))
+
+# (Optional) see what got dropped (helpful sanity check)
+dropped <- calls %>%
+	anti_join(calls2 %>% dplyr::select(CB), by = "CB") %>%
+	left_join(meta_stage, by = "CB") %>%
+	dplyr::count(stage_meta, sort = TRUE)
+if (nrow(dropped)) {
+	message("Dropped (labels not in your 12-state scheme):")
+	print(dropped, n = 20)
+}
+
+# 4) Tally k (ALT+ cells) and n (evaluable REF ∪ ALT) per stage
+k_n_by_stage <- calls2 %>%
+	group_by(stage) %>%
+	summarise(
+		k = sum(call == "ALT", na.rm = TRUE),
+		n = n_distinct(CB),
+		.groups = "drop"
+	) %>%
+	arrange(stage) %>%
+	complete(stage = factor(stage_order, levels = stage_order),
+				fill = list(k = 0L, n = 0L))
+
+print(k_n_by_stage)
+
+# 5) Export vectors for the prevalence model
+k_vec <- as.integer(k_n_by_stage$k)
+n_vec <- as.integer(k_n_by_stage$n)
+names(k_vec) <- names(n_vec) <- as.character(k_n_by_stage$stage)
+
+cat("\n# k (ALT-positive) per stage:\n")
+print(k_vec)
+cat("\n# n (evaluable) per stage:\n")
+print(n_vec)
+
+# -----------------------------------------------------------------------------
+# Estimate stage-wise mutant prevalence (pᵢ) correcting for stage-specific sensitivity (sᵢ) 
+# and false-positive rate (fprᵢ), then test for a monotonic increase across your 12 ordered stages 
+# and plot a ribbon with 95% credible intervals
+# -----------------------------------------------------------------------------
+suppressPackageStartupMessages({
+	library(dplyr); library(tidyr); library(stringr)
+	library(Seurat); library(ggplot2); library(scales)
+})
+
+# ---- 1) Derive stage-specific sensitivity s_i from coverage among ALL cells ----
+# Build per-cell metadata (stage + CB list)
+all_cells <- FetchData(so.st, vars = "cell_type") %>%
+	tibble::rownames_to_column("CB") %>%
+	transmute(CB, stage = factor(str_squish(as.character(cell_type)), levels = stage_order)) %>%
+	filter(!is.na(stage))
+
+# Coverage at locus per CB from calls (any ref/alt reads => covered)
+cov_tbl <- calls %>%
+	mutate(total_reads = dplyr::coalesce(ref_reads,0) + dplyr::coalesce(alt_reads,0),
+			 has_cov    = total_reads > 0) %>%
+	select(CB, has_cov, total_reads)
+
+# Coverage fraction among ALL cells of each stage
+cov_stage <- all_cells %>%
+	left_join(cov_tbl, by = "CB") %>%
+	mutate(has_cov = tidyr::replace_na(has_cov, FALSE),
+			 total_reads = tidyr::replace_na(total_reads, 0)) %>%
+	group_by(stage) %>%
+	summarise(n_cells = n(),
+				 cov_frac = mean(has_cov),
+				 reads_mu = ifelse(any(has_cov), mean(total_reads[has_cov]), 0),
+				 .groups = "drop") %>%
+	arrange(stage)
+
+# Convert coverage fraction into sensitivity s_i by scaling a baseline
+s_baseline <- 0.65     # adjust if you have an empirical estimate
+med_cov    <- median(cov_stage$cov_frac[cov_stage$n_cells > 5], na.rm = TRUE)
+if (!is.finite(med_cov) || med_cov == 0) med_cov <- median(cov_stage$cov_frac, na.rm = TRUE)
+
+s_by_stage <- cov_stage %>%
+	mutate(s = pmax(0.01, pmin(0.99, s_baseline * cov_frac / med_cov))) %>%
+	select(stage, s)
+
+# If coverage could not be computed (e.g., missing objects), fall back to constant s
+if (nrow(s_by_stage) == 0 || any(is.na(s_by_stage$s))) {
+	s_by_stage <- tibble(stage = factor(stage_order, levels = stage_order),
+								s = rep(s_baseline, length(stage_order)))
+}
+
+# ---- 2) False positive rate (stage-constant here; replace if you have neg controls) ----
+fpr_default <- 1e-3
+fpr_by_stage <- tibble(stage = factor(stage_order, levels = stage_order),
+							  fpr = fpr_default)
+
+# ---- 3) Assemble prevalence inputs per stage (k, n, s_i, fpr_i) ---------------
+df_prev <- k_n_by_stage %>%
+	mutate(stage = factor(as.character(stage), levels = stage_order)) %>%
+	left_join(s_by_stage,   by = "stage") %>%
+	left_join(fpr_by_stage, by = "stage")
+
+# ---- 4) Posterior p_i on a grid with misclassification correction -------------
+posterior_p_grid <- function(k, n, s, fpr, a=1, b=1, grid_len=5001) {
+	p <- seq(0, 1, length.out = grid_len)
+	q <- p * s + (1 - p) * fpr
+	loglik   <- dbinom(k, size = n, prob = q, log = TRUE)
+	logprior <- dbeta(p, shape1 = a, shape2 = b, log = TRUE)
+	logpost  <- loglik + logprior
+	w <- exp(logpost - max(logpost)); w <- w/sum(w)
+	cdf <- cumsum(w)
+	tibble(
+		p_mean = sum(p*w),
+		p_low  = p[which.max(cdf >= 0.025)],
+		p_high = p[which.max(cdf >= 0.975)],
+		p_mode = p[which.max(w)]
+	)
+}
+
+summ <- df_prev %>%
+	rowwise() %>%
+	mutate(res = list(posterior_p_grid(k, n, s, fpr))) %>%
+	tidyr::unnest(res) %>%
+	ungroup() %>%
+	mutate(stage_idx = as.integer(stage))
+
+# ---- 5) Monotonic increase tests across ordered stages ------------------------
+sp <- suppressWarnings(cor.test(summ$p_mean, summ$stage_idx, method = "spearman", exact = FALSE))
+kd <- suppressWarnings(cor.test(summ$p_mean, summ$stage_idx, method = "kendall"))
+fit <- lm(qlogis(pmin(pmax(p_mean,1e-6),1-1e-6)) ~ stage_idx, data = summ)
+
+cat("\n--- Trend tests (misclassification-corrected p_i vs stage) ---\n")
+cat(sprintf("Spearman rho = %.3f, p = %.3g\n", sp$estimate, sp$p.value))
+cat(sprintf("Kendall tau  = %.3f, p = %.3g\n", kd$estimate, kd$p.value))
+cat(sprintf("Logit slope per stage = %.3f (p = %.3g)\n",
+				coef(summary(fit))['stage_idx','Estimate'],
+				coef(summary(fit))['stage_idx','Pr(>|t|)']))
+
+# ---- 6) Plot: ribbon (95% CrI) of p_i across stages --------------------------
+lab_pct <- function(x) scales::percent(x, accuracy = 1)
+
+p1 <- ggplot(summ, aes(x = stage_idx, y = p_mean, group = 1)) +
+	geom_ribbon(aes(ymin = p_low, ymax = p_high), alpha = 0.20) +
+	geom_line(size = 0.9) +
+	geom_point(size = 2) +
+	scale_x_continuous(breaks = summ$stage_idx, labels = levels(summ$stage)) +
+	scale_y_continuous(labels = lab_pct, limits = c(0, NA)) +
+	labs(x = "Cell type",
+		  y = "Cancer cell fraction (CCF)",
+		  title = "CBL (11:119284966 T>A)",
+		  subtitle = "") +
+	theme_classic(base_size = 12) +
+	theme(axis.text.x = element_text(angle = 35, hjust = 1),
+			plot.title = ggplot2::element_text(face = "bold", size = 16, hjust = 0.5),
+			axis.title = ggplot2::element_text(size = 14),
+			axis.text  = ggplot2::element_text(size = 12))
+print(p1)
+
+# Save
+outfile <- file.path(wd.de.plots, paste0(GENE, "_prevalence_by_stage_misclass_corrected.png"))
+ggsave(outfile, plot = p1, width = 6, height = 6, dpi = 300)
+cat("Saved:", outfile, "\n")
+
+#Mutant prevalence pᵢ (posterior mean)
+#CBL (11:119284966 T>A) prevalence across germ cell stages
+#Misclassification-corrected posterior mean ± 95% credible interval
+
+# ---- 7) Export tidy results table --------------------------------------------
+out <- summ %>%
+	select(stage, k, n, s, fpr, p_mean, p_low, p_high) %>%
+	mutate(across(c(p_mean,p_low,p_high), ~ round(., 4)))
+print(out, n = Inf)
+readr::write_csv(out, file.path(wd.de.plots, paste0(GENE, "_prevalence_by_stage_misclass_corrected.csv")))
+
+# -----------------------------------------------------------------------------
+# Bin schemes
+# -----------------------------------------------------------------------------
+# 1) 3 bins: pre-meiotic, meiotic, post-meiotic
+bins_3 <- list(
+	`Pre-meiotic`   = c("Stage 0","Stage 0A","Stage 0B","Stage 1"),
+	`Meiotic`       = c("Stage 2","Stage 3","Leptotene","Zygotene","Pachytene","Diplotene","Meiotic division"),
+	`Post-meiotic`  = c("Early spermatid","Late spermatid")
+)
+
+# 2) 4 bins by dominant phase (no overlaps)
+bins_4 <- list(
+	`G0/G1 (pre)`   = c("Stage 0","Stage 0A","Stage 0B","Stage 1"),
+	`S`             = c("Stage 2","Stage 3","Leptotene"),
+	`G2/M`          = c("Zygotene","Pachytene","Diplotene","Meiotic division"),
+	`G0 (post)`     = c("Early spermatid","Late spermatid")
+)
+
+# ---------- Stage-specific sensitivity from coverage ----------
+# all cells with stage
+all_cells <- FetchData(so.st, vars = "cell_type") %>%
+	tibble::rownames_to_column("CB") %>%
+	transmute(CB, stage = factor(str_squish(as.character(cell_type)), levels = stage_order)) %>%
+	filter(!is.na(stage))
+
+# coverage at locus
+cov_tbl <- calls %>%
+	mutate(total_reads = coalesce(ref_reads,0) + coalesce(alt_reads,0),
+			 has_cov    = total_reads > 0) %>%
+	select(CB, has_cov, total_reads)
+
+cov_stage <- all_cells %>%
+	left_join(cov_tbl, by = "CB") %>%
+	mutate(has_cov = replace_na(has_cov, FALSE),
+			 total_reads = replace_na(total_reads, 0)) %>%
+	group_by(stage) %>%
+	summarise(n_cells=n(),
+				 cov_frac=mean(has_cov),
+				 reads_mu=ifelse(any(has_cov), mean(total_reads[has_cov]), 0),
+				 .groups="drop")
+
+s_baseline <- 0.65
+med_cov <- median(cov_stage$cov_frac[cov_stage$n_cells>5], na.rm=TRUE)
+if (!is.finite(med_cov) || med_cov==0) med_cov <- median(cov_stage$cov_frac, na.rm=TRUE)
+
+s_by_stage <- cov_stage %>%
+	mutate(s = pmax(0.01, pmin(0.99, s_baseline * cov_frac / med_cov))) %>%
+	select(stage, s)
+
+fpr_default <- 1e-3
+fpr_by_stage <- tibble(stage=factor(stage_order,levels=stage_order), fpr=fpr_default)
+
+# ---------- Helper: fit a bin scheme ----------
+posterior_p_grid <- function(k, n, s, fpr, a=1, b=1, grid_len=5001) {
+	p <- seq(0, 1, length.out = grid_len)
+	q <- p * s + (1 - p) * fpr
+	loglik   <- dbinom(k, size=n, prob=q, log=TRUE)
+	logprior <- dbeta(p, shape1=a, shape2=b, log=TRUE)
+	w <- exp(loglik + logprior - max(loglik + logprior))
+	w <- w/sum(w)
+	cdf <- cumsum(w)
+	tibble(
+		p_mean = sum(p*w),
+		p_low  = p[which.max(cdf >= 0.025)],
+		p_high = p[which.max(cdf >= 0.975)]
+	)
+}
+
+# --- Robust fitter: avoid Hessian inversion; borrow CIs from bin posteriors ---
+fit_bin_scheme <- function(k_n_by_stage, s_by_stage, fpr_by_stage, bins_named_list) {
+	stage_order <- levels(k_n_by_stage$stage)
+	
+	# stage -> bin map
+	map <- tibble(bin = names(bins_named_list),
+					  stages = I(unname(bins_named_list))) |>
+		tidyr::unnest_longer(stages, values_to = "stage") |>
+		mutate(stage = factor(stage, levels = stage_order),
+				 bin   = factor(bin, levels = names(bins_named_list)))
+	
+	df <- k_n_by_stage |>
+		mutate(stage = factor(as.character(stage), levels = stage_order)) |>
+		left_join(map, by = "stage") |>
+		left_join(s_by_stage, by = "stage") |>
+		left_join(fpr_by_stage, by = "stage") |>
+		arrange(bin, stage)
+	
+	stopifnot(!any(is.na(df$bin)))
+	
+	# Neg log-likelihood for bin logits theta
+	bins <- levels(df$bin)
+	npar <- length(bins)
+	nll <- function(theta) {
+		p <- plogis(theta)  # length npar
+		q <- p[as.integer(df$bin)] * df$s + (1 - p[as.integer(df$bin)]) * df$fpr
+		-sum(dbinom(df$k, size = df$n, prob = q, log = TRUE))
+	}
+	
+	opt <- optim(par = rep(qlogis(0.2), npar), fn = nll, method = "BFGS",
+					 control = list(maxit = 1000))
+	
+	loglik <- -opt$value
+	aic    <- 2*npar - 2*loglik
+	
+	# Posterior-by-bin for CIs (aggregating k,n and s,fpr with n-weights)
+	posterior_p_grid <- function(k, n, s, fpr, a=1, b=1, grid_len=5001) {
+		p <- seq(0, 1, length.out = grid_len)
+		q <- p * s + (1 - p) * fpr
+		loglik   <- dbinom(k, size = n, prob = q, log = TRUE)
+		logprior <- dbeta(p, shape1 = a, shape2 = b, log = TRUE)
+		w <- exp(loglik + logprior - max(loglik + logprior)); w <- w/sum(w)
+		cdf <- cumsum(w)
+		tibble(
+			p_mean = sum(p*w),
+			p_low  = p[which.max(cdf >= 0.025)],
+			p_high = p[which.max(cdf >= 0.975)]
+		)
+	}
+	
+	agg <- df |>
+		group_by(bin) |>
+		summarise(k_bin = sum(k), n_bin = sum(n),
+					 s_bin = sum(n*s)/sum(n),
+					 fpr_bin = sum(n*fpr)/sum(n), .groups = "drop") |>
+		rowwise() |>
+		mutate(post = list(posterior_p_grid(k_bin, n_bin, s_bin, fpr_bin))) |>
+		tidyr::unnest(post) |>
+		ungroup()
+	
+	# Report MLE p plus posterior CIs (no Hessian)
+	p_hat <- tibble(bin = bins, p = plogis(opt$par)) |>
+		left_join(agg |> select(bin, p_low, p_high), by = "bin")
+	
+	list(df_stage = df, p_hat_mle = p_hat, agg_posterior = agg,
+		  logLik = loglik, AIC = aic)
+}
+
+# (Re)define bins (as you had)
+bins_1  <- list(`All stages` = stage_order)
+bins_12 <- as.list(stage_order); names(bins_12) <- stage_order
+
+fit1  <- fit_bin_scheme(k_n_by_stage, s_by_stage, fpr_by_stage, bins_1)
+fit3  <- fit_bin_scheme(k_n_by_stage, s_by_stage, fpr_by_stage, bins_3)
+fit4  <- fit_bin_scheme(k_n_by_stage, s_by_stage, fpr_by_stage, bins_4)
+fit12 <- fit_bin_scheme(k_n_by_stage, s_by_stage, fpr_by_stage, bins_12)
+
+res <- dplyr::tibble(
+	model  = c("1-bin (null)", "3-bin (pre/meiotic/post)", "4-bin (G0→S→G2M→G0)", "12-bin (per-stage)"),
+	k      = c(1, 3, 4, 12),
+	logLik = c(fit1$logLik, fit3$logLik, fit4$logLik, fit12$logLik),
+	AIC    = c(fit1$AIC,    fit3$AIC,    fit4$AIC,    fit12$AIC)
+) |> arrange(AIC)
+print(res)
+
+# Monotone trend across bins (posterior means)
+mono_test <- function(agg, order_labels) {
+	x <- seq_along(order_labels); m <- match(agg$bin, order_labels)
+	sp <- suppressWarnings(cor.test(agg$p_mean, x[m], method = "spearman", exact = FALSE))
+	kd <- suppressWarnings(cor.test(agg$p_mean, x[m], method = "kendall"))
+	c(Spearman_rho = unname(sp$estimate), Spearman_p = sp$p.value,
+	  Kendall_tau  = unname(kd$estimate), Kendall_p  = kd$p.value)
+}
+mt3 <- mono_test(fit3$agg_posterior, names(bins_3))
+mt4 <- mono_test(fit4$agg_posterior, names(bins_4))
+cat(sprintf("\n3-bin trend (Pre→Meiotic→Post): rho=%.3f (p=%.3g)\n", mt3["Spearman_rho"], mt3["Spearman_p"]))
+cat(sprintf("4-bin trend (G0/G1→S→G2/M→G0):  rho=%.3f (p=%.3g)\n", mt4["Spearman_rho"], mt4["Spearman_p"]))
+
+# Plots
+plot_bins <- function(agg, title) {
+	agg <- agg |> mutate(bin_idx = as.integer(factor(bin, levels = unique(bin))))
+	ggplot(agg, aes(x = bin, y = p_mean, group = 1)) +
+		geom_ribbon(aes(ymin = p_low, ymax = p_high), alpha = 0.20) +
+		geom_line(aes(x = bin_idx), linewidth = 0.9) +
+		geom_point(size = 2) +
+		scale_y_continuous("Cancer cell fraction (CCF)", labels = scales::percent_format(accuracy = 1),
+								 limits = c(0, NA)) +
+		labs(x = "Cell cycle phase", title = title,
+			  subtitle = "") +
+		theme_classic(base_size = 12) + 
+		theme(axis.text.x = element_text(angle = 35, hjust = 1),
+				plot.title = ggplot2::element_text(face = "bold", size = 16, hjust = 0.5),
+				axis.title = ggplot2::element_text(size = 14),
+				axis.text  = ggplot2::element_text(size = 12))
+}
+#Posterior mean ± 95% credible interval (misclassification-corrected)
+
+p3 <- print(plot_bins(fit3$agg_posterior, "CBL (11:119284966 T>A)"))
+#3-bin: Pre-meiotic → Meiotic → Post-meiotic
+outfile <- file.path(wd.de.plots, paste0(GENE, "_prevalence_by_stage_misclass_corrected_3-bin.png"))
+ggsave(outfile, plot = p3, width = 6, height = 6, dpi = 300)
+cat("Saved:", outfile, "\n")
+
+p4 <- print(plot_bins(fit4$agg_posterior, "CBL (11:119284966 T>A)"))
+#4-bin: G0/G1 (pre) → S → G2/M → G0 (post)
+outfile <- file.path(wd.de.plots, paste0(GENE, "_prevalence_by_stage_misclass_corrected_4-bin.png"))
+ggsave(outfile, plot = p4, width = 6, height = 6, dpi = 300)
+cat("Saved:", outfile, "\n")
+
+# Useful tables
+cat("\nBin prevalence (posterior) — 3-bin:\n")
+print(fit3$agg_posterior |> mutate(across(starts_with("p_"), ~round(., 4))))
+readr::write_csv(fit3$agg_posterior, file.path(wd.de.plots, paste0(GENE, "_prevalence_by_stage_misclass_corrected_3-bin.csv")))
+
+cat("\nBin prevalence (posterior) — 4-bin:\n")
+print(fit4$agg_posterior |> mutate(across(starts_with("p_"), ~round(., 4))))
+readr::write_csv(fit4$agg_posterior, file.path(wd.de.plots, paste0(GENE, "_prevalence_by_stage_misclass_corrected_4-bin.csv")))
+
+save(calls, calls2, k_n_by_stage, fit1, fit3, fit4, fit12, res, file=file.path(wd.de.plots, paste0("ssc_filtered_normalised_integrated_DF_SCT_PCA_UMAP_23_res=0.5_-C0_ordered_annotated_meta_cells_only_", GENE, "_CCF.RData")))
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+# 
+# -----------------------------------------------------------------------------
+library(dplyr)
+
+# 1) Build the 12-type CCF vector from your `out`
+ccf_one <- out %>%
+	transmute(cell_type = as.character(stage),
+				 CCF = p_mean, CCF_lo = p_low, CCF_hi = p_high)
+
+allowed_ct <- ccf_one$cell_type   # the 12 stages with CCFs
+
+# Predict composition only for those 12 types (re-normalize to sum=1)
+mean_age <- mean(df$age, na.rm=TRUE)
+sd_age   <- sd(df$age,  na.rm=TRUE)
+sc       <- function(a) (a - mean_age) / sd_age
+invlogit <- function(x) 1/(1+exp(-x))
+
+pred_comp12 <- function(a_years) {
+	pr <- sapply(allowed_ct, function(ct) {
+		m <- mods[[ct]]; if (is.null(m)) return(NA_real_)
+		predict(m, newdata = data.frame(age_c = sc(a_years)),
+				  type = "response", re.form = NA)
+	})
+	pr <- pr / sum(pr, na.rm = TRUE)     # normalize across the 12 only
+	tibble(cell_type = allowed_ct, prop = as.numeric(pr))
+}
+
+# Project overall CCF at age 60 → 70 using this donor’s within-type CCFs
+proj_CCF12 <- function(a_years) {
+	pred_comp12(a_years) %>%
+		inner_join(ccf_one, by = "cell_type") %>%
+		summarise(projected_CCF = sum(prop * CCF, na.rm = TRUE), .groups="drop") %>%
+		pull(projected_CCF)
+}
+
+proj60 <- proj_CCF12(60)
+proj70 <- proj_CCF12(70)
+delta_per_decade <- proj70 - proj60
+delta_per_decade
+
+# -----------------------------------------------------------------------------
+# A) Per-stage contributions (deterministic point estimates)
+# -----------------------------------------------------------------------------
+library(dplyr)
+# 1) Get predicted compositions at 60 and 70 (population-average)
+comp60 <- pred_comp12(60)  # tibble: cell_type, prop
+comp70 <- pred_comp12(70)
+
+# 2) Join and compute per-stage contributions
+drivers <- comp70 %>%
+	rename(prop70 = prop) %>%
+	inner_join(rename(comp60, prop60 = prop), by = "cell_type") %>%
+	inner_join(ccf_one, by = "cell_type") %>%
+	mutate(
+		delta_prop      = prop70 - prop60,             # change in stage fraction (absolute)
+		contribution    = delta_prop * CCF,            # adds up to ΔCCF/decade
+		delta_prop_pp   = 100 * delta_prop,            # percentage points of composition
+		contribution_pp = 100 * contribution           # percentage points of CCF
+	) %>%
+	arrange(desc(contribution))
+
+# 3) Check that the sum equals your ΔCCF/decade
+sum_contrib <- sum(drivers$contribution, na.rm = TRUE)
+# Should match your delta_per_decade ~ 0.003880074
+
+# 4) Add each stage’s share of the total change
+drivers <- drivers %>%
+	mutate(share_pct = 100 * contribution / sum_contrib)
+
+drivers
+
+# -----------------------------------------------------------------------------
+# Quick bar plot (who pushes the increase?)
+# -----------------------------------------------------------------------------
+library(ggplot2)
+
+ggplot(drivers, aes(x = reorder(cell_type, contribution_pp), y = contribution_pp)) +
+	geom_hline(yintercept = 0, linetype = 2) +
+	geom_col() +
+	coord_flip() +
+	labs(x = NULL, y = "Contribution to ΔCCF per decade (pp)",
+		  title = "Stage drivers of composition-only ΔCCF (age 60→70)") +
+	theme_classic()
+
+# -----------------------------------------------------------------------------
+# the projected overall CCF at 60 and 70,
+# the relative % change per decade,
+# and a small table of the top 5 positive/negative stage contributions (in pp).
+# -----------------------------------------------------------------------------
+library(dplyr)
+
+## 1) Project overall CCF at 60 and 70
+comp60 <- pred_comp12(60)   # tibble: cell_type, prop
+comp70 <- pred_comp12(70)
+
+tbl60 <- comp60 %>% inner_join(ccf_one, by = "cell_type")
+tbl70 <- comp70 %>% inner_join(ccf_one, by = "cell_type")
+
+proj60 <- sum(tbl60$prop * tbl60$CCF, na.rm = TRUE)
+proj70 <- sum(tbl70$prop * tbl70$CCF, na.rm = TRUE)
+
+delta          <- proj70 - proj60                   # absolute change (fraction units)
+abs_pp         <- 100 * delta                       # percentage points per decade
+rel_pct        <- 100 * delta / proj60              # relative % per decade
+
+cat(sprintf("Projected overall CCF at 60: %.4f  (%.2f%%)\n", proj60, 100*proj60))
+cat(sprintf("Projected overall CCF at 70: %.4f  (%.2f%%)\n", proj70, 100*proj70))
+cat(sprintf("Change per decade: %+0.4f ( %+0.2f pp ); relative: %+0.2f%% per decade\n\n",
+				delta, abs_pp, rel_pct))
+
+## 2) Per-stage driver decomposition (sums to delta)
+drivers <- comp70 %>%
+	rename(prop70 = prop) %>%
+	inner_join(rename(comp60, prop60 = prop), by = "cell_type") %>%
+	inner_join(ccf_one, by = "cell_type") %>%
+	mutate(
+		delta_prop      = prop70 - prop60,      # change in composition (absolute)
+		contribution    = delta_prop * CCF,     # change in overall CCF due to this stage
+		delta_prop_pp   = 100 * delta_prop,     # pp change in composition
+		contribution_pp = 100 * contribution,   # pp contribution to overall CCF
+		share_pct       = 100 * contribution / sum(contribution, na.rm = TRUE)
+	) %>%
+	arrange(desc(contribution_pp))
+
+# Take top 5 positive and top 5 negative contributors
+pos5 <- drivers %>% slice_max(contribution_pp, n = 5, with_ties = FALSE)
+neg5 <- drivers %>% slice_min(contribution_pp, n = 5, with_ties = FALSE)
+
+report <- bind_rows(pos5, neg5) %>%
+	transmute(
+		cell_type,
+		`Δ composition (pp/dec)` = round(delta_prop_pp, 3),
+		`CCF (donor)`            = round(CCF, 3),
+		`Contribution (pp/dec)`  = round(contribution_pp, 3),
+		`Share of total (%)`     = round(share_pct, 1)
+	) %>%
+	arrange(desc(`Contribution (pp/dec)`))
+
+print(report, n = nrow(report))
+
+# Sanity check: contributions sum to the overall change
+cat(sprintf("\nCheck: sum of contributions = %+0.4f ( %+0.2f pp )\n",
+				sum(drivers$contribution, na.rm = TRUE),
+				sum(drivers$contribution_pp, na.rm = TRUE)))
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------- 2) Build S-fraction per stage from your phase_proportions ----------
+phases_wide <- phase_proportions %>%
+	mutate(cell_type = str_squish(as.character(cell_type)),
+			 phase     = factor(as.character(phase), levels = c("G1","S","G2M"))) %>%
+	filter(cell_type %in% stage_order, !is.na(phase)) %>%
+	select(cell_type, phase, proportion) %>%
+	pivot_wider(names_from = phase, values_from = proportion) %>%
+	mutate(across(c(G1,S,G2M), ~ replace_na(., 0))) %>%
+	rowwise() %>%
+	mutate(.sum = sum(c_across(c(G1,S,G2M))),
+			 G1 = ifelse(.sum > 0, G1/.sum, NA_real_),
+			 S  = ifelse(.sum > 0, S /.sum, NA_real_),
+			 G2M= ifelse(.sum > 0, G2M/.sum, NA_real_)) %>%
+	ungroup() %>%
+	select(-.sum) %>%
+	mutate(Cycling = S + G2M,
+			 stage = factor(cell_type, levels = stage_order)) %>%
+	arrange(stage)
+
+# ---------- 3) Misclassification-corrected prevalence (build 'summ') ----------
+s_default   <- 0.65   # sensitivity Pr(call | truly mutant) — replace with stage-specific if you have them
+fpr_default <- 1e-3   # false positive rate Pr(call | WT)
+
+posterior_p_grid <- function(k, n, s, fpr, a=1, b=1, grid_len=5001) {
+	p <- seq(0, 1, length.out = grid_len)
+	q <- p * s + (1 - p) * fpr
+	loglik <- dbinom(k, n, q, log = TRUE)
+	logpost <- loglik + dbeta(p, a, b, log = TRUE)
+	m <- max(logpost); w <- exp(logpost - m); w <- w / sum(w)
+	cdf <- cumsum(w)
+	tibble(
+		p_mean = sum(p*w),
+		p_low  = p[which.max(cdf >= 0.025)],
+		p_high = p[which.max(cdf >= 0.975)],
+		p_mode = p[which.max(w)]
+	)
+}
+
+df_prev <- k_n_by_stage %>%
+	mutate(s = s_default, fpr = fpr_default)
+
+summ <- df_prev %>%
+	rowwise() %>%
+	mutate(res = list(posterior_p_grid(k, n, s, fpr))) %>%
+	unnest(res) %>%
+	ungroup() %>%
+	mutate(stage_idx = as.integer(stage),
+			 logit_p   = qlogis(pmin(pmax(p_mean, 1e-6), 1-1e-6)))
+
+# ---------- 4) Join prevalence with G1/S/G2M and run correlations ----------
+dat <- summ %>%
+	select(stage, stage_idx, p_mean, p_low, p_high) %>%
+	inner_join(phases_wide %>% select(stage, G1, S, G2M, Cycling), by = "stage") %>%
+	arrange(stage)
+
+# Spearman correlations (raw)
+vars <- c("G1","S","G2M","Cycling")
+corrs <- lapply(vars, function(v) {
+	ct <- suppressWarnings(cor.test(dat$p_mean, dat[[v]], method = "spearman", exact = FALSE))
+	tibble(var = v, rho = unname(ct$estimate), p = ct$p.value, n = nrow(dat))
+}) %>% bind_rows() %>% mutate(q = p.adjust(p, "BH"))
+print(corrs)
+
+# Residualized (beyond stage order trend)
+residual_cor <- function(y, x, idx) {
+	ry <- lm(y ~ idx)$residuals
+	rx <- lm(x ~ idx)$residuals
+	suppressWarnings(cor.test(ry, rx, method = "spearman", exact = FALSE))
+}
+pcorrs <- lapply(vars, function(v) {
+	ct <- residual_cor(dat$p_mean, dat[[v]], dat$stage_idx)
+	tibble(var = v, rho_resid = unname(ct$estimate), p_resid = ct$p.value)
+}) %>% bind_rows() %>% mutate(q_resid = p.adjust(p_resid, "BH"))
+print(pcorrs)
+
+# ---------- 5) Quick plot ----------
+lab_pct <- function(x) percent(x, accuracy = 1)
+long <- dat %>%
+	select(stage, p_mean, G1, S, G2M, Cycling) %>%
+	pivot_longer(cols = c(G1, S, G2M, Cycling), names_to = "phase_metric", values_to = "prop")
+
+gg1 <- ggplot(long, aes(x = prop, y = p_mean)) +
+	geom_point(size = 2) +
+	geom_smooth(method = "lm", se = FALSE, linetype = 2) +
+	facet_wrap(~ phase_metric, nrow = 1, scales = "free_x") +
+	scale_x_continuous(labels = lab_pct, limits = c(0, 1)) +
+	scale_y_continuous(labels = lab_pct, limits = c(0, NA)) +
+	labs(x = "Phase proportion", y = "Mutant prevalence p\u1D62",
+		  title = "CBL mutant prevalence vs phase composition across stages",
+		  subtitle = "Spearman correlations shown in console; Cycling = S + G2M") +
+	theme_classic(base_size = 12)
+print(gg1)
+
+# -----------------------------------------------------------------------------
+# 1) Is CBL expression lower in S/G2M (by stage × phase)?
+# -----------------------------------------------------------------------------
+library(dplyr); library(tidyr); library(stringr); library(Seurat)
+
+DefaultAssay(so.integrated) <- "RNA"  # or "RNA" if that's your working assay
+# Per-cell CBL expression
+cb_vec <- tryCatch(GetAssayData(so.integrated, slot="data")["CBL", ], error=function(e) NULL)
+if (is.null(cb_vec)) stop("Gene 'CBL' not found in current assay; check feature name/case or switch assay.")
+
+md <- FetchData(so.integrated, vars = c("cell_type","Phase")) %>%
+	tibble::rownames_to_column("CB") %>%
+	mutate(cell_type = str_squish(cell_type),
+			 Phase = factor(Phase, levels=c("G1","S","G2M"))) %>%
+	mutate(CBL = as.numeric(cb_vec[CB]),
+			 is_expr = CBL > 0)
+
+# summarize by stage × phase
+cb_stage_phase <- md %>%
+	filter(cell_type %in% stage_order, !is.na(Phase)) %>%
+	group_by(cell_type, Phase) %>%
+	summarise(
+		n = n(),
+		det_frac = mean(is_expr),
+		mean_expr = mean(CBL),       # log-normalized mean
+		med_expr  = median(CBL),
+		.groups = "drop"
+	) %>%
+	mutate(stage = factor(cell_type, levels = stage_order)) %>%
+	arrange(stage, Phase)
+
+print(cb_stage_phase, n=36)
+
+# -----------------------------------------------------------------------------
+# tests detection bias (coverage + mutant call) ~ CBL expression, total UMIs, Phase,
+# recomputes local density and next-stage distance,
+# fits an adjusted regression: distance ~ %S + density + UMIs + CBL + slide,
+# -----------------------------------------------------------------------------
+suppressPackageStartupMessages({
+	library(dplyr); library(tidyr); library(stringr); library(purrr)
+	library(Seurat); library(FNN); library(lme4); library(lmerTest); library(broom)
+})
+
+# -------- 1) Per-cell metadata table ------------------------------------------
+# Fetch stage, phase, counts and coordinates
+vars <- c("cell_type","Phase","nCount_RNA","sample.id")
+md <- FetchData(so.integrated, vars = vars) %>%
+	tibble::rownames_to_column("CB") %>%
+	mutate(cell_type = str_squish(as.character(cell_type)),
+			 Phase     = factor(as.character(Phase), levels = c("G1","S","G2M")),
+			 stage     = factor(cell_type, levels = stage_order))
+
+# Try UMAP; if missing, fall back to plot_x/plot_y
+umap_ok <- "umap" %in% names(so.integrated@reductions)
+if (umap_ok) {
+	md <- md %>% bind_cols(
+		FetchData(so.st, vars = c("UMAP_1","UMAP_2"))
+	)
+} else {
+	# If you stored custom coords:
+	if (all(c("plot_x","plot_y") %in% colnames(so.integrated@meta.data))) {
+		xy <- FetchData(so.integrated, vars = c("plot_x","plot_y"))
+		colnames(xy) <- c("UMAP_1","UMAP_2")
+		md <- md %>% bind_cols(xy)
+	} else {
+		stop("No UMAP_1/UMAP_2 or plot_x/plot_y found.")
+	}
+}
+
+# CBL expression (log-normalised) from active assay
+DefaultAssay(so.integrated) <- DefaultAssay(so.integrated) # keep current
+cb_vec <- tryCatch(GetAssayData(so.integrated, slot = "data")["CBL", ], error=function(e) NULL)
+if (is.null(cb_vec)) stop("Feature 'CBL' not found in current assay; switch assay or check name.")
+md$CBL_expr <- as.numeric(cb_vec[md$CB])
+
+# Total UMIs (adjust if you prefer nCount_SCT)
+md$log_umis <- log1p(md$nCount_RNA)
+
+# -------- 2) Join mutation calls & coverage -----------------------------------
+# calls has union of REF/ALT per CB; build coverage and mutant flags
+stopifnot(all(c("CB","ref_reads","alt_reads") %in% colnames(calls)))
+calls_cov <- calls %>%
+	mutate(total_reads = coalesce(ref_reads,0) + coalesce(alt_reads,0),
+			 has_cov    = total_reads > 0,
+			 is_mut1    = !is.na(alt_reads) & alt_reads >= 1,  # ≥1 ALT read
+			 is_mut2    = !is.na(alt_reads) & alt_reads >= 2)  # ≥2 ALT reads
+
+dat <- md %>%
+	left_join(calls_cov %>% select(CB, has_cov, total_reads, is_mut1, is_mut2), by = "CB") %>%
+	mutate(across(c(has_cov, is_mut1, is_mut2), ~ replace_na(., FALSE)),
+			 total_reads = replace_na(total_reads, 0)) %>%
+	filter(!is.na(stage), !is.na(Phase))
+
+# -------- 3) CHECK 1: Detection bias models -----------------------------------
+# (A) Coverage presence ~ CBL + UMIs + Phase + Stage
+m_cov <- glm(has_cov ~ scale(CBL_expr) + scale(log_umis) + Phase + stage,
+				 data = dat, family = binomial())
+cat("\n--- Coverage model (has_cov) ---\n")
+print(broom::tidy(m_cov) %>% mutate(or = exp(estimate)))
+
+# (B) Mutation call among covered cells ~ CBL + UMIs + Phase + Stage
+covered <- dat %>% filter(has_cov)
+m_mut1 <- glm(is_mut1 ~ scale(CBL_expr) + scale(log_umis) + Phase + stage,
+				  data = covered, family = binomial())
+m_mut2 <- glm(is_mut2 ~ scale(CBL_expr) + scale(log_umis) + Phase + stage,
+				  data = covered, family = binomial())
+cat("\n--- Mutation call model (≥1 ALT) ---\n")
+print(broom::tidy(m_mut1) %>% mutate(or = exp(estimate)))
+cat("\n--- Mutation call model (≥2 ALT) ---\n")
+print(broom::tidy(m_mut2) %>% mutate(or = exp(estimate)))
+
+# Interpretation guide:
+#  - If PhaseS or PhaseG2M are positive/NS after adjusting for CBL_expr and UMIs,
+#    phase-by-coverage bias is not driving calls; if negative, it suggests under-calling in S/G2M.
+
+# -------- 4) Stage %S and other stage covariates ------------------------------
+# %S by stage (from your table)
+S_by_stage <- phase_proportions %>%
+	filter(phase %in% c("G1","S","G2M")) %>%
+	group_by(cell_type) %>%
+	mutate(prop = proportion / sum(proportion)) %>%  # re-normalize defensively
+	ungroup() %>%
+	filter(phase == "S") %>%
+	transmute(stage = factor(cell_type, levels = stage_order),
+				 S_frac = prop) %>%
+	distinct()
+
+# Stage sizes
+n_by_stage <- md %>% count(stage, name = "n_stage")
+
+stage_covars <- S_by_stage %>%
+	full_join(n_by_stage, by = "stage")
+
+# -------- 5) Local density and next-stage distance ----------------------------
+# kNN density (inverse mean distance to k nearest neighbours among all germ stages)
+k <- 20
+coords <- dat %>% select(CB, stage, UMAP_1, UMAP_2)
+mat <- as.matrix(coords %>% select(UMAP_1, UMAP_2))
+nn <- FNN::get.knn(mat, k = min(k, nrow(mat)-1))
+
+inv_mean_d <- 1 / rowMeans(nn$nn.dist)
+dens_tbl <- tibble(CB = coords$CB, local_density = as.numeric(scale(inv_mean_d)))
+
+# Next-stage mapping
+stage_next <- setNames(c(stage_order[-1], NA), stage_order)
+dat2 <- dat %>%
+	left_join(dens_tbl, by = "CB") %>%
+	mutate(next_stage = stage_next[as.character(stage)])
+
+# Fast nearest distance to any cell in the next stage
+get_next_dist <- function(df) {
+	out <- rep(NA_real_, nrow(df))
+	for (s in stage_order) {
+		idx <- which(df$stage == s)
+		ns  <- stage_next[s]
+		if (is.na(ns)) next
+		jdx <- which(df$stage == ns)
+		if (length(idx) == 0 || length(jdx) == 0) next
+		m1 <- as.matrix(df[idx, c("UMAP_1","UMAP_2")])
+		m2 <- as.matrix(df[jdx, c("UMAP_1","UMAP_2")])
+		d  <- FNN::get.knnx(m2, m1, k = 1)$nn.dist[,1]
+		out[idx] <- d
+	}
+	out
+}
+dat2$next_dist <- get_next_dist(dat2)
+
+# Bring in stage-level covariates
+dat2 <- dat2 %>%
+	left_join(stage_covars, by = "stage") %>%
+	# n_next: size of the next stage
+	left_join(n_by_stage %>% rename(next_stage = stage, n_next = n_stage),
+				 by = "next_stage") %>%
+	mutate(log_n_stage = log1p(n_stage),
+			 log_n_next  = log1p(n_next))
+
+# -------- 6) CHECK 2+3: Adjusted regression of distance -----------------------
+# distance ~ %S + density + UMIs + CBL + (1|stage) + (1|sample.id)
+dist_df <- dat2 %>%
+	filter(!is.na(next_dist), is.finite(next_dist)) %>%
+	mutate(S_frac = replace_na(S_frac, 0))
+
+m_dist <- lmer(
+	next_dist ~ S_frac + local_density + scale(log_umis) + scale(CBL_expr) +
+		log_n_stage + log_n_next + (1|stage) + (1|sample.id),
+	data = dist_df, REML = FALSE
+)
+cat("\n--- Adjusted distance model ---\n")
+print(summary(m_dist))
+
+# Optional: also test S vs G2M separately at cell level (encode cell-cycle as dummies)
+# Here we add cell-level Phase to ensure %S isn’t just reflecting micro-phase composition
+m_dist2 <- lmer(
+	next_dist ~ S_frac + local_density + scale(log_umis) + scale(CBL_expr) +
+		log_n_stage + log_n_next + Phase + (1|stage) + (1|sample.id),
+	data = dist_df, REML = FALSE
+)
+cat("\n--- Adjusted distance model (with cell-level Phase) ---\n")
+print(summary(m_dist2))
+
+# Quick tidy tables for reporting
+tab_cov <- broom.mixed::tidy(m_cov)
+tab_mut1 <- broom.mixed::tidy(m_mut1)
+tab_mut2 <- broom.mixed::tidy(m_mut2)
+tab_dist <- broom.mixed::tidy(m_dist, effects = "fixed")
+tab_dist2<- broom.mixed::tidy(m_dist2, effects = "fixed")
+
+list(
+	coverage_model = tab_cov,
+	mutation_model_ge1 = tab_mut1,
+	mutation_model_ge2 = tab_mut2,
+	distance_model = tab_dist,
+	distance_model_with_phase = tab_dist2
+) -> results_tables
+
+# Example: write to CSVs
+# readr::write_csv(tab_cov,  file.path(wd.de.plots, "model_coverage.csv"))
+# readr::write_csv(tab_mut1, file.path(wd.de.plots, "model_mut_ge1.csv"))
+# readr::write_csv(tab_mut2, file.path(wd.de.plots, "model_mut_ge2.csv"))
+# readr::write_csv(tab_dist, file.path(wd.de.plots, "model_distance.csv"))
+# readr::write_csv(tab_dist2,file.path(wd.de.plots, "model_distance_with_phase.csv"))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Standard Seurat re-processing workflow
@@ -1132,7 +2084,7 @@ save_phase_plot_perm <- function(df, phase_text, phase_label, color_hex, outdir,
 		ggplot2::annotate("text", x = x_pos, y = y_pos, label = lab,
 								hjust = 1.05, vjust = 1.4, size = 6) +
 		ggplot2::labs(
-			title = "",
+			title = "PD53626b_ST1",
 			x = "Spatial distance (µm)",
 			y = paste0("% ", phase_label)
 		) +

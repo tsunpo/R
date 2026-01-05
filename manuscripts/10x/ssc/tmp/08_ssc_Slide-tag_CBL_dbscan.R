@@ -53,6 +53,7 @@ meta.st <- subset(meta, Index %in% barcodes.st$CB)
 # -----------------------------------------------------------------------------
 library(Seurat)
 library(qs)
+library(ggplot2)
 
 so <- qread(file.path(wd.rna, "ngs/slide-tag/pipeline_outputs/PD53626B/Positions/seurat.qs"))
 so.integrated.st <- subset(so.integrated, sample.id == "PD53626b_ST1")

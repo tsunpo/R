@@ -58,6 +58,97 @@ library(ggplot2)
 
 # 1. Total cells per sample
 total_cells <- so.integrated@meta.data %>%
+	group_by(patient_id) %>%
+	summarise(total_cells = n(), .groups = "drop")
+
+# 2. Cell counts per sample × cell type
+cell_counts <- so.integrated@meta.data %>%
+	group_by(patient_id, cell_type = cell_type, age) %>%
+	summarise(n_cells = n(), .groups = "drop")
+
+# 3. Merge total cells into cell_counts
+cell_counts <- left_join(cell_counts, total_cells, by = "patient_id")
+
+# 4. Get list of unique cell types
+cell_types <- unique(cell_counts$cell_type)
+
+# -----------------------------------------------------------------------------
+# Binomial GLMM (better than Poisson here)
+# -----------------------------------------------------------------------------
+library(lme4)
+library(broom.mixed)
+library(dplyr)
+
+# per-sample counts (you already have cell_counts with n_cells and total_cells)
+df <- cell_counts %>%
+	mutate(success   = n_cells,
+			 failure   = pmax(total_cells - n_cells, 0),
+			 age_c     = scale(age, center = TRUE, scale = TRUE))  # helps convergence
+
+fit_binom <- function(ct) {
+	dd <- filter(df, cell_type == ct)
+	if (n_distinct(dd$success) < 2) return(NULL)
+	glmer(cbind(success, failure) ~ age_c + (1|patient_id),
+			data = dd,
+			family = binomial(link = "logit"),
+			control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
+}
+
+mods <- setNames(lapply(unique(df$cell_type), fit_binom), unique(df$cell_type))
+res  <- bind_rows(lapply(names(mods), function(ct) {
+	m <- mods[[ct]]; if (is.null(m)) return(NULL)
+	tt <- tidy(m, effects = "fixed") %>% filter(term == "age_c")
+	tt %>% transmute(cell_type = ct,
+						  logit_per_SD = estimate, se = std.error, p = p.value)
+}))
+
+# FDR across cell types
+res <- res %>% mutate(q = p.adjust(p, method = "BH"))
+
+# Report odds ratios per year (or per decade) instead of per SD (helps biology readers)
+res <- res %>%
+	mutate(OR_per_SD = exp(logit_per_SD),
+			 CI_lo = exp(logit_per_SD - 1.96*se),
+			 CI_hi = exp(logit_per_SD + 1.96*se))
+
+sd_age <- sd(df$age, na.rm = TRUE)
+res <- res %>%
+	mutate(
+		OR_per_year   = exp(logit_per_SD / sd_age),
+		OR_per_decade = exp(logit_per_SD * (10 / sd_age))
+	)
+
+# Order stages biologically and make a quick forest plot (effects ±95% CI):
+stage_order <- c("Stage 0","Stage 0A","Stage 0B","Stage 1","Stage 2","Stage 3",
+					  "Leptotene","Zygotene","Pachytene","Diplotene",
+					  "Meiotic division","Early spermatid","Late spermatid")
+
+res$cell_type <- factor(res$cell_type, levels = rev(stage_order))
+
+library(ggplot2)
+ggplot(res, aes(x = cell_type, y = OR_per_SD)) +
+	geom_hline(yintercept = 1, linetype = 2) +
+	geom_point() +
+	geom_errorbar(aes(ymin = CI_lo, ymax = CI_hi), width = 0.15) +
+	coord_flip() +
+	labs(y = "Odds ratio per 1 SD age", x = NULL,
+		  title = "Age effect on cell-type proportion (GLMM, per SD age)") +
+	theme_classic()
+
+
+
+
+# -----------------------------------------------------------------------------
+# Proportion of cell type ~ age + (1 | patient_id), per cell type
+# -----------------------------------------------------------------------------
+library(lme4)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(ggplot2)
+
+# 1. Total cells per sample
+total_cells <- so.integrated@meta.data %>%
    group_by(patient_id) %>%
    summarise(total_cells = n(), .groups = "drop")
 

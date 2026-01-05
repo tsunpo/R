@@ -33,7 +33,7 @@ so.integrated$orig.ident <- ifelse(
    so.integrated$orig.ident
 )
 unique(so.integrated$orig.ident)
-so.integrated$patient_id <- str_extract(so.integrated$orig.ident, "^[^_]+")
+so.integrated$patient_id <- sub("_.*$", "", so.integrated$orig.ident)
 
 so.integrated$cell_type <- Idents(so.integrated)
 

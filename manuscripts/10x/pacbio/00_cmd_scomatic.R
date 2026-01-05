@@ -11,13 +11,13 @@ pd_id <- as.character(args[1])
 library(ggplot2)
 library(dplyr)
 
-pd_id <- "PD53621b"
+pd_id <- "PD53626b"
 
 # -----------------------------------------------------------------------------
 # Set working directory
 # -----------------------------------------------------------------------------
-wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/nf-scomatic/out", pd_id)
-wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/SComatic/results/Step4_VariantCalling/new_beta")
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/10x/nf-scomatic/out", pd_id)
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/10x/SComatic/results/Step4_VariantCalling/default")
 wd.de.plots <- file.path(wd.de.data, pd_id)
 dir.create(wd.de.plots, showWarnings = FALSE)
 
