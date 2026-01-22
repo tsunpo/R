@@ -19,7 +19,7 @@ pd_id <- "PD53626b"
 #wd.de.data  <- file.path("/lustre/scratch125/casm/staging/team294/ty2/SSC/ngs/pacbio/SComatic/results/Step4_VariantCalling/default")
 #wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/10x/nf-scomatic/out", pd_id)
 #wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/10x/SComatic/results/Step4_VariantCalling/default")
-wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/SComatic/results/Step4_VariantCalling/default")
+wd.de.data  <- file.path("/Users/ty2/Work/sanger/ty2/SSC/ngs/pacbio/SComatic/results/Step4_VariantCalling/new_beta")
 wd.de.plots <- file.path(wd.de.data, pd_id)
 dir.create(wd.de.plots, showWarnings = FALSE)
 
